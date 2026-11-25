@@ -50,10 +50,18 @@ test('binding checkpoints retain cached next and early-close obligations without
   }
 });
 
-test('nested patterns, assignment patterns and captured builtin methods retain explicit source refusals',async()=>{
+test('nested ordinary array bindings preserve their original source and independently recheck',async()=>{
+  const result=await verifyProtocolRegionTrainingCase(fixture('const [[first]]=[[3]];return first;'));
+  assert(result.exported,result.reason);
+  assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion,{kind:'return',value:['num',3]});
+  assert.equal(result.exported.sidecar.sourceArtifact.sidecar.reference.completionAudit.status,'agreed');
+  assert.equal((await recheckProtocolRegionEvidence(result.exported)).sourceValidated,true);
+});
+
+test('assignment patterns and implicit captured builtin methods retain explicit source refusals',async()=>{
   for(const body of [
-    'const [[first]]=[[3]];return first;',
     'let first=0;[first]=[3];return first;',
     'const [first]="a";return first;'
-  ]){const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.status,'unsupported',result.reason);assert(!result.exported);}
+  ]){const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.status,'unsupported',result.reason);assert(!result.exported);
+    assert.match(result.reason,/qualified synchronous loop or binding pattern|implicit call lacks its selected guest method/);}
 });

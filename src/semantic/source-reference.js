@@ -83,7 +83,7 @@ export function independentSemanticChecks(bundle,source,operations,decisions,com
   const sites=staticSites(source),semantic=normalizeJournal(bundle);
   const events=new Map(bundle.events.map(event=>[event.eventId,event]));
   const types=new Set(['primitive.binary','primitive.unary','template.substitute',
-    'spec.operation.complete','binding.update','property.update']);
+    'spec.operation.complete','binding.update','property.update','property.delete']);
   const expectedOperations=[],expectedBranches=[];
   for(const row of semantic.events){
     const event=events.get(row.journalEvent),site=row.source?row.source.start+':'+row.source.end:null;

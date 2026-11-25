@@ -3,6 +3,7 @@
 // or create a second identity for a Promise.
 import {token} from './values.js';
 import {symbolPropertyKey} from './property-keys.js';
+import {ERROR_PROTOTYPES,errorPrototypeRecord,ensureErrorPrototype} from './owned-error-objects.js';
 
 function promisePrototypeRecord(){
   const properties={constructor:token(['intrinsic','Promise'])};
@@ -22,6 +23,7 @@ export function ownedObjectStorage(state,value){
   if(value?.[0]==='promise')return state.promises[value[1]]??null;
   if(value?.[0]==='ref')return state.heap[value[1]]??null;
   if(value?.[0]==='intrinsic'&&value[1]==='Promise.prototype')return ensurePromisePrototype(state);
+  if(value?.[0]==='intrinsic'&&ERROR_PROTOTYPES.includes(value[1]))return ensureErrorPrototype(state,value[1]);
   return null;
 }
 
@@ -32,15 +34,16 @@ export function ownedObjectHeap(state){
   // allocate an unrelated guest object or consume an object counter.
   // Lookup borrows one row on demand. An ordinary property read must not
   // enumerate or copy every unrelated Promise in the realm.
-  let pristine;
+  let pristine;const errorPrototypes=new Map();
   return new Proxy(Object.create(null),{get(_target,id){
     if(Object.hasOwn(state.promises,id))return state.promises[id];
     if(Object.hasOwn(state.heap,id))return state.heap[id];
     if(id==='Promise.prototype')return pristine??=promisePrototypeRecord();
+    if(ERROR_PROTOTYPES.includes(id)){if(!errorPrototypes.has(id))errorPrototypes.set(id,errorPrototypeRecord(id));return errorPrototypes.get(id);}
     return undefined;
   }});
 }
 
 export function ownedObjectValue(state,id){
-  return id==='Promise.prototype'?['intrinsic',id]:state.promises[id]?['promise',id]:['ref',id];
+  return id==='Promise.prototype'||ERROR_PROTOTYPES.includes(id)?['intrinsic',id]:state.promises[id]?['promise',id]:['ref',id];
 }

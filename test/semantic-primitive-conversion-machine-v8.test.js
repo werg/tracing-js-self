@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {applyProtocolRecordV8,createProtocolStateV8,restoreProtocolStateV8,PROTOCOL_MACHINE_API_V8} from '../src/semantic/protocol-state-v8.js';
 import {validateProtocolValueV8,encodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
+import {promiseIntrinsicIdV8} from '../src/semantic/protocol-promise-object-v8.js';
 import {PRIMITIVE_CONVERSION_RECORD_FIELDS,PRIMITIVE_CONVERSION_FAULTS_V8,
   validatePrimitiveConversionRecordV8,assertPrimitiveConversionNextV8,applyPrimitiveConversionRecordV8,
   restorePrimitiveConversionStateV8} from '../src/semantic/protocol-primitive-conversion-v8.js';
@@ -73,6 +74,37 @@ test('goal derives method order and callback hint, including snapshot refusal af
   }
 });
 
+test('constructor-captured conversion arrows restore their exact callee with the live receiver',()=>{
+  const c=controller();
+  apply(c,closure('Constructor'),allocation('ConstructorPrototype'),
+    {kind:'callable.define',object:'Constructor',constructorKind:'base',classConstructor:true},
+    {kind:'class.link',object:'Constructor',prototype:['ref','ConstructorPrototype'],heritage:['undefined']},
+    closure('arrowOne',{code:'sharedArrowCode',functionKind:'arrow',lexicalReceiver:undefinedValue}),
+    {kind:'callable.define',object:'arrowOne',constructorKind:null,classConstructor:false},
+    closure('arrowTwo',{code:'sharedArrowCode',functionKind:'arrow',lexicalReceiver:undefinedValue}),
+    {kind:'callable.define',object:'arrowTwo',constructorKind:null,classConstructor:false},
+    allocation('replacement'),
+    {kind:'construct.enter',id:'construction',child:'constructorBody',callee:['ref','Constructor'],
+      newTarget:['ref','Constructor'],arguments:[],receiver:['ref','instance'],mode:'ordinary',owner:null},
+    {kind:'callable.capture',object:'arrowOne',frame:'construction',thisCell:'constructorBody:this'},
+    {kind:'callable.capture',object:'arrowTwo',frame:'construction',thisCell:'constructorBody:this'},
+    {kind:'return',invocation:'constructorBody',value:['ref','replacement']},
+    {kind:'construct.finish',id:'construction',completion:{kind:'normal',value:['ref','replacement']}},
+    allocation('input',[{key:['str','valueOf'],value:['ref','arrowOne']}]),
+    begin('convert','Number',['ref','input']),lookup('convert',exotic),
+    lookup('convert',['str','valueOf'],'data',['ref','arrowOne']),
+    {kind:'conversion.call',id:'convert',child:'arrowCall'});
+  assert.deepEqual(c.receiver,['ref','instance']);
+  assert.deepEqual(c.protocol.callFrames.at(-1).callee,['ref','arrowOne']);
+  apply(c,{kind:'construct.this',invocation:'arrowCall',result:['ref','instance']},
+    {kind:'construct.target',invocation:'arrowCall',result:['ref','Constructor']});
+  restoreProtocolStateV8(c,copy(c.protocol));
+  const forged=copy(c.protocol);forged.callFrames.at(-1).callee=['ref','arrowTwo'];
+  assert.throws(()=>restoreProtocolStateV8(c,forged),/callee|receiver|lexical/);
+  returnValue(c,'convert','arrowCall',['num',7]);apply(c,end('convert',['num',7]));
+  assert.deepEqual(c.protocol.construction.frames[0].receiver,['ref','instance']);
+});
+
 test('getter result is captured once despite live descriptor replacement and call receiver is retained',()=>{
   const c=controller();apply(c,closure('getter'),closure('returnedMethod'),closure('replacement'),allocation('input'),
     define('input',['str','toString'],{kind:'accessor',get:['ref','getter'],set:undefinedValue,enumerable:true,configurable:true}));
@@ -130,7 +162,9 @@ test('four fault causes are derived and fault records allocate only fresh bounde
     assert.equal(row(c).fault,cause);refuse(c,{kind:'conversion.fault',id:'convert',error:'occupied'},/duplicate allocation identity/);
     refuse(c,{kind:'conversion.fault',id:'convert',error:'error',message:'invented'},/fields/);
     apply(c,{kind:'conversion.fault',id:'convert',error:'error'});
-    assert.deepEqual([...c.heap.get('error').properties],[['name',['str','TypeError']],['message',['str',PRIMITIVE_CONVERSION_FAULTS_V8[cause]]]]);
+    assert.deepEqual([...c.heap.get('error').properties],[['message',['str',PRIMITIVE_CONVERSION_FAULTS_V8[cause]]]]);
+    assert.deepEqual(c.heap.get('error').prototype,['ref',promiseIntrinsicIdV8('TypeError.prototype')]);
+    apply(c,{kind:'property.get',object:'error',key:['str','name'],receiver:['ref','error'],result:['str','TypeError']});
     // The caught object is ordinary mutable state. A later mutation must not
     // invalidate the retained fact that conversion originally produced it.
     apply(c,define('error',['str','message'],data(['str','changed by catch'])));

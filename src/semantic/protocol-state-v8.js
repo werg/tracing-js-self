@@ -47,6 +47,14 @@ export function initializeRetainedProtocolStateV8(controller){
   controller.protocol=protocol;
 }
 function state(controller){return controller.protocol??=createProtocolStateV8();}
+export function protocolCallReceiverV8(controller,callee,receiver){
+  let effective=copy(receiver);
+  for(const adapter of PROTOCOL_MACHINE_ADAPTERS_V8)if(adapter.callReceiver){
+    const adapted=adapter.callReceiver(controller,callee,effective,PROTOCOL_MACHINE_API_V8);
+    if(adapted!==undefined)effective=copy(adapted);
+  }
+  return effective;
+}
 export function protocolReservedIdentitiesV8(controller){
   return new Set([...controller.heap.keys(),...state(controller).symbols.map(row=>row.id),
     ...PROTOCOL_MACHINE_ADAPTERS_V8.flatMap(adapter=>adapter.reservedIdentities?.(controller)??[])]);
@@ -134,13 +142,19 @@ function unmodeledPrototypeMember(node,key){
     node.kind==='closure'&&['constructor','toString','call','apply','bind','length','name','prototype','arguments','caller'].includes(key[1]);
 }
 function missingIntrinsic(node,key){return key[0]==='str'&&objectIntrinsicNames.includes(key[1])||unmodeledPrototypeMember(node,key);}
-function resolveProperty(controller,object,key,{forSet=false}={}){
+function resolveProperty(controller,object,key,{forSet=false,forHas=false}={}){
   const visited=new Set();let current=object;
   for(;;){
     require(!visited.has(current),'cyclic prototype chain');visited.add(current);
     const node=heapNode(controller,current),descriptor=ownDescriptor(node,key);
     if(descriptor)return {owner:current,node,descriptor};
+    if(node.kind==='closure'&&[undefined,'ordinary'].includes(node.prototype)&&
+      key[0]==='symbol'&&key[1]==='well-known:hasInstance'&&controller.protocol?.promiseObjects?.initialized)
+      return {owner:null,node,descriptor:{kind:'data',value:['ref',promiseIntrinsicIdV8('Function.prototype.hasInstance')],
+        writable:false,enumerable:false,configurable:false}};
     const prototype=node.prototype===undefined?'ordinary':node.prototype;
+    if(forHas&&node.kind==='promise'&&prototype==='ordinary')
+      require(false,'Promise property existence requires initialized intrinsic state');
     if(prototype===null)return {owner:null,node:null,descriptor:null};
     if(prototype==='ordinary'){
       // Array.prototype and Function.prototype override some Object members.
@@ -156,6 +170,11 @@ function resolveProperty(controller,object,key,{forSet=false}={}){
       if(forSet&&(key[0]==='str'&&key[1]!=='__proto__'&&objectIntrinsicNames.includes(key[1])||
         node.kind==='array'&&key[0]==='symbol'&&key[1]==='well-known:iterator'))
         return {owner:null,node:null,descriptor:{kind:'data',writable:true}};
+      // Existence does not read an intrinsic value or invoke its getter. A
+      // closure's own prototype depends on its construction capability and
+      // cannot be inferred from a generic callable record.
+      if(forHas&&missingIntrinsic(node,key)&&!(node.kind==='closure'&&key[0]==='str'&&key[1]==='prototype'))
+        return {owner:null,node:null,descriptor:{kind:'data'}};
       require(!missingIntrinsic(node,key),'inherited intrinsic property requires its callable protocol');
       return {owner:null,node:null,descriptor:null};
     }
@@ -220,17 +239,99 @@ function call(controller,record,options={}){
     'resumed invocation must be inactive and retain the same source callable');
   else require(!controller.frameFunctions.has(record.child),'duplicate invocation');
   const protocol=state(controller);require(protocol.callFrames.length<PROTOCOL_V8_LIMITS.calls,'call stack bound');
-  protocol.callFrames.push({child:record.child,parent:controller.stack.at(-1),
+  const frame={child:record.child,parent:controller.stack.at(-1),callee:copy(record.callee),
     priorReceiver:copy(controller.receiver??['undefined']),priorAliases:[...(controller.captureAliases??new Map())],
-    arguments:copy(record.arguments)});
-  controller.receiver=copy(node.functionKind==='arrow'?node.lexicalReceiver:record.receiver);
+    arguments:copy(record.arguments)};
+  if(options.proxyReflectionScope!==undefined){
+    assertAlgorithmFields(options.proxyReflectionScope,['kind','definition'],'Proxy reflection call scope');
+    require(options.proxyReflectionScope.kind==='proxy.defineProperty'&&isAlgorithmDataRecord(options.proxyReflectionScope.definition),
+      'Proxy reflection call scope kind/definition');
+    frame.proxyReflectionScope=copy(options.proxyReflectionScope);
+  }
+  protocol.callFrames.push(frame);
+  controller.receiver=protocolCallReceiverV8(controller,record.callee,
+    node.functionKind==='arrow'?node.lexicalReceiver:record.receiver);
   controller.captureAliases=new Map(node.captures.map(row=>[row.binding,row.cell]));
   controller.locals.set(record.child+':this',copy(controller.receiver));
   record.arguments.forEach((value,index)=>controller.locals.set(record.child+':argument:'+index,copy(value)));
   controller.frameFunctions.set(record.child,node.code);controller.stack.push(record.child);
 }
-function complete(controller,record){
-  const protocol=state(controller);
+function scheduledCallback(job){
+  if(job?.promise){
+    if(job.reaction==='then'&&job.originalStatus==='rejected')return job.rejectionClosure??null;
+    if(job.reaction==='catch'&&job.originalStatus==='fulfilled')return null;
+  }
+  return job?.closure??null;
+}
+function scheduledChild(controller,identity,job){
+  if(job?.reaction==='adopt'){
+    const row=[...controller.heap.values()].map(node=>node.adoption)
+      .find(adoption=>adoption?.job===identity&&adoption.phase==='reading');
+    if(row?.lookup?.child)return row.lookup.child;
+  }
+  return 'job:'+identity;
+}
+function scheduledCallbackFrame(controller,frame){
+  const identity=controller.activeJob,job=identity===null||identity===undefined?null:controller.jobs?.get(identity),
+    callback=scheduledCallback(job);
+  return Boolean(job?.status==='running'&&!['adopt','adoption'].includes(job.reaction)&&callback&&
+    frame.child===scheduledChild(controller,identity,job)&&eq(frame.callee,['ref',callback]));
+}
+function scheduledParameterAliases(controller,identity,job,callback,frame){
+  const node=controller.heap.get(callback),definition=job.callbackDefinition,bindings=job.parameterBindings;
+  require(node?.kind==='closure'&&definition&&
+    Object.keys(definition).length===4&&['code','name','start','params'].every(key=>Object.hasOwn(definition,key))&&
+    definition.code===node.code&&(definition.name===null||typeof definition.name==='string'&&definition.name.length>0)&&
+    Number.isSafeInteger(definition.start)&&definition.start>=0&&
+    (definition.code===definition.name||definition.code==='function:'+definition.start)&&
+    Array.isArray(definition.params)&&definition.params.length<=256&&
+    definition.params.every(name=>name===null||typeof name==='string'&&name.length>0)&&
+    Array.isArray(bindings),'scheduled callback source parameter definition');
+  const sourceFunctions=analyzeSemanticProgram(controller.source.source).functions,
+    sourceFunction=sourceFunctions.find(fn=>fn.start===definition.start);
+  require(sourceFunction&&sourceFunction.name===definition.name&&eq(sourceFunction.params,definition.params)&&
+    (node.code===sourceFunction.name||node.code==='function:'+sourceFunction.start),
+    'scheduled callback parameter definition differs from immutable source');
+  const indices=definition.params.map((name,index)=>name===null?null:index).filter(index=>index!==null);
+  require(bindings.length===indices.length,'scheduled callback parameter binding count');
+  const aliases=new Map((node.captures??[]).map(row=>[row.binding,row.cell]));
+  bindings.forEach((row,offset)=>{
+    const index=indices[offset],name=definition.params[index],base='j'+identity+'p'+index,
+      initial=frame.arguments[index]??['undefined'];
+    const suffix=typeof row?.cell==='string'?row.cell.slice(base.length):'',
+      validCell=row?.cell===base||row?.cell.startsWith(base+'x')&&/^[1-9][0-9]*$/.test(suffix.slice(1));
+    require(row&&Object.keys(row).length===4&&['binding','index','cell','initialValue'].every(key=>Object.hasOwn(row,key))&&
+      row.binding===name&&row.index===index&&typeof row.cell==='string'&&
+      row.cell.length>0&&row.cell.length<=256&&validCell&&
+      eq(row.initialValue,initial)&&controller.locals.has(row.cell),
+      'scheduled callback parameter binding receipt');
+    known(controller,row.initialValue);known(controller,controller.locals.get(row.cell));
+    aliases.set(row.binding,row.cell);
+  });
+  return aliases;
+}
+function validateScheduledCallerCompletion(controller,job){
+  require(Object.hasOwn(job,'priorPending')&&Object.hasOwn(job,'priorLastReturn'),
+    'active scheduler job lacks its saved caller completion');
+  const priorPending=job.priorPending;
+  if(priorPending!==null){
+    assertAlgorithmFields(priorPending,['kind','value',...(Object.hasOwn(priorPending,'handler')?['handler']:[])],
+      'scheduled caller completion');
+    require(['return','throw','cleanup'].includes(priorPending.kind),'scheduled caller completion kind');
+    known(controller,priorPending.value);
+  }
+  const priorLastReturn=job.priorLastReturn;
+  if(priorLastReturn!==null){
+    assertAlgorithmFields(priorLastReturn,['kind','value'],'scheduled caller return');
+    require(['return','throw'].includes(priorLastReturn.kind),'scheduled caller return kind');
+    known(controller,priorLastReturn.value);
+  }
+}
+export function activateProtocolCallV8(controller,record){
+  call(controller,record);
+  return copy(state(controller).callFrames.at(-1));
+}
+function complete(controller,record){  const protocol=state(controller);
   require(['return','throw'].includes(record.kind),'call completion kind');
   require(controller.stack.at(-1)===record.invocation,'completion has wrong active invocation');known(controller,record.value);
   if(controller.stack.length>1){
@@ -238,7 +339,24 @@ function complete(controller,record){
     require(frame?.child===record.invocation&&frame.parent===controller.stack.at(-2),'call scope completion mismatch');
     controller.stack.pop();protocol.callFrames.pop();
     controller.receiver=copy(frame.priorReceiver);controller.captureAliases=new Map(frame.priorAliases);
-    controller.lastReturn={kind:record.kind,value:copy(record.value)};
+    if(controller.activeJob&&frame.child===scheduledChild(controller,controller.activeJob,
+      controller.jobs?.get(controller.activeJob))){
+      const job=controller.jobs?.get(controller.activeJob),callback=scheduledCallback(job);
+      require(job?.status==='running'&&job.owner===controller.rootInvocation&&
+        controller.stack.length===1&&controller.stack[0]===controller.rootInvocation&&
+        frame.parent===controller.rootInvocation&&callback&&eq(frame.callee,['ref',callback])&&
+        job.returned===undefined,'scheduled callback completion differs from its retained job');
+      controller.stack.pop();
+      job.returned={kind:record.kind,value:copy(record.value)};
+    }else if(controller.activeJob){
+      const job=controller.jobs?.get(controller.activeJob),child=scheduledChild(controller,controller.activeJob,job);
+      if(['adopt','adoption'].includes(job?.reaction))
+        require(job.status==='running'&&controller.stack.length>=1&&controller.stack[0]===child,
+          'adoption getter nested call must return to its retained getter scope');
+      else require(controller.stack.length>1,'scheduled callback must complete through its retained call frame');
+    }
+    controller.lastReturn={kind:record.kind,value:copy(record.value),
+      ...(frame.proxyReflectionScope?{proxyReflectionScope:copy(frame.proxyReflectionScope)}:{})};
   }else{
     require(!controller.activeJob,'job completion needs its declared scheduler profile');
     controller.stack.pop();controller.pending={kind:record.kind,value:copy(record.value)};
@@ -357,6 +475,9 @@ function apply(controller,record){
       const expected=descriptor?.kind==='data'?descriptor.value:['undefined'];require(eq(expected,record.result),'false property read');known(controller,record.result);
     }else if(record.kind==='property.hasOwn'){
       require(eq(record.result,['bool',ownDescriptor(node,record.key)!==null]),'false own-property result');
+    }else if(record.kind==='property.has'){
+      const {descriptor}=resolveProperty(controller,record.object,record.key,{forHas:true});
+      require(eq(record.result,['bool',descriptor!==null]),'false inherited-property result');
     }else if(record.kind==='property.set'){
       const success=directSet(controller,record);require(record.success===success,'false property write result');
     }else if(record.kind==='property.delete'){
@@ -444,12 +565,14 @@ export function restoreProtocolStateV8(controller,snapshot){
     heapNode(temporary,pending.object);knownKey(temporary,pending.key);known(temporary,pending.receiver);callable(temporary,pending.callee);
     require(controller.frameFunctions.has(pending.child)&&controller.frameFunctions.has(pending.parent),'pending call frames');
     if(pending.operation==='get')require(pending.value===null,'getter has no assignment operand');else known(temporary,pending.value);
-    const callee=heapNode(temporary,pending.callee[1]),receiver=callee.functionKind==='arrow'?callee.lexicalReceiver:pending.receiver,
+    const callee=heapNode(temporary,pending.callee[1]),receiver=callee.functionKind==='arrow'?
+      protocolCallReceiverV8(temporary,pending.callee,callee.lexicalReceiver):pending.receiver,
       active=snapshot.callFrames.find(frame=>frame.child===pending.child);
     require(controller.frameFunctions.get(pending.child)===callee.code&&
       eq(controller.locals.get(pending.child+':this'),receiver),'pending accessor receiver or callable differs from its activation');
-    if(active)require(active.parent===pending.parent&&eq(active.arguments,pending.operation==='get'?[]:[pending.value]),
-      'pending accessor arguments or parent differ from its activation');
+    if(active)require(eq(active.callee,pending.callee)&&active.parent===pending.parent&&
+      eq(active.arguments,pending.operation==='get'?[]:[pending.value]),
+      'pending accessor callee, arguments or parent differ from its activation');
     if(controller.stack.at(-1)===pending.child)require(eq(controller.receiver,receiver),
       'active accessor receiver differs from its retained call');
   }
@@ -457,14 +580,99 @@ export function restoreProtocolStateV8(controller,snapshot){
   require(snapshot.callFrames.length<=PROTOCOL_V8_LIMITS.calls,'call frame bound');
   for(let i=0;i<snapshot.callFrames.length;i++){
     const frame=snapshot.callFrames[i];
-    assertAlgorithmFields(frame,['child','parent','priorReceiver','priorAliases','arguments'],'protocol call frame');
+    const callFrameFields=['child','parent','callee','priorReceiver','priorAliases','arguments'];
+    if(Object.hasOwn(frame,'proxyReflectionScope'))callFrameFields.push('proxyReflectionScope');
+    assertAlgorithmFields(frame,callFrameFields,'protocol call frame');
+    if(Object.hasOwn(frame,'proxyReflectionScope')){
+      assertAlgorithmFields(frame.proxyReflectionScope,['kind','definition'],'Proxy reflection call scope');
+      require(frame.proxyReflectionScope.kind==='proxy.defineProperty'&&isAlgorithmDataRecord(frame.proxyReflectionScope.definition),
+        'Proxy reflection call scope kind/definition');
+    }
+    const suspendedCallback=[...(controller.continuations?.values()??[])].some(continuation=>
+      continuation.invocation===frame.child&&continuation.activeJob!==undefined&&continuation.activeJob!==null&&
+      ['waiting','ready'].includes(continuation.state));
+    const activeRelationship=controller.stack.includes(frame.child)&&controller.stack.includes(frame.parent)&&
+      controller.stack.indexOf(frame.child)===controller.stack.indexOf(frame.parent)+1;
+    const suspendedRelationship=suspendedCallback&&!controller.stack.includes(frame.child)&&
+      controller.stack.includes(frame.parent)&&frame.parent===controller.rootInvocation;
     require(typeof frame.child==='string'&&typeof frame.parent==='string'&&
-      controller.stack.indexOf(frame.child)===controller.stack.indexOf(frame.parent)+1&&
-      controller.stack.includes(frame.child)&&(!i||snapshot.callFrames[i-1].child===frame.parent),'call frame stack relationship');
+      (activeRelationship||suspendedRelationship)&&
+      (!i||snapshot.callFrames[i-1].child===frame.parent),'call frame stack relationship');
+    known(temporary,frame.callee);require(frame.callee[0]==='ref'&&
+      heapNode(temporary,frame.callee[1]).kind==='closure'&&
+      controller.frameFunctions.get(frame.child)===heapNode(temporary,frame.callee[1]).code,'call frame callee identity');
+    const called=heapNode(temporary,frame.callee[1]);
+    if(controller.stack.at(-1)===frame.child){
+      require(controller.locals.has(frame.child+':this')&&
+        eq(controller.receiver,controller.locals.get(frame.child+':this')),'active call frame receiver');
+      if(!scheduledCallbackFrame(controller,frame))
+        require(eq([...controller.captureAliases],called.captures.map(row=>[row.binding,row.cell])),
+          'active call frame captures');
+    }
+    if(called.functionKind==='arrow'){
+      const captured=protocolCallReceiverV8(temporary,frame.callee,called.lexicalReceiver);
+      require(eq(controller.locals.get(frame.child+':this'),captured),'call frame arrow receiver/callee identity');
+      if(called.callable?.lexicalConstruction){
+        const observedTarget=controller.locals.get(frame.child+':lexical-newTarget'),capture=called.callable.lexicalConstruction,
+          owner=snapshot.construction?.frames.find(row=>row.id===capture.frame);
+        if(observedTarget!==undefined)require(owner&&eq(observedTarget,owner.newTarget),'call frame lexical newTarget/callee identity');
+      }
+    }
     known(temporary,frame.priorReceiver);assertAlgorithmDataArray(frame.priorAliases,'prior capture aliases');
     const aliases=new Set();for(const pair of frame.priorAliases){assertAlgorithmDataArray(pair,'capture alias');
       require(pair.length===2&&pair.every(value=>typeof value==='string')&&!aliases.has(pair[0])&&controller.locals.has(pair[1]),'capture alias binding');aliases.add(pair[0]);}
     assertAlgorithmDataArray(frame.arguments,'call arguments');frame.arguments.forEach(value=>known(temporary,value));
+  }
+  const currentScheduledJob=controller.activeJob===null||controller.activeJob===undefined?
+    null:controller.jobs?.get(controller.activeJob);
+  // Promise adoption owns its getter frame and validates it from the adoption
+  // extension. It has no ordinary scheduled-callback call frame or saved
+  // caller completion to validate here.
+  if(controller.activeJob!==null&&controller.activeJob!==undefined&&
+    !['adopt','adoption'].includes(currentScheduledJob?.reaction)){
+    const job=currentScheduledJob,callback=scheduledCallback(job),
+      child=scheduledChild(controller,controller.activeJob,job),frame=snapshot.callFrames.find(row=>row.child===child);
+    require(job?.status==='running'&&job.owner===controller.rootInvocation&&callback&&
+      Object.hasOwn(job,'priorPending')&&Object.hasOwn(job,'priorLastReturn'),
+      'active scheduler job lacks its selected callback or saved caller completion');
+    validateScheduledCallerCompletion(temporary,job);
+    if(job.returned!==undefined){
+      assertAlgorithmFields(job.returned,['kind','value'],'scheduled callback completion');
+      require(['return','throw'].includes(job.returned.kind)&&!frame&&!controller.stack.includes(child),
+        'completed scheduler callback retains an active call frame');
+      known(temporary,job.returned.value);
+    }else{
+      const expectedArguments=job.promise&&job.reaction!=='finally'?[job.originalResult]:[];
+      require(frame&&frame.parent===controller.rootInvocation&&eq(frame.callee,['ref',callback])&&
+        eq(frame.arguments,expectedArguments)&&eq(job.priorReceiver,frame.priorReceiver)&&
+        eq(job.priorAliases,frame.priorAliases)&&controller.stack.includes(child)&&
+        controller.stack.indexOf(child)===controller.stack.indexOf(controller.rootInvocation)+1,
+        'active scheduler callback differs from its retained call frame');
+      const aliases=scheduledParameterAliases(controller,controller.activeJob,job,callback,frame);
+      if(controller.stack.at(-1)===child)
+        require(eq([...controller.captureAliases],[...aliases]),'active scheduler callback parameter aliases');
+    }
+  }
+  for(const [continuationId,continuation]of controller.continuations??[]){
+    if(!['waiting','ready'].includes(continuation.state)||continuation.activeJob===undefined||
+       continuation.activeJob===null||continuation.activeJob===controller.activeJob)continue;
+    const identity=continuation.activeJob,job=controller.jobs?.get(identity);
+    if(!job||['adopt','adoption'].includes(job.reaction))continue;
+    const callback=scheduledCallback(job),child=scheduledChild(controller,identity,job),
+      frame=snapshot.callFrames.find(row=>row.child===child),
+      expectedArguments=job.promise&&job.reaction!=='finally'?[job.originalResult]:[];
+    require(job.status==='running'&&job.owner===controller.rootInvocation&&callback&&
+      continuation.invocation===child&&!controller.stack.includes(child)&&
+      controller.stack.includes(controller.rootInvocation)&&frame&&frame.parent===controller.rootInvocation&&
+      eq(frame.callee,['ref',callback])&&eq(frame.arguments,expectedArguments)&&
+      eq(job.priorReceiver,frame.priorReceiver)&&eq(job.priorAliases,frame.priorAliases)&&
+      job.returned===undefined,'suspended scheduler callback differs from its retained frame');
+    validateScheduledCallerCompletion(controller,job);
+    const aliases=scheduledParameterAliases(controller,identity,job,callback,frame);
+    require(eq(continuation.captureAliases,[...aliases])&&
+      eq(continuation.receiver,controller.locals.get(child+':this'))&&
+      eq([...controller.captureAliases],job.priorAliases)&&eq(controller.receiver,job.priorReceiver),
+      'suspended scheduler callback lost its retained receiver or parameter aliases');
   }
   for(const row of snapshot.symbols)require(!controller.heap.has(row.id),'Symbol/object identity collision');
   for(const [id,node]of controller.heap){
@@ -613,8 +821,11 @@ export function assertProtocolDetailCompatible(controller,record){
     require(keys.size<=PROTOCOL_V8_LIMITS.properties,'ordinary property count bound');
   }
   if(controller.protocol&&(record.kind==='call'||['return','throw'].includes(record.kind)&&(controller.protocol.callFrames.length||controller.stack.length>1))){
-    const scheduler=allowsProtocolInternalSchedulerV8(controller,record)&&!controller.protocol.callFrames.length&&
-      !controller.protocol.pendingCalls.length;
+    const activeFrame=controller.protocol.callFrames.at(-1),scopedJobCompletion=controller.activeJob!==null&&
+      ['return','throw'].includes(record.kind)&&activeFrame?.child===record.fields?.invocation&&
+      controller.stack.at(-1)===activeFrame.child;
+    const scheduler=scopedJobCompletion||allowsProtocolInternalSchedulerV8(controller,record)&&
+      !controller.protocol.callFrames.length&&!controller.protocol.pendingCalls.length;
     const detailedCall=record.kind!=='call'||PROTOCOL_MACHINE_ADAPTERS_V8.some(adapter=>
       adapter.allowsDetailedCall?.(controller,record)===true);
     require(scheduler&&detailedCall,'active protocol calls require scoped call/completion records');
@@ -654,4 +865,5 @@ export function describeProtocolObjectV8(controller,id){
 /** Trusted component interface. Public records never carry options or adapters. */
 export const PROTOCOL_MACHINE_API_V8=Object.freeze({require,fail,copy,eq,state,known,knownKey,heapNode,
   ownDescriptor,installDescriptor,resolveProperty,directSet,order,fresh,call,complete,allocate,setLocal,truthy,
+  callReceiver:protocolCallReceiverV8,
   validatePendingScope:validateProtocolPendingScopeV8});

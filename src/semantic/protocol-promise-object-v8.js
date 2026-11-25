@@ -2,6 +2,7 @@
 // are materialized together, once per shared realm, rather than supplied as
 // unverified ordinary allocations by the generated trace.
 import {assertAlgorithmFields} from './ir.js';
+import {ERROR_CONSTRUCTORS,ERROR_PROTOTYPES} from '../owned-error-objects.js';
 
 export const PROMISE_OBJECT_PROFILE_V8='promise-object/1';
 export const PROMISE_OBJECT_STATE_V8='semantic-promise-object-state/1';
@@ -10,15 +11,17 @@ export const PROMISE_OBJECT_RECORD_FIELDS=Object.freeze({
   'promise.intrinsic.get':Object.freeze(['kind','base','key','result']),
   'property.getPrototypeOf':Object.freeze(['kind','object','result']),
   'property.isExtensible':Object.freeze(['kind','object','result']),
+  'object.hasInstance':Object.freeze(['kind','constructor','value','result']),
   'property.descriptor':Object.freeze(['kind','object','key','descriptor','name'])
 });
 const objectMethods=['__defineGetter__','__defineSetter__','hasOwnProperty','__lookupGetter__',
   '__lookupSetter__','isPrototypeOf','propertyIsEnumerable','toString','valueOf','toLocaleString'];
 export const PROMISE_OBJECT_INTRINSICS_V8=Object.freeze(['Promise','Promise.prototype',
   'Promise.prototype.then','Promise.prototype.catch','Promise.prototype.finally','Object','Object.prototype',
-  ...objectMethods.map(name=>'Object.prototype.'+name),'Object.prototype.__proto__.get','Object.prototype.__proto__.set']);
+  ...objectMethods.map(name=>'Object.prototype.'+name),'Object.prototype.__proto__.get','Object.prototype.__proto__.set',
+  ...ERROR_CONSTRUCTORS,...ERROR_PROTOTYPES,'Error.prototype.toString','Function.prototype.hasInstance']);
 export const promiseIntrinsicIdV8=name=>'intrinsic'+name.replace(/[^a-z0-9]/gi,'').toLowerCase();
-const intrinsicCallables=PROMISE_OBJECT_INTRINSICS_V8.filter(name=>!['Promise.prototype','Object.prototype'].includes(name));
+const intrinsicCallables=PROMISE_OBJECT_INTRINSICS_V8.filter(name=>!['Promise.prototype','Object.prototype',...ERROR_PROTOTYPES].includes(name));
 const copy=structuredClone;
 const fail=message=>{throw new TypeError('Promise object: '+message);};
 const id=value=>{if(typeof value!=='string'||!value||value.length>256)fail('bounded identity required');};
@@ -33,7 +36,7 @@ export function initializePromiseObjectsV8(controller,api){
   api.require(protocol.promiseObjects===null,'intrinsics are already initialized');
   for(const name of PROMISE_OBJECT_INTRINSICS_V8)api.fresh(controller,promiseIntrinsicIdV8(name));
   for(const name of intrinsicCallables)controller.heap.set(promiseIntrinsicIdV8(name),{kind:'intrinsic',intrinsicName:name,
-    callableKind:['Promise','Object'].includes(name)?'constructor':'function',properties:new Map()});
+    callableKind:['Promise','Object',...ERROR_CONSTRUCTORS].includes(name)?'constructor':'function',properties:new Map()});
   const object=ordinary(null);
   install(object,'constructor',['ref',promiseIntrinsicIdV8('Object')]);
   for(const name of objectMethods.filter(name=>name!=='toLocaleString'))install(object,name,['ref',promiseIntrinsicIdV8('Object.prototype.'+name)]);
@@ -48,6 +51,13 @@ export function initializePromiseObjectsV8(controller,api){
   controller.heap.set(promiseIntrinsicIdV8('Promise.prototype'),promise);
   for(const node of controller.heap.values())if(node.kind==='promise'&&[undefined,'ordinary'].includes(node.prototype))
     node.prototype=['ref',promiseIntrinsicIdV8('Promise.prototype')];
+  for(const name of ERROR_CONSTRUCTORS){
+    const prototype=ordinary(['ref',promiseIntrinsicIdV8(name==='Error'?'Object.prototype':'Error.prototype')]);
+    install(prototype,'constructor',['ref',promiseIntrinsicIdV8(name)]);
+    install(prototype,'name',['str',name]);install(prototype,'message',['str','']);
+    if(name==='Error')install(prototype,'toString',['ref',promiseIntrinsicIdV8('Error.prototype.toString')]);
+    controller.heap.set(promiseIntrinsicIdV8(name+'.prototype'),prototype);
+  }
   protocol.promiseObjects={schema:PROMISE_OBJECT_STATE_V8,initialized:true};
 }
 export function validatePromiseObjectRecordV8(record,{value:validate}={}){
@@ -55,9 +65,10 @@ export function validatePromiseObjectRecordV8(record,{value:validate}={}){
   assertAlgorithmFields(record,fields,'Promise object record');
   if(record.object!==undefined)id(record.object);
   if(record.kind==='promise.intrinsic.get'){
-    if(!['Promise','Object'].includes(record.base)||JSON.stringify(record.key)!=='["str","prototype"]')fail('intrinsic member');
+    if(!['Promise','Object',...ERROR_CONSTRUCTORS].includes(record.base)||!(record.key?.[0]==='symbol'&&record.key[1]==='well-known:hasInstance')&&(!['prototype','name','length'].includes(record.key?.[1])||record.key[0]!=='str'||!ERROR_CONSTRUCTORS.includes(record.base)&&record.key[1]!=='prototype'))fail('intrinsic member');
     validate?.(record.result);
   }
+  if(record.kind==='object.hasInstance'){validate?.(record.constructor);validate?.(record.value);validate?.(record.result);if(record.result?.[0]!=='bool')fail('hasInstance result');}
   if(record.kind==='property.getPrototypeOf'){
     validate?.(record.result);if(!['null','ref'].includes(record.result?.[0]))fail('prototype result');
   }
@@ -77,7 +88,37 @@ export function applyPromiseObjectRecordV8(controller,record,api){
   api.require(controller.protocol?.promiseObjects?.initialized,'intrinsics are not initialized');
   if(record.kind==='promise.intrinsic.get'){
     api.require(controller.protocol?.promiseObjects?.initialized&&
-      api.eq(record.result,['ref',promiseIntrinsicIdV8(record.base+'.prototype')]),'intrinsic prototype identity differs');return true;
+      api.eq(record.result,record.key[0]==='symbol'?['ref',promiseIntrinsicIdV8('Function.prototype.hasInstance')]:record.key[1]==='prototype'?['ref',promiseIntrinsicIdV8(record.base+'.prototype')]:record.key[1]==='name'?['str',record.base]:['num',1]),'intrinsic prototype identity differs');return true;
+  }
+  if(record.kind==='object.hasInstance'){
+    api.known(controller,record.constructor);api.known(controller,record.value);
+    const constructor=record.constructor[0]==='ref'?controller.heap.get(record.constructor[1]):null;
+    let answer=false;
+    if(constructor?.kind==='closure'||constructor?.kind==='intrinsic'){
+      if(record.value[0]==='ref'){
+        let sought;
+        if(constructor.kind==='intrinsic'){
+          api.require(['Object','Promise',...ERROR_CONSTRUCTORS].includes(constructor.intrinsicName),'hasInstance intrinsic constructor');
+          sought=['ref',promiseIntrinsicIdV8(constructor.intrinsicName+'.prototype')];
+        }else{
+          const {descriptor}=api.resolveProperty(controller,record.constructor[1],['str','prototype']);
+          api.require(descriptor?.kind==='data'&&descriptor.value?.[0]==='ref','hasInstance requires its ordinary object prototype');
+          sought=descriptor.value;
+        }
+        const seen=new Set();let current=record.value;
+        while(current?.[0]==='ref'){
+          api.require(!seen.has(current[1]),'hasInstance cyclic prototype chain');seen.add(current[1]);
+          const node=controller.heap.get(current[1]);
+          api.require(node&&!node.proxy&&['object','array','closure','promise'].includes(node.kind),'hasInstance prototype requires its internal-method continuation');
+          let prototype=node.prototype;
+          if(prototype===undefined||prototype==='ordinary')prototype=['ref',promiseIntrinsicIdV8('Object.prototype')];
+          if(prototype===null)break;
+          api.require(Array.isArray(prototype)&&prototype[0]==='ref','hasInstance prototype value');
+          if(api.eq(prototype,sought)){answer=true;break;}current=prototype;
+        }
+      }
+    }
+    api.require(api.eq(record.result,['bool',answer]),'hasInstance result differs from live prototype chain');return true;
   }
   const node=api.heapNode(controller,record.object);
   if(record.kind==='property.getPrototypeOf'){
@@ -107,11 +148,11 @@ export function restorePromiseObjectStateV8(controller,snapshot,api){
   api.require(snapshot.schema===PROMISE_OBJECT_STATE_V8&&snapshot.initialized===true,'intrinsic initialization state');
   for(const name of PROMISE_OBJECT_INTRINSICS_V8){
     const node=controller.heap.get(promiseIntrinsicIdV8(name));api.require(node,'missing initialized intrinsic '+name);
-    if(['Promise.prototype','Object.prototype'].includes(name))api.require(node.kind==='object','intrinsic prototype kind');
+    if(['Promise.prototype','Object.prototype',...ERROR_PROTOTYPES].includes(name))api.require(node.kind==='object','intrinsic prototype kind');
     else{
       assertAlgorithmFields(node,['kind','intrinsicName','callableKind','properties'],'intrinsic identity');
       api.require(node.kind==='intrinsic'&&node.intrinsicName===name&&
-        node.callableKind===(['Promise','Object'].includes(name)?'constructor':'function')&&
+        node.callableKind===(['Promise','Object',...ERROR_CONSTRUCTORS].includes(name)?'constructor':'function')&&
         node.properties instanceof Map&&node.properties.size===0,'altered intrinsic callable identity');
     }
   }

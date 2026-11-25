@@ -92,7 +92,7 @@ test('direct self resolution rejects with its source error without enqueuing eit
   refuses(h,{kind:'promise.adopt.self',promise:'p1',error:'o1'},/duplicate|fresh/);
   select(h,{kind:'promise.adopt.self',promise:'p1',error:'error1'});finish(h);h=roundtrip(h);
   assert.equal(h.controller.jobs.size,0);assert.deepEqual(h.controller.heap.get('p1').result,['ref','error1']);
-  detail(h,'write',{object:'error1',key:'name',value:['str','changed'],present:true});roundtrip(h);
+  select(h,{kind:'property.set',object:'error1',key:['str','name'],receiver:['ref','error1'],value:['str','changed'],success:true});roundtrip(h);
 });
 test('distinct mutually adopting Promises remain pending without fabricating a cycle rejection',()=>{
   let h=setup();call(h,'resolve',['ref','p2']);enqueue(h);finish(h);

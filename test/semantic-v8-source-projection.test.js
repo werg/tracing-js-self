@@ -7,6 +7,7 @@ import {verifyEffectfulTrainingCase,recheckEffectfulAdmission} from '../src/trai
 import {decodeWitness} from '../src/training/format.js';
 import {checkEffectfulProjectionState} from '../src/training/projection-state-profile.js';
 import {runtimeDifferential} from './helpers/runtime-frontier.js';
+import {decodeProtocolRecordV8} from '../src/semantic/protocol-codec-v8.js';
 
 test('forward parameter closure uses checked detailed execution when a pure core cannot represent its identity',async()=>{
   const source='"use strict";function run(f=()=>n,n=7){return f();}';
@@ -36,12 +37,18 @@ test('supported prototype and Proxy state route through independently checked pr
   }
 });
 
-test('unqualified live prototype replacement is not flattened into a scalar-only trace',async()=>{
+test('live prototype replacement retains checked object identity and independent source evidence',async()=>{
   const source='"use strict";function run(){const o={};const p={x:4};Object.setPrototypeOf(o,p);return Object.getPrototypeOf(o)===p;}',
     result=await verifyRegionTrainingCase({source,entry:'run',family:'unsupported-prototype-replacement',fixture:{calls:[]}});
-  assert.equal(result.status,'projection_refused',result.reason);
-  assert.match(result.reason,/explicit v8 (behavioral-state|protocol) profile/);
-  assert.equal(result.exported,undefined);
+  assert(result.exported,result.reason);assert.equal(result.status,'detailed-fallback');
+  const artifact=result.exported,controller=RegionExecutionHarness.replay(artifact).controller,
+    replacement=artifact.public.timeline.filter(row=>row.kind==='protocol')
+      .map(row=>decodeProtocolRecordV8(row.fields.line)).find(row=>row.kind==='property.prototype');
+  assert(replacement);assert.equal(replacement.prototype[0],'ref');
+  assert.deepEqual(controller.heap.get(replacement.object).prototype,replacement.prototype);
+  assert.deepEqual(controller.completion,{kind:'return',value:['bool',true]});
+  assert.equal(artifact.sidecar.sourceArtifact.sidecar.reference.metadataAudit.status,'agreed');
+  assert.equal((await recheckRegionEvidence(artifact)).sourceValidated,true);
 });
 
 test('class, private slots and constructor completion cannot be flattened by the historical detailed state profile',()=>{

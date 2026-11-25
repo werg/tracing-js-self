@@ -19,7 +19,11 @@ const cases=[
     async function h(){return p;}const q=h();queueMicrotask(()=>{log+='q';});const value=await q;return log+value;`,'gqs7'],
   ['getter-replaces-own-descriptor',`let log='';const p=Promise.resolve(1);
     Object.defineProperty(p,'constructor',{configurable:true,get(){log+='g';Object.defineProperty(p,'constructor',{value:Promise});return Promise;}});
-    async function h(){return p;}await h();return log+(Object.getOwnPropertyDescriptor(p,'constructor').value===Promise);`,'gtrue']
+    async function h(){return p;}await h();return log+(Object.getOwnPropertyDescriptor(p,'constructor').value===Promise);`,'gtrue'],
+  ['nested-helper-return',`let log='';const p=Promise.resolve(1);function inner(){return Promise;}function outer(){return inner();}
+    Object.defineProperty(p,'constructor',{get(){log+='g';return outer();}});async function h(){return p;}await h();return log+'1';`,'g1'],
+  ['constructor-arrow-lexical-receiver',`const p=Promise.resolve(1);p.value=1;class Holder{constructor(){this.value=Promise;
+    Object.defineProperty(p,'constructor',{get:()=>this.value});}}new Holder();async function h(){return p;}await h();return 'ok';`,'ok']
 ];
 export const PROMISE_ADOPTION_GETTER_FIXTURES_V8=Object.freeze(cases.map(([name,body,expected])=>Object.freeze({
   id:'promise-adoption-getter-'+name,family:'promise-adoption-getter',entry:'run',args:[],expected,

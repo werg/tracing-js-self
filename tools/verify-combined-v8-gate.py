@@ -239,7 +239,7 @@ def command(argv, cwd, log, env):
 def verify_review_promise_packets(root):
     result = []
     for name, total, contexts, population, artifact_key in (
-        ("promise-object-review-source-evidence.json", 8, 196, "sourceCases", "exported"),
+        ("promise-object-review-source-evidence.json", 8, 199, "sourceCases", "exported"),
         ("promise-object-review-protocol-evidence.json", 2, 30, "publicCases", "artifact"),
     ):
         packet = read(root / name)
@@ -304,11 +304,11 @@ def verify_review_promise_packets(root):
 def verify_promise_packets(root):
     populations = [
         ("promise-adoption-source-evidence.json", 15, 15, 458, 65, None),
-        ("promise-mutation-profile-evidence.json", 24, 7, 125, None, 17),
-        ("promise-object-profile-evidence.json", 22, 22, 230, None, 0),
+        ("promise-mutation-profile-evidence.json", 24, 7, 129, None, 17),
+        ("promise-object-profile-evidence.json", 22, 22, 236, None, 0),
         ("async-return-adoption-composition-evidence.json", 2, 2, 86, 9, None),
-        ("promise-object-source-evidence.json", 15, 15, 320, None, None),
-        ("promise-adoption-getter-source-evidence.json", 5, 5, 213, None, None),
+        ("promise-object-source-evidence.json", 15, 15, 326, None, None),
+        ("promise-adoption-getter-source-evidence.json", 7, 7, 307, None, None),
     ]
     result = []
     for name, total, eligible, contexts, cuts, refused in populations:

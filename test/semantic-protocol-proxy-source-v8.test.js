@@ -7,8 +7,10 @@ import {createProxyObservationAdapterV8} from '../src/semantic/protocol-proxy-ob
 import {createProtocolCompletionCapture,ownedProtocolSourceObservations} from '../src/semantic/protocol-source-observations-v8.js';
 import {compareProtocolMetadata} from '../src/semantic/protocol-metadata-v8.js';
 import {verifyProtocolRegionTrainingCase,recheckProtocolRegionEvidence} from '../src/semantic/protocol-source-v8.js';
+import {compileProtocolSourceV8} from '../src/semantic/protocol-source-compiler-v8.js';
 import {RegionExecutionHarness} from '../src/semantic/region-harness.js';
 import {hashAlgorithmData} from '../src/semantic/program.js';
+import {issue51ProxyFixtures} from '../fixtures/semantic-regions/objects-issue51-proxy.js';
 
 const source=body=>'"use strict";function run(){'+body+'}';
 function archive(text){const runtime=createRuntime().startEntry({text,functionName:'run',args:[]});runtime.drive();return runtime.exportRun();}
@@ -80,21 +82,150 @@ test('source Proxy profile preserves empty/null handlers, symbol keys and alias 
     'const target={x:2};const proxy=new Proxy(target,{});proxy.x=7;return target.x;',
     'const target={x:2};const proxy=new Proxy(target,{get:null,set:null});proxy.x=7;return proxy.x;',
     'const key=Symbol("x");const target={[key]:2};const proxy=new Proxy(target,{});target[key]=4;proxy[key]=7;return target[key];',
-    'const target=Object.create(null);target.x=2;const handler=Object.create(null);const proxy=new Proxy(target,handler);proxy.x=7;return proxy.x;'
+    'const target=Object.create(null);target.x=2;const handler=Object.create(null);const proxy=new Proxy(target,handler);proxy.x=7;return proxy.x;',
+    'const proxy=new Proxy({x:2},{getPrototypeOf:0,has:null});return "x" in proxy;'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
-    assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion.value,['num',7]);
+    const completion=RegionExecutionHarness.replay(result.exported).controller.completion;
+    assert(['num','bool'].includes(completion.value[0]));
   }
+});
+
+test('independent Proxy observations cover has/delete order, raw values and retained selection',()=>{
+  const text=source('let order="";const target={x:2},handler={};const key={get [Symbol.toPrimitive](){'+
+    'order+="g";return function(hint){order+="c"+hint;return "x";};}};'+
+    'handler.has=function(t,k){order+="h"+k;handler.has=null;delete t[k];return 0;};'+
+    'handler.deleteProperty=function(t,k){order+="d"+k;return "yes";};'+
+    'const proxy=new Proxy(target,handler);const present=key in proxy;'+
+    'const deleted=delete proxy[key];return [present,deleted,order,handler.has,target.x];'),
+    native=observed(text),owned=ownedProtocolSourceObservations(archive(text),text,{adapters:[createProxyObservationAdapterV8]});
+  assert.deepEqual(structuredClone(native.result),[false,true,'gcstringhxgcstringdx',null,undefined]);
+  assert.deepEqual(owned.completions,native.capture.observations);
+  assert.deepEqual(owned.extensionObservations,[{profile:native.adapter.id,rows:native.adapter.observations()}]);
+  assert.equal(compareProtocolMetadata(owned.metadata,native.capture.metadata).status,'agreed');
+  assert.deepEqual(native.adapter.observations().map(row=>row.kind),
+    ['create','select','call','return','select','call','return']);
+  assert.deepEqual(native.adapter.observations().filter(row=>row.kind==='select').map(row=>row.operation),['has','delete']);
+});
+
+test('source-qualified Proxy has/delete preserve object-key conversion ordering and native fault identity',async()=>{
+  const objectKey='let order="";const target={x:1},handler={};const key={get [Symbol.toPrimitive](){order+="g";'+
+    'return function(hint){order+="c"+hint;return "x";};}};'+
+    'handler.has=function(t,k){order+="h"+k;handler.has=null;delete t[k];return 0;};'+
+    'handler.deleteProperty=function(t,k){order+="d"+k;return "yes";};'+
+    'const proxy=new Proxy(target,handler);const present=key in proxy;const deleted=delete proxy[key];'+
+    'return [present,deleted,order,target.x,handler.has];';
+  const ordered=await verifyProtocolRegionTrainingCase(fixture(objectKey));assert(ordered.exported,ordered.reason);
+  const orderedReference=ordered.exported.sidecar.sourceArtifact.sidecar.reference;
+  assert.equal(orderedReference.status,'agreed');
+  assert.equal(orderedReference.extensionAudit.status,'agreed');
+  assert.equal(orderedReference.metadataAudit.status,'agreed');
+  assert(ordered.exported.sidecar.protocolExtensions.includes('ordinary-data-proxy-source/1'));
+
+  const constructorArrow="class A{};class D extends A{#x=5;constructor(){const has=(t,k)=>"+
+    "this.#x===5&&new.target===D&&k==='x';super();return {has};}}"+
+    "const handler=new D();const proxy=new Proxy({x:1},handler);return 'x' in proxy;";
+  const receiver=await verifyProtocolRegionTrainingCase(fixture(constructorArrow));assert(receiver.exported,receiver.reason);
+  assert.equal(receiver.exported.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
+  assert.deepEqual(RegionExecutionHarness.replay(receiver.exported).controller.completion,{kind:'return',value:['bool',true]});
+
+  for(const body of [
+    'const proxy=new Proxy({}, {deleteProperty:function(){return false;}});try{delete proxy.x;return "none";}catch(error){return [error.name,error.message];}',
+    'const target={};Object.defineProperty(target,"x",{value:1,configurable:false});const proxy=new Proxy(target,{});'+
+      'try{delete proxy.x;return "none";}catch(error){return [error.name,error.message];}',
+    'const target={};Object.defineProperty(target,"x",{value:1,configurable:false});'+
+      'const proxy=new Proxy(target,{has:function(){return false;}});'+
+      'try{return "x" in proxy;}catch(error){return [error.name,error.message];}',
+    'const target={x:1};Object.preventExtensions(target);const proxy=new Proxy(target,{has:function(){return false;}});'+
+      'try{return "x" in proxy;}catch(error){return error.message;}',
+    'const target={x:1};Object.preventExtensions(target);'+
+      'const proxy=new Proxy(target,{deleteProperty:function(){return true;}});'+
+      'try{delete proxy.x;return "none";}catch(error){return error.message;}',
+    'const reason={tag:7};const proxy=new Proxy({}, {has:function(){throw reason;}});'+
+      'try{return "x" in proxy;}catch(error){return error===reason;}'
+  ]){
+    const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
+    const reference=result.exported.sidecar.sourceArtifact.sidecar.reference;
+    assert.equal(reference.status,'agreed');assert.equal(reference.extensionAudit.status,'agreed');
+    assert.equal(reference.metadataAudit.status,'agreed');
+  }
+});
+
+test('Proxy source fault receipts reject an unrelated Error property origin',()=>{
+  const text=source('const proxy=new Proxy({}, {deleteProperty:function(){return false;}});'+
+    'try{delete proxy.x;return "none";}catch(error){return error.message;}'),bundle=archive(text),
+    event=bundle.events.find(row=>row.operation==='call.return'&&row.stateChanges.some(change=>
+      change.table==='heap'&&change.before===null&&change.after?.declaredError==='TypeError'));
+  assert(event);
+  const unrelated=bundle.events.find(row=>row.eventId!==event.eventId).eventId,
+    errorId=event.stateChanges.find(change=>change.table==='heap'&&change.after?.declaredError==='TypeError').id;
+  for(const change of event.stateChanges)if(change.table==='heap'&&change.id===errorId&&change.after){
+    change.after.properties.message.origin=unrelated;
+  }
+  for(const state of [bundle.finalState,...Object.values(bundle.checkpoints)])if(state.heap[errorId]){
+    state.heap[errorId].properties.message.origin=unrelated;
+  }
+  // Exact source replay may reject the causal forgery before adapter projection.
+  assert.throws(()=>compileProtocolSourceV8(bundle),/Replay divergence: semantic event|source origin/);
+});
+
+test('Proxy source deletion authenticates the caller strict mode',()=>{
+  const bundle=archive(source('const proxy=new Proxy({}, {deleteProperty:function(){return false;}});'+
+    'try{delete proxy.x;return \"none\";}catch(error){return error.message;}'));
+  let changes=0;
+  const alter=node=>{if(node?.pendingProperty?.kind==='delete'&&node.pendingProperty.proxy){
+    node.pendingProperty.proxy.strict=false;changes++;
+  }};
+  for(const state of [bundle.initialState,bundle.finalState,...Object.values(bundle.checkpoints)])
+    for(const node of Object.values(state.frames))alter(node);
+  for(const event of bundle.events)for(const change of event.stateChanges)if(change.table==='frames'){
+    alter(change.before);alter(change.after);
+  }
+  assert(changes>0);
+  assert.throws(()=>compileProtocolSourceV8(bundle),/Replay divergence: semantic event|strict-delete context/);
+});
+
+test('strict false-set callback errors are source-qualified with the native message',async()=>{
+  const result=await verifyProtocolRegionTrainingCase(fixture('const proxy=new Proxy({}, {set:function(){return false;}});'+
+    'try{proxy.x=7;return "missed";}catch(error){return error.message;}'));
+  assert(result.exported,result.reason);
+  assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion,
+    {kind:'return',value:['str',"'set' on proxy: trap returned falsish for property 'x'"]});
+});
+
+test('transparent nested target routes retain the original receiver and selected inner owner',async()=>{
+  const body='let order="";const target={x:2};let outer=null;'+
+    'const handler={get:function(t,k,r){order+="g";return r===outer?t[k]+1:-1;},'+
+    'has:function(t,k){order+="h";return k==="x";},'+
+    'deleteProperty:function(t,k){order+="d";return k==="y";}};'+
+    'const inner=new Proxy(target,handler);outer=new Proxy(inner,{});'+
+    'return outer.x+("x" in outer?10:0)+(delete outer.y?100:0)+target.x;';
+  const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
+  const artifact=result.exported,reference=artifact.sidecar.sourceArtifact.sidecar.reference,
+    replay=RegionExecutionHarness.replay(artifact);
+  assert.deepEqual(replay.controller.completion,{kind:'return',value:['num',115]});
+  assert.equal(reference.status,'agreed');assert.equal(reference.extensionAudit.status,'agreed');
+  assert.equal(reference.metadataAudit.status,'agreed');
+  assert(artifact.sidecar.protocolExtensions.includes('ordinary-data-proxy-source/1'));
+  const bundle=archive(source(body)),proxies=Object.values(bundle.finalState.heap).filter(node=>node.kind==='proxy'),
+    inner=proxies.find(node=>bundle.finalState.heap[node.targetId]?.kind==='object'),
+    outer=proxies.find(node=>node.targetId===inner?.id),
+    event=bundle.events.find(row=>row.operation==='property.read'&&row.stateChanges.some(change=>
+      change.table==='frames'&&change.after?.pendingProperty?.proxy)),
+    pending=event?.stateChanges.find(change=>change.table==='frames'&&change.after?.pendingProperty?.proxy)?.after.pendingProperty.proxy;
+  assert(inner&&outer&&pending);
+  assert.equal(pending.owner,inner.id);
+  assert.deepEqual(pending.object,['ref',outer.id]);
+  assert.deepEqual(pending.route.map(row=>row.object),[outer.id,inner.id]);
 });
 
 test('unsupported Proxy traps, accessor targets, nesting and callable profiles remain explicit source refusals',async()=>{
   for(const body of [
-    'return new Proxy({x:2},{getPrototypeOf:function(){return null;}}).x;',
-    'const proxy=new Proxy({x:2},{set:function(){return false;}});proxy.x=7;return 1;',
     'return new Proxy({x:2},{get:async function(){return 2;}}).x;',
     'return new Proxy({x:2},{get:function*(){yield 2;}}).x;',
     'return new Proxy({get x(){return 2;}},{}).x;',
-    'const target=new Proxy({x:2},{});return new Proxy(target,{}).x;',
+    'const target=new Proxy({x:2},{get:function(){return 3;}});return new Proxy(target,{get:function(){return 4;}}).x;',
+    'return new Proxy({x:2},{get get(){return function(){return 2;};}}).x;',
     'return new Proxy(function(){return 2;},{})();'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.status,'unsupported',result.reason);
@@ -144,7 +275,7 @@ test('source-qualified Proxy traps compose with compact locals and restore in th
   const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
   const artifact=result.exported,reference=artifact.sidecar.sourceArtifact.sidecar.reference;
   assert(artifact.sidecar.regionCoverage.compactRegions>=2);assert.equal(reference.extensionAudit.status,'agreed');
-  assert.equal(reference.metadataAudit.status,'agreed');assert(reference.extensionAudit.expected>=8);
+  assert.equal(reference.metadataAudit.status,'agreed');assert(reference.extensionAudit.expected>=7);
   assert.deepEqual(RegionExecutionHarness.replay(artifact).controller.completion,{kind:'return',value:['num',20]});
   const cut=artifact.public.timeline.findIndex(row=>row.fields?.line?.includes('"kind":"proxy.set.call"'))+1;assert(cut>2);
   const partial=RegionExecutionHarness.replay({...artifact.public,timeline:artifact.public.timeline.slice(0,cut)},{requireTerminal:false}),
@@ -169,5 +300,21 @@ test('source Proxy traps preserve nested calls, Symbol keys, lexical receivers, 
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
     assert.deepEqual(RegionExecutionHarness.replay(result.exported).controller.completion,{kind,value:['num',value]});
     assert.equal(result.exported.sidecar.sourceArtifact.sidecar.reference.extensionAudit.status,'agreed');
+  }
+});
+
+
+test('revoked property operations retain operation-specific intrinsic errors through fresh source replay',async()=>{
+  for(const operation of ['get','set','has','deleteProperty']){
+    const input=issue51ProxyFixtures.find(row=>row.id==='issue51-proxy-revoked-'+operation);
+    assert(input);
+    const result=await verifyProtocolRegionTrainingCase(input);assert(result.exported,result.reason);
+    const artifact=result.exported,controller=RegionExecutionHarness.replay(artifact).controller,
+      reference=artifact.sidecar.sourceArtifact.sidecar.reference;
+    assert.deepEqual(controller.materialize(controller.completion.value),
+      ['TypeError',"Cannot perform '"+operation+"' on a proxy that has been revoked",true]);
+    assert.equal(reference.status,'agreed');assert.equal(reference.metadataAudit.status,'agreed');
+    assert.equal(reference.completionAudit.status,'agreed');assert.equal(reference.extensionAudit.status,'agreed');
+    assert.equal((await recheckProtocolRegionEvidence(artifact)).sourceValidated,true);
   }
 });

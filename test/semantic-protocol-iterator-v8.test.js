@@ -128,6 +128,9 @@ test('frozen iterator contract fixtures replay their exact result identities and
     const expected=fixture.expected;
     assert.deepEqual(c.heap,new Map(expected.heap.map(([id,node])=>[id,{...node,properties:new Map(node.properties),
       ...(node.descriptors?{descriptors:new Map(node.descriptors)}:{})}])));
-    assert.deepEqual(c.completion,expected.completion);assert.deepEqual(c.protocol,expected.protocol);
+    assert.deepEqual(c.completion,expected.completion);
+    const expectedProtocol={...expected.protocol,...Object.fromEntries(Object.entries(c.protocol)
+      .filter(([key,value])=>!Object.hasOwn(expected.protocol,key)&&value===null))};
+    assert.deepEqual(c.protocol,expectedProtocol);
   }
 });

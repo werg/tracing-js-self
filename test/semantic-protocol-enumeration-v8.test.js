@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createProtocolStateV8,applyProtocolRecordV8,PROTOCOL_MACHINE_API_V8 as api} from '../src/semantic/protocol-state-v8.js';
 import {validateProtocolValueV8} from '../src/semantic/protocol-codec-v8.js';
 import {validateEnumerationRecordV8,applyEnumerationRecordV8,restoreEnumerationStateV8} from '../src/semantic/protocol-enumeration-v8.js';
+import {promiseIntrinsicIdV8} from '../src/semantic/protocol-promise-object-v8.js';
 
 function controller(){return {heap:new Map(),locals:new Map(),captureAliases:new Map(),receiver:['undefined'],stack:['root'],
   frameFunctions:new Map([['root','run']]),pending:null,lastReturn:null,completion:null,protocol:createProtocolStateV8()};}
@@ -50,17 +51,87 @@ test('own-property checks distinguish inherited missing and undefined values wit
   assert.throws(()=>applyProtocolRecordV8(c,{kind:'property.hasOwn',object:'object',key:['str','inherited'],result:['bool',true]}),/own-property/);
 });
 
-test('enumeration permits value writes and refuses changed keys descriptors or prototype on the next step',()=>{
+test('enumeration retains candidates across descriptor and prototype changes after restoration',()=>{
   for(const mutate of [
-    c=>write(c,'object','new',['num',4]),
-    c=>define(c,'object',['str','a'],['num',4],{enumerable:false}),
+    c=>define(c,'object',['str','b'],['num',4],{enumerable:false}),
     c=>applyProtocolRecordV8(c,{kind:'property.prototype',object:'object',prototype:null,success:true})
   ]){
-    const c=controller();allocate(c,'object',[property('a',1)]);create(c,'cursor',['ref','object']);
+    const c=controller();allocate(c,'object',[property('a',1),property('b',2)]);create(c,'cursor',['ref','object']);
     write(c,'object','a',['num',3]);next(c,'cursor','r0','a');mutate(c);
-    assert.equal(restoreEnumerationStateV8(c,api).valid,true);const before=structuredClone(c);
-    assert.throws(()=>next(c,'cursor','end',undefined),/descriptor or prototype changed/);assert.deepEqual(c,before);
+    const restored=structuredClone(c);assert.equal(restoreEnumerationStateV8(restored,api).valid,true);
+    next(restored,'cursor','r1','b');next(restored,'cursor','end',undefined);
+    assert.deepEqual(restored.heap.get('cursor').keys,['a','b']);
   }
+});
+
+test('enumeration skips removed own and inherited candidates, ignores additions and retains inherited fallback',()=>{
+  const c=controller();allocate(c,'proto',[property('b',2),property('c',3)]);
+  allocate(c,'object',[property('a',1),property('b',4)]);
+  applyProtocolRecordV8(c,{kind:'property.prototype',object:'object',prototype:['ref','proto'],success:true});
+  create(c,'cursor',['ref','object']);next(c,'cursor','r0','a');
+  for(const [object,key]of [['object','b'],['proto','c']])
+    applyProtocolRecordV8(c,{kind:'property.delete',object,key:['str',key],success:true});
+  write(c,'object','new',['num',5]);
+  assert.equal(restoreEnumerationStateV8(c,api).valid,true);
+  next(c,'cursor','r1','b');next(c,'cursor','end',undefined);
+  assert.equal(c.heap.get('cursor').nextIndex,3);
+  const resumed=structuredClone(c);
+  applyProtocolRecordV8(resumed,{kind:'property.prototype',object:'object',prototype:null,success:true});
+  define(resumed,'object',['str','a'],['num',2],{enumerable:false});
+  next(resumed,'cursor','again',undefined);
+});
+
+test('enumeration uses shared existence for a deleted own name inherited from Object.prototype',()=>{
+  const c=controller();allocate(c,'object',[property('a',1),property('toString',2)]);
+  create(c,'cursor',['ref','object']);next(c,'cursor','r0','a');
+  applyProtocolRecordV8(c,{kind:'property.delete',object:'object',key:['str','toString'],success:true});
+  next(c,'cursor','r1','toString');next(c,'cursor','end',undefined);
+});
+
+test('enumerable intrinsic properties require an explicit captured chain and later additions stay excluded',()=>{
+  const c=controller();allocate(c,'object',[property('a',1)]);
+  applyProtocolRecordV8(c,{kind:'promise.intrinsics'});
+  create(c,'before',['ref','object']);
+  const prototype=promiseIntrinsicIdV8('Object.prototype');
+  define(c,prototype,['str','late'],['num',2]);
+  next(c,'before','first','a');next(c,'before','end',undefined);
+  const unchanged=structuredClone(c);
+  assert.throws(()=>create(c,'implicit',['ref','object']),/explicit enumeration chain/);
+  assert.deepEqual(c,unchanged);
+  applyProtocolRecordV8(c,{kind:'property.prototype',object:'object',prototype:['ref',prototype],success:true});
+  create(c,'explicit',['ref','object']);
+  next(c,'explicit','explicitFirst','a');next(c,'explicit','explicitInherited','late');next(c,'explicit','explicitEnd',undefined);
+});
+
+test('initialized intrinsic storage controls inherited existence after deletion',()=>{
+  const c=controller();allocate(c,'object');applyProtocolRecordV8(c,{kind:'promise.intrinsics'});
+  const record={kind:'property.has',object:'object',key:['str','toString'],result:['bool',true]};
+  applyProtocolRecordV8(c,record);
+  applyProtocolRecordV8(c,{kind:'property.delete',object:promiseIntrinsicIdV8('Object.prototype'),key:['str','toString'],success:true});
+  applyProtocolRecordV8(c,{...record,result:['bool',false]});
+  assert.throws(()=>applyProtocolRecordV8(c,record),/inherited-property/);
+});
+
+test('inherited existence checks data/accessors/Symbols without reading values and rejects forged claims',()=>{
+  const c=controller();allocate(c,'proto',[{key:['str','present'],value:['undefined']}]);allocate(c,'object');
+  applyProtocolRecordV8(c,{kind:'property.prototype',object:'object',prototype:['ref','proto'],success:true});
+  applyProtocolRecordV8(c,{kind:'property.define',object:'proto',key:['str','getter'],
+    descriptor:{kind:'accessor',get:['undefined'],set:['undefined'],enumerable:false,configurable:true},success:true});
+  define(c,'proto',['symbol','well-known:iterator'],['undefined']);
+  for(const [key,present]of [[['str','present'],true],[['str','getter'],true],[['str','toString'],true],
+    [['str','missing'],false],[['symbol','well-known:iterator'],true]]){
+    const row={kind:'property.has',object:'object',key,result:['bool',present]};
+    applyProtocolRecordV8(c,row);const before=structuredClone(c);
+    assert.throws(()=>applyProtocolRecordV8(c,{...row,result:['bool',!present]}),/inherited-property/);
+    assert.deepEqual(c,before);
+  }
+  const row={kind:'property.has',object:'object',key:['str','present'],result:['bool',true]};
+  for(const changed of [{...row,object:'absent'},{...row,key:['symbol','undeclared']},{...row,key:['num',1]},
+    {...row,result:['num',1]}])assert.throws(()=>applyProtocolRecordV8(c,changed));
+  applyProtocolRecordV8(c,{kind:'property.delete',object:'proto',key:['str','present'],success:true});
+  applyProtocolRecordV8(c,{...row,result:['bool',false]});
+  applyProtocolRecordV8(c,{kind:'property.prototype',object:'proto',prototype:null,success:true});
+  applyProtocolRecordV8(c,{...row,key:['str','toString'],result:['bool',false]});
 });
 
 test('false enumeration results and reused identities leave the cursor unchanged',()=>{

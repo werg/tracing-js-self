@@ -62,7 +62,7 @@ export function createEnumerationObservationAdapterV8({source,side='native',bund
   const inventory=loops(source);if(!inventory.length)return null;
   const sites=new Set(inventory.map(({node})=>node.start+':'+node.end));
   if(side==='owned')return {id:ENUMERATION_OBSERVATION_PROFILE_V8,observations:()=>ownedObservations(bundle,sites)};
-  const rows=[],identities=new Map(),intrinsics=new Set([Object.prototype,Array.prototype,Function.prototype]),failures=[];let serial=0;
+  const rows=[],identities=new Map(),intrinsics=new Set([Object.prototype,Array.prototype,Function.prototype]),failures=[];let serial=0,proxyTarget=null;
   const fail=message=>{failures.push(message);throw new TypeError('Native for-in observation: '+message);};
   function value(raw){
     const kind=typeof raw;if(raw===null||!['object','function','symbol'].includes(kind))return encode(raw);
@@ -83,10 +83,15 @@ export function createEnumerationObservationAdapterV8({source,side='native',bund
     }
     if(source===null||!['object','function'].includes(typeof source))return {chain,keys};
     for(let object=source;;){
-      if(typeof object==='function'||types.isProxy(object)||objects.has(object)||chain.length>=128)fail('exotic, callable or cyclic prototype');objects.add(object);
+      const identity=object;
+      if(types.isProxy(object)){
+        if(!proxyTarget)fail('Proxy enumeration requires its constructor registry');
+        object=proxyTarget(object);if(!object)fail('unregistered enumeration Proxy');
+      }
+      if(typeof object==='function'||types.isProxy(object)||objects.has(identity)||chain.length>=128)fail('exotic, callable or cyclic prototype');objects.add(identity);
       const descriptors=Object.getOwnPropertyDescriptors(object),own=Reflect.ownKeys(descriptors).filter(key=>typeof key==='string').map(key=>[key,descriptors[key].enumerable]);
       const parent=Object.getPrototypeOf(object),prototype=parent===null?null:intrinsics.has(parent)?'ordinary':value(parent);
-      chain.push({id:value(object),prototype,keys:own});
+      chain.push({id:value(identity),prototype,keys:own});
       for(const [key,enumerable]of own)if(!seen.has(key)){
         seen.add(key);if(seen.size>4096)fail('key bound');if(enumerable)keys.push(key);
       }
@@ -96,6 +101,7 @@ export function createEnumerationObservationAdapterV8({source,side='native',bund
   }
   const add=row=>{if(rows.length>=32768)fail('observation bound');rows.push(row);};
   return {id:ENUMERATION_OBSERVATION_PROFILE_V8,
+    setProxyEnumerationTarget(resolve){proxyTarget=resolve;},
     initializeRealm(evaluate){for(const prototype of evaluate('[Object.prototype,Array.prototype,Function.prototype]'))intrinsics.add(prototype);},
     globals:{[beginHook]:(site,source)=>{if(!sites.has(site))fail('unknown source loop');const reference=value(source),selected=snapshot(source);
       add({site,kind:'begin',source:reference,...selected});return source;},

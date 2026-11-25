@@ -251,7 +251,7 @@ export class BoundedNatlangEnvironment {
       if(!settled||settled.status==='pending')
         throw new TypeError('Owned async guest root has not settled');
       if(settled.status==='rejected'){
-        const reason=realizeGraph(runtime.state.heap,[settled.value.value])[0];
+        const reason=realizeGraph(runtime.state.heap,[settled.value.value],{exceptionProfile:true})[0];
         throw new Error('Owned guest promise rejected: '+String(
           reason&&typeof reason==='object'?reason.message??reason.name??'guest object':reason));
       }
@@ -338,7 +338,7 @@ export class BoundedNatlangEnvironment {
         if(!settled||settled.status==='pending')
           throw new TypeError('Owned async entry has not settled');
         if(settled.status==='rejected'){
-          const reason=realizeGraph(runtime.state.heap,[settled.value.value])[0];
+          const reason=realizeGraph(runtime.state.heap,[settled.value.value],{exceptionProfile:true})[0];
           throw new Error('Owned guest promise rejected: '+String(
             reason&&typeof reason==='object'?reason.message??reason.name??'guest object':reason));
         }

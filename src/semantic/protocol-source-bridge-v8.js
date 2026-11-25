@@ -1,6 +1,7 @@
 // Adapt individual direct protocol events to the shared source coordinator.
 // Each component uses the real invocation controller, cell/frame names and
 // publication transaction. There is no second replay or whole-episode trace.
+import {createSymbolCompositionSourceV8} from './protocol-symbol-composition-v8.js';
 import {parse} from 'acorn';
 import {isDeepStrictEqual as eq} from 'node:util';
 import {decode} from '../values.js';
@@ -22,15 +23,16 @@ function sharedSyntax(adapter,node){
   const name=memberName(node);
   if(adapter.id==='synchronous-generator-source/1')return node.generator===true&&!node.async;
   if(adapter.id==='ordinary-array-map-source/1')return node.type==='MemberExpression'&&name==='map';
-  if(['custom-iterator-source/1','ordinary-completions-source/1'].includes(adapter.id))
-    return node.type==='ForOfStatement'&&node.await;
+  if(adapter.id==='ordinary-for-in/1')return node.type==='ForInStatement';
+  if(adapter.id==='ordinary-completions-source/1')return node.type==='TryStatement'||node.type==='ForOfStatement'&&node.await;
+  if(adapter.id==='custom-iterator-source/1')return node.type==='ForOfStatement'&&node.await;
   if(adapter.id==='builtin-iterator/1')return node.type==='ForOfStatement'||
     node.type==='MemberExpression'&&(['values','keys','entries','next'].includes(name)||
       node.computed&&node.property?.type==='MemberExpression'&&node.property.object?.name==='Symbol'&&
       node.property.property?.name==='iterator');
   return false;
 }
-function inventory(source,bundle){
+function inventory(source,bundle,adapters){
   const nodes=new Map(),functions=new Map(),codes=new Map(),asyncSites=asyncIterationSourceSitesV8(source);
   function visit(node){
     if(!node||typeof node!=='object')return;
@@ -41,16 +43,20 @@ function inventory(source,bundle){
   }
   visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
-    if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op))
-      codes.set(instruction.arg.codeId,bundle.programs[instruction.arg.codeId]?.sourceRole?
+    if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
+      const sourceDefinitions=adapters.map(adapter=>adapter.functionDefinition?.(instruction)).filter(definition=>definition?.code);
+      if(sourceDefinitions.length>1)throw new TypeError('Ambiguous shared source function definition');
+      codes.set(instruction.arg.codeId,sourceDefinitions[0]?.code??(bundle.programs[instruction.arg.codeId]?.sourceRole?
         asyncIterationSourceCodeV8(bundle.programs[instruction.arg.codeId].sourceRole,instruction.start,instruction.end,asyncSites):
-        instruction.op==='DEF_FN'?instruction.arg.name:'function:'+instruction.start);
+        instruction.op==='DEF_FN'?instruction.arg.name:'function:'+instruction.start));
+    }
   return {nodes,functions,codes};
 }
 function selected(adapter,input){
   if(!SHARED_PROTOCOL_SOURCE_IDS_V8.includes(adapter.id))return false;
   return sourceHasSyntaxV8(input,node=>adapter.syntax?.(node)===true||sharedSyntax(adapter,node)||
     adapter.id==='primitive-conversion-source/1'&&(node.type==='CallExpression'&&node.callee.type==='Identifier'&&node.callee.name==='Number'||
+      node.type==='BinaryExpression'&&node.operator==='in'||
       node.computed&&['MemberExpression','Property','MethodDefinition','PropertyDefinition'].includes(node.type))||
     adapter.id==='owned-binary-memory/1'&&node.type==='MemberExpression'&&node.object.type==='Identifier'&&
       ['Atomics','ArrayBuffer'].includes(node.object.name));
@@ -58,18 +64,19 @@ function selected(adapter,input){
 
 export function createSharedProtocolSourceComponentsV8({source,bundle,adapters}){
   const chosen=adapters.filter(adapter=>selected(adapter,{source,bundle}));
-  if(!chosen.length)return [];
+  const symbol=sourceHasSyntaxV8({source,bundle},node=>node.type==='Identifier'&&node.name==='Symbol')?createSymbolCompositionSourceV8():null;
+  if(!chosen.length)return symbol?[symbol]:[];
   if(chosen.some(adapter=>adapter.id==='synchronous-generator-source/1')&&
     sourceHasSyntaxV8({source,bundle},node=>node.type==='YieldExpression'&&node.delegate))
     throw new TypeError('Shared generator source: yield delegation requires its explicit composition profile');
-  const syntax=inventory(source,bundle);
+  const syntax=inventory(source,bundle,chosen);
   // Setup declares source capabilities shared by the direct adapters (for
   // example, the exact destructuring patterns and cleanup scope profile).
   // Preserve those declarations when the same adapters join the coordinator.
   // Each event receives a copy, so observers cannot mutate a peer's authority.
   const extensionState=new Map();
   for(const adapter of chosen)adapter.setup?.({extensionState});
-  return chosen.map(adapter=>{
+  const components=chosen.map(adapter=>{
     const id=adapter.id,claims=adapter.claims??protocolSourceClaimsV8(id),
       stateful=typeof adapter.captureState==='function'&&typeof adapter.restoreState==='function';
     if((adapter.captureState!==undefined||adapter.restoreState!==undefined)&&!stateful)
@@ -106,17 +113,28 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
         const length=node.kind==='array'?node.properties?.length?.value:null,
           keys=[...new Set([...(node.propertyOrder??[]),...Object.keys(node.properties??{}),...Object.keys(node.accessors??{})])]
             .filter(key=>!(node.kind==='array'&&key==='length')),
-          ordinaryPrototype=node.kind==='array'?['Array.prototype']:['Object.prototype'];
+          ordinaryPrototype=node.kind==='array'?['Array.prototype']:['Object.prototype'],
+          constructorDescriptor=keys.length===1&&keys[0]==='constructor'?descriptor(node,'constructor'):null,
+          ordinaryFunctionPrototype=node.kind==='object'&&keys.length===1&&keys[0]==='constructor'&&
+            eq(constructorDescriptor,{kind:'data',value:node.properties?.constructor?.value,writable:true,
+              enumerable:false,configurable:true})&&node.properties?.constructor?.value?.[0]==='ref'&&
+            Object.keys(node.accessors??{}).length===0&&Object.keys(node.dataAttributes??{}).every(key=>key==='constructor'),
+          publishedParent=typeof node.prototype==='string'&&controller().heap.has(ctx.identity(node.prototype)),
+          prototypeShape=[undefined,'Object.prototype',null].includes(node.prototype)||ordinaryFunctionPrototype&&publishedParent;
         if(node.kind==='array'&&(length?.[0]!=='num'||!Number.isSafeInteger(length[1])||length[1]<0)||
-          Object.keys(node.accessors??{}).length||Object.keys(node.dataAttributes??{}).length||
-          ![undefined,...ordinaryPrototype].includes(node.prototype)||node.extensible===false||
-          keys.some(key=>key.startsWith('\u0000')||!node.properties?.[key]?.value))
+          Object.keys(node.accessors??{}).length||Object.keys(node.dataAttributes??{}).length&&!ordinaryFunctionPrototype||
+          !(node.kind==='object'&&ordinaryFunctionPrototype?prototypeShape:[undefined,...ordinaryPrototype].includes(node.prototype))||node.extensible===false||
+          keys.some(key=>key.startsWith('\u0000')||!node.properties?.[key]?.value)||
+          Object.keys(node.dataAttributes??{}).some(key=>key!=='constructor')||
+          Object.keys(node.dataAttributes??{}).length&&!ordinaryFunctionPrototype)
           ctx.refuse('shared source publication requires an ordinary default-descriptor data object');
         publishing.add(identity);
         try{
-          const properties=keys.map(key=>({key:['str',key],value:tag(node.properties[key].value,at)}));
+          const properties=ordinaryFunctionPrototype?[]:keys.map(key=>({key:['str',key],value:tag(node.properties[key].value,at)}));
           ctx.emitProtocol(owner,{kind:'allocate',name:identity,objectKind:node.kind,length:length?.[1]??null,properties,
             code:null,captures:[],functionKind:null,lexicalReceiver:null},at,'owned-source-allocation/1');
+          if(ordinaryFunctionPrototype)ctx.emitProtocol(owner,{kind:'property.define',object:identity,key:['str','constructor'],
+            descriptor:{...constructorDescriptor,value:tag(constructorDescriptor.value,at)},success:true},at,'owned-source-constructor-backlink/1');
         }finally{publishing.delete(identity);}
         return controller().heap.has(identity);
       };
@@ -152,16 +170,25 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
         get state(){return ctx.state;},get beforeState(){return ctx.state;},
         get controller(){return controller();},
         get publicInvocation(){return controller().stack.at(-1);},
-        tag,cell:ctx.cell,frame:frame=>ctx.registerFrame(frame,owner),descriptor,publish,orderedKeys,
+        tag,cell:ctx.cell,frame:frame=>ctx.registerFrame(frame,owner),descriptor,publish,orderedKeys,prototype,
         functionCodes:syntax.codes,baseCheckHeap,
         baseAllocate(node,at=event){
-          if(!allocationFields||node.kind!=='function'||node.id!==allocationFields.name||
-            Object.keys(node.properties??{}).length||node.generatorFunction||node.nonConstructible||
-            node.prototype!==undefined||Object.keys(node.dataAttributes??{}).length)
-            ctx.refuse('shared generator allocation requires its bare reserved source closure');
+          const construction=id==='class-private-source/1',valid=allocationFields&&node.kind==='function'&&
+            node.id===allocationFields.name&&allocationFields.kind==='closure'&&
+            allocationFields.code===syntax.codes.get(node.codeId)&&Array.isArray(allocationFields.captures)&&
+            allocationFields.captures.every(row=>row&&typeof row.binding==='string'&&typeof row.cell==='string')&&
+            (construction?!node.generatorFunction:!node.generatorFunction&&!node.nonConstructible&&
+              !Object.keys(node.properties??{}).length&&node.prototype===undefined&&
+              !Object.keys(node.dataAttributes??{}).length);
+          if(!valid)ctx.refuse('shared source allocation requires its authenticated bare closure');
+          const functionKind=construction?(node.arrow?'arrow':'ordinary'):'ordinary',
+            lexicalReceiver=construction&&node.arrow?tag(node.lexicalThis):null;
+          if(!['ordinary','arrow'].includes(functionKind)||
+            (functionKind==='arrow')!==Boolean(node.arrow)||functionKind==='ordinary'&&lexicalReceiver!==null)
+            ctx.refuse('shared source allocation callable kind differs from its owned node');
           ctx.emitProtocol(owner,{kind:'allocate',name:allocationFields.name,objectKind:'closure',length:null,properties:[],
-            code:allocationFields.code,captures:copy(allocationFields.captures),functionKind:'ordinary',lexicalReceiver:null},
-            at,'owned-source-generator-closure/1');
+            code:allocationFields.code,captures:copy(allocationFields.captures),functionKind,lexicalReceiver},
+            at,construction?'owned-source-construction-closure/1':'owned-source-generator-closure/1');
         },
         codeFor:node=>syntax.codes.get(node?.codeId)??ctx.refuse('shared source function has no exact definition'),
         bind:(name,value,at=event)=>ctx.emit(owner,'bind',{name,value:tag(value)},at,'shared-protocol-cell'),
@@ -195,6 +222,7 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
       }finally{if(stateful)adapter.restoreState(prior);}
     }
     return {id,
+      sourceFunctionCode:codeId=>syntax.codes.get(codeId)??null,
       completionWritesHandled:adapter.completionWritesHandled===true,
       initialize:()=>copy(adapter.captureState?.()??{}),
       claims:{
@@ -211,17 +239,21 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
       allocation(ctx,event,fields){
         const node=event?.stateChanges.find(change=>change.table==='heap'&&ctx.identity(change.id)===fields.name)?.after??
           ctx.state.heap[fields.name];
-        if(id!=='synchronous-generator-source/1'||node?.generatorFunction!==true||fields.kind!=='closure')
+        const construction=id==='class-private-source/1',generator=id==='synchronous-generator-source/1';
+        if(construction?node?.kind!=='function'||fields.kind!=='closure':
+          !generator||node?.generatorFunction!==true||fields.kind!=='closure')
           ctx.refuse('protocol allocation must be performed by its reserved source event: '+id);
         return invoke(ctx,event,context=>{
           guardHeap(node,{extraFields:adapter.heapFields(node),allowUnknown:true,allowFunctionMetadata:true});
           if(adapter.allocate(context,node,event)!==true||adapter.checkHeap(context,node)!==true)
-            ctx.refuse('shared generator definition allocation failed');
+            ctx.refuse('shared callable definition allocation failed: '+id);
           context.baseCheckHeap(node);
-          const prototypeId=node.properties.prototype.value[1],prototypeNode=event?.stateChanges.find(change=>
-            change.table==='heap'&&change.id===prototypeId)?.after??ctx.state.heap[prototypeId];
-          if(!prototypeNode)ctx.refuse('shared generator definition lacks its owned prototype');
-          guardHeap(prototypeNode);context.baseCheckHeap(prototypeNode);
+          if(generator){
+            const prototypeId=node.properties.prototype.value[1],prototypeNode=event?.stateChanges.find(change=>
+              change.table==='heap'&&change.id===prototypeId)?.after??ctx.state.heap[prototypeId];
+            if(!prototypeNode)ctx.refuse('shared generator definition lacks its owned prototype');
+            guardHeap(prototypeNode);context.baseCheckHeap(prototypeNode);
+          }
           return true;
         },{allocationFields:fields});
       },
@@ -238,9 +270,10 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
           if(change.table==='heap'){
             const fields=adapter.heapFields?.(change.after);
             if(fields){
-              const generator=id==='synchronous-generator-source/1',allowed=new Set(['id','kind','version',...fields]);
+              const generator=id==='synchronous-generator-source/1',baseFields=id==='class-private-source/1'&&change.after.kind==='function'?['codeId','closureEnvId','async','arrow','lexicalThis','nonConstructible','properties','propertyVersions','shapeVersion','propertyOrder','prototype','accessors','dataAttributes','extensible']:[],allowed=new Set(['id','kind','version',...baseFields,...fields]);
               if(generator)guardHeap(change.after,{extraFields:fields,allowUnknown:true,allowFunctionMetadata:true});
-              if(!generator&&Object.keys(change.after).some(key=>!allowed.has(key))||adapter.checkHeap?.(context,change.after)!==true)
+              const heapOk=adapter.checkHeap?.(context,change.after)===true;
+              if(!generator&&Object.keys(change.after).some(key=>!allowed.has(key))||!heapOk)
                 ctx.refuse('shared protocol heap comparison failed: '+id);
               if(generator&&['object','array','function'].includes(change.after.kind))
                 context.baseCheckHeap(change.after);
@@ -251,7 +284,7 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
               if(Object.keys(change.after).some(key=>!frameFields.has(key)&&!fields.includes(key))||
                 typeof adapter.checkFrame!=='function'||adapter.checkFrame(context,change.after,event)!==true)
                 ctx.refuse('shared protocol frame comparison failed: '+id);
-            }else if(id!=='synchronous-generator-source/1'&&typeof adapter.checkFrame==='function'&&adapter.checkFrame(context,change.after,event)!==true)
+            }else if(fields&&id!=='synchronous-generator-source/1'&&typeof adapter.checkFrame==='function'&&adapter.checkFrame(context,change.after,event)!==true)
               ctx.refuse('shared protocol frame comparison failed: '+id);
           }
         }
@@ -261,4 +294,5 @@ export function createSharedProtocolSourceComponentsV8({source,bundle,adapters})
       });}
     };
   });
+  return symbol?[...components,symbol]:components;
 }

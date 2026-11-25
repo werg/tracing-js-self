@@ -4,11 +4,12 @@ import {propertyKeyValue,stringPropertyKey,symbolPropertyKey} from '../property-
 import {decode,encode} from '../values.js';
 import {constructionSourceInventoryV8} from './protocol-construction-source-inventory-v8.js';
 import {describeConstructionObjectV8} from './protocol-construction-v8.js';
+import {protocolSourceClaimsV8} from './protocol-source-claims-v8.js';
 
 export const CONSTRUCTION_SOURCE_PROFILE_V8='class-private-source/1';
 const U=['undefined'],ref=id=>['ref',id],literal=value=>({op:'literal',value});
 const heapFields=['prototypeInitialized','classConstructor','derivedConstructor','homeObject','instanceInitializer','staticInitializer',
-  'privateSlots','privateKinds','privateVersions'];
+  'privateSlots','privateKinds','privateVersions','lexicalThisFrameId'];
 const frameFields=['constructReceiver','newTarget','constructorId','constructKind','thisInitialized','constructorArguments',
   'afterInstanceInitialization','classStaticResult','superInitializedResult'];
 const specialFrames=new Set(frameFields);
@@ -64,9 +65,17 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     for(const key of ctx.orderedKeys(node))if(['name','length'].includes(key))
       emit(ctx,{kind:'property.define',object:node.id,key:propertyKeyValue(key),descriptor:ctx.descriptor(node,key),success:true},event);
   }
-  function capability(node){const definition=definitions.get(node.codeId),isClass=definition?.placement==='constructor';
+  function capability(node){const definition=definitions.get(node.codeId),isClass=definition?.placement==='constructor',
+    nonConstructible=definition?.placement==='object-method'||node.arrow||node.nonConstructible||node.async||node.generatorFunction;
     return {constructorKind:isClass?(definition.classNode.superClass?'derived':'base'):
-      definition?.placement==='object-method'||node.arrow||node.nonConstructible?null:'base',classConstructor:isClass};
+      nonConstructible?null:'base',classConstructor:isClass};
+  }
+  function constructionFunction(node){
+    if(node.kind!=='function'||node.generatorFunction||node.async)return false;
+    const definition=definitions.get(node.codeId),lexicalRole=node.arrow&&node.lexicalThisFrameId?roles.get(node.lexicalThisFrameId):null,
+      method=['constructor','method','object-method','instance','static'].includes(definition?.placement);
+    if(node.classConstructor===true||node.derivedConstructor===true||method||lexicalRole?.kind==='body')return true;
+    return !node.async&&!node.generatorFunction&&!node.arrow&&!node.nonConstructible;
   }
   function initializeOrdinaryPrototypes(ctx,event){
     let initialized=false;
@@ -138,8 +147,49 @@ export function createConstructionSourceAdapterV8({bundle,source}){
     }
     require(ctx,ctx.eq(node.thisValue,entry.receiver),'retained receiver differs from shared construction state');return true;
   }
-  return {id:CONSTRUCTION_SOURCE_PROFILE_V8,
-    captureState:()=>({roles:[...roles]}),
+  function projectThisFault(ctx,event,row){
+    const inst=instruction(ctx,event),current=ctx.state.frames[event.invocationId],
+      ownerId=current?.thisBindingFrameId??event.invocationId,owner=ctx.state.frames[ownerId],role=roles.get(ownerId),
+      entry=role?.kind==='body'?construction(ctx,role.id):null,
+      activation=ctx.controller.protocol?.callFrames?.findLast(call=>call.child===ctx.publicInvocation),
+      message="Must call super constructor in derived class before accessing 'this' or returning from derived constructor";
+    require(ctx,event.operation==='reference.this'&&inst?.op==='THIS'&&
+      ctx.inventory.nodes.get(inst.start+':'+inst.end)?.type==='ThisExpression','fault is not the source this read');
+    require(ctx,current&&owner&&entry&&role.kind==='body'&&entry.phase==='body'&&entry.bodyInvocation===ctx.frame(ownerId)&&
+      entry.initialized===false&&ctx.state.frames[ownerId].constructKind==='derived'&&
+      ctx.state.frames[ownerId].thisInitialized===false&&ctx.state.frames[ownerId].constructorId===entry.callee[1],
+      'uninitialized receiver is not an active derived constructor');
+    require(ctx,activation?.child===ctx.publicInvocation&&
+      (ownerId===event.invocationId
+        ? activation.parent===entry.parent&&ctx.eq(activation.callee,entry.callee)
+        : activation.parent===ctx.frame(ownerId)&&activation.callee?.[0]==='ref'&&
+          ctx.state.heap[activation.callee[1]]?.kind==='function'&&
+          ctx.state.heap[activation.callee[1]]?.arrow===true&&
+          ctx.state.heap[activation.callee[1]]?.lexicalThisFrameId===ownerId&&
+          current.thisBindingFrameId===ownerId),
+      'faulting activation does not retain the constructor or its lexical arrow');
+    const cellName=entry.bodyInvocation+':this';
+    require(ctx,ctx.controller.locals.has(cellName)&&ctx.eq(ctx.controller.locals.get(cellName),U)&&
+      ctx.eq(ctx.controller.receiver,U)&&ctx.eq(current.thisValue,U),
+      'uninitialized constructor receiver cell or active receiver changed');
+    const completion=event.completion,allocation=event.stateChanges.filter(change=>change.table==='heap'),
+      errorId=completion?.value?.value?.[1],error=allocation.length===1&&allocation[0].before===null&&
+        allocation[0].id===errorId?allocation[0].after:null;
+    require(ctx,completion?.type==='throw'&&completion.errorType==='ReferenceError'&&completion.message===message&&
+      completion.origin===event.eventId&&completion.value?.origin===event.eventId&&
+      completion.value.value?.[0]==='ref'&&error?.kind==='object'&&error.declaredError==='ReferenceError'&&
+      error.prototype==='ReferenceError.prototype'&&Object.keys(error.properties??{}).join(',')==='message'&&
+      ctx.eq(error.dataAttributes?.message,{writable:true,enumerable:false,configurable:true})&&
+      ctx.eq(error.properties.message?.value,['str',message])&&
+      error.properties.message?.origin===event.eventId,
+      'fault lacks the exact current ReferenceError allocation');
+    emit(ctx,{kind:'construct.this.fault',invocation:ctx.publicInvocation,error:errorId},event,'owned-derived-this-fault/1');
+    ctx.markPublished(errorId);
+    return true;
+  }
+  const baseClaims=protocolSourceClaimsV8(CONSTRUCTION_SOURCE_PROFILE_V8);
+  return {id:CONSTRUCTION_SOURCE_PROFILE_V8,claims:baseClaims,
+    captureState:()=>({roles:[...roles],functionDefinitions:[...definitions].map(([code,definition])=>[code,definition.placement])}),
     restoreState(state){roles=new Map(state.roles);},
     syntax(node){
       if(['ClassDeclaration','ClassExpression'].includes(node.type)){
@@ -150,22 +200,32 @@ export function createConstructionSourceAdapterV8({bundle,source}){
       return node.type==='NewExpression';
     },
     functionDefinition(instruction){const definition=definitions.get(instruction.arg.codeId);return definition?.code?{code:definition.code,node:definition.node}:null;},
-    heapFields(node){return node.kind==='function'||Object.keys(node).some(key=>heapFields.includes(key))?heapFields:null;},
+    heapFields(node){return node.kind==='function'?(constructionFunction(node)?heapFields:null):Object.keys(node).some(key=>heapFields.includes(key))?heapFields:null;},
     frameFields(node){return Object.keys(node).some(key=>specialFrames.has(key))?frameFields:null;},
     allocate(ctx,node,event){
       if(node.kind!=='function')return false;
-      require(ctx,!node.lexicalThisFrameId,'lexical constructor arrow context needs its public continuation');
-      ctx.baseAllocate(node,event);emit(ctx,{kind:'callable.define',object:node.id,...capability(node)},event);return true;
+      let lexicalCapture=null;
+      if(node.lexicalThisFrameId){
+        const role=roles.get(node.lexicalThisFrameId),entry=role?.kind==='body'?construction(ctx,role.id):null;
+        require(ctx,node.arrow&&entry?.phase==='body'&&entry.bodyInvocation===ctx.publicInvocation&&
+          entry.activeChild===ctx.publicInvocation,'lexical constructor arrow has no active public body');
+        lexicalCapture={frame:role.id,thisCell:entry.bodyInvocation+':this'};
+      }
+      ctx.baseAllocate(node,event);emit(ctx,{kind:'callable.define',object:node.id,...capability(node)},event);
+      if(lexicalCapture)emit(ctx,{kind:'callable.capture',object:node.id,...lexicalCapture},event);
+      return true;
     },
-    beforeEvent(ctx,event){initializeOrdinaryPrototypes(ctx,event);},
+    beforeEvent(ctx,event){if(event)initializeOrdinaryPrototypes(ctx,event);},
     event(ctx,event,row){
       const inst=instruction(ctx,event);if(!inst)return false;const op=inst.op;
       const ordinaryPrototypeInitialized=event.stateChanges.some(change=>change.table==='heap'&&change.after?.kind==='function'&&
         change.after.prototypeInitialized&&!change.before?.prototypeInitialized&&!change.after.classConstructor&&!change.after.generatorFunction);
+      const derivedThisFault=op==='THIS'&&event.completion?.type==='throw';
       if(['CLASS_CREATE','SET_HOME_OBJECT','CLASS_INITIALIZER','CLASS_FINISH','CLASS_CONSTRUCTOR_GUARD','CONSTRUCT',
         'SUPER_CONSTRUCTOR','SUPER_CALL','SUPER_FORWARD_CALL','SUPER_BIND','THIS','NEW_TARGET','PROPERTY_KEY',
         'PRIVATE_DEFINE','PRIVATE_GET','PRIVATE_GET_METHOD','PRIVATE_SET','PRIVATE_HAS','PRIVATE_UPDATE'].includes(op))
-        require(ctx,event.completion?.type!=='throw','guest abrupt construction/private operation requires its own public record');
+        require(ctx,event.completion?.type!=='throw'||derivedThisFault,
+          'guest abrupt construction/private operation requires its own public record');
       if(ordinaryPrototypeInitialized&&['GET_PROP','GET_METHOD'].includes(op)){
         const [object,key]=event.operands;
         require(ctx,object?.[0]==='ref'&&ctx.eq(key,['str','prototype'])&&!row?.child,'ordinary prototype read shape');
@@ -221,7 +281,12 @@ export function createConstructionSourceAdapterV8({bundle,source}){
         const role=roles.get(event.invocationId),child=addedFrame(event);require(ctx,role?.kind==='body','super binding owner');
         emit(ctx,{kind:'super.bind',owner:role.id,receiver:ctx.tag(event.operands[0],event),child:child?ctx.frame(child.id):null},event);
         if(child){roles.set(child.id,{kind:'derived-initializer',id:role.id});bindFrame(ctx,event,child);}
-      }else if(op==='THIS'||op==='NEW_TARGET')emit(ctx,{kind:op==='THIS'?'construct.this':'construct.target',invocation:ctx.publicInvocation,result:ctx.tag(event.result,event)},event);
+      }else if(op==='THIS'||op==='NEW_TARGET'){
+        if(event.completion?.type==='throw'){
+          require(ctx,op==='THIS','only a derived this read may use the owned abrupt constructor transition');
+          projectThisFault(ctx,event,row);
+        }else emit(ctx,{kind:op==='THIS'?'construct.this':'construct.target',invocation:ctx.publicInvocation,result:ctx.tag(event.result,event)},event);
+      }
       else if(op==='PROPERTY_KEY'){
         const key=ctx.key(event.operands[0]);require(ctx,ctx.eq(key,event.result),'primitive property key conversion');
         emit(ctx,{kind:'compute',expr:literal(key),result:ctx.tag(event.result,event),bind:null},event);
@@ -286,8 +351,14 @@ export function createConstructionSourceAdapterV8({bundle,source}){
       if(node.kind==='function'){
         if(definitions.get(node.codeId)?.placement==='object-method')
           require(ctx,node.nonConstructible===true&&!node.arrow,'object method construction capability differs from source');
-        const expected={...capability(node),homeObject:node.homeObject??null,instanceInitializer:node.instanceInitializer??null,staticInitializer:node.staticInitializer??null};
-        require(ctx,ctx.eq(described.callable,expected),'callable capability, home or initializer state differs');
+        const lexicalRole=node.arrow&&node.lexicalThisFrameId?roles.get(node.lexicalThisFrameId):null,
+          lexicalOwner=lexicalRole?.kind==='body'?construction(ctx,lexicalRole.id):null,
+          lexicalConstruction=lexicalOwner?{frame:lexicalRole.id,thisCell:lexicalOwner.bodyInvocation+':this'}:null,
+          expected={...capability(node),homeObject:node.homeObject??null,instanceInitializer:node.instanceInitializer??null,
+            staticInitializer:node.staticInitializer??null,lexicalConstruction};
+        if(node.lexicalThisFrameId)require(ctx,node.arrow&&lexicalConstruction!==null,
+          'lexical this frame must be an admitted constructor arrow');
+        require(ctx,ctx.eq(described.callable,expected),'callable capability, home, initializer or lexical-construction state differs');
         if(Object.hasOwn(node,'classConstructor'))require(ctx,node.classConstructor===expected.classConstructor,'owned class capability differs from source');
         if(expected.classConstructor&&node.homeObject)require(ctx,node.classConstructor===true&&node.prototypeInitialized===true,
           'linked class constructor metadata is incomplete');

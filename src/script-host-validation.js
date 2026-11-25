@@ -1,5 +1,8 @@
+import {ERROR_PROTOTYPES,errorPrototypeRecord} from './owned-error-objects.js';
+import {ordinaryGet} from './spec-operations.js';
+import {ownedObjectHeap} from './owned-object-storage.js';
 // Independent checks for the narrow original-Test262 host observations.
-import {symbolPropertyKey} from './property-keys.js';
+import {symbolPropertyKey,stringPropertyKey} from './property-keys.js';
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const clone=value=>structuredClone(value);
 const errorKinds=new Set(['Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError']);
@@ -17,7 +20,8 @@ const prototypeKeys={
   'Promise.prototype':new Set([...objectKeys,'then','catch','finally',symbolPropertyKey('well-known:toStringTag')])
 };
 function keyOf(value,fail){
-  if(value?.[0]==='str'||value?.[0]==='bigint')return value[1];
+  if(value?.[0]==='str')return stringPropertyKey(value[1]);
+  if(value?.[0]==='bigint')return value[1];
   if(value?.[0]==='symbol')return symbolPropertyKey(value[1]);
   if(value?.[0]==='num')return value[1]==='-0'?'0':value[1]==='+Infinity'?'Infinity':String(value[1]);
   if(value?.[0]==='undefined'||value?.[0]==='null')return value[0];
@@ -33,12 +37,12 @@ function hasProperty(state,receiver,key,fail){
     seen.add(object.id);
     if(Object.hasOwn(object.properties??{},key)||Object.hasOwn(object.accessors??{},key))return true;
     if(object.kind==='function'&&(['name','length'].includes(key)||key==='prototype'&&!object.arrow&&!object.async&&!object.nonConstructible))return true;
-    if(object.declaredError&&key==='constructor')return true;
     const parent=Object.hasOwn(object,'prototype')?object.prototype:
       object.kind==='array'?'Array.prototype':object.kind==='function'?'Function.prototype':
         object.kind==='promise'?'Promise.prototype':'Object.prototype';
     if(parent===null)return false;
     if(parent==='Promise.prototype'&&state.heap[parent]){object=state.heap[parent];continue;}
+    if(ERROR_PROTOTYPES.includes(parent)){object=state.heap[parent]??errorPrototypeRecord(parent);continue;}
     if(Object.hasOwn(prototypeKeys,parent))return prototypeKeys[parent].has(key);
     object=state.heap[parent]??state.promises[parent];if(!object)fail('Unknown in-operator prototype');
   }
@@ -67,10 +71,12 @@ export function validateScriptHostEvent(state,event,programs,fail){
       fail('Owned Test262 print output or frame transition changed');
   }else if(controlPatch&&!same(controlPatch.after?.test262Output,control.test262Output))
     fail('Test262 print journal changed outside its original host call');
-  if(event.completion||!frame)return;
+  if(event.completion||!frame||['property.key.convert','property.key.resume'].includes(event.operation))return;
   if(instruction?.op==='BINARY'&&instruction.arg==='in'){
     const operands=frame.stack.slice(-2).map(item=>item.value);
     if(!same(event.operands,operands))fail('Ordinary in-operator operands changed');
+    const right=operands[1]?.[0]==='ref'?state.heap[operands[1][1]]:null;
+    if(right?.kind==='proxy')return;
     expectStackResult(event,frame,['bool',hasProperty(state,operands[1],keyOf(operands[0],fail),fail)],fail);
   }
   if(['GET_PROP','GET_METHOD'].includes(instruction?.op)){
@@ -78,8 +84,8 @@ export function validateScriptHostEvent(state,event,programs,fail){
     const object=base?.[0]==='ref'?state.heap[base[1]]:null;
     if(object?.declaredError&&same(key,['str','constructor'])){
       if(!errorKinds.has(object.declaredError)||!same(event.operands,[base,key]))fail('Unknown owned error constructor');
-      const value=['intrinsic',object.declaredError];
-      expectStackResult(event,frame,instruction.op==='GET_METHOD'?['method',value,base]:value,fail);
+      const found=ordinaryGet(ownedObjectHeap(state),base,'constructor',{accessors:true});
+      if(found?.method){const value=found.method.value;expectStackResult(event,frame,instruction.op==='GET_METHOD'?['method',value,base]:value,fail);}
     }
   }
 }

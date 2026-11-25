@@ -24,11 +24,20 @@ The optional specification oracle keeps its separate lock in `tools/spec-oracle`
 The [compositional v8 candidate](docs/SEMANTIC_REGIONS_V8.md) combines compact
 calculations with checked property access, calls, cleanup and suspension in one
 shared state. Its bounded source profiles cover Symbols and ordinary properties,
-ordinary `for…in` enumeration, shared binary views, construction and private fields,
-Number conversion and ordinary cleanup, builtin and bounded custom iterators,
-flat iterable declarations, synchronous generators and delegation,
-Promise joins/executors, and ordinary Proxy get/set traps. Each profile documents its supported boundaries;
-the candidate does not claim unrestricted ECMAScript coverage. The
+ordinary `for…in` snapshots with live candidate-existence checks, stable transparent
+Proxy enumeration, operation-derived Error values with standard TypeError
+properties/prototype identity, shared binary views, base/derived construction
+and private fields (including authenticated constructor arrows and derived-this
+ReferenceErrors before `super`), Number conversion and ordinary cleanup, live
+Map/Set iterators, bounded array/string literal spread, flat and selected nested
+ordinary-array bindings, synchronous generators and delegation, Promise
+joins/executors and selected adoption jobs, plus ordinary Proxy get/set/has/delete,
+revocation, transparent nested routes through outer links with absent traps and a
+single selected inner trap, and a separate bounded reflection profile. Effectful
+Proxy enumeration, arbitrary nested custom iterables and general nested
+active-trap invariant dispatch remain outside those boundaries. Each profile
+documents its supported limits; the candidate does not claim unrestricted
+ECMAScript coverage. The
 [Promise scheduling profile](docs/V8_PROMISE_SCHEDULER.md) documents the resolution
 and cleanup jobs that require separate checked protocols.
 

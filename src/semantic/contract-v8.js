@@ -1,3 +1,5 @@
+import {PROXY_REFLECTION_PROFILE_V8,PROXY_REFLECTION_STATE_V8,PROXY_REFLECTION_CALL_FIELDS_V8,
+  PROXY_REFLECTION_OPERATIONS_V8} from './protocol-proxy-reflection-v8.js';
 import {REGION_LIMITS,REGION_PROGRAM_VERSION,REGION_EXECUTION_VERSION,REGION_TRACE_VERSION,
   REGION_CONTEXT_VERSION,REGION_CONTINUATION_VERSION,REGION_PROFILE} from './regions.js';
 import {ALGORITHM_V8_SCHEMA,ALGORITHM_V8_PROFILE,ALGORITHM_V8_LIMITS,ALGORITHM_V8_INPUT_TYPES,
@@ -17,11 +19,13 @@ import {PROMISE_JOIN_PROFILE_V8,PROMISE_JOIN_STATE_V8} from './protocol-promise-
 import {PRIMITIVE_CONVERSION_PROFILE_V8,PRIMITIVE_CONVERSION_STATE_V8_SCHEMA,PRIMITIVE_CONVERSION_OPERATION_FIELDS,PRIMITIVE_CONVERSION_PHASES_V8,PRIMITIVE_CONVERSION_FAULTS_V8} from './protocol-primitive-conversion-v8.js';
 import {NUMBER_STATE_V8_SCHEMA,NUMBER_OPERATION_FIELDS} from './protocol-number-v8.js';
 import {GENERATOR_PROFILE_V8,GENERATOR_HEAP_FIELDS,GENERATOR_INTRINSICS_V8} from './protocol-generator-v8.js';
-import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIELDS} from './protocol-proxy-v8.js';
+import {PROXY_PROFILE_V8,PROXY_STATE_V8_SCHEMA,PROXY_HEAP_FIELDS,PROXY_CALL_FIELDS,PROXY_RECORD_FIELDS} from './protocol-proxy-v8.js';
 import {PROTOCOL_MACHINE_ADAPTERS_V8} from './protocol-machine-extensions-v8.js';
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_STATE_V8} from './protocol-promise-executor-v8.js';
 import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_STATE_V8} from './protocol-promise-adoption-v8.js';
 import {PROMISE_OBJECT_PROFILE_V8,PROMISE_OBJECT_STATE_V8,PROMISE_OBJECT_INTRINSICS_V8} from './protocol-promise-object-v8.js';
+import {INTRINSIC_ERROR_PROFILE_V8,INTRINSIC_ERROR_STATE_V8_SCHEMA,INTRINSIC_ERROR_STATE_V8_FIELDS,
+  INTRINSIC_ERROR_STATE_V8_ROW_FIELDS} from './protocol-intrinsic-error-v8.js';
 import {ASYNC_CALL_PROFILE_V8,ASYNC_CALL_STATE_V8,ASYNC_CALL_FIELDS_V8} from './protocol-async-call-v8.js';
 import {BOUND_MODULE_SCHEDULER_PLAN_V8} from './module-scheduler-plan-v8.js';
 import {MODULE_SCHEDULER_PROFILE_V8,MODULE_SCHEDULER_LEDGER_FIELDS_V8} from './protocol-module-scheduler-v8.js';
@@ -62,12 +66,18 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
     'receiver','captureAliases','continuations','reactionSequence','blockedSync','callReturn','activeJob','scheduler','frameFunctions','jobErrors','protocol'],
   protocolState:{schema:PROTOCOL_STATE_V8_SCHEMA,fields:PROTOCOL_STATE_V8_FIELDS,initial:null,
     heap:'Existing heap nodes with property, descriptor and private-element Maps serialized as entry arrays; Symbol keys remain tagged pairs.',
+    callFrames:{fields:['child','parent','callee','priorReceiver','priorAliases','arguments'],optionalFields:['proxyReflectionScope'],
+      proxyReflectionScopeFields:['kind','definition'],
+      restoration:'Retained callee identity binds source code, argument list, live lexical receiver and capture cells. Active receiver/captures and parent-child stack order are checked independently. A Proxy defineProperty callback binds the original partial ToPropertyDescriptor snapshot to its checked call scope and carries a matching receipt through callback return until Proxy completion consumes it.'},
+    intrinsicErrors:{profile:INTRINSIC_ERROR_PROFILE_V8,schema:INTRINSIC_ERROR_STATE_V8_SCHEMA,
+      fields:INTRINSIC_ERROR_STATE_V8_FIELDS,rowFields:INTRINSIC_ERROR_STATE_V8_ROW_FIELDS,initial:null,maxErrors:4096,
+      meaning:'Private fault allocators register each fresh intrinsic Error identity after deriving its operation. Restoration requires an exact one-to-one match between registry rows and heap brands; guest writes may change ordinary name/message properties without changing the brand. No public free-standing Error creation record exists.'},
     promiseObjects:{profile:PROMISE_OBJECT_PROFILE_V8,schema:PROMISE_OBJECT_STATE_V8,fields:['schema','initialized'],
       intrinsicNames:PROMISE_OBJECT_INTRINSICS_V8,
       intrinsicIdentity:'intrinsic followed by the lowercase intrinsic name with all non-ASCII-alphanumeric characters removed; names are a fixed unique set, never selected aliases.',
       storage:'Promise properties, descriptors, prototype links and extensibility occupy the same shared heap node as settlement and reactions. Intrinsic prototype objects are mutable; intrinsic callable identity markers are opaque and immutable.',
       initialization:'One deterministic intrinsic-group transition materializes all identities and upgrades implicit Promise prototype links without consuming ordinary object identities. Duplicate or partial initialization is rejected.',
-      reflection:'Ordinary descriptor, hasOwn, key, get, set, delete, prototype and extensibility operations use the shared object machine. Accessors retain the original receiver, child call and exact normal or abrupt completion.',
+      reflection:'Ordinary descriptor, own and inherited existence, key, get, set, delete, prototype and extensibility operations use the shared object machine. Accessors retain the original receiver, child call and exact normal or abrupt completion.',
       boundaries:'Opaque intrinsic callable own-state reflection, custom Promise species construction and modified then-call protocols require their separately declared operations. Unsupported behavior remains outside guest exceptions.'},
     asyncCalls:{profile:ASYNC_CALL_PROFILE_V8,schema:ASYNC_CALL_STATE_V8,fields:ASYNC_CALL_FIELDS_V8,
       storage:'Retained asyncCall metadata belongs to its internal execution Promise; asyncFunction marks its callable closure.',
@@ -84,9 +94,11 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       callableFields:CALLABLE_STATE_V8_FIELDS,frameFields:CONSTRUCTION_FRAME_V8_FIELDS,
       privateElementFields:['kind','value','version'],
       sourceCallables:'Explicit function source offsets and source-inventoried class:<offset>:constructor|instance|static bodies.',
-      continuations:'Owned base/derived constructor receivers, newTarget, field initializers and captured superclass selection; private fields and methods retain declaring-class identities.'},
+      lexicalConstructionFields:['frame','thisCell'],
+      continuations:'Owned base/derived receivers and newTarget, field initializers and selected super dispatch; private fields and methods retain declaring-class identities. Constructor-captured arrows retain their exact constructor frame and live this cell across super and after constructor completion, including object-return substitution. Reading derived this before super produces an operation-derived ReferenceError. The same authenticated receiver is supported through synchronous calls, property/conversion/Proxy callbacks, Promise reaction jobs and Promise adoption constructor-getter jobs.',
+      boundaries:'Async/generator callback suspension within these scopes, arbitrary thenable or custom Promise species assimilation, and builtin/exotic inheritance beyond the inventoried constructor forms require separate profiles.'},
     iterators:{profile:ITERATOR_PROFILE_V8,heapFields:ITERATOR_HEAP_FIELDS,
-      capabilities:'Builtin array keys/values/entries and Unicode string iteration, live array length, sticky exhaustion and explicit result/pair allocation identities.'},
+      capabilities:'Builtin array keys/values/entries, Unicode string iteration and live Map/Set keys/values/entries preserve cursor state, mutation order, sticky exhaustion and explicit result/pair allocation identities. Bounded array and string spread retain the evaluated snapshot before later effects.'},
     ordinaryCompletions:{schema:'semantic-handler-scopes/1',fields:['schema','frames'],
       frameFields:['invocation','handlers'],optionalFrameFields:['targets'],
       handlerFields:['id','catch','finally','phase','caught','pending'],
@@ -94,11 +106,11 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       pendingFields:['kind','value'],optionalPendingFields:['target'],maxHandlersPerFrame:64,maxTargetsPerFrame:64,
       capabilities:'Ordinary catch/finally scopes retain pending completion and bounded loop target identities through synchronous execution and owned await suspension. Break and continue targets belong to the same frame; only loop targets permit continue. Source qualification privately checks destinations and suspended obligations without publishing bytecode.'},
     customIteration:{profile:'custom-iterator-source/1',
-      capabilities:'Ordinary custom for-of, for-await-of, and flat variable array bindings use checked properties, cached next and receiver cells, scoped calls, and retained cleanup. Async iteration prefers Symbol.asyncIterator, awaits next and close results, and preserves yielded async value identity. Sync fallback uses exact source-loop AsyncFromSync helper roles and distinct Promise jobs, including done-true value awaits and rejection cleanup precedence.',
-      boundaries:'Malformed intrinsic TypeErrors, callable thenable source projection, async generators, and nested or assignment pattern source projection require separate qualification. Reference-engine disagreements stay explicit; runtime execution alone does not admit them.'},
+      capabilities:'Ordinary custom for-of, for-await-of, and flat variable array bindings use checked properties, cached next and receiver cells, scoped calls, and retained cleanup. Nested ordinary array bindings, defaults and rest retain their source order; an abrupt nested default preserves outer iterator cleanup. Async iteration prefers Symbol.asyncIterator, awaits next and close results, and preserves yielded async value identity. Sync fallback uses exact source-loop AsyncFromSync helper roles and distinct Promise jobs, including done-true value awaits and rejection cleanup precedence.',
+      boundaries:'Malformed intrinsic TypeErrors, callable thenable source projection, async generators, nested custom iterable patterns, assignment patterns and implicit captured builtin iterator bindings require separate qualification. Reference-engine disagreements stay explicit; runtime execution alone does not admit them.'},
     enumeration:{profile:ENUMERATION_PROFILE_V8,heapFields:ENUMERATION_HEAP_FIELDS,limits:ENUMERATION_LIMITS_V8,
       chainFields:['id','prototype','keys'],
-      capabilities:'Stable ordinary for-in snapshots preserve own-key order, prototype walks, nonenumerable shadowing and fresh per-step result identities. Value writes are live; changed key/prototype structure is refused on the next step.'},
+      capabilities:'Ordinary for-in snapshots preserve captured own-key order, prototype walks, nonenumerable shadowing and fresh per-step result identities. Value writes and additions/deletions are live: added names are ignored and candidates absent from the current live chain are skipped. Pinned V8 prototype replacement and later enumerable-flag changes retain the original candidate order; only live existence decides whether a captured candidate is skipped. Completed cursors stay exhausted. Stable transparent Proxy enumeration retains Proxy identity and captured target keys, descriptors and prototype; effectful enumeration traps and active Proxy shape/prototype mutation require separate continuations.'},
     promiseJoins:{profile:PROMISE_JOIN_PROFILE_V8,schema:PROMISE_JOIN_STATE_V8,modes:['all','allSettled','race'],
       fields:['schema','owner','mode','inputs','jobs','observed','values','settled','output','error'],
       jobFields:['status','owner','promise','reaction','closure','rejectionClosure','target','sequence','joinResult','joinIndex','readySequence'],
@@ -116,9 +128,18 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       handlerFields:['name','catch','finally','phase','caught','pending'],
       delegationFields:['iterator','next','request','phase','result'],
       capabilities:'Retained invocations, receivers, arguments and captures; sent values, catch/finally cleanup, suspension and cached-next delegation through declared builtin iterators and synchronous generators.'},
-    proxyCalls:{profile:PROXY_PROFILE_V8,schema:PROXY_STATE_V8_SCHEMA,fields:['schema','pending'],initial:null,
-      heapFields:PROXY_HEAP_FIELDS,callFields:PROXY_CALL_FIELDS,
-      capabilities:'Distinct Proxy, target and handler identities; ordinary data forwarding and synchronous owned get/set traps with live target invariants and exact pending callback completion. Callable or revoked proxies and other traps require explicit profiles.'},
+    proxyReflection:{profile:PROXY_REFLECTION_PROFILE_V8,schema:PROXY_REFLECTION_STATE_V8,
+      fields:['schema','pending'],initial:null,callFields:PROXY_REFLECTION_CALL_FIELDS_V8,
+      operations:PROXY_REFLECTION_OPERATIONS_V8,
+      capabilities:'Retained synchronous reflection traps use live target prototype and extensibility after callback mutations. Object and Reflect caller behavior, Boolean normalization and derived intrinsic faults are explicit.'},
+    proxyCalls:{profile:PROXY_PROFILE_V8,schema:PROXY_STATE_V8_SCHEMA,fields:['schema','pending','getMethods'],initial:null,
+      heapFields:PROXY_HEAP_FIELDS,callFields:PROXY_CALL_FIELDS,allocationFields:PROXY_RECORD_FIELDS['proxy.revocable'],optionalFields:{'proxy.has':['id']},getMethodFields:['id','phase','operation','parent','child','object','target','handler','receiver','key','getter','rawReturn','method'],
+      faultFields:{callback:['kind','id','error'],directStrictDelete:['kind','object','key','error'],
+        revoked:['kind','object','operation','error']},
+      resultSemantics:{has:'Boolean(ToBoolean(raw trap result))',delete:'Boolean(ToBoolean(raw trap result))',
+        get:'raw callback result',set:'assigned value when trap returns truthy'},
+      capabilities:'Distinct Proxy, target, handler and retained callee identities; Proxy.revocable returns an ordinary result pair with a stable callable revoker identity; revocation clears target/handler internal slots once and repeated calls have no further effect. Transparent nested target routes and synchronous owned get/set/has/deleteProperty traps are supported. A bounded own has getter runs once with its handler receiver; the selected synchronous guest function survives handler mutation or revocation, a nullish return uses the retained target, and throws preserve their original value. Selection, getter calls and returns retain authenticated checkpoint state. Callback completion checks current target descriptors and extensibility after trap mutations. Has/delete return normalized booleans; operation-derived TypeErrors cover strict false set/delete trap results and live Proxy invariants, including frozen get/set data and accessor restrictions. Direct strict delete faults require an absent deleteProperty trap and a live non-configurable target property.',
+      boundaries:'Nested target internal-method invariants, accessor trap getters outside the bounded own has getter continuation, non-callable trap-getter results, and asynchronous or otherwise unowned trap calls require their dedicated continuations. Source-derived abrupt faults are qualified for revoked get/set/has/deleteProperty, has/delete invariants and strict false-set/delete results; get/set invariant source faults require their own source evidence.'},
     promiseExecutors:{profile:PROMISE_EXECUTOR_PROFILE_V8,schema:PROMISE_EXECUTOR_STATE_V8,
       fields:['schema','capabilities','executors'],capabilityFields:['promise','resolve','reject','called','resolution'],
       executorFields:['promise','parent','child','phase','completion'],
@@ -132,7 +153,7 @@ export const SEMANTIC_V8_DEFINITION=Object.freeze({
       getterJobFields:['priorAliases','priorReceiver'],completedGetterJobFields:['returned'],
       forwardingJobFields:['status','owner','promise','reaction','closure','rejectionClosure','target','sequence','adoptionPromise','adoptionTarget','readySequence'],
       capabilities:'Owned internal Promises with a resolved intrinsic then use one existing realm FIFO and shared ordinary descriptors/prototypes. The original resolver or completed async/reaction frame binds an immediate resolution intent. Enqueue consumes that intent before any further record. The first job checks the actual constructor. A synchronous owned constructor getter runs in that exact job with its original receiver, captures and nested calls; its explicit completion restores prior state and either rejects with the opaque thrown value or registers a forwarding dependency. A separate FIFO job forwards the settled target. First-call authority remains consumed throughout. Distinct mutual adoption cycles remain pending. Direct self resolution allocates a fresh declared TypeError identity at the self step, without either job. Source admission independently rebuilds each identity and source event.',
-      boundaries:'Callable thenables, then getters, proxies, custom adoption constructors/species and general Promise.finally cleanup continuations require separate profiles. Unrelated Promise properties and valid prototype chains remain ordinary shared state. A declared self error has ordinary name/message data properties; native Error descriptors, stack and prototype are not claimed equivalent. Original-source checks refuse any observable mismatch.'},
+      boundaries:'Callable thenables, then getters, proxies, custom adoption constructors/species and general Promise.finally cleanup continuations require separate profiles. Unrelated Promise properties and valid prototype chains remain ordinary shared state. Direct self-resolution faults use the standard TypeError prototype identity and own message data property; engine-specific stack fields remain outside the profile. Original-source checks refuse any observable mismatch.'},
     binaryMemory:{profile:MEMORY_PROFILE_V8,heapFields:MEMORY_HEAP_FIELDS_V8,maxBufferBytes:1024,
       typedArrayByteOrder:'little-endian',dataViewByteOrder:'explicit per operation',
       capabilities:'Fixed ordinary buffers and fixed/growable shared buffers; scalar conversions; shared view identities; bounded single-agent atomic operations. No detach, transfer, host buffers or cross-agent scheduling.'},

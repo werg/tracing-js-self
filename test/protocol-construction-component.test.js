@@ -22,7 +22,8 @@ function fixture(){
     allocate(c,record){require(!c.heap.has(record.name),'duplicate object');c.heap.set(record.name,{kind:record.objectKind,prototype:'ordinary',properties:new Map(),descriptors:new Map()});},
     call(c,record,options){
       assertConstructionCallV8(c,record.callee,options,api);require(!c.frameFunctions.has(record.child),'duplicate invocation');
-      c.protocol.callFrames.push({child:record.child,parent:c.stack.at(-1),priorReceiver:structuredClone(c.receiver),priorAliases:[],arguments:structuredClone(record.arguments)});
+      c.protocol.callFrames.push({child:record.child,parent:c.stack.at(-1),callee:structuredClone(record.callee),
+        priorReceiver:structuredClone(c.receiver),priorAliases:[],arguments:structuredClone(record.arguments)});
       c.frameFunctions.set(record.child,c.heap.get(record.callee[1]).code);c.stack.push(record.child);c.receiver=structuredClone(record.receiver);
       c.locals.set(record.child+':this',structuredClone(record.receiver));
     }

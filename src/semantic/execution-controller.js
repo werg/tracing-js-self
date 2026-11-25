@@ -1,3 +1,4 @@
+import {promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
 // Version-neutral typed execution state. Wire clients own parsing and rendering.
 // No teacher records, VM instructions or source interpreter are loaded here.
 import {canonicalCompletionPolicy,assertValue,validateTypedSemanticRecord} from './record-schema.js';
@@ -7,6 +8,7 @@ import {analyzeSemanticProgram} from '../training/semantic-program.js';
 import {materializeHostArguments,decodeHostPayload} from '../host/materialize.js';
 import {hostOperation} from '../host/operations.js';
 import {checkSemanticRegionClaim} from '../training/semantic-regions.js';
+import {activateProtocolCallV8,PROTOCOL_MACHINE_API_V8} from './protocol-state-v8.js';
 
 const eq=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 function arrayIndex(key){
@@ -195,10 +197,26 @@ export class SemanticExecutionController {
   }
   observedGraph(){
     if(!this.completion)return null;
-    const seen=new Map();
+    const seen=new Map(),value=this.completion.value,
+      error=value?.[0]==='ref'?this.heap.get(value[1]):null;
+    let completed;
+    // The declared exception boundary observes name/message without changing
+    // the ordinary live Error representation or evaluating any getter.
+    if(this.completion.kind==='throw'&&error?.declaredError){
+      const name=error.declaredError,prototype=this.heap.get(promiseIntrinsicIdV8(name+'.prototype')),
+        message=error.properties.get('message')??['str',''],descriptor=error.descriptors?.get('message');
+      if(JSON.stringify(error.prototype)!==JSON.stringify(['ref',promiseIntrinsicIdV8(name+'.prototype')])||
+        error.extensible===false||[...error.properties.keys()].some(key=>key!=='message')||
+        [...(error.descriptors?.keys()??[])].some(key=>key!=='message')||
+        message[0]!=='str'||error.properties.has('message')&&(!descriptor||descriptor.kind!=='data'||
+          descriptor.enumerable||!descriptor.writable||!descriptor.configurable)||
+        prototype?.properties.get('name')?.[1]!==name||
+        prototype?.properties.get('constructor')?.[1]!==promiseIntrinsicIdV8(name))
+        fail('unsupported-boundary','Altered Error requires its ordinary exception boundary');
+      completed={name,message:message[1]};
+    }else completed=this.materialize(value,seen);
     return describeGraph([
-      ...this.input.graph.roots.map(v=>this.materialize(v,seen)),
-      this.materialize(this.completion.value,seen)
+      ...this.input.graph.roots.map(v=>this.materialize(v,seen)),completed
     ]);
   }
   commitRecord(record,{mode='generated',track=this.trackId}={}){
@@ -338,7 +356,9 @@ export class SemanticExecutionController {
         this.frameFunctions.set(f.child,callee);
         this.stack.push(f.child);
       }else if(kind==='return'||kind==='throw'){
-        if(this.stack.length===1&&this.activeJob){
+        if(this.protocol&&this.activeJob&&this.stack.length===2&&this.stack.at(-1)===f.invocation){
+          PROTOCOL_MACHINE_API_V8.complete(this,{kind,invocation:f.invocation,value:structuredClone(f.value)});
+        }else if(this.stack.length===1&&this.activeJob){
           this.stack.pop();this.jobs.get(this.activeJob).returned={kind,value:structuredClone(f.value)};
         }else if(this.stack.length>1){
           this.stack.pop();
@@ -474,7 +494,9 @@ export class SemanticExecutionController {
         this.refreshReady();
       }else if(kind==='resume'){
         const continuation=this.continuations.get(f.continuation);
-        if(this.stack.length||this.ready[0]!==f.continuation||
+        const suspendedJobRoot=Boolean(continuation?.activeJob)&&this.stack.length===1&&
+          this.stack[0]===this.rootInvocation;
+        if(this.stack.length&&!suspendedJobRoot||this.ready[0]!==f.continuation||
            continuation?.state!=='ready'||continuation.invocation!==f.invocation)
           fail('continuation','Resume violates owned dependency, turn ownership or FIFO order');
         const promise=this.promise(continuation.promise);
@@ -511,40 +533,61 @@ export class SemanticExecutionController {
             if(job.reaction!=='finally')argument=promise.result;
           }
           if(callback){
-              const closure=this.schedulerClosure(callback);
-              job.priorAliases=[...this.captureAliases];
+              const closure=this.schedulerClosure(callback),child='job:'+f.job;
               if(this.protocol){
-                job.priorReceiver=structuredClone(this.receiver);
-                this.receiver=structuredClone(closure.functionKind==='arrow'?closure.lexicalReceiver:['undefined']);
+                if(this.stack.length)fail('job','Owned jobs cannot inherit an active invocation');
+                job.priorPending=structuredClone(this.pending??null);
+                job.priorLastReturn=structuredClone(this.lastReturn??null);
+                this.pending=null;this.lastReturn=null;
+                this.stack.push(this.rootInvocation);
+                const frame=activateProtocolCallV8(this,{child,callee:['ref',callback],
+                  receiver:closure.functionKind==='arrow'?closure.lexicalReceiver:['undefined'],
+                  arguments:job.promise&&job.reaction!=='finally'?[argument]:[]});
+                job.priorAliases=structuredClone(frame.priorAliases);
+                job.priorReceiver=structuredClone(frame.priorReceiver);
+              }else{
+                job.priorAliases=[...this.captureAliases];
+                this.captureAliases=new Map((closure.captures??[]).map(c=>[c.binding,c.cell]));
+                this.stack.push(child);this.frameFunctions.set(child,closure.code);
               }
-              this.captureAliases=new Map((closure.captures??[]).map(c=>[c.binding,c.cell]));
               const fn=analyzeSemanticProgram(this.source.source).functions.find(fn=>
                 fn.name===closure.code||'function:'+fn.start===closure.code);
               if(!fn)fail('capture','Promise reaction closure has no source site');
-              for(const [index,name] of fn.params.entries())if(name){
+              if(!Array.isArray(fn.params)||fn.params.length>256||
+                 fn.params.some(name=>name!==null&&(typeof name!=='string'||!name))||
+                 fn.name!==null&&(typeof fn.name!=='string'||!fn.name)||!Number.isSafeInteger(fn.start)||fn.start<0)
+                fail('capture','Promise reaction has malformed immutable parameter definitions');
+              job.callbackDefinition={code:closure.code,name:fn.name,start:fn.start,
+                params:structuredClone(fn.params)};
+              const parameterBindings=[];
+              for(const [index,name] of fn.params.entries())if(name!==null){
                 const base='j'+f.job+'p'+index;
                 let cell=base,ordinal=0;
                 while(this.locals.has(cell))cell=base+'x'+(++ordinal);
                 this.captureAliases.set(name,cell);
-                this.locals.set(cell,index===0?structuredClone(argument):['undefined']);
+                const initialValue=index===0?structuredClone(argument):['undefined'];
+                this.locals.set(cell,initialValue);
+                parameterBindings.push({binding:name,index,cell,initialValue:structuredClone(initialValue)});
               }
-              this.activeJob=f.job;this.stack.push('job:'+f.job);
-              this.frameFunctions.set('job:'+f.job,closure.code);
+              job.parameterBindings=parameterBindings;
+              this.activeJob=f.job;
           }
         }else{
           if(this.jobs.get(f.job)?.owner!==f.owner)fail('job','Job owner mismatch');
           if(this.jobs.get(f.job)?.status!=='running')
             fail('job','Complete requires a running owned job');
           const job=this.jobs.get(f.job);
-          if(this.stack.length||this.activeJob&&this.activeJob!==f.job)
-            fail('job','Cannot complete a running callback frame');
           if([...this.continuations.values()].some(continuation=>
             continuation.activeJob===f.job&&continuation.state!=='resumed'))
             fail('job','Cannot complete a suspended callback frame');
+          if(this.stack.length||this.activeJob&&this.activeJob!==f.job)
+            fail('job','Cannot complete a running callback frame');
           job.status='completed';
           if(this.activeJob===f.job){
             this.captureAliases=new Map(job.priorAliases);
             if(Object.hasOwn(job,'priorReceiver'))this.receiver=structuredClone(job.priorReceiver);
+            if(Object.hasOwn(job,'priorPending'))this.pending=structuredClone(job.priorPending);
+            if(Object.hasOwn(job,'priorLastReturn'))this.lastReturn=structuredClone(job.priorLastReturn);
             this.activeJob=null;
           }
           if(job.promise){

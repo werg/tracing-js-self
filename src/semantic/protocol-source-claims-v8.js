@@ -6,21 +6,23 @@ import {SHARED_TYPES} from '../owned-shared-memory.js';
 export const ORDINARY_PROTOCOL_SOURCE_V8='ordinary-protocol-source/1';
 const memory='owned-binary-memory/1',iterator='builtin-iterator/1',generator='synchronous-generator-source/1',
   construction='class-private-source/1',custom='custom-iterator-source/1',completion='ordinary-completions-source/1',
-  number='primitive-conversion-source/1',proxy='ordinary-data-proxy-source/1',map='ordinary-array-map-source/1',enumeration='ordinary-for-in/1';
+  number='primitive-conversion-source/1',proxy='ordinary-data-proxy-source/1',map='ordinary-array-map-source/1',enumeration='ordinary-for-in/1',
+  collection='owned-collections/1',reflection='proxy-reflection-source/1';
 const memoryKinds=new Set(['array-buffer','shared-int32-buffer','typed-array','shared-int32-view','data-view','shared-data-view']);
 const constructors=new Set(['ArrayBuffer','SharedArrayBuffer','DataView',...Object.keys(SHARED_TYPES)]);
 const iteratorNames=new Set(['Array.prototype.values','Array.prototype.keys','Array.prototype.entries',
-  'String.prototype.iterator','Iterator.next','Iterator.identity']);
+  'String.prototype.iterator','Set.prototype.values','Set.prototype.keys','Set.prototype.entries',
+  'Map.prototype.keys','Map.prototype.values','Map.prototype.entries','Iterator.next','Iterator.identity']);
 const baseBuiltins=new Set(['Array.prototype.push','Array.prototype.pop','Symbol','Symbol.for','Symbol.keyFor',
-  'Symbol.prototype.toString','Symbol.prototype.valueOf','Object.hasOwn','Reflect.ownKeys','Object.keys',
-  'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Object.entries','Object.values','Object.defineProperty',
-  'Object.setPrototypeOf','Object.create']);
+  'Symbol.prototype.toString','Symbol.prototype.valueOf','Object.hasOwn','Reflect.has','Reflect.deleteProperty','Reflect.ownKeys','Object.keys',
+  'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Object.entries','Object.values','Object.defineProperty','Object.preventExtensions',
+  'Function.prototype.hasInstance','Object.setPrototypeOf','Object.create','Object.getPrototypeOf','Object.getOwnPropertyDescriptor','Object.isExtensible']);
 const constructionOps=new Set(['CLASS_CREATE','SET_HOME_OBJECT','CLASS_INITIALIZER','CLASS_FINISH','CLASS_CONSTRUCTOR_GUARD',
   'SUPER_CONSTRUCTOR','SUPER_CALL','SUPER_FORWARD_CALL','SUPER_BIND','THIS','NEW_TARGET','PROPERTY_KEY',
   'PRIVATE_DEFINE','PRIVATE_GET','PRIVATE_GET_METHOD','PRIVATE_SET','PRIVATE_HAS','PRIVATE_UPDATE','DEFINE_LITERAL_PROP']);
 const delegateOps=new Set(['LOGICAL_JUMP','REQUIRE_OBJECT','BINARY','DELEGATE_RESUME_KIND','DELEGATE_RESUME_VALUE',
   'DELEGATE_YIELD','LEAVE_SCOPE','RETURN','ITERATOR_THROW_MISSING']);
-const ordinaryOperations=new Set(['property.read','property.write','property.update','primitive.binary','primitive.unary',
+const ordinaryOperations=new Set(['property.read','property.write','property.update','property.delete','primitive.binary','primitive.unary',
   'binding.update','binding.read','binding.initialize','binding.write','call.return','completion.throw','control.jump',
   'environment.iteration','binding.default.guard']);
 // The same declarative domains are available to the shared effectful source
@@ -29,7 +31,7 @@ const ordinaryOperations=new Set(['property.read','property.write','property.upd
 // These protocol families can participate in Promise source projection without
 // introducing an independent whole-episode teacher. Their events are still
 // claimed through the same prefix coordinator and retained-state transaction.
-export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,iterator,map,generator,custom,completion]);
+export const SHARED_PROTOCOL_SOURCE_IDS_V8=Object.freeze([memory,number,proxy,reflection,iterator,map,enumeration,generator,custom,construction,completion,collection]);
 const callee=value=>value?.[0]==='method'?value[1]:value;
 const builtin=value=>['intrinsic','builtinfn'].includes(value?.[0])?value[1]:null;
 const selected=value=>value?.[0]==='method'?value[1]:value;
@@ -45,6 +47,12 @@ const ordinaryPrototype=view=>view.event.stateChanges.some(change=>change.table=
   change.after.prototypeInitialized&&!change.before?.prototypeInitialized&&!change.after.classConstructor&&!change.after.generatorFunction);
 
 const eventClaims={
+  [reflection](view,{event,row}){
+    const name=builtin(callee(row?.operands?.[0]??event.operands?.[0]));
+    return event.operation==='call.return'&&has(state(view,reflection).callbacks,event.invocationId)||
+      event.operation==='call.enter'&&['getPrototypeOf','setPrototypeOf','isExtensible','preventExtensions','getOwnPropertyDescriptor','ownKeys','defineProperty'].some(
+        op=>name==='Object.'+op||name==='Reflect.'+op)&&heap(view,row?.operands?.[1]??event.operands?.[1])?.kind==='proxy';
+  },
   [memory](view,{event,row}){
     if(!row)return false;
     const raw=row.operands[0],name=builtin(callee(raw));
@@ -56,8 +64,27 @@ const eventClaims={
   [enumeration](view){return ['FOR_IN_CREATE','FOR_IN_NEXT'].includes(view.instruction?.op);},
   [number](_view,{event}){return ['intrinsic.number.resume','property.key.convert','property.key.resume'].includes(event.operation)||
     event.operation==='call.enter'&&builtin(callee(event.operands[0]))==='Number';},
-  [proxy](view,{event,row}){return event.operation==='proxy.allocate'||
-    ['property.read','property.write'].includes(event.operation)&&heap(view,row?.operands[0])?.kind==='proxy';},
+  [proxy](view,{event,row}){const raw=row?.operands?.[0],selectedCall=callee(raw),
+      selectedProperty=row?.result?.[0]==='method'?row.result[1]:row?.result,
+      directRevoker=selectedCall?.[0]==='builtinfn'&&selectedCall[1].startsWith('Proxy.revoke:'),
+      revokeProperty=event.operation==='property.read'&&selectedProperty?.[0]==='builtinfn'&&
+        selectedProperty[1].startsWith('Proxy.revoke:');
+    return ['proxy.allocate','proxy.revocable.allocate'].includes(event.operation)||
+    event.operation==='call.enter'&&directRevoker||revokeProperty||
+    ['property.read','property.write'].includes(event.operation)&&(
+      heap(view,row?.operands[0])?.kind==='proxy'||event.completion?.type==='throw'&&
+      (['GET_PROP','GET_METHOD'].includes(view.instruction?.op)&&
+        heap(view,frame(view)?.stack?.at(-2)?.value)?.kind==='proxy'||
+       view.instruction?.op==='PUT_PROP'&&heap(view,frame(view)?.stack?.at(-3)?.value)?.kind==='proxy'))||
+    event.operation==='primitive.binary'&&view.instruction?.op==='BINARY'&&view.instruction.arg==='in'&&(
+      heap(view,row?.operands[1])?.kind==='proxy'||event.completion?.type==='throw'&&
+      heap(view,frame(view)?.stack?.at(-1)?.value)?.kind==='proxy')||
+    event.operation==='call.enter'&&at(state(view,proxy).getMethods,event.invocationId)?.phase==='returned'||
+    event.operation==='call.return'&&has(state(view,proxy).getMethodCallbacks,event.invocationId)||
+    event.operation==='property.delete'&&(heap(view,row?.operands[0])?.kind==='proxy'||
+      event.completion?.type==='throw'&&view.instruction?.op==='DELETE_PROP'&&
+      heap(view,frame(view)?.stack?.at(-2)?.value)?.kind==='proxy')||
+    event.operation==='call.return'&&has(state(view,proxy).callbacks,event.invocationId);},
   [map](view,{event,row}){
     const own=state(view,map),plan=at(own.plans,event.invocationId),callback=at(own.callbacks,event.invocationId);
     return has(own.callbacks,event.invocationId)&&event.stateChanges.some(change=>change.table==='frames'&&
@@ -84,9 +111,24 @@ const eventClaims={
       ['INIT','GET'].includes(inst.op)&&(/^\[\[(?:(?:async|sync) )?iterator next [0-9]+\]\]$/.test(inst.arg)&&event.result?.[0]==='method'||
         pattern&&event.result?.[0]==='method');
   },
+  [collection](view,{event,row}){
+    const raw=row?.operands?.[0]??event.operands?.[0],name=builtin(callee(raw));
+    if(event.operation==='object.construct'&&raw?.[0]==='intrinsic'&&['Set','Map'].includes(raw[1]))return true;
+    const baseValue=event.operation==='property.read'?row?.operands?.[0]:
+      raw?.[0]==='method'?raw[2]:null,base=heap(view,baseValue),kind=base?.kind;
+    if(event.operation==='property.read'&&['set','map'].includes(kind)){
+      const key=row?.operands?.[1],methods=kind==='set'?['add','has','delete','clear']:['get','set','has','delete','clear'];
+      return key?.[0]==='str'&&(key[1]==='size'||methods.includes(key[1]));
+    }
+    return Boolean(event.operation==='call.enter'&&
+      (name?.startsWith('Set.prototype.')&&['add','has','delete','clear'].includes(name.slice(14))||
+       name?.startsWith('Map.prototype.')&&['get','set','has','delete','clear'].includes(name.slice(14)))&&
+      ['set','map'].includes(heap(view,raw?.[0]==='method'?raw[2]:null)?.kind));
+  },
   [iterator](view,{event,row}){
     const inst=view.instruction;
-    if(inst?.op==='ITERATOR_ARRAY_GUARD')return true;
+    if(inst?.op==='ITERATOR_ARRAY_GUARD'||inst?.op==='SPREAD')return true;
+    if(inst?.op==='APPEND_ARRAY'&&view.sourceNode?.type==='ArrayExpression')return true;
     if(!row)return false;
     if(event.operation==='primitive.binary'&&inst?.op==='BINARY'&&inst.arg==='>'&&
       state(view,iterator).arrayLoops?.includes(event.invocationId+':'+row.source?.start+':'+row.source?.end))return true;
@@ -160,13 +202,24 @@ function completionOwners(view,change){
   return [...(change.after?.generatorId||routedGenerator?.length===1?[generator]:[]),
     ...(enabled(view,moduleNamespace)&&(state(view,moduleNamespace).operations??[]).some(([,operation])=>
       operation.waitingFrameId===change.id)?[moduleNamespace]:[]),
-    ...[[construction,'roles'],[number,'callbacks'],[proxy,'callbacks'],[map,'callbacks'],[custom,'accessors']]
-      .filter(([id,key])=>has(state(view,id)[key],change.id)).map(([id])=>id)];
+    ...[[construction,'roles'],[number,'callbacks'],[proxy,'callbacks'],[reflection,'callbacks'],[map,'callbacks'],[custom,'accessors']]
+      .filter(([id,key])=>has(state(view,id)[key],change.id)).map(([id])=>id),
+    ...(has(state(view,proxy).getMethodCallbacks,change.id)?[proxy]:[])];
+}
+function constructionCallable(view,node){
+  if(node.kind!=='function'||node.generatorFunction||node.async)return false;
+  const component=view.components?.[construction]??{},roles=new Map(component.roles??[]),
+    definitions=new Map(component.functionDefinitions??[]),placement=definitions.get(node.codeId),
+    lexicalRole=node.arrow&&node.lexicalThisFrameId?roles.get(node.lexicalThisFrameId):null;
+  if(node.classConstructor===true||node.derivedConstructor===true||
+     ['constructor','method','object-method','instance','static'].includes(placement)||lexicalRole?.kind==='body')return true;
+  return !node.async&&!node.generatorFunction&&!node.arrow&&!node.nonConstructible;
 }
 function allocationOwner(view,node){
   if(node.generatorFunction||node.kind==='generator')return generator;
-  if(node.kind==='function'&&enabled(view,construction))return construction;
+  if(enabled(view,construction)&&constructionCallable(view,node))return construction;
   if(memoryKinds.has(node.kind))return memory;
+  if(node.kind==='set'||node.kind==='map')return collection;
   if(node.kind==='iterator')return iterator;
   if(node.kind==='enumerator')return enumeration;
   if(node.kind==='proxy')return proxy;

@@ -1,5 +1,7 @@
 // Source correspondence for Promise ordinary state. These operations use the
 // same public heap, descriptors and accessor calls as ordinary objects.
+import {ERROR_CONSTRUCTORS,ERROR_PROTOTYPES} from '../owned-error-objects.js';
+import {sourceInvalidInFaultV8} from './protocol-intrinsic-error-source-v8.js';
 import {isDeepStrictEqual as eq} from 'node:util';
 import {propertyKeyValue,stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
 import {decode,encode} from '../values.js';
@@ -14,31 +16,36 @@ import {finishSourcePromiseAdoptionGetterV8} from './protocol-promise-adoption-s
 
 export const PROMISE_OBJECT_SOURCE_V8='promise-object-source/1';
 const copy=structuredClone,select=value=>value?.[0]==='method'?value[1]:value;
-const objectCalls=new Set(['Object.defineProperty','Object.getOwnPropertyDescriptor','Object.hasOwn',
+const objectCalls=new Set(['Function.prototype.hasInstance','Object.defineProperty','Object.getOwnPropertyDescriptor','Object.hasOwn',
   'Object.prototype.hasOwnProperty','Object.setPrototypeOf','Object.getPrototypeOf',
   'Object.preventExtensions','Object.isExtensible','Object.create','Object.keys',
-  'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Reflect.ownKeys']);
+  'Object.getOwnPropertyNames','Object.getOwnPropertySymbols','Reflect.ownKeys','Reflect.has','Reflect.deleteProperty']);
 const nodeFor=(state,value)=>value?.[0]==='promise'?state.promises[value[1]]:
-  value?.[0]==='ref'||value?.[0]==='intrinsic'&&value[1]==='Promise.prototype'?state.heap[value[1]]:null;
+  value?.[0]==='ref'||value?.[0]==='intrinsic'&&['Promise.prototype',...ERROR_PROTOTYPES].includes(value[1])?state.heap[value[1]]:null;
 const rich=node=>node&&(['promise'].includes(node.kind)||Object.keys(node.accessors??{}).length||
   Object.keys(node.dataAttributes??{}).length||node.extensible===false||
   node.prototype!==undefined&&!['Object.prototype','Array.prototype','Function.prototype'].includes(node.prototype));
-const intrinsicPrototype=value=>value?.[0]==='intrinsic'&&['Promise.prototype','Object.prototype'].includes(value[1]);
+const intrinsicPrototype=value=>value?.[0]==='intrinsic'&&['Promise.prototype','Object.prototype',...ERROR_PROTOTYPES].includes(value[1]);
 function method(event){const callable=select(event.operands?.[0]);return callable?.[0]==='builtinfn'?callable[1]:null;}
 export function promiseObjectSourceEventV8(view,{event,row}){
   if(!view.components[PROMISE_OBJECT_SOURCE_V8])return false;
   const pending=view.components[PROMISE_OBJECT_SOURCE_V8].accessors??[],base=event.operands?.[0];
   if(event.operation==='call.enter'&&objectCalls.has(method(event)))return true;
+  if(view.sourceNode?.type==='BinaryExpression'&&view.sourceNode.operator==='instanceof'&&
+    ['REQUIRE_OBJECT','LOGICAL_JUMP','INSTANCEOF_DEFAULT','INSTANCEOF_RESULT'].includes(view.instruction?.op))return true;
+  if(event.operation==='property.delete'||event.operation==='primitive.binary'&&view.instruction?.op==='BINARY'&&view.instruction.arg==='in')return true;
   if(['property.read','property.write','property.update'].includes(event.operation)){
     if(intrinsicPrototype(base)||base?.[0]==='promise')return true;
-    if(rich(nodeFor(view.owned,base))&&!sharedProtocolSourceEventV8(view,{event,row}))return true;
-    if(base?.[0]==='intrinsic'&&['Promise','Object'].includes(base[1])&&event.operands?.[1]?.[1]==='prototype')return true;
+    const property=event.operands?.[1],encodedKey=property?.[0]==='symbol'||
+      property?.[0]==='str'&&property[1].startsWith('\u0000');
+    if((rich(nodeFor(view.owned,base))||encodedKey)&&!sharedProtocolSourceEventV8(view,{event,row}))return true;
+    if(base?.[0]==='intrinsic'&&(ERROR_CONSTRUCTORS.includes(base[1])||['Promise','Object'].includes(base[1])&&event.operands?.[1]?.[1]==='prototype'))return true;
   }
   return Boolean(row?.child&&event.stateChanges.some(change=>change.table==='frames'&&change.id===row.child&&
     change.after?.promiseConstructorLookup));
 }
 export function promiseObjectSourceAllocationV8(view,input){
-  return Boolean(view.components[PROMISE_OBJECT_SOURCE_V8]&&input.identity==='Promise.prototype');
+  return Boolean(view.components[PROMISE_OBJECT_SOURCE_V8]&&['Promise.prototype',...ERROR_PROTOTYPES].includes(input.identity));
 }
 export function promiseObjectSourceCompletionV8(view,exit){
   return ['return','throw','unhandled-throw'].includes(exit.operation)&&
@@ -47,8 +54,7 @@ export function promiseObjectSourceCompletionV8(view,exit){
 function key(value){
   if(value?.[0]==='symbol')return copy(value);
   if(value?.[0]==='str')return copy(value);
-  if(['num','bool','null','undefined'].includes(value?.[0]))return ['str',String(value.length===1?
-    value[0]==='null'?null:undefined:value[1])];
+  if(['num','bigint','bool','null','undefined'].includes(value?.[0]))return ['str',String(decode(value))];
   throw new TypeError('Promise object source: observable key conversion requires its own protocol');
 }
 const storage=value=>value[0]==='symbol'?symbolPropertyKey(value[1]):stringPropertyKey(value[1]);
@@ -56,7 +62,7 @@ function projectedDescriptor(ctx,node,property){const d=descriptor(node,property
   return d.kind==='data'?{...d,value:ctx.tag(d.value)}:{...d,get:ctx.tag(d.get),set:ctx.tag(d.set)};}
 function projectedPrototype(ctx,node){const p=node.prototype;
   if(p===null)return null;
-  if(['Promise.prototype','Object.prototype'].includes(p))return ['ref',promiseIntrinsicIdV8(p)];
+  if(['Promise.prototype','Object.prototype',...ERROR_PROTOTYPES].includes(p))return ['ref',promiseIntrinsicIdV8(p)];
   if(p===undefined||['Array.prototype','Function.prototype'].includes(p))return 'ordinary';
   return ['ref',ctx.identity(p)];
 }
@@ -95,11 +101,11 @@ export function createPromiseObjectTeacherV8(){
       event:(_view,{event})=>({kind:'promise-object-event',event:event.eventId}),
       completion:(_view,exit)=>({kind:'promise-property-completion',invocation:exit.invocation})},
     tag(ctx,value){initialize(ctx,null);return ['ref',promiseIntrinsicIdV8(value[1])];},
-    allocation(ctx,event,fields){if(fields.name!==promiseIntrinsicIdV8('Promise.prototype'))ctx.refuse('undeclared intrinsic allocation');
+    allocation(ctx,event,fields){if(!['Promise.prototype',...ERROR_PROTOTYPES].some(name=>fields.name===promiseIntrinsicIdV8(name)))ctx.refuse('undeclared intrinsic allocation');
       initialize(ctx,event);return true;},
     beforeEvent(ctx,event){
       if(!event)return;
-      if(event.stateChanges.some(c=>c.table==='heap'&&c.id==='Promise.prototype'))initialize(ctx,event);
+      if(event.stateChanges.some(c=>c.table==='heap'&&['Promise.prototype',...ERROR_PROTOTYPES].includes(c.id)))initialize(ctx,event);
       // A getter can synchronously create a reaction or begin an await when it
       // returns. Finish its checked property call before publishing those jobs.
       for(const [frame,pending]of ctx.componentState(PROMISE_OBJECT_SOURCE_V8).accessors)
@@ -124,6 +130,40 @@ export function createPromiseObjectTeacherV8(){
         ctx.emitProtocol(owner,{kind:'property.get.call',id,child:invocation,object:receiver[1],key:property,receiver},event,'source-promise-constructor-call/1');
         parameters(ctx,event,child.id,owner);state.accessors.push([child.id,{id,operation:'get',value:null,owner,finished:false,lookup:copy(lookup)}]);return true;
       }
+      const currentFrame=ctx.state.frames[event.invocationId],
+        inst=ctx.bundle.programs[currentFrame?.codeId]?.instructions[currentFrame?.pc];
+      if(inst?.op==='REQUIRE_OBJECT'){
+        if(event.operands.length!==1||!['ref','promise','intrinsic','builtinfn','hostfn'].includes(base?.[0])||!eq(raw,base))ctx.refuse('object guard requires its original reference');
+        const value=ctx.tag(base);ctx.emitProtocol(owner,{kind:'compute',expr:{op:'literal',value},result:value,bind:null},event,'source-object-guard/1');return true;
+      }
+      if(inst?.op==='LOGICAL_JUMP'){
+        if(inst.arg.operator!=='??'||!row?.test||!row.result)ctx.refuse('hasInstance selection lacks its exact nullish test');
+        const value=ctx.tag(select(row.test));
+        ctx.emitProtocol(owner,{kind:'choose',expr:{op:'logical-test',operator:'??',arg:{op:'literal',value}},decision:row.result,path:row.path},event,'source-hasinstance-method-selection/1');return true;
+      }
+      if(event.operation==='primitive.binary'){
+        if(inst?.op==='INSTANCEOF_RESULT'){
+          ctx.emitProtocol(owner,{kind:'compute',expr:{op:'unary',operator:'!',arg:{op:'unary',operator:'!',arg:{op:'literal',value:ctx.tag(base)}}},result:ctx.tag(raw),bind:null},event,'source-hasinstance-result/1');return true;
+        }
+        if(inst?.op==='INSTANCEOF_DEFAULT'){
+          ctx.emitProtocol(owner,{kind:'object.hasInstance',constructor:ctx.tag(event.operands[1]),value:ctx.tag(base),result:ctx.tag(raw)},event,'source-hasinstance-default/1');return true;
+        }
+        if(event.completion?.type==='throw'){
+          const fault=sourceInvalidInFaultV8(ctx.bundle,ctx.state,event,row);
+          ctx.emitProtocol(owner,{kind:'property.fault',operation:'has',target:ctx.tag(fault.target),key:ctx.tag(fault.key),error:ctx.identity(fault.error)},event,'source-in-invalid-rhs/1');
+          ctx.claimDataIdentity(fault.error);return true;
+        }
+        const frame=ctx.state.frames[event.invocationId],instruction=ctx.bundle.programs[frame?.codeId]?.instructions[frame.pc],
+          receiver=ctx.tag(event.operands[1]);
+        if(instruction?.op!=='BINARY'||instruction.arg!=='in'||receiver?.[0]!=='ref'||raw?.[0]!=='bool')
+          ctx.refuse('property existence requires its original object and completed in expression');
+        ctx.emitProtocol(owner,{kind:'property.has',object:receiver[1],key:key(base),result:ctx.tag(raw)},event,'source-property-existence/1');return true;
+      }
+      if(event.operation==='property.delete'){
+        const receiver=ctx.tag(base);
+        if(receiver?.[0]!=='ref'||raw?.[0]!=='bool')ctx.refuse('property deletion requires its ordinary receiver and completed boolean');
+        ctx.emitProtocol(owner,{kind:'property.delete',object:receiver[1],key:key(event.operands[1]),success:raw[1]},event,'source-property-deletion/1');return true;
+      }
       if(event.operation==='property.update'){
         const receiver=ctx.tag(base),property=key(event.operands[1]),old=event.operands[2],
           after=event.stateChanges.find(change=>['heap','promises'].includes(change.table)&&change.id===base?.[1])?.after,
@@ -142,12 +182,22 @@ export function createPromiseObjectTeacherV8(){
         if(!eq(raw,row.update.prefix?next:numeric))ctx.refuse('Promise property update completion differs from its prefix/postfix mode');
         return true;
       }
+      if(name==='Function.prototype.hasInstance'){
+        if(base?.[0]!=='method'||event.operands.length!==2)ctx.refuse('hasInstance builtin requires its selected method receiver');
+        ctx.emitProtocol(owner,{kind:'object.hasInstance',constructor:ctx.tag(base[2]),value:ctx.tag(event.operands[1]),result:ctx.tag(raw)},event,'source-hasinstance-call/1');return true;
+      }
       if(event.operation==='property.read'||event.operation==='property.write'){
-        if(base?.[0]==='intrinsic'&&['Promise','Object'].includes(base[1])&&event.operands[1]?.[1]==='prototype'){
-          ctx.emitProtocol(owner,{kind:'promise.intrinsic.get',base:base[1],key:['str','prototype'],result:ctx.tag(raw)},event,'source-intrinsic-prototype/1');return true;
+        if(base?.[0]==='intrinsic'&&(ERROR_CONSTRUCTORS.includes(base[1])||['Promise','Object'].includes(base[1])&&event.operands?.[1]?.[1]==='prototype')){
+          ctx.emitProtocol(owner,{kind:'promise.intrinsic.get',base:base[1],key:key(event.operands[1]),result:ctx.tag(raw)},event,'source-intrinsic-prototype/1');return true;
         }
         const receiver=ctx.tag(base),property=key(event.operands[1]);
         if(receiver[0]!=='ref')ctx.refuse('ordinary property receiver required');
+        const frame=ctx.state.frames[event.invocationId],instruction=ctx.bundle.programs[frame?.codeId]?.instructions[frame?.pc];
+        if(event.operation==='property.write'&&instruction?.op==='DEFINE_LITERAL_PROP'){
+          ctx.emitProtocol(owner,{kind:'property.define',object:receiver[1],key:property,
+            descriptor:{kind:'data',value:ctx.tag(event.operands[2]),writable:true,enumerable:true,configurable:true},success:true},
+            event,'source-literal-property-definition/1');return true;
+        }
         if(row?.child){
           ctx.allocations(row,owner,event);
           const operation=event.operation==='property.read'?'get':'set',id='promiseaccess'+(++state.sequence),
@@ -188,6 +238,13 @@ export function createPromiseObjectTeacherV8(){
         if(ownMethod&&base?.[0]!=='method')ctx.refuse('hasOwnProperty requires its actual method receiver');
         ctx.emitProtocol(owner,{kind:'property.hasOwn',object,key:key(args[ownMethod?0:1]),result:ctx.tag(raw)},event,'source-own-property/1');return true;
       }
+      if(name==='Reflect.has'){
+        ctx.emitProtocol(owner,{kind:'property.has',object,key:key(args[1]??['undefined']),result:ctx.tag(raw)},event,'source-property-existence/1');return true;
+      }
+      if(name==='Reflect.deleteProperty'){
+        if(raw?.[0]!=='bool')ctx.refuse('Reflect.deleteProperty requires its completed boolean');
+        ctx.emitProtocol(owner,{kind:'property.delete',object,key:key(args[1]??['undefined']),success:raw[1]},event,'source-property-deletion/1');return true;
+      }
       if(name==='Object.getOwnPropertyDescriptor'){
         const property=key(args[1]),d=projectedDescriptor(ctx,current,storage(property)),identity=raw?.[0]==='ref'?ctx.identity(raw[1]):null;
         ctx.emitProtocol(owner,{kind:'property.descriptor',object,key:property,descriptor:d,name:identity},event,'source-own-descriptor/1');
@@ -227,11 +284,12 @@ export function createPromiseObjectTeacherV8(){
       if(!controller.protocol?.promiseObjects?.initialized)return true;
       for(const change of event.stateChanges)if(['heap','promises'].includes(change.table)&&change.after){
         const node=change.after,id=ctx.identity(change.id);
-        if((change.table==='promises'||change.id==='Promise.prototype')&&controller.heap.has(id)){
+        if((change.table==='promises'||['Promise.prototype',...ERROR_PROTOTYPES].includes(change.id)||node.declaredError)&&controller.heap.has(id)){
           const actual=describeProtocolObjectV8(controller,id),expected={kind:change.table==='promises'?'promise':'object',
             prototype:projectedPrototype(ctx,node),extensible:node.extensible!==false,
             properties:orderedKeys(node).map(k=>({key:propertyKeyValue(k),descriptor:projectedDescriptor(ctx,node,k)}))};
           if(!eq(actual,expected))ctx.refuse('Promise descriptors/prototype differ from current owned state: '+change.id);
+          if(node.declaredError&&controller.heap.get(id)?.declaredError!==node.declaredError)ctx.refuse('Error allocation lacks its derived intrinsic brand');
         }
       }
       return true;

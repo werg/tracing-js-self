@@ -3,6 +3,7 @@
 export const PROTOCOL_METADATA_ADAPTERS_V8=Object.freeze([]);
 import {createMemoryObservationAdapterV8} from './protocol-memory-observation-v8.js';
 import {createConstructionObservationAdapterV8} from './protocol-construction-observations-v8.js';
+import {createCollectionObservationAdapterV8} from './protocol-collection-observations-v8.js';
 import {createIteratorObservationAdapterV8} from './protocol-iterator-observations-v8.js';
 import {createCustomIteratorObservationAdapterV8} from './protocol-custom-iterator-observations-v8.js';
 import {createPromiseObservationAdapterV8} from './protocol-promise-observations-v8.js';
@@ -11,4 +12,4 @@ import {createProxyObservationAdapterV8} from './protocol-proxy-observations-v8.
 import {createGeneratorObservationAdapterV8} from './protocol-generator-observations-v8.js';
 import {createPromiseExecutorObservationAdapterV8} from './protocol-promise-executor-observations-v8.js';
 import {createEnumerationObservationAdapterV8} from './protocol-enumeration-observations-v8.js';
-export const PROTOCOL_OBSERVATION_ADAPTERS_V8=Object.freeze([createMemoryObservationAdapterV8,createPromiseExecutorObservationAdapterV8,createPrimitiveConversionObservationAdapterV8,createCustomIteratorObservationAdapterV8,createIteratorObservationAdapterV8,createGeneratorObservationAdapterV8,createPromiseObservationAdapterV8,createConstructionObservationAdapterV8,createProxyObservationAdapterV8,createEnumerationObservationAdapterV8]);
+export const PROTOCOL_OBSERVATION_ADAPTERS_V8=Object.freeze([createMemoryObservationAdapterV8,createPromiseExecutorObservationAdapterV8,createPrimitiveConversionObservationAdapterV8,createCustomIteratorObservationAdapterV8,createIteratorObservationAdapterV8,createGeneratorObservationAdapterV8,createPromiseObservationAdapterV8,createConstructionObservationAdapterV8,createProxyObservationAdapterV8,createEnumerationObservationAdapterV8,createCollectionObservationAdapterV8]);

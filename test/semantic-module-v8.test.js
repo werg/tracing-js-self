@@ -105,15 +105,18 @@ test('static namespace re-export reads keep live-cell public projection without 
   assert.equal(refused.exported,undefined);
 });
 
-test('owned module declarations retain class refusal and independently prove generator descriptor observations',async()=>{
+test('owned module declarations independently prove class and generator descriptor observations',async()=>{
   const input={id:'declaration-boundary',family:'declaration-boundary',entryModule:'main.js',exportName:'run',fixture:{calls:[]}},
-    refused=await verifyRegionModuleTrainingCase({...input,modules:{
+    classResult=await verifyRegionModuleTrainingCase({...input,modules:{
       'main.js':'export class C{static observed=this.name;}export function run(){return C.observed;}'}});
-  assert.equal(refused.moduleReference,'passed');
-  assert.equal(refused.status,'projection_refused');
-  assert.equal(refused.phase,'projection');
-  assert.equal(refused.exported,undefined);
-  assert.match(refused.reason,/class\/private state/);
+  assert.ok(classResult.exported,classResult.reason);
+  assert.equal(classResult.moduleReference,'passed');
+  assert.equal(classResult.moduleCorrespondence,'passed');
+  const classSide=classResult.exported.sidecar.sourceArtifact.sidecar;
+  assert.deepEqual(classSide.outcome.graph.roots.at(-1),['str','C']);
+  assert.equal(classSide.reference.metadataAudit.status,'agreed');
+  const classCheck=await recheckRegionEvidence(classResult.exported);
+  assert(classCheck.sourceValidated&&classCheck.projectionValidated&&classCheck.replayValidated);
 
   const source='export function* values(){yield 7;}export function run(){return values.name;}',
     result=await verifyRegionModuleTrainingCase({...input,modules:{'main.js':source}});

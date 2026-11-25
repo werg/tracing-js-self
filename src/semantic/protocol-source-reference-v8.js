@@ -49,7 +49,7 @@ export function independentProtocolSourceReference(input,{timeoutMs=10000,maxOut
   });
 }
 function sourceSites(source){
-  const operations=new Set(),branches=new Set(),logicalAssignments=new Set();
+  const operations=new Set(),branches=new Set(),logicalAssignments=new Set(),inOperators=new Set(),deletes=new Set();
   function visit(node,parent=null){
     if(!node||typeof node!=='object')return;
     if(Array.isArray(node)){for(const child of node)visit(child,parent);return;}
@@ -57,34 +57,46 @@ function sourceSites(source){
     if(['BinaryExpression','UnaryExpression','UpdateExpression'].includes(node.type)||
       node.type==='TemplateLiteral'&&parent?.type!=='TaggedTemplateExpression'||
       node.type==='AssignmentExpression'&&node.operator!=='=')operations.add(site);
+    if(node.type==='BinaryExpression'&&node.operator==='in')inOperators.add(site);
+    if(node.type==='UnaryExpression'&&node.operator==='delete')deletes.add(site);
     if(node.type==='AssignmentExpression'&&['&&=','||=','??='].includes(node.operator)){logicalAssignments.add(site);branches.add(site);}
     if(['IfStatement','WhileStatement','DoWhileStatement','ForStatement','ConditionalExpression'].includes(node.type)&&node.test)
       branches.add(node.test.start+':'+node.test.end);
     if(node.type==='LogicalExpression')branches.add(site);
     for(const [key,value]of Object.entries(node))if(!['start','end','loc'].includes(key))visit(value,node);
-  }visit(parse(source,{ecmaVersion:'latest'}));return {operations,branches,logicalAssignments};
+  }visit(parse(source,{ecmaVersion:'latest'}));return {operations,branches,logicalAssignments,inOperators,deletes};
 }
 export async function auditProtocolSourceV8({bundle,referenceInput,outcome,timeoutMs=10000}){
-  const modes=['original','operations','branches','completions'];
-  const settled=await Promise.allSettled(modes.map(mode=>independentProtocolSourceReference({...referenceInput,mode},{timeoutMs})));
+  const modes=['original','operations','branches','completions'],awaitReturnedPromise=bundle.events.some(event=>
+    event.operation==='job.enter'&&event.causes?.some(cause=>cause.kind==='promise'));
+  const settled=await Promise.allSettled(modes.map(mode=>independentProtocolSourceReference(
+    {...referenceInput,mode,...(awaitReturnedPromise?{awaitReturnedPromise:true}:{})},{timeoutMs})));
   for(const item of settled)if(item.status==='rejected')throw item.reason;
   const [original,operations,branches,completions]=settled.map(item=>item.value);
   for(const reference of [original,operations,branches,completions])
     if(!isDeepStrictEqual(reference.outcome,outcome))fail('original or instrumented completion graph differs from owned execution');
   const sites=sourceSites(referenceInput.source),events=new Map(bundle.events.map(row=>[row.eventId,row])),
-    expectedOperations=[],expectedBranches=[];
+    expectedOperations=[],expectedBranches=[],proxyIds=new Set(
+      Object.entries(bundle.initialState.heap).filter(([,node])=>node.kind==='proxy').map(([id])=>id)),proxySites=new Set();
+  for(const event of bundle.events)for(const change of event.stateChanges??[])
+    if(change.table==='heap'&&change.after?.kind==='proxy')proxyIds.add(change.id);
   for(const row of normalizeJournal(bundle).events){
     const event=events.get(row.journalEvent),site=row.source?row.source.start+':'+row.source.end:null;
     if(event.completion?.type==='throw')continue;
+    if(sites.inOperators.has(site)&&event.operation==='primitive.binary'&&
+      event.operands?.[1]?.[0]==='ref'&&proxyIds.has(event.operands[1][1])){proxySites.add(site);continue;}
+    if(sites.deletes.has(site)&&event.operation==='property.delete'&&
+      event.operands?.[0]?.[0]==='ref'&&proxyIds.has(event.operands[0][1])){proxySites.add(site);continue;}
     if(sites.logicalAssignments.has(site)){
       if(event.operation==='control.branch'&&row.path==='use-left')expectedOperations.push({site,value:row.test});
       else if(['binding.write','property.write'].includes(event.operation))expectedOperations.push({site,value:row.result});
-    }else if(['primitive.binary','primitive.unary','binding.update','property.update','spec.operation.complete','template.substitute'].includes(event.operation)&&sites.operations.has(site))
+    }else if(['primitive.binary','primitive.unary','binding.update','property.update','property.delete','spec.operation.complete','template.substitute'].includes(event.operation)&&sites.operations.has(site))
       expectedOperations.push({site,value:row.result});
     if(event.operation==='control.branch'&&sites.branches.has(site))expectedBranches.push({site,decision:row.result});
   }
   const ownedObservations=ownedProtocolSourceObservations(bundle,referenceInput.source);
-  const operationAudit=compareOperationObservations(expectedOperations,operations.operations),
+  const observedOperations=(operations.operations??[]).filter(row=>!proxySites.has(row.site)),
+    operationAudit=compareOperationObservations(expectedOperations,observedOperations),
     branchAudit=compareBranchObservations(expectedBranches,branches.decisions),
     completionAudit=compareProtocolCompletionObservations(ownedObservations.completions,completions.completions),
     metadataAudit=compareProtocolMetadata(ownedObservations.metadata,completions.metadata),

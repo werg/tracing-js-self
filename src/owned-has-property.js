@@ -24,7 +24,6 @@ export function ownedHasProperty(heap,receiver,key){
       throw new TypeError('Unsupported ordinary in-operator receiver or prototype');
     seen.add(object.id);
     if(ownedHasOwnProperty(object,key))return true;
-    if(object.declaredError&&key==='constructor')return true;
     const parent=Object.hasOwn(object,'prototype')?object.prototype:
       object.kind==='array'?'Array.prototype':object.kind==='function'?'Function.prototype':object.kind==='promise'?'Promise.prototype':'Object.prototype';
     if(parent===null)return false;

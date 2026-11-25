@@ -1,98 +1,123 @@
 # Ordinary data Proxy protocol
 
-`ordinary-data-proxy/1` is a bounded shared-state component for Proxy allocation,
-data access and synchronous owned get/set traps. A proxy retains separate target and handler
-references; it does not copy target properties into independent storage.
+`ordinary-data-proxy/1` is the bounded shared-state protocol for Proxy allocation,
+synchronous `get`, `set`, `has` and `deleteProperty` operations, revocation, and
+their retained call scopes. A Proxy keeps its target and handler identities; it
+does not copy target properties into independent storage. The separate
+`proxy-reflection/1` profile covers seven reflective operations listed below.
+
+## Records
+
+All records use the canonical `protocol ` line prefix. Fields below omit `kind`.
+Each record has the exact listed shape; `proxy.has` may additionally carry `id`
+when it resumes a selected `has` GetMethod continuation.
 
 | Record | Fields after `kind` | Checked behavior |
 | --- | --- | --- |
-| `proxy.create` | `name`, `target`, `handler` | Allocate a fresh Proxy identity over already published object identities. |
-| `proxy.get` | `object`, `key`, `result` | Read the current target data through a handler with no active traps. |
-| `proxy.set` | `object`, `key`, `value`, `success` | Apply the shared ordinary assignment operation to the same target. |
-| `proxy.get.call` | `id`, `object`, `key`, `child` | Select the live getter trap and enter its shared call frame with target, key and Proxy receiver. |
-| `proxy.set.call` | `id`, `object`, `key`, `value`, `child` | Select the live setter trap with the additional assignment value argument. |
-| `proxy.finish` | `id`, `completion` | Consume exactly the returned callback, check the live target invariant, and preserve the property completion value. |
+| `proxy.create` | `name, target, handler` | Allocate a fresh Proxy over published target and handler identities. |
+| `proxy.revocable` | `proxy, revoke, result, target, handler` | Allocate the Proxy, stable revoker and wrapper object from one retained event. |
+| `proxy.revoke` | `object` | Clear the retained target and handler slots; repeated revocation is idempotent. |
+| `proxy.getMethod.begin` | `id, operation, object, target, handler, receiver, key, child, getter` | Retain a synchronous getter selected for the handler's `has` method. |
+| `proxy.getMethod.finish` | `id, completion` | Retain the getter's exact return or thrown completion before continuing GetMethod. |
+| `proxy.revoked.fault` | `object, operation, error` | Allocate the operation-specific TypeError from a revoked Proxy state. |
+| `proxy.get` | `object, key, result, route` | Check the getter result against the retained route and live target invariant. |
+| `proxy.set` | `object, key, value, success, route` | Check assignment success and target effects on the retained route. |
+| `proxy.has` | `object, key, result, route`; optional `id` | Check the Boolean membership result and the retained route/GetMethod continuation. |
+| `proxy.delete` | `object, key, success, route` | Check deletion success against the live target and retained route. |
+| `proxy.get.call` | `id, object, owner, receiver, key, child, route` | Call the retained get trap with target, key and original Proxy receiver. |
+| `proxy.set.call` | `id, object, owner, receiver, key, value, child, strict, route` | Call the retained set trap with target, key, value and original Proxy receiver. |
+| `proxy.has.call` | `id, object, owner, receiver, key, child, route` | Call the retained has trap with target and key. |
+| `proxy.delete.call` | `id, object, owner, receiver, key, child, strict, route` | Call the retained deleteProperty trap with target and key. |
+| `proxy.delete.fault` | `object, key, error, route` | Derive the direct strict-delete TypeError when the trap is absent and the live target property is nonconfigurable. |
+| `proxy.fault` | `id, error` | Derive an operation fault from the retained trap completion and live target state. |
+| `proxy.finish` | `id, completion` | Consume the exact callback completion and check the live operation result or invariant. |
 
-Target and handler are ordinary objects with ordinary or null prototypes and
-data descriptors. Get/set traps may be owned closures; all other recognized
-traps must be absent, undefined or null.
-The same checks run at allocation, each operation and checkpoint validation.
-Arrays, nested proxies, custom prototypes, accessors, callable proxies and
-revocation require their own explicit protocol extensions.
+A Proxy heap node retains exactly its kind, target, handler and empty own-property
+map. Revocation clears its target and handler slots; the ordinary wrapper and
+revoker retain their own identities. Target and handler effects remain in the
+authoritative shared heap, so writes through aliases are visible through the
+Proxy.
 
-Public Proxy nodes have exactly `kind`, `target`, `handler` and an empty
-`properties` map. Their target's descriptors, values, extensibility and aliases
-remain in the existing authoritative heap. A write through either alias is
-visible through the other. A proxy value stored in its target preserves the
-proxy's own identity. False read or assignment claims are rejected before
-the staged state is committed.
+## Retained calls, routes and faults
 
-`proxyCalls` retains the selected callback, caller/child frames, target/handler
-identities, property key and assignment operand. The shared call machinery
-owns function source identity, capture aliases, arguments and effective receiver;
-arrow functions keep their lexical receiver. A changed handler does not replace
-an already selected callback. Once it returns, a matching `proxy.finish` is
-mandatory before other records or compact work can proceed. Checkpoint restore
-validates the complete retained call against the shared stack and argument cells.
+Targets and handlers are ordinarily bounded objects. The get, set, has and
+deleteProperty traps can be selected as synchronous owned closures. The has
+GetMethod path also retains an accessor getter when it returns a supported
+synchronous callable; its receiver, return/throw completion, mutation effects
+and any revocation are checked before the selected trap proceeds. Other
+accessor-based trap selection is not implied by that extension.
 
-Get results and successful set operands must satisfy nonconfigurable,
-nonwritable target data using SameValue. These checks inspect the live target
-after callback effects. A thrown callback retains its thrown value. A false
-setter result and invariant violations need an explicit abrupt completion
-extension and are refused by this public component. The owned runtime separately
-models those failures as caller TypeErrors after the callback has returned.
+Transparent nested routes are supported when outer Proxy links have an absent
+or null trap for the operation and forwarding reaches at most one active inner
+trap. The retained route identifies the original Proxy, every transparent
+outer link and the selected inner owner. Chains requiring multiple active trap
+calls or composed nested target-invariant dispatch remain outside this profile.
 
-Component tests compare native Proxy alias behavior, check nonwritable and
-nonextensible targets, and reject invalid traps, accessor targets, invented
-proxy storage and forged target identities. They also exercise nested callbacks,
-live trap replacement, arrow receivers, thrown values and exact frozen-data
-invariants, including `-0`, `NaN` and reference identity.
+The call state retains the selected callback, caller and child frames, route,
+target/handler, arguments, effective receiver and strictness. Shared call
+validation binds source identity, capture aliases, arguments and receiver.
+Checkpoint restore checks the complete route and call frame. A changed handler
+does not replace a selected callback; the matching finish or fault record must
+consume that completion before another operation proceeds.
+
+Faults are operation-derived. Source-qualified cases include revoked
+get/set/has/deleteProperty operations, strict false set/delete results, direct
+strict delete with no active trap, and selected live-target has/delete
+invariants. Get/set invariant faults remain outside source admission until
+qualified by their own source evidence. Trap-thrown guest values keep their
+identity. These bounded records do not license a throw solely because a claim
+says an operation failed.
+
+## Proxy reflection
+
+`proxy-reflection/1` retains separate call/direct/finish/fault records for
+`getPrototypeOf`, `setPrototypeOf`, `isExtensible`, `preventExtensions`,
+`getOwnPropertyDescriptor`, `ownKeys` and `defineProperty`.
+
+| Record | Fields after kind | Checked behavior |
+| --- | --- | --- |
+| `proxy.reflect.call` | `id, object, operation, caller, arguments, child, route, descriptorObject` | Retain the selected reflection callback and descriptor conversion state. |
+| `proxy.reflect.direct` | `object, operation, caller, arguments, result, route` | Check direct forwarding through the retained target route. |
+| `proxy.reflect.finish` | `id, completion` | Check the exact callback completion and post-callback target state. |
+| `proxy.reflect.fault` | `id, error` | Allocate the derived reflection invariant TypeError. |
+
+It checks the caller form, arguments, selected trap, target effects, descriptor/list values
+and the corresponding Proxy invariant after callback effects. Callback frames
+retain the exact ToPropertyDescriptor result for defineProperty. Descriptor and
+key-list objects whose required property reads invoke unqualified getters are
+refused; an arbitrary reflection trap is not accepted merely because it returns
+the expected scalar.
 
 ## Source and independent metadata
 
-`ordinary-data-proxy-source/1` binds the records to direct owned `new Proxy`
-allocations and get/set events. It checks the allocated target and handler
-identities and the complete retained Proxy node after every owned transition.
-Trap entries additionally bind the selected source code, closure environment,
-effective receiver and declared parameter values to the native call argument
-order. The source adapter checks retained target/key/value and caller/child
-identities until the callback completes. Qualified source traces retain compact
-computations around the Proxy boundary, Symbol keys, target-alias mutations,
-null/undefined traps, live handler replacement and nested trap callbacks.
-The independent assignment observer reads committed target storage, so an
-unchanged assignment-expression result cannot hide a dropped target write.
-For a setter trap, the assignment expression keeps its original right-hand
-value while independent metadata checks the actual effects on target storage.
+`ordinary-data-proxy-source/1` binds `new Proxy` and `Proxy.revocable`
+allocations to original source, target/handler identities and the public heap.
+It qualifies synchronous get/set/has/deleteProperty operations, the selected
+has-getter continuation, transparent nested routes, revocation and the bounded
+operation-derived faults above. It retains compact source work around those
+boundaries and checks effect order, receiver, key conversion, aliases and
+partial effects.
 
-The native metadata adapter registers only actual source `new Proxy` results
-with their original target and handler in a private WeakMap. A private handler
-observer lets native Proxy select each operation and apply its invariants. It
-calls each selected source trap with the original handler as receiver and the
-actual native target, key, value and source Proxy arguments. Absent get/set traps
-forward through native `Reflect.get`/`Reflect.set` with the same receiver. The
-target and source handler remain unchanged, and guest code cannot access the
-private observation handler. The shared observer dispatcher composes callback
-invocations with other declared protocol observers.
+The native metadata adapter registers only Proxy values and revokers created at
+an inventoried source allocation. A private handler observer lets native Proxy
+select the actual trap and apply its algorithm without replacing the guest
+target or handler. It tracks the original target/handler, wrapper and stable
+revoker identities, plus revoked state; unregistered Proxies are refused before
+any trap or unrelated metadata adapter runs. The observer records the native
+trap receiver and arguments and never performs an internal method on the Proxy
+itself.
 
-At every metadata snapshot the adapter checks the ordinary-data and bounded
-trap profile, derives visible descriptors from the
-actual target, and records distinct target/handler identities. It performs no
-get, ownKeys, getPrototypeOf or other internal method on the Proxy itself.
-Unregistered Proxies fail before any trap or unrelated metadata adapter runs.
-Separate ordered receipts cover creation, live trap selection, callback method,
-receiver and argument identities, and returned or thrown values. The owned
-receipt collector reads raw journal frames and environments independently of
-the public component and source compiler; it rejects a different callback
-source, closure, receiver or declared argument even when the final scalar agrees.
+Source tests compare original execution, operations, branches, completions and
+identity/descriptor snapshots. They cover has/delete ordering, retained getter
+selection, receiver preservation, transparent nested routes, revocation,
+operation-derived errors and live target changes.
+`test/semantic-protocol-proxy-source-v8.test.js` and
+`test/semantic-protocol-proxy-reflection-source-v8.test.js` are the focused
+source suites. Independent native-consumer admission remains a separate gate.
 
-Source tests independently compare original execution, operations, branches,
-completions and identity/descriptor snapshots. They reject a target-swapping
-teacher mutation despite an identical scalar outcome and verify exact JSON
-checkpoint resumption during a live setter without repeating target writes.
-Tests cover method replacement order, nested get calls, lexical receivers,
-Number conversion inside traps and scalar thrown values. Arrays, custom
-prototypes, accessor targets or handlers, proxies used directly as targets,
-callable or revoked proxies, async/generator traps, traps other than get/set,
-false setters and invariant-triggered TypeErrors remain explicit source refusals.
-Independent native-consumer admission is a separate gate and is not implied
-by these source tests.
+Arrays, custom prototypes, accessor targets, handler accessors outside the
+bounded has GetMethod path, callable Proxy targets and apply/construct trap
+behavior, asynchronous or generator traps, and nested routes with multiple
+active trap calls or composed invariant dispatch remain outside these source
+profiles. The seven operations in proxy-reflection/1 do not imply support for
+every exotic Proxy behavior.

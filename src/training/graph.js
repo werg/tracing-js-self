@@ -1,6 +1,7 @@
 // Identity-preserving boundary for the deliberately bounded training profile.
 // No user getter, toJSON, coercion hook, or guest code is invoked.
 import {inspectDataObject,inspectOwnedDataEntity} from './data-graph-contract.js';
+import {ownedExceptionFields} from './owned-exception-profile.js';
 import {encode, decode, token} from '../values.js';
 import {stringPropertyKey,stringPropertyName} from '../property-keys.js';
 
@@ -38,13 +39,17 @@ export function importGraph(state, roots, allocate, {maxNodes=256,maxProperties=
   return roots.map(visit);
 }
 
-export function realizeGraph(heap, roots) {
+export function realizeGraph(heap, roots,{exceptionProfile=false}={}) {
   const seen=new Map();
   function visit(value) {
     if (value[0] !== 'ref') return decode(value);
     const id=value[1];
     if(seen.has(id))return seen.get(id);
-    const entity=heap[id];
+    const entity=heap[id],exception=exceptionProfile?ownedExceptionFields(entity):null;
+    if(exception){const result={};seen.set(id,result);
+      for(const {key,value}of exception)Object.defineProperty(result,key,{value:visit(value),writable:true,configurable:true,enumerable:true});
+      return result;
+    }
     inspectOwnedDataEntity(entity);
     const result=entity.kind==='array'?new Array(decode(entity.properties.length.value)):
       entity.prototype===null?Object.create(null):{};

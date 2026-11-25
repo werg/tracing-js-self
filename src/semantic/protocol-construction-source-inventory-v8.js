@@ -58,6 +58,12 @@ export function constructionSourceInventoryV8(source){
 
 /** Exact source membership only; construction capabilities remain separate. */
 export function hasConstructionSourceCallableV8(source,code){
-  if(typeof code!=='string'||!/^class:(0|[1-9][0-9]*):(constructor|instance|static)$/.test(code))return false;
-  try{return constructionSourceInventoryV8(source).synthetic.has(code);}catch{return false;}
+  if(typeof code!=='string'||!code||code.length>256)return false;
+  try{
+    const inventory=constructionSourceInventoryV8(source);
+    if(/^class:(0|[1-9][0-9]*):(constructor|instance|static)$/.test(code)&&inventory.synthetic.has(code))return true;
+    return inventory.classes.some(({node})=>
+      (node.type==='ClassDeclaration'||node.type==='ClassExpression')&&
+      (node.id?.name===code||node.type==='ClassExpression'&&code==='function:'+node.start));
+  }catch{return false;}
 }

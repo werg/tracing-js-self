@@ -6,28 +6,30 @@ import {stringPropertyKey,symbolPropertyKey} from '../property-keys.js';
 export const CUSTOM_ITERATOR_SOURCE_PROFILE_V8='custom-iterator-source/1';
 const cached=/^\[\[(?:(?:async|sync) )?iterator next [0-9]+\]\]$/;
 export function createCustomIteratorSourceAdapterV8({bundle,source}){
-  const patterns=new Set(),defaults=new Set(),rests=new Set();let asyncLoop=false;
+  const patterns=new Set(),nestedPatterns=new Set(),defaults=new Set(),rests=new Set();let asyncLoop=false;
+  const supported=pattern=>pattern?.type==='Identifier'||pattern?.type==='ArrayPattern'&&pattern.elements.every(element=>element===null||supported(element))||
+    pattern?.type==='AssignmentPattern'&&supported(pattern.left)||pattern?.type==='RestElement'&&supported(pattern.argument);
+  function collect(pattern,root=true){
+    if(pattern.type==='ArrayPattern'){const point=pattern.start+':'+pattern.end;patterns.add(point);if(!root)nestedPatterns.add(point);
+      pattern.elements.forEach(element=>{if(element)collect(element,false);});}
+    else if(pattern.type==='AssignmentPattern'){defaults.add(pattern.start+':'+pattern.end);collect(pattern.left,false);}
+    else if(pattern.type==='RestElement'){rests.add(pattern.start+':'+pattern.end);collect(pattern.argument,false);}
+  }
   function visit(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}
     if(node.type==='ForOfStatement'&&node.await)asyncLoop=true;
-    // For-in/of declarations receive their value from the loop and have no
-    // initializer, but their binding patterns use the same checked iterator.
-    if(node.type==='VariableDeclarator'&&node.id.type==='ArrayPattern'&&node.id.elements.every(element=>element===null||
-      element.type==='Identifier'||element.type==='AssignmentPattern'&&element.left.type==='Identifier'||
-      element.type==='RestElement'&&element.argument.type==='Identifier')){
-      patterns.add(node.id.start+':'+node.id.end);
-      for(const element of node.id.elements)if(element?.type==='AssignmentPattern')defaults.add(element.start+':'+element.end);
-      else if(element?.type==='RestElement')rests.add(element.start+':'+element.end);
-    }
+    // Variable binding patterns share the retained iterator machinery. Every
+    // nested pattern keeps its own source range for guard/default/rest claims.
+    if(node.type==='VariableDeclarator'&&node.id.type==='ArrayPattern'&&supported(node.id))collect(node.id);
     for(const [key,value]of Object.entries(node))if(!['start','end','loc','raw'].includes(key))visit(value);
   }visit(parse(source,{ecmaVersion:'latest',sourceType:'script'}));
   if(!asyncLoop&&!Object.values(bundle.programs).some(program=>program.instructions.some(row=>row.op==='ITERATOR_ARRAY_GUARD')))return null;
   let methods=new Map(),accessors=new Map(),accessorSequence=0;
   const require=(ctx,condition,message)=>{if(!condition)ctx.refuse('custom iterator: '+message);};
   return {id:CUSTOM_ITERATOR_SOURCE_PROFILE_V8,
-    captureState:()=>({methods:[...methods],patterns:[...patterns],defaults:[...defaults],rests:[...rests],
+    captureState:()=>({methods:[...methods],patterns:[...patterns],nestedPatterns:[...nestedPatterns],defaults:[...defaults],rests:[...rests],
       asyncLoop,accessors:[...accessors],accessorSequence}),
     restoreState(state){methods=new Map(state.methods);accessors=new Map(state.accessors);accessorSequence=state.accessorSequence;},
-    setup(ctx){ctx.extensionState.set(CUSTOM_ITERATOR_SOURCE_PROFILE_V8,{patterns,defaults,rests});},
+    setup(ctx){ctx.extensionState.set(CUSTOM_ITERATOR_SOURCE_PROFILE_V8,{patterns,nestedPatterns,defaults,rests});},
     event(ctx,event,row){
       const frame=ctx.getOwnedFrame(event.invocationId),inst=bundle.programs[frame?.codeId]?.instructions[frame?.pc];
       if(!inst||inst.siteId!==event.siteId)return false;

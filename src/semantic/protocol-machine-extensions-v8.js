@@ -3,7 +3,8 @@
 import {MEMORY_PROFILE_V8,MEMORY_RECORD_FIELDS,validateMemoryRecordV8,applyMemoryRecordV8,restoreMemoryStateV8} from './protocol-memory-v8.js';
 import {isBinaryMemoryKind} from '../binary-memory-validation.js';
 import {CONSTRUCTION_RECORD_FIELDS,validateConstructionRecordV8,applyConstructionRecordV8,restoreConstructionStateV8,
-  constructionReservedIdentitiesV8,hasConstructionStateV8,assertConstructionNextV8,assertConstructionCallV8} from './protocol-construction-v8.js';
+  constructionReservedIdentitiesV8,hasConstructionStateV8,assertConstructionNextV8,assertConstructionCallV8,
+  constructionCallReceiverV8} from './protocol-construction-v8.js';
 import {hasConstructionSourceCallableV8} from './protocol-construction-source-inventory-v8.js';
 import {ITERATOR_PROFILE_V8,ITERATOR_RECORD_FIELDS,validateIteratorRecordV8,applyIteratorRecordV8,
   restoreIteratorStateV8,hasIteratorStateV8} from './protocol-iterator-v8.js';
@@ -17,7 +18,7 @@ import {NUMBER_RECORD_FIELDS,validateNumberRecordV8,applyNumberRecordV8,restoreN
 import {GENERATOR_PROFILE_V8,GENERATOR_RECORD_FIELDS,GENERATOR_INTRINSICS_V8,validateGeneratorRecordV8,
   applyGeneratorRecordV8,restoreGeneratorStateV8,hasGeneratorStateV8,assertGeneratorCallV8,
   assertGeneratorNextV8,resolveGeneratorIntrinsicV8} from './protocol-generator-v8.js';
-import {PROXY_PROFILE_V8,PROXY_RECORD_FIELDS,validateProxyRecordV8,applyProxyRecordV8,restoreProxyStateV8,hasProxyStateV8,assertProxyNextV8} from './protocol-proxy-v8.js';
+import {PROXY_PROFILE_V8,PROXY_RECORD_FIELDS,validateProxyRecordV8,applyProxyRecordV8,restoreProxyStateV8,hasProxyStateV8,assertProxyNextV8,hasProxySourceCallableV8} from './protocol-proxy-v8.js';
 import {PROMISE_EXECUTOR_PROFILE_V8,PROMISE_EXECUTOR_RECORD_FIELDS,validatePromiseExecutorRecordV8,applyPromiseExecutorRecordV8,
   restorePromiseExecutorStateV8,assertPromiseExecutorNextV8,assertPromiseExecutorCallV8,
   allowsPromiseExecutorInternalSchedulerV8,allowsPromiseExecutorDetailedCallV8} from './protocol-promise-executor-v8.js';
@@ -35,11 +36,22 @@ import {PROMISE_ADOPTION_PROFILE_V8,PROMISE_ADOPTION_RECORD_FIELDS,validatePromi
 import {hasAsyncIterationSourceCallableV8} from './async-iteration-source-v8.js';
 import {PROMISE_OBJECT_PROFILE_V8,PROMISE_OBJECT_RECORD_FIELDS,validatePromiseObjectRecordV8,
   applyPromiseObjectRecordV8,restorePromiseObjectStateV8} from './protocol-promise-object-v8.js';
+import {INTRINSIC_ERROR_PROFILE_V8,INTRINSIC_ERROR_RECORD_FIELDS,validateIntrinsicErrorRecordV8,
+  applyIntrinsicErrorRecordV8,restoreIntrinsicErrorStateV8} from './protocol-intrinsic-error-v8.js';
+import {COLLECTION_PROFILE_V8,COLLECTION_RECORD_FIELDS,validateCollectionRecordV8,applyCollectionRecordV8,
+  restoreCollectionStateV8,hasCollectionStateV8} from './protocol-collection-v8.js';
+import {PROXY_REFLECTION_PROFILE_V8,PROXY_REFLECTION_FIELDS_V8,validateProxyReflectionV8,applyProxyReflectionV8,
+  restoreProxyReflectionV8,assertProxyReflectionNextV8} from './protocol-proxy-reflection-v8.js';
 export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:PROMISE_OBJECT_PROFILE_V8,recordFields:PROMISE_OBJECT_RECORD_FIELDS,
   validateRecord:validatePromiseObjectRecordV8,applyRecord:applyPromiseObjectRecordV8,
   stateField:'promiseObjects',ordinaryHeapKinds:['promise'],
   hasRichState:node=>node.kind==='intrinsic',restoreState:restorePromiseObjectStateV8
+}),Object.freeze({
+  id:INTRINSIC_ERROR_PROFILE_V8,recordFields:INTRINSIC_ERROR_RECORD_FIELDS,
+  validateRecord:validateIntrinsicErrorRecordV8,applyRecord:applyIntrinsicErrorRecordV8,
+  stateField:'intrinsicErrors',hasRichState:node=>Object.hasOwn(node,'declaredError'),
+  restoreState:restoreIntrinsicErrorStateV8
 }),Object.freeze({
   id:MODULE_SCHEDULER_PROFILE_V8,recordFields:MODULE_SCHEDULER_RECORD_FIELDS,
   validateRecord:validateModuleSchedulerRecordV8,applyRecord:applyModuleSchedulerRecordV8,
@@ -66,7 +78,8 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   id:'class-construction/1',recordFields:CONSTRUCTION_RECORD_FIELDS,validateRecord:validateConstructionRecordV8,
   applyRecord:applyConstructionRecordV8,stateField:'construction',restoreState:restoreConstructionStateV8,
   reservedIdentities:constructionReservedIdentitiesV8,hasRichState:hasConstructionStateV8,
-  assertNext:assertConstructionNextV8,assertCall:assertConstructionCallV8,hasSourceCallable:hasConstructionSourceCallableV8
+  assertNext:assertConstructionNextV8,assertCall:assertConstructionCallV8,callReceiver:constructionCallReceiverV8,
+  hasSourceCallable:hasConstructionSourceCallableV8
 }),Object.freeze({
   id:ITERATOR_PROFILE_V8,recordFields:ITERATOR_RECORD_FIELDS,validateRecord:validateIteratorRecordV8,
   applyRecord:applyIteratorRecordV8,hasRichState:hasIteratorStateV8,
@@ -95,9 +108,12 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   assertNext:assertGeneratorNextV8,assertCall:assertGeneratorCallV8,
   restoreState:(controller,_snapshot,api)=>restoreGeneratorStateV8(controller,api)
 }),Object.freeze({
+  id:PROXY_REFLECTION_PROFILE_V8,recordFields:PROXY_REFLECTION_FIELDS_V8,validateRecord:validateProxyReflectionV8,
+  applyRecord:applyProxyReflectionV8,stateField:'proxyReflection',restoreState:restoreProxyReflectionV8,assertNext:assertProxyReflectionNextV8
+}),Object.freeze({
   id:PROXY_PROFILE_V8,recordFields:PROXY_RECORD_FIELDS,validateRecord:validateProxyRecordV8,
   applyRecord:applyProxyRecordV8,hasRichState:hasProxyStateV8,stateField:'proxyCalls',
-  restoreState:restoreProxyStateV8,assertNext:assertProxyNextV8
+  restoreState:restoreProxyStateV8,assertNext:assertProxyNextV8,hasSourceCallable:hasProxySourceCallableV8
 }),Object.freeze({
   id:PROMISE_EXECUTOR_PROFILE_V8,recordFields:PROMISE_EXECUTOR_RECORD_FIELDS,validateRecord:validatePromiseExecutorRecordV8,
   applyRecord:applyPromiseExecutorRecordV8,stateField:'promiseExecutors',restoreState:restorePromiseExecutorStateV8,
@@ -109,4 +125,9 @@ export const PROTOCOL_MACHINE_ADAPTERS_V8=Object.freeze([Object.freeze({
   applyRecord:applyPromiseAdoptionRecordV8,restoreState:(controller,_snapshot,api)=>restorePromiseAdoptionStateV8(controller,api),
   assertNext:assertPromiseAdoptionNextV8,hasRichState:node=>node.adoption!==undefined,
   allowsInternalScheduler:allowsPromiseAdoptionInternalSchedulerV8,allowsWithoutStack:allowsPromiseAdoptionWithoutStackV8
+}),Object.freeze({
+  id:COLLECTION_PROFILE_V8,recordFields:COLLECTION_RECORD_FIELDS,
+  validateRecord:validateCollectionRecordV8,applyRecord:applyCollectionRecordV8,
+  stateField:'collections',hasRichState:hasCollectionStateV8,
+  restoreState:restoreCollectionStateV8
 })]);

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {referenceCommand,referenceEnvironment} from '../src/corpus/reference-isolation.mjs';
@@ -102,16 +103,52 @@ test('full reference completion preserves a genuine rejected Error without readi
 
 test('metadata and final Error boundaries never invoke name, tag or stack getters',async()=>{
   let calls=0;const error=new Error('expected');
-  for(const key of ['name','stack',Symbol.toStringTag])Object.defineProperty(error,key,{
+  // Replace the lazy stack before installing getters used by old V8 formatting.
+  for(const key of ['stack','name',Symbol.toStringTag])Object.defineProperty(error,key,{
     get(){calls++;throw 99;},configurable:true});
   createNativeProtocolMetadata().observe('error','return',error);assert.equal(calls,0);
   for(const [resolution,reason]of [['resolve',/custom prototype/],['reject',/Error extensions/]]){
     const source=`function run(){const error=new Error('expected');
-      for(const key of ['name','stack',Symbol.toStringTag])Object.defineProperty(error,key,{get(){throw 'getter invoked';}});
+      for(const key of ['stack','name',Symbol.toStringTag])Object.defineProperty(error,key,{get(){throw 'getter invoked';}});
       return Promise.${resolution}(error);}`;
     await assert.rejects(independentProtocolSourceReference({source,entry:'run',inputGraph:encodeNativeGraph([]),
       awaitReturnedPromise:true,mode:'original'}),failure=>failure.category==='unsupported.protocol-reference'&&reason.test(failure.message));
   }
+});
+
+test('metadata omits a lazy Error stack before inspecting its descriptor',()=>{
+  let calls=0;const error=new TypeError('expected');
+  for(const key of ['name','message'])Object.defineProperty(error,key,{
+    get(){calls++;throw 99;},configurable:true});
+  const receipt=createNativeProtocolMetadata().observe('error','catch',error),
+    node=receipt.objects.find(node=>node.kind==='error');
+  assert.equal(calls,0);assert.equal(node.errorType,'TypeError');
+  assert.deepEqual(node.properties.map(({key,descriptor})=>[key,descriptor.kind]),[
+    [['str','message'],'accessor'],[['str','name'],'accessor']]);
+});
+
+test('protocol metadata authenticates intrinsic Error type without reading mutable own fields',()=>{
+  const context=vm.createContext({}),prototypes=vm.runInContext(
+    '[Object.prototype,Array.prototype,Function.prototype,Error.prototype,EvalError.prototype,RangeError.prototype,ReferenceError.prototype,SyntaxError.prototype,TypeError.prototype,URIError.prototype]',context),
+    labels=['Object.prototype','Array.prototype','Function.prototype','Error.prototype','EvalError.prototype','RangeError.prototype',
+      'ReferenceError.prototype','SyntaxError.prototype','TypeError.prototype','URIError.prototype'];
+  context.calls=0;const metadata=createNativeProtocolMetadata();metadata.setIntrinsicPrototypes(prototypes,labels);
+  const error=vm.runInContext(`(()=>{const error=new TypeError('expected');
+    for(const key of ['stack','name','message',Symbol.toStringTag])Object.defineProperty(error,key,{get(){calls++;throw 99;},configurable:true});
+    return error;})()`,context);
+  const receipt=metadata.observe('error','catch',error);
+  assert.deepEqual(receipt.objects.find(node=>node.kind==='error'),{
+    id:'r1',kind:'error',errorType:'TypeError',prototype:'TypeError.prototype',extensible:true,
+    properties:[
+      {key:['str','message'],descriptor:{kind:'accessor',get:['ref','r2'],set:['undefined'],enumerable:false,configurable:true}},
+      {key:['str','name'],descriptor:{kind:'accessor',get:['ref','r3'],set:['undefined'],enumerable:false,configurable:true}},
+      {key:['symbol','s1'],descriptor:{kind:'accessor',get:['ref','r4'],set:['undefined'],enumerable:false,configurable:true}}
+    ]
+  });
+  assert.equal(context.calls,0);
+  const forged=vm.runInContext('(()=>{const error=new TypeError();Object.setPrototypeOf(error,Object.create(TypeError.prototype));return error;})()',context),
+    unregistered=createNativeProtocolMetadata();unregistered.setIntrinsicPrototypes(prototypes,labels);
+  assert.throws(()=>unregistered.observe('error','catch',forged),/native Error origin was not observed before its prototype changed/);
 });
 
 test('native slot access adds no process, require or internal binding to the guest realm',async()=>{

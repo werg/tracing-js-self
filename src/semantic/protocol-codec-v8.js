@@ -26,6 +26,7 @@ const baseFields={
   'property.define':['kind','object','key','descriptor','success'],
   'property.get':['kind','object','key','receiver','result'],
   'property.hasOwn':['kind','object','key','result'],
+  'property.has':['kind','object','key','result'],
   'property.set':['kind','object','key','receiver','value','success'],
   'property.delete':['kind','object','key','success'],
   'property.keys':['kind','object','mode','name','keys'],
@@ -100,7 +101,8 @@ function completion(value){
 export function validateProtocolRecordV8(record){
   if(!isAlgorithmDataRecord(record))fail('record must be ordinary data');
   if(typeof record.kind!=='string'||!Object.hasOwn(PROTOCOL_RECORD_V8_FIELDS,record.kind))fail('record kind');
-  const fields=PROTOCOL_RECORD_V8_FIELDS[record.kind];
+  let fields=PROTOCOL_RECORD_V8_FIELDS[record.kind];
+  if(record.kind==='proxy.has'&&Object.hasOwn(record,'id'))fields=[...fields,'id'];
   assertAlgorithmFields(record,fields,'protocol record');
   const adapter=extensionRecords.get(record.kind);
   if(adapter){if(adapter.validateRecord(record,{value:validateProtocolValueV8})!==true)fail('extension record validation');return true;}
@@ -139,7 +141,7 @@ export function validateProtocolRecordV8(record){
   if(record.kind==='choose'&&['evaluate-right','use-left'].includes(record.path)&&
     (record.expr.op!=='logical-test'||record.decision[0]!=='bool'))fail('logical choice requires its left-operand test');
   if(record.kind==='property.define')validateProtocolDescriptorV8(record.descriptor);
-  if(record.kind==='property.hasOwn'&&record.result[0]!=='bool')fail('own-property boolean');
+  if(['property.hasOwn','property.has'].includes(record.kind)&&record.result[0]!=='bool')fail('property-existence boolean');
   if(record.kind==='property.keys'){
     if(!['own','strings','symbols','enumerable-strings'].includes(record.mode))fail('own-key mode');
     list(record.keys,'own keys');record.keys.forEach(validateProtocolKeyV8);

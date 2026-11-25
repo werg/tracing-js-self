@@ -17,6 +17,8 @@ import {verifyExperimentalModuleNamespacePlan} from './module-namespace-state-v8
 import {sourceLinkedComputation,sourceLinkedDecision} from '../training/semantic-source.js';
 import {DECLARED_EXCEPTION_PROFILE} from '../training/exception-profile.js';
 import {inspectSemanticRegion,evaluateSemanticRegion,checkSemanticRegionClaim} from '../training/semantic-regions.js';
+import {ERROR_PROTOTYPES} from '../owned-error-objects.js';
+import {ownedExceptionFields} from '../training/owned-exception-profile.js';
 import {checkEffectfulProjectionState} from '../training/projection-state-profile.js';
 import {inspectOwnedDataEntity} from '../training/data-graph-contract.js';
 import {asyncIterationSourceSitesV8,asyncIterationSourceCodeV8} from './async-iteration-source-v8.js';
@@ -101,7 +103,7 @@ export function ownedEffectfulOutcome(bundle){
   }
   if(!graphValue(value))refuse('completion is outside the declared data boundary');
   return {kind,graph:describeGraph(realizeGraph(bundle.finalState.heap,
-    [...bundle.entrySpec.arguments,value]))};
+    [...bundle.entrySpec.arguments,value],{exceptionProfile:true}))};
 }
 
 export function compileSourceProjection(bundle,{sessionId='teacher1',programId='program1',
@@ -130,7 +132,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     refuse('compact expressions require an operator bound from 1 through 8');
   validateBundle(bundle);replayExact(bundle);
   assertPromiseSourceObjectProfileV8(bundle);
-  checkEffectfulProjectionState(bundle,{protocolProfiles:regionAdapter?.projectionStateProfiles??[]});
+  checkEffectfulProjectionState(bundle,{protocolProfiles:regionAdapter?.projectionStateProfiles??[],exceptionProfile:regionAdapter===null});
   const semantic=normalizeJournal(bundle);validateSemantic(bundle,semantic);
   const entry=bundle.entrySpec;
   if(entry?.kind!=='function')refuse('an explicit owned function entry is required');
@@ -255,9 +257,9 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   for(const program of Object.values(bundle.programs))for(const instruction of program.instructions)
     if(instruction.arg?.codeId&&['DEF_FN','MAKE_FUNCTION'].includes(instruction.op)){
       const helper=bundle.programs[instruction.arg.codeId]?.sourceRole;
-      functionNames.set(instruction.arg.codeId,helper?
+      functionNames.set(instruction.arg.codeId,regionAdapter?.sourceFunctionCode?.(instruction.arg.codeId)??(helper?
         asyncIterationSourceCodeV8(helper,instruction.start,instruction.end,asyncIterationSites):instruction.op==='DEF_FN'?
-        instruction.arg.name:'function:'+instruction.start);
+        instruction.arg.name:'function:'+instruction.start));
       functionReferences.set(instruction.arg.codeId,helper?new Set(bundle.programs[instruction.arg.codeId].instructions
         .filter(row=>row.op==='GET'&&/^\[\[(?:async iterator|sync iterator next) [0-9]+\]\]$/.test(row.arg))
         .map(row=>row.arg)):sourceReferences.get(instruction.start)??new Set());
@@ -265,7 +267,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     }
   const rootFor=frame=>roots.get(frame)??invocationId;
   const frameId=frame=>{if(!frames.has(frame))frames.set(frame,'guest'+(++frameOrdinal));return frames.get(frame);};
-  const identity=id=>id==='Promise.prototype'?promiseIntrinsicIdV8(id):publicIdentities.get(id)??id;
+  const identity=id=>['Promise.prototype',...ERROR_PROTOTYPES].includes(id)?promiseIntrinsicIdV8(id):publicIdentities.get(id)??id;
   const tag=value=>{
     const extended=regionAdapter?.tag?.(value);if(extended!==undefined&&extended!==null)return copy(extended);
     if(!graphValue(value))refuse('unrepresentable value '+JSON.stringify(value));
@@ -413,6 +415,24 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       if(record===true)return null;
       if(record)return emitProtocol(owner,record,event,'source-owned-closure/1');
     }
+    // Symbols use the existing protocol value domain. Detailed scalar records
+    // cannot encode their identity, even inside a composed Promise source.
+    if(regionAdapter){
+      const symbolIn=value=>{
+        if(!value||typeof value!=='object')return false;
+        if(Array.isArray(value)&&value[0]==='symbol')return true;
+        if(value.op==='local'){
+          const selected=controller(owner),name=selected.captureAliases.get(value.name)??value.name;
+          if(selected.locals.get(name)?.[0]==='symbol')return true;
+        }
+        return Object.values(value).some(symbolIn);
+      };
+      if(symbolIn(fields)){
+        if(kind==='bind')return emitProtocol(owner,{kind:'bind',name:fields.name,value:fields.value},event,rule);
+        if(kind==='compute')return emitProtocol(owner,{kind:'compute',expr:fields.expr,result:fields.result,bind:fields.bind??null},event,rule);
+        if(kind==='return'||kind==='throw')return emitProtocol(owner,{kind,invocation:fields.invocation,value:fields.value},event,rule);
+      }
+    }
     // Canonical production reduction over an already committed local cell.
     // A normal assignment to an already published lexical cell is idempotent
     // only when the exact cell and tagged value already match. This cannot
@@ -533,8 +553,10 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
   function allocations(row,owner,event,{initial=null}={}){
     for(const allocation of row.allocations??[]){
       if(controller(owner).heap.has(identity(allocation.identity)))continue;
+      const committed=event.stateChanges.find(change=>change.table==='heap'&&change.id===allocation.identity)?.after,
+        projectedError=regionAdapter===null?ownedExceptionFields(committed):null;
       const fields={name:identity(allocation.identity),kind:allocation.kind==='function'?'closure':allocation.kind,
-        properties:allocation.kind==='function'?[]:allocation.properties.filter(p=>p.key!=='length'||allocation.kind!=='array')
+        properties:allocation.kind==='function'?[]:(projectedError??allocation.properties).filter(p=>p.key!=='length'||allocation.kind!=='array')
           .map(({key,value})=>({key,value:tag(value)}))};
       if(allocation.kind==='array')fields.length=allocation.properties.find(p=>p.key==='length')?.value?.[1];
       if(allocation.kind==='function'){
@@ -804,7 +826,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       event.stateChanges.some(change=>['envs','heap','effects','inputs','promises','control'].includes(change.table))))
       flushComputations();
     let owner=rootFor(event.invocationId),handled=false;
-    if(row?.op==='throw'&&row.allocations?.length)allocations(row,owner,event);
+    if(!regionAdapter&&row?.op==='throw'&&row.allocations?.length)allocations(row,owner,event);
     const promiseChanges=event.stateChanges.filter(change=>change.table==='promises');
     const effectCreated=event.stateChanges.find(change=>change.table==='effects'&&change.before===null);
     const queued=state.control.a0.queue?.[0];
@@ -1098,7 +1120,13 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
       }else writes(row,owner,event);
       handled=true;
     }else if(row?.op==='read'){
-      for(const read of row.reads??[])if(read.kind==='property'&&controller(owner).heap.has(identity(read.objectId??read.object))){
+      const base=event.operands?.[0],exception=regionAdapter===null&&base?.[0]==='ref'?
+        ownedExceptionFields(state.heap[base[1]]):null;
+      if(exception&&event.operation==='property.read'){
+        const key=event.operands[1]?.[1],selected=exception.find(field=>field.key===key);
+        if(!selected||!isDeepStrictEqual(event.result,selected.value))refuse('Error name/message read differs from its declared exception boundary');
+        emit(owner,'read',{object:identity(base[1]),key,present:true,value:tag(selected.value)},event,'declared-error-boundary-read');
+      }else for(const read of row.reads??[])if(read.kind==='property'&&controller(owner).heap.has(identity(read.objectId??read.object))){
         const object=identity(read.objectId??read.object),key=read.key??read.property;
         if(typeof key==='string'&&sourceValue(read.value))emit(owner,'read',{object,key,
           present:read.present??true,value:tag(read.value)},event,'read');
@@ -1115,6 +1143,7 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
     // One owned throw may close helper and executor scopes before reaching an
     // ordinary root/job completion. Extensions consume only their exact exits;
     // the remaining lifecycle stays with the shared completion projector.
+    if(regionAdapter&&!handled&&row?.op==='throw'&&row.allocations?.length)allocations(row,owner,event);
     const completionResult=regionAdapter?.completion?.(extensionContext,event,row,fact),
       handledCompletion=completionResult===true,
       completedInvocations=new Set(completionResult?.invocations??[]);
@@ -1178,7 +1207,10 @@ export function compileSourceProjection(bundle,{sessionId='teacher1',programId='
         const reaction=reactionFrames.get(exit.invocation),adoptedTarget=regionAdapter&&reaction&&kind==='return'&&
           value[0]==='ref'&&controller(owner).heap.get(value[1])?.kind==='promise'?value[1]:null;
         if(adoptedTarget!==null)extensionContext.preparePromiseAdoption(event,owner,reaction.target,adoptedTarget);
-        emit(owner,kind,{value,invocation:frameId(exit.invocation)},event,'completion');
+        const scopedCall=controller(owner).protocol?.callFrames.at(-1);
+        if(regionAdapter&&scopedCall?.child===frameId(exit.invocation))
+          emitProtocol(owner,{kind,invocation:frameId(exit.invocation),value},event,'owned-source-completion/1');
+        else emit(owner,kind,{value,invocation:frameId(exit.invocation)},event,'completion');
         if(reactionFrames.has(exit.invocation)){
           const job=reactionFrames.get(exit.invocation);
           if(adoptedTarget!==null){

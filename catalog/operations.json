@@ -270,12 +270,22 @@
       "kind": "algorithm"
     },
     {
+      "operationId": "proxy.revocable.allocate",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
       "operationId": "environment.iteration",
       "version": 1,
       "kind": "algorithm"
     },
     {
       "operationId": "property.update",
+      "version": 1,
+      "kind": "algorithm"
+    },
+    {
+      "operationId": "property.delete",
       "version": 1,
       "kind": "algorithm"
     },

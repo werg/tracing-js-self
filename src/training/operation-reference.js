@@ -8,7 +8,7 @@ import {normalizeJournal} from '../semantic/normalize.js';
 import {referenceOutcome} from './reference.js';
 
 const observedOperations=new Set([
-  'primitive.binary','primitive.unary','template.substitute','spec.operation.complete','binding.update','property.update'
+  'primitive.binary','primitive.unary','template.substitute','spec.operation.complete','binding.update','property.update','property.delete'
 ]);
 
 function sourceOperationNodes(source) {
@@ -21,6 +21,7 @@ function sourceOperationNodes(source) {
        (value.type==='AssignmentExpression'&&value.operator!=='=')||
        value.type==='UpdateExpression'||value.type==='TemplateLiteral'&&parent?.type!=='TaggedTemplateExpression')
       nodes.push({start:value.start,end:value.end,site:String(value.start)+':'+value.end,
+        nodeType:value.type,operator:value.operator,
         logicalAssignment:value.type==='AssignmentExpression'&&['&&=','||=','??='].includes(value.operator)});
     for(const [name,child] of Object.entries(value))
       if(name!=='start'&&name!=='end'&&name!=='loc')visit(child,value);
@@ -72,11 +73,23 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
   // operator at those locations. Keep them in the journal, and separate
   // their coverage status from auditable source expressions.
   const sourceNodes=sourceOperationNodes(source),sourceSites=new Set(sourceNodes.map(node=>node.site)),
-    logicalAssignments=new Set(sourceNodes.filter(node=>node.logicalAssignment).map(node=>node.site));
+    sourceBySite=new Map(sourceNodes.map(node=>[node.site,node])),
+    logicalAssignments=new Set(sourceNodes.filter(node=>node.logicalAssignment).map(node=>node.site)),
+    proxyIds=new Set(Object.entries(bundle.initialState.heap).filter(([,node])=>node.kind==='proxy').map(([id])=>id)),
+    proxySites=new Set();
+  for(const event of bundle.events)for(const change of event.stateChanges??[])
+    if(change.table==='heap'&&change.after?.kind==='proxy')proxyIds.add(change.id);
   const unverified=new Set();
   for(const row of normalized.events){
     const event=eventsById.get(row.journalEvent),operation=event?.operation;
-    const site=row.source?String(row.source.start)+':'+row.source.end:null;
+    const site=row.source?String(row.source.start)+':'+row.source.end:null,
+      original=sourceBySite.get(site);
+    // A Proxy in-operator can suspend before producing its source result;
+    // its retained call/finish evidence is audited by the Proxy protocol.
+    if(operation==='primitive.binary'&&original?.nodeType==='BinaryExpression'&&original.operator==='in'&&
+       event.operands?.[1]?.[0]==='ref'&&proxyIds.has(event.operands[1][1])){if(site)proxySites.add(site);continue;}
+    if(operation==='property.delete'&&event.operands?.[0]?.[0]==='ref'&&proxyIds.has(event.operands[0][1])){
+      if(site)proxySites.add(site);continue;}
     if(logicalAssignments.has(site)){
       // The value of a logical assignment is the old LHS on the skipped path,
       // or the assigned RHS after a completed write. Neither is a binary op.
@@ -122,6 +135,7 @@ export function auditReferenceOperations({source,entry,args,initialHeap,bundle,r
       referenceKind:observed.kind,message:observed.message??null};
   if(!isDeepStrictEqual(observed.graph,reference.graph))
     return {schema,status:'mismatch',reason:'Instrumentation altered the observable graph'};
-  const comparison=compareOperationObservations(expected,observed.operations);
+  const scalarOperations=(observed.operations??[]).filter(row=>!proxySites.has(row.site));
+  const comparison=compareOperationObservations(expected,scalarOperations);
   return {schema,...comparison,covered,unverifiedFamilies:[...unverified].sort()};
 }

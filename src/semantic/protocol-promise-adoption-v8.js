@@ -1,3 +1,4 @@
+import {allocateIntrinsicErrorV8} from './protocol-intrinsic-error-v8.js';
 // Promise resolution has two observable FIFO turns: the intrinsic then call
 // registers a forwarding reaction, which subsequently settles the result. Both
 // use the controller's existing jobs, dependency sequence and ready queue.
@@ -154,9 +155,8 @@ export function applyPromiseAdoptionRecordV8(controller,record,api){
     api.require(adoption.owner===controller.rootInvocation&&adoption.phase==='intent'&&adoption.target===record.promise,
       'self resolution requires the exact original resolution intent');
     freshJob(controller,record.error,api);
-    controller.heap.set(record.error,{kind:'object',code:null,captures:[],prototype:'ordinary',properties:new Map([
-      ['name',['str','TypeError']],['message',['str','Chaining cycle detected for promise']]
-    ])});adoption.phase='self';adoption.error=record.error;
+    allocateIntrinsicErrorV8(controller,{identity:record.error,errorType:'TypeError',message:'Chaining cycle detected for promise'},api);
+    adoption.phase='self';adoption.error=record.error;
     controller.settlePromise(record.promise,'rejected',['ref',record.error]);return true;
   }
   if(record.kind==='promise.adopt.enqueue'){
@@ -202,13 +202,16 @@ export function applyPromiseAdoptionRecordV8(controller,record,api){
     if(record.kind==='promise.adopt.get'){
       const descriptor=constructorDescriptor(controller,record.target,api),callee=descriptor?.kind==='accessor'?descriptor.get:null,
         closure=callee?.[0]==='ref'?controller.heap.get(callee[1]):null;
+      api.require(callee?.[0]==='ref',
+        'adoption getter requires its selected synchronous owned getter');
       api.require(closure?.kind==='closure'&&!closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver,
-        'adoption constructor requires its selected synchronous owned getter');
+        'adoption getter requires its selected synchronous owned getter');
       api.require(!controller.protocol.callFrames.length&&!controller.protocol.pendingCalls.length,
         'adoption getter cannot inherit another call continuation');
       // A job has no guest caller. Use the common checked activation machinery,
       // retaining its caller state on the job rather than an absent call frame.
-      api.call(controller,{child:record.child,callee,receiver:['ref',record.target],arguments:[]});
+      const receiver=api.callReceiver(controller,callee,closure.functionKind==='arrow'?closure.lexicalReceiver:['ref',record.target]);
+      api.call(controller,{child:record.child,callee,receiver,arguments:[]});
       const scope=controller.protocol.callFrames.pop();
       job.priorAliases=scope.priorAliases;job.priorReceiver=scope.priorReceiver;job.closure=callee[1];
       controller.ready.shift();job.status='running';controller.activeJob=record.job;
@@ -253,6 +256,17 @@ export function allowsPromiseAdoptionInternalSchedulerV8(controller,record){
 }
 export function restorePromiseAdoptionStateV8(controller,api){
   const ownedJobs=new Set(),pending=[],reading=[];
+  for(const job of controller.jobs?.values()??[])for(const identity of [job.closure,job.rejectionClosure])if(identity){
+    const closure=controller.heap.get(identity),capture=closure?.callable?.lexicalConstruction;
+    if(capture!==undefined&&capture!==null){
+      api.require(closure?.kind==='closure'&&closure.functionKind==='arrow',
+        'scheduled constructor capture requires its exact arrow');
+      // Re-resolve the arrow's receiver from the retained constructor cell at
+      // every checkpoint. This authenticates the constructor frame and rejects
+      // forged or stale lexical receiver metadata without trusting the job row.
+      api.callReceiver(controller,['ref',identity],closure.lexicalReceiver);
+    }
+  }
   for(const [identity,node]of entries(controller)){
     const adoption=node.adoption,lookup=adoption.lookup;
     assertAlgorithmFields(adoption,['schema','owner','target','phase','cause','job','forwarding','error',
@@ -277,9 +291,11 @@ export function restorePromiseAdoptionStateV8(controller,api){
     if(lookup!==undefined){
       assertAlgorithmFields(lookup,['child','callee'],'adoption constructor lookup');id(lookup.child);api.known(controller,lookup.callee);
       const closure=lookup.callee?.[0]==='ref'?controller.heap.get(lookup.callee[1]):null,
-        receiver=closure?.functionKind==='arrow'?closure.lexicalReceiver:['ref',adoption.target];
+        rawReceiver=closure?.functionKind==='arrow'?closure.lexicalReceiver:['ref',adoption.target],
+        receiver=closure?api.callReceiver(controller,lookup.callee,rawReceiver):rawReceiver;
       api.require(['reading','observing','completed','rejected'].includes(adoption.phase)&&closure?.kind==='closure'&&
-        !closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver,'retained adoption getter identity');
+        !closure.asyncFunction&&!closure.generatorFunction&&!closure.promiseResolver,
+        'retained adoption getter identity or receiver');
       if(adoption.owner===controller.rootInvocation){
         api.require(controller.frameFunctions.get(lookup.child)===closure.code&&
           api.eq(controller.locals.get(lookup.child+':this'),receiver),'retained adoption getter identity or receiver');

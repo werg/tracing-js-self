@@ -14,8 +14,8 @@ const binaries=new Set(['+','-','*','/','%','**','<','<=','>','>=','===','!==','
 const logical=new Set(['&&','||','??']);
 const assignments=new Set(['=','&&=','||=','??=','+=','-=','*=','/=','%=','**=',
   '&=','|=','^=','<<=','>>=','>>>=']);
-const unary=new Set(['!','-','+','typeof','void','~']);
-const ownedConstructors=new Set(['Set','Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError','Symbol','Promise','ArrayBuffer','SharedArrayBuffer','DataView',
+const unary=new Set(['!','-','+','typeof','void','~','delete']);
+const ownedConstructors=new Set(['Set','Map','Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError','Symbol','Promise','ArrayBuffer','SharedArrayBuffer','DataView',
   'Int8Array','Uint8Array','Int16Array','Uint16Array','Int32Array','Uint32Array',
   'BigInt64Array','BigUint64Array','Float32Array','Float64Array']);
 export function parseTraining(source,{moduleNamespaceIntrinsic=false}={}) {
@@ -186,6 +186,7 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
         return {...loc,type:'Await',argument:expr(n.argument)};
       case 'UnaryExpression':
         if(!unary.has(n.operator))reject(n,'unary operator');
+        if(n.operator==='delete'&&n.argument.type!=='MemberExpression')reject(n,'delete target');
         return {...loc,type:'Unary',operator:n.operator,argument:expr(n.argument)};
       case 'BinaryExpression':case 'LogicalExpression':
         if(n.operator==='in'&&n.left.type==='PrivateIdentifier')return {...loc,type:'PrivateHas',name:n.left.name,object:expr(n.right)};
@@ -253,6 +254,11 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
           reject(n,'spread/optional call');
         if(n.callee.type==='Identifier' && ['eval','Function','require'].includes(n.callee.name))
           reject(n,'dynamic source or host call');
+        if(n.callee.type==='MemberExpression'&&!n.callee.computed&&n.callee.object.type==='Identifier'&&
+           n.callee.object.name==='Proxy'&&n.callee.property.name==='revocable'){
+          if(n.arguments.length!==2||n.arguments.some(a=>a.type==='SpreadElement'))reject(n,'Proxy.revocable arguments');
+          return {...loc,type:'ProxyRevocable',args:n.arguments.map(expr)};
+        }
         return {...loc,type:n.callee.type==='Super'?'SuperCall':'Call',...(n.callee.type==='Super'?{}:{callee:expr(n.callee)}),
           args:n.arguments.map(a=>a.type==='SpreadElement'?
             {...span(a),type:'Spread',argument:expr(a.argument)}:expr(a))};
@@ -443,6 +449,7 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
         case 'DeferredRegExp':case 'OwnedPinnedRegExp':break;
         case 'Array':n.elements.forEach(x=>{if(x)value(x.type==='Spread'?x.argument:x,e);});break;
         case 'Proxy':value(n.target,e);value(n.handler,e);break;
+        case 'ProxyRevocable':n.args.forEach(argument=>value(argument,e));break;
         case 'Object':n.properties.forEach(p=>{if(p.computedKey)value(p.computedKey,e);value(p.value,e);});break;
         case 'Assign':value(n.left,e);value(n.right,e);break;
         case 'PatternAssignment':statement(n,e);break;
@@ -535,6 +542,6 @@ function parseOwnedProfile(source,{training,moduleNamespaceIntrinsic=false}){
       init:{type:'Literal'},pattern:parsed.pattern},{names:new Set(params),parent});
     statements.forEach(n=>statement(n,env));
   }
-  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','ArrayBuffer','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
+  scope(body,{names:new Set(['undefined','Object','Array','Number','BigInt','String','Symbol','Reflect','Math','Promise','Set','Map','Error','TypeError','Date','console','host','NaN','Infinity','parseInt','isNaN','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','ArrayBuffer','SharedArrayBuffer','DataView',...ownedConstructors,'Atomics']),parent:null},[],false,true);
   return {type:'Program',body,start:0,end:source.length,profile};
 }

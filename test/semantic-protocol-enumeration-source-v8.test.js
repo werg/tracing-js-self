@@ -86,16 +86,41 @@ test('enumeration checkpoint replay binds every prefix and rejects false keys wi
   assert.equal((await recheckProtocolRegionEvidence(artifact)).sourceValidated,true);
 });
 
-test('structural mutation callable chains proxies and complex loop bindings stay outside the source profile',async()=>{
+test('callable chains effectful Proxy traps and complex loop bindings stay outside the source profile',async()=>{
   for(const body of [
-    'const o={a:1,b:2};for(const key in o)o.added=3;return 7;',
-    'const o={a:1,b:2};for(const key in o)Object.defineProperty(o,"b",{enumerable:false});return 7;',
-    'const o={a:1,b:2};for(const key in o)Object.setPrototypeOf(o,{p:1});return 7;',
-    'const o=new Proxy({a:1},{});for(const key in o){}return 7;',
+    'const o=new Proxy({a:1},{ownKeys(){return ["a"];}});for(const key in o){}return 7;',
     'const f=()=>1;Object.setPrototypeOf(f,{prototype:3});for(const key in f){}return 7;',
     'const f=()=>1;f.p=1;const o=Object.create(f);for(const key in o){}return 7;',
     'for(const [key] in {a:1}){}return 7;'
   ]){
     const result=await verifyProtocolRegionTrainingCase(fixture(body));assert.equal(result.exported,undefined,body);assert.notEqual(result.status,'locally_verified');
+  }
+});
+
+test('the original structural-mutation controls now admit exact source/native evidence',async()=>{
+  for(const body of [
+    'const o={a:1,b:2};for(const key in o)Object.defineProperty(o,"b",{enumerable:false});return 7;',
+    'const o={a:1,b:2};for(const key in o)Object.setPrototypeOf(o,{p:1});return 7;',
+  ]){
+    const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(result.exported,result.reason);
+    assert.equal((await recheckProtocolRegionEvidence(result.exported)).valid,true);
+  }
+});
+
+test('transparent Proxy for-in preserves source identity, inherited shadowing and value-only writes',async()=>{
+  const {issue51ObjectFixtures}=await import('../fixtures/semantic-regions/objects-issue51.js');
+  for(const id of ['issue51-control-for-in-proxy','issue51-for-in-transparent-proxy-value-writes','issue51-for-in-nested-transparent-proxy']){
+    const fixture=issue51ObjectFixtures.find(row=>row.id===id);assert(fixture);
+    const result=await verifyProtocolRegionTrainingCase({...fixture,timeoutMs:30000});assert(result.exported,result.reason);
+    assert.equal((await recheckProtocolRegionEvidence(result.exported)).sourceValidated,true);
+  }
+});
+test('Proxy for-in refuses effectful internal methods and shape changes until their ordered continuation',async()=>{
+  for(const body of [
+    'const object=new Proxy({a:1},{ownKeys(){return ["a"];}});for(const key in object){}return 7;',
+    'const target={a:1,b:2};const object=new Proxy(target,{});for(const key in object)delete target.b;return 7;'
+  ]){
+    const result=await verifyProtocolRegionTrainingCase(fixture(body));assert(!result.exported);
+    assert.match(result.reason,/Proxy.*(enumeration|descriptor|trap)|enumeration.*Proxy/i);
   }
 });

@@ -24,11 +24,14 @@ import {createSharedProtocolSourceComponentsV8} from './protocol-source-bridge-v
 import {createPromiseExecutorTeacherV8} from './protocol-promise-executor-source-v8.js';
 import {assertPromiseSourceObjectProfileV8} from './protocol-promise-adoption-source-v8.js';
 import {applyProtocolRecordV8,describeProtocolObjectV8,assertProtocolDetailCompatible} from './protocol-state-v8.js';
+import {sourceInvalidInFaultV8} from './protocol-intrinsic-error-source-v8.js';
+import {ERROR_CONSTRUCTORS,ERROR_PROTOTYPES} from '../owned-error-objects.js';
+import {isPromiseIntrinsicValueV8,promiseIntrinsicIdV8,PROMISE_OBJECT_INTRINSICS_V8} from './protocol-promise-object-v8.js';
 import {bindModuleSchedulerSourceProjectionV8} from './module-scheduler-source-bridge-v8.js';
 
 const copy=structuredClone,eq=isDeepStrictEqual,lit=value=>({op:'literal',value:copy(value)});
 function refuse(message){const error=new TypeError('Protocol source projection: '+message);error.category='unsupported.protocol-source';throw error;}
-const valueTag=value=>Array.isArray(value)&&['undefined','null','bool','str','num','bigint','ref','symbol'].includes(value[0]);
+const valueTag=value=>Array.isArray(value)&&(['undefined','null','bool','str','num','bigint','ref','symbol'].includes(value[0])||isPromiseIntrinsicValueV8(value));
 function sourceInventory(source,admitSyntax=()=>false){const functions=new Map(),nodes=new Map();
   function visit(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(visit);return;}
     if(typeof node.type==='string')nodes.set(node.start+':'+node.end,node);
@@ -162,7 +165,22 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       certificate:{rule,journalEvents:selectedEvents,source:source?{start:source.start,end:source.end}:null,
         ...(selectedEvents.length>1?{sourceEvents:eventSites}:{})}});
   }
-  function tag(value,event=null){if(!valueTag(value))refuse('value requires an explicit callable/protocol interface: '+JSON.stringify(value));
+  const publicIdentity=id=>ERROR_PROTOTYPES.includes(id)?promiseIntrinsicIdV8(id):id;
+  function initializeIntrinsics(event){if(!controller.protocol?.promiseObjects?.initialized)
+    emit({kind:'promise.intrinsics'},event,'owned-source-ordinary-intrinsics/1');
+    for(const name of PROMISE_OBJECT_INTRINSICS_V8)published.add(promiseIntrinsicIdV8(name));}
+  function publicDescriptor(node,key,event=null){const value=descriptor(node,key);
+    return value?.kind==='data'?{...value,value:tag(value.value,event)}:value?{...value,get:tag(value.get,event),set:tag(value.set,event)}:null;}
+  function normalizeValueTag(value,event=null){
+    const normalized=extension('normalizeTag',context,value,event);
+    if(normalized===null)return value;
+    if(!valueTag(normalized))refuse('callable normalization produced an invalid protocol value');
+    validateProtocolValueV8(normalized);return normalized;
+  }
+  function tag(value,event=null){
+    value=normalizeValueTag(value,event);
+    if(isPromiseIntrinsicValueV8(value)){initializeIntrinsics(event);return ['ref',promiseIntrinsicIdV8(value[1])];}
+    if(!valueTag(value))refuse('value requires an explicit callable/protocol interface: '+JSON.stringify(value));
     if(value[0]==='ref'&&!published.has(value[1])){
       const initial=bundle.initialState.heap[value[1]];
       if(!initial||initial.kind!=='function'||!eq(initial,state.heap[value[1]]))refuse('reference used before its owned allocation');
@@ -182,7 +200,10 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     use(adapter);published.add(node.id);
   }
   function baseAllocate(node,event){
-    guardedHeap(node);if(published.has(node.id))return;if(publishing.has(node.id))refuse('recursive unpublished closure capture');publishing.add(node.id);
+    guardedHeap(node);if(published.has(node.id))return;
+    if(node.declaredError)refuse('intrinsic Error allocation requires its derived fault transition');
+    if(ERROR_PROTOTYPES.includes(node.id)){initializeIntrinsics(event);published.add(node.id);return;}
+    if(publishing.has(node.id))refuse('recursive unpublished closure capture');publishing.add(node.id);
     if(node.kind==='symbol'){
       emit(node.registeredKey===undefined?{kind:'symbol.create',id:node.id,description:copy(node.description)}:
         {kind:'symbol.for',id:node.id,key:node.registeredKey},event,'owned-source-symbol/1');published.add(node.id);publishing.delete(node.id);return;
@@ -217,12 +238,20 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
     return name&&eq(controller.locals.get(controller.captureAliases.get(name)??name),value)?{op:'local',name}:lit(value);
   }
   function compute(expr,result,event,{name=null}={}){
+    const map=value=>{if(!value||typeof value!=='object')return value;if(Array.isArray(value))return isPromiseIntrinsicValueV8(value)?tag(value,event):value.map(map);return Object.fromEntries(Object.entries(value).map(([key,item])=>[key,map(item)]));};expr=map(expr);
     result=tag(result,event);let hasSymbol=false;const inspect=value=>{if(!value||typeof value!=='object')return;if(Array.isArray(value)&&value[0]==='symbol'||value.op==='local'&&controller.locals.get(controller.captureAliases.get(value.name)??value.name)?.[0]==='symbol')hasSymbol=true;for(const item of Object.values(value))inspect(item);};inspect(expr);
     if(!hasSymbol&&result[0]!=='symbol'&&!(expr.op==='unary'&&expr.operator==='typeof'&&expr.arg.value?.[0]==='ref')){
       emit({kind:'compute',fields:{expr,result}},event,'owned-source-computation/1',{detail:true});if(name!==null)bind(name,result,event);
     }else emit({kind:'compute',expr,result,bind:name},event,'owned-source-computation/1');
   }
   function key(value){if(value?.[0]==='symbol')return copy(value);if(!['undefined','null','str','num','bool','bigint'].includes(value?.[0]))refuse('observable ToPropertyKey requires a coercion protocol');return ['str',String(decode(value))];}
+  function projectInvalidInFault(event,row,error,heapChanges){
+    const fault=sourceInvalidInFaultV8(bundle,state,event,row);
+    if(fault.error!==error.id||heapChanges.length!==1)refuse('invalid in fault allocation differs');
+    emit({kind:'property.fault',operation:'has',target:tag(fault.target,event),key:tag(fault.key,event),error:fault.error},
+      event,'owned-source-in-invalid-rhs/1');
+    published.add(fault.error);return true;
+  }
   function checkNode(node){guardedHeap(node);
     for(const adapter of heapOwners.get(node.id)??[])if(adapter.checkHeap(context,node)!==true)refuse('extension failed its complete heap comparison: '+adapter.id);
     if(!['object','array','function','symbol'].includes(node.kind))return;
@@ -231,10 +260,12 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   function baseCheckHeap(node){if(node.kind==='symbol'){
       const row=controller.protocol?.symbols.find(row=>row.id===node.id);if(!row||!eq(row.description,node.description)||
         (node.registeredKey===undefined?row.kind!=='unique':row.kind!=='registry'||row.key!==node.registeredKey))refuse('Symbol declaration differs from owned identity');return;}
-    const expected={kind:node.kind==='function'?'closure':node.kind,prototype:prototype(node),extensible:node.extensible!==false,
-      properties:orderedKeys(node).map(key=>({key:propertyKeyValue(key),descriptor:descriptor(node,key)})),
+    const expected={kind:node.kind==='function'?'closure':node.kind,prototype:ERROR_PROTOTYPES.includes(node.id)&&node.prototype==='Object.prototype'?['ref',promiseIntrinsicIdV8('Object.prototype')]:prototype(node),extensible:node.extensible!==false,
+      properties:orderedKeys(node).map(key=>({key:propertyKeyValue(key),descriptor:publicDescriptor(node,key)})),
       ...(node.kind==='function'?{code:codeFor(node),functionKind:node.arrow?'arrow':'ordinary',lexicalReceiver:node.arrow?node.lexicalThis:null}:{})};
-    if(!eq(expected,describeProtocolObjectV8(controller,node.id)))refuse('shared descriptor/heap state differs after owned transition '+node.id);
+    if(!eq(expected,describeProtocolObjectV8(controller,publicIdentity(node.id))))refuse('shared descriptor/heap state differs after owned transition '+node.id);
+    if(node.declaredError&&controller.heap.get(node.id)?.declaredError!==node.declaredError)
+      refuse('intrinsic Error type differs from its derived public fault '+node.id);
   }
   function arrayMutationReceiver(value,method){
     const node=value?.[0]==='ref'?state.heap[value[1]]:null;
@@ -248,6 +279,10 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   }
   function builtin(event,row,changes){
     const raw=row.operands[0],callee=raw?.[0]==='method'?raw[1]:raw,args=row.operands.slice(1),name=callee?.[0]==='intrinsic'?callee[1]:callee?.[0]==='builtinfn'?callee[1]:null;
+    if(name==='Function.prototype.hasInstance'){
+      if(raw?.[0]!=='method'||args.length!==1)refuse('hasInstance requires its selected builtin method and original receiver');
+      initializeIntrinsics(event);emit({kind:'object.hasInstance',constructor:tag(raw[2],event),value:tag(args[0],event),result:tag(row.result,event)},event,'owned-source-has-instance/1');return;
+    }
     if(['Array.prototype.push','Array.prototype.pop'].includes(name)){
       if(raw[0]!=='method')refuse('array mutation requires its original method receiver');
       const receiver=tag(raw[2],event),node=arrayMutationReceiver(receiver,name),length=node.properties.length.value[1];
@@ -280,9 +315,31 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       if(name==='Symbol.prototype.valueOf')compute(lit(symbol),row.result,event);
       else emit({kind:'symbol.read',symbol,operation:name==='Symbol.keyFor'?'keyFor':'toString',result:tag(row.result,event),bind:null},event);return;
     }
+    if(['Object.getPrototypeOf','Object.isExtensible','Object.getOwnPropertyDescriptor'].includes(name)){
+      const input=args[0],node=input?.[0]==='ref'||input?.[0]==='intrinsic'?state.heap[input[1]]:null;
+      if(!node||!['object','array'].includes(node.kind))refuse('ordinary reflection requires owned object storage');
+      initializeIntrinsics(event);const object=tag(input,event)[1];
+      if(name==='Object.getOwnPropertyDescriptor'){
+        const encoded=key(args[1]??['undefined']),storage=encoded[0]==='str'?stringPropertyKey(encoded[1]):symbolPropertyKey(encoded[1]),
+          described=publicDescriptor(node,storage,event),allocation=row.result?.[0]==='ref'?row.result[1]:null;
+        if(described===null?row.result?.[0]!=='undefined':allocation===null)refuse('descriptor result identity differs');
+        emit({kind:'property.descriptor',object,key:encoded,descriptor:described,name:allocation},event,'owned-source-object-descriptor/1');
+        if(allocation!==null)published.add(allocation);
+      }else emit({kind:name==='Object.getPrototypeOf'?'property.getPrototypeOf':'property.isExtensible',object,result:tag(row.result,event)},event,'owned-source-object-reflection/1');
+      return;
+    }
     if(name==='Object.hasOwn'){
       if(args[0]?.[0]!=='ref'||changes.length)refuse('own-property check requires ordinary storage without heap effects');
       emit({kind:'property.hasOwn',object:tag(args[0],event)[1],key:key(args[1]??['undefined']),result:tag(row.result,event)},event,'owned-source-own-property/1');return;
+    }
+    if(name==='Reflect.has'){
+      if(args[0]?.[0]!=='ref'||changes.length)refuse('property existence requires ordinary storage without heap effects');
+      emit({kind:'property.has',object:tag(args[0],event)[1],key:key(args[1]??['undefined']),result:tag(row.result,event)},event,'owned-source-property-existence/1');return;
+    }
+    if(name==='Reflect.deleteProperty'){
+      if(args[0]?.[0]!=='ref'||row.result?.[0]!=='bool'||changes.some(change=>change.id!==args[0][1]))
+        refuse('property deletion requires an ordinary receiver and exact boolean result');
+      emit({kind:'property.delete',object:tag(args[0],event)[1],key:key(args[1]??['undefined']),success:row.result[1]},event,'owned-source-property-deletion/1');return;
     }
     if(['Reflect.ownKeys','Object.keys','Object.getOwnPropertyNames','Object.getOwnPropertySymbols'].includes(name)){
       if(args[0]?.[0]!=='ref'||row.result?.[0]!=='ref')refuse('key enumeration requires an ordinary object');
@@ -323,15 +380,22 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
       return;
     }
     if(name==='Object.defineProperty'){
-      if(args[0]?.[0]!=='ref'||args[2]?.[0]!=='ref')refuse('ordinary descriptor arguments required');
-      const object=args[0][1],encoded=key(args[1]),storage=encoded[0]==='str'?stringPropertyKey(encoded[1]):symbolPropertyKey(encoded[1]);
-      const target=changes.find(change=>change.id===object)?.after??state.heap[object];
-      const described=descriptor(target,storage);if(!described)refuse('defined property missing');
+      if(!(['ref','intrinsic'].includes(args[0]?.[0]))||args[2]?.[0]!=='ref')refuse('ordinary descriptor arguments required');
+      const object=tag(args[0],event)[1],ownedId=args[0][1],encoded=key(args[1]),storage=encoded[0]==='str'?stringPropertyKey(encoded[1]):symbolPropertyKey(encoded[1]);
+      const target=changes.find(change=>change.id===ownedId)?.after??state.heap[ownedId];
+      const described=publicDescriptor(target,storage,event);if(!described)refuse('defined property missing');
       emit({kind:'property.define',object,key:encoded,descriptor:described,success:true},event,'owned-source-descriptor/1');return;
     }
+    if(name==='Object.preventExtensions'){
+      const object=args[0]?.[0]==='ref'?args[0][1]:null,
+        changed=changes.find(change=>change.id===object)?.after??state.heap[object];
+      if(object===null||changes.some(change=>change.id!==object)||changed?.extensible!==false||
+        !eq(row.result,['ref',object]))refuse('preventExtensions requires one exact ordinary object result');
+      emit({kind:'property.preventExtensions',object},event,'owned-source-object-prevent-extensions/1');return;
+    }
     if(name==='Object.setPrototypeOf'){
-      if(args[0]?.[0]!=='ref'||!['null','ref'].includes(args[1]?.[0]))refuse('ordinary prototype operands required');
-      emit({kind:'property.prototype',object:args[0][1],prototype:args[1][0]==='null'?null:tag(args[1],event),success:true},event);return;
+      if(!['ref','intrinsic'].includes(args[0]?.[0])||!['null','ref','intrinsic'].includes(args[1]?.[0]))refuse('ordinary prototype operands required');
+      emit({kind:'property.prototype',object:tag(args[0],event)[1],prototype:args[1][0]==='null'?null:tag(args[1],event),success:true},event);return;
     }
     if(name==='Object.create'){
       const allocation=changes.find(change=>change.before===null&&change.id===row.result?.[1]);
@@ -359,6 +423,11 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
   const context={bundle,source,inventory,
     get state(){return state;},get beforeState(){return state;},get controller(){return controller;},get claims(){return claims;},
     emit,bind,tag,cell,frame,codeFor,publish,baseAllocate,baseCheckHeap,
+    bindDerived(name,value,event=null){
+      if(!Array.isArray(value)||!['undefined','null','bool','str','num','bigint'].includes(value[0]))
+        refuse('derived source binding must be a checked primitive');
+      return bind(name,value,event);
+    },
     functionCodes,functionNodes,get published(){return published;},get pendingAccessors(){return pendingAccessors;},
     key,descriptor,prototype,orderedKeys,refuse,copy,eq,
     markPublished(id){published.add(id);},
@@ -440,7 +509,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         if(event.operation==='property.read'||event.operation==='property.write'){
           if(row.operands[0]?.[0]!=='ref')refuse('accessor receiver must be an owned ordinary object');
           const operation=event.operation==='property.read'?'get':'set',id='access'+(++accessorCounter);
-          emit({kind:'property.'+operation+'.call',id,child,object:row.operands[0][1],key:key(row.operands[1]),
+          emit({kind:'property.'+operation+'.call',id,child,object:tag(row.operands[0],event)[1],key:key(row.operands[1]),
             receiver:tag(row.receiver,event),...(operation==='set'?{value:tag(row.operands[2],event)}:{})},event,'owned-source-accessor-call/1');
           pendingAccessors.set(child,{id,operation,value:operation==='set'?tag(row.operands[2],event):null});
         }else{
@@ -451,24 +520,34 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         const environment=event.stateChanges.find(change=>change.table==='envs'&&change.before===null)?.after;
         for(const [name,binding]of Object.entries(environment?.bindings??{}))if(binding.initialized)bind(cell(environment.id,name),binding.token.value,event);
       }else if(event.operation==='call.enter')builtin(event,row,heapChanges);
-      else if(row.allocations?.length)for(const allocation of row.allocations){const node=heapChanges.find(change=>change.id===allocation.identity)?.after;if(!node)refuse('allocation patch missing');publish(node,event);}
+      else if(row.allocations?.length)for(const allocation of row.allocations){
+        const node=heapChanges.find(change=>change.id===allocation.identity)?.after;if(!node)refuse('allocation patch missing');
+        if(node.declaredError){projectInvalidInFault(event,row,node,heapChanges);continue;}
+        publish(node,event);
+      }
       else if(event.operation==='property.read'){
         const [base,property]=row.operands;
-        const output=row.result?.[0]==='method'?row.result[1]:row.result;
-        if(output?.[0]==='builtinfn'&&['Array.prototype.push','Array.prototype.pop'].includes(output[1])){
+        const output=row.result?.[0]==='method'?row.result[1]:row.result,
+          owner=state.frames[event.invocationId],inst=bundle.programs[owner?.codeId]?.instructions[owner?.pc];
+        if(inst?.op==='REQUIRE_OBJECT'){
+          if(row.operands.length!==1||!['ref','promise','intrinsic','builtinfn','hostfn'].includes(base?.[0])||!eq(row.result,base))refuse('object guard requires its original reference value');
+          compute(lit(tag(base,event)),row.result,event);
+        }else if(output?.[0]==='builtinfn'&&['Array.prototype.push','Array.prototype.pop'].includes(output[1])){
           // A builtin method is not a public first-class value. Its direct call
           // is expanded into checked length reads and ordinary property writes.
           // Capturing or replacing the method still requires a callable profile.
           arrayMutationReceiver(base,output[1]);
           if(!eq(property,['str',output[1].slice('Array.prototype.'.length)]))refuse('array method lookup key differs');
-        }else if(base?.[0]==='ref')emit({kind:'property.get',object:base[1],key:key(property),receiver:tag(base,event),
+        }else if(base?.[0]==='intrinsic'&&ERROR_CONSTRUCTORS.includes(base[1])){
+          initializeIntrinsics(event);emit({kind:'promise.intrinsic.get',base:base[1],key:key(property),result:tag(output,event)},event,'owned-source-error-intrinsic/1');
+        }else if(base?.[0]==='ref'||base?.[0]==='intrinsic'&&ERROR_PROTOTYPES.includes(base[1]))emit({kind:'property.get',object:tag(base,event)[1],key:key(property),receiver:tag(base,event),
           result:tag(row.result?.[0]==='method'?row.result[1]:row.result,event)},event,'owned-source-property-read/1');
         else if(base?.[0]==='symbol'&&property?.[0]==='str'&&property[1]==='description')
           emit({kind:'symbol.read',symbol:tag(base,event),operation:'description',result:tag(row.result,event),bind:null},event);
         else if(!['intrinsic','symbol'].includes(base?.[0])||!['method','builtinfn','symbol'].includes(row.result?.[0]))
           refuse('primitive/intrinsic property needs its own protocol');
       }else if(event.operation==='property.write'){
-        if(row.operands[0]?.[0]!=='ref')refuse('ordinary write receiver required');
+        if(row.operands[0]?.[0]!=='ref'&&!(row.operands[0]?.[0]==='intrinsic'&&ERROR_PROTOTYPES.includes(row.operands[0][1])))refuse('ordinary write receiver required');
         const owner=state.frames[event.invocationId],instruction=bundle.programs[owner?.codeId]?.instructions[owner?.pc];
         if(instruction?.op==='DEFINE_LITERAL_PROP'&&instruction.siteId===event.siteId){
           const object=row.operands[0][1],node=heapChanges.find(change=>change.id===object)?.after??state.heap[object];
@@ -477,7 +556,12 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
             const property=key(row.operands[1]),storage=property[0]==='str'?stringPropertyKey(property[1]):symbolPropertyKey(property[1]);
             emit({kind:'property.define',object,key:property,descriptor:descriptor(node,storage),success:true},event,'owned-source-literal-definition/1');
           }
-        }else emit({kind:'property.set',object:row.operands[0][1],key:key(row.operands[1]),receiver:tag(row.operands[0],event),value:tag(row.operands[2],event),success:true},event,'owned-source-property-write/1');
+        }else emit({kind:'property.set',object:tag(row.operands[0],event)[1],key:key(row.operands[1]),receiver:tag(row.operands[0],event),value:tag(row.operands[2],event),success:true},event,'owned-source-property-write/1');
+      }else if(event.operation==='property.delete'){
+        const [base,property]=row.operands;
+        if(base?.[0]!=='ref'||row.result?.[0]!=='bool'||heapChanges.some(change=>change.id!==base[1]))
+          refuse('property deletion requires an ordinary receiver and exact boolean result');
+        emit({kind:'property.delete',object:tag(base,event)[1],key:key(property),success:row.result[1]},event,'owned-source-property-deletion/1');
       }else if(event.operation==='property.update'){
         const [base,property,old]=row.operands,encoded=key(property);
         if(base?.[0]!=='ref'||!['undefined','null','bool','str','num','bigint'].includes(old?.[0]))
@@ -497,8 +581,16 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);
         compute({op:'binary',operator:row.arithmetic.operator,left:operand(row.operands[0],node?.left,event),right:operand(row.operands[1],node?.right,event)},row.result,event);
       }else if(event.operation==='primitive.binary'){
-        const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);if(!node?.operator)refuse('binary source operator missing');
-        compute({op:'binary',operator:node.operator,left:operand(row.operands[0],node.left,event),right:operand(row.operands[1],node.right,event)},row.result,event);
+        const owner=state.frames[event.invocationId],inst=bundle.programs[owner?.codeId]?.instructions[owner?.pc];
+        if(inst?.op==='INSTANCEOF_RESULT'){compute({op:'unary',operator:'!',arg:{op:'unary',operator:'!',arg:lit(tag(row.operands[0],event))}},row.result,event);}
+        else if(inst?.op==='INSTANCEOF_DEFAULT'){initializeIntrinsics(event);emit({kind:'object.hasInstance',constructor:tag(row.operands[1],event),value:tag(row.operands[0],event),result:tag(row.result,event)},event,'owned-source-default-has-instance/1');}
+        else {const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);if(!node?.operator)refuse('binary source operator missing');
+        if(node.operator==='in'&&event.completion?.type==='throw'){
+          refuse('invalid in-operator RHS allocation was not claimed by its derived fault transition');
+        }else if(node.operator==='in'){
+          if(row.operands[1]?.[0]!=='ref'||heapChanges.length)refuse('in requires an ordinary object and separately checked key conversion');
+          emit({kind:'property.has',object:tag(row.operands[1],event)[1],key:key(row.operands[0]),result:tag(row.result,event)},event,'owned-source-property-existence/1');
+        }else compute({op:'binary',operator:node.operator,left:operand(row.operands[0],node.left,event),right:operand(row.operands[1],node.right,event)},row.result,event);}
       }else if(event.operation==='primitive.unary'){
         const node=inventory.nodes.get(row.source?.start+':'+row.source?.end);if(!node?.operator)refuse('unary source operator missing');
         compute({op:'unary',operator:node.operator,arg:operand(row.operands[0],node.argument,event)},row.result,event);
@@ -519,16 +611,17 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
         }else{
           const node=inventory.nodes.get(row.source?.start+':'+row.source?.end),
             optional=['MemberExpression','CallExpression'].includes(node?.type)&&node.optional===true,
+            hasInstance=node?.type==='BinaryExpression'&&node.operator==='instanceof',
             instruction=bundle.programs[event.codeId]?.instructions.find(item=>item.siteId===event.siteId&&item.op==='LOGICAL_JUMP'),
-            operator=optional?'??':node?.type==='LogicalExpression'?node.operator:
+            operator=optional||hasInstance?'??':node?.type==='LogicalExpression'?node.operator:
               node?.type==='AssignmentExpression'?node.operator.slice(0,-1):null;
           if(!['&&','||','??'].includes(operator))refuse('logical choice lacks its exact source operator');
           if(instruction?.arg.operator!==operator)refuse('logical choice differs from its immutable instruction');
           // This record commits before the right operand executes. Publish the
           // actual left operand and its operator, never a teacher-only decision
           // literal or a value from the future right-hand computation.
-          const value=optional&&row.test[0]==='method'?row.test[1]:row.test,
-            left=optional?(node.type==='MemberExpression'?node.object:node.callee):node.left;
+          const value=(optional||hasInstance)&&row.test[0]==='method'?row.test[1]:row.test,
+            left=hasInstance?null:optional?(node.type==='MemberExpression'?node.object:node.callee):node.left;
           emit({kind:'choose',expr:{op:'logical-test',operator,arg:operand(tag(value,event),left,event)},
             decision:row.result,path:optional?(row.result[1]?'then':'else'):row.path},event,
             optional?'owned-source-optional-choice/1':'owned-source-logical-choice/1');
@@ -543,7 +636,7 @@ export function compileProtocolSourceV8(bundle,{maxGenerated=16384,adapters=PROT
           if(!initial?.initialized||!eq(initial.token?.value,read.value))refuse('read of an unprojected source cell');
           bind(name,read.value,event);
         }
-        if(!eq(controller.locals.get(controller.captureAliases.get(name)??name),read.value))refuse('source cell read disagrees with shared live cell');
+        if(!eq(controller.locals.get(controller.captureAliases.get(name)??name),tag(read.value,event)))refuse('source cell read disagrees with shared live cell');
       }
     }
     // Project each completed frame once, deepest first, including propagating

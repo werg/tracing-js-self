@@ -1,6 +1,7 @@
-// Stable ordinary for-in cursors on the authoritative shared heap. Key lists
+// Ordinary for-in cursors on the authoritative shared heap. Candidate lists
 // are derived here, never supplied by a teacher or a native enumeration call.
 import {assertAlgorithmFields,assertAlgorithmDataArray,isAlgorithmDataRecord} from './ir.js';
+import {promiseIntrinsicIdV8} from './protocol-promise-object-v8.js';
 
 export const ENUMERATION_PROFILE_V8='ordinary-for-in/1';
 export const ENUMERATION_RECORD_FIELDS=Object.freeze({
@@ -28,6 +29,20 @@ function selectedKeys(chain,api){
   }
   return keys;
 }
+function enumerationTarget(controller,identity,api){
+  const seen=new Set();let current=identity,node=controller.heap.get(current);
+  while(node?.kind==='proxy'){
+    api.require(!seen.has(current)&&seen.size<64,'enumeration Proxy route cycle/bound');seen.add(current);
+    api.require(node.target?.[0]==='ref'&&node.handler?.[0]==='ref','revoked Proxy enumeration requires its abrupt boundary');
+    for(const name of ['ownKeys','getOwnPropertyDescriptor','getPrototypeOf']){
+      const descriptor=api.resolveProperty(controller,node.handler[1],['str',name],{forHas:true}).descriptor;
+      api.require(!descriptor||descriptor.kind==='data'&&['undefined','null'].includes(descriptor.value[0]),
+        'Proxy enumeration trap requires its ordered internal-method continuation');
+    }
+    current=node.target[1];node=controller.heap.get(current);
+  }
+  return {identity:current,node:api.heapNode(controller,current)};
+}
 function snapshot(controller,source,api){
   api.known(controller,source);const chain=[];
   if(source[0]==='str'){
@@ -38,7 +53,7 @@ function snapshot(controller,source,api){
   const seen=new Set();let current=source[1];
   for(;;){
     api.require(!seen.has(current)&&chain.length<ENUMERATION_LIMITS_V8.chain,'cyclic or excessive enumeration prototype chain');seen.add(current);
-    const node=api.heapNode(controller,current);api.require(ordinary.has(node.kind),'enumeration requires ordinary storage');
+    const {node}=enumerationTarget(controller,current,api);api.require(ordinary.has(node.kind),'enumeration requires ordinary storage');
     const keys=api.order(node).filter(key=>typeof key==='string').map(key=>[key,api.ownDescriptor(node,['str',key]).enumerable]);
     api.require(keys.length<=ENUMERATION_LIMITS_V8.keys,'enumeration own-key bound');
     const prototype=node.prototype===undefined?'ordinary':api.copy(node.prototype);chain.push({id:current,prototype,keys});
@@ -51,11 +66,25 @@ export function applyEnumerationRecordV8(controller,record,api){
   if(!Object.hasOwn(ENUMERATION_RECORD_FIELDS,record.kind))return false;
   if(record.kind==='enumeration.create'){
     api.fresh(controller,record.name);const selected=snapshot(controller,record.source,api);
+    if(selected.chain.at(-1)?.prototype==='ordinary'&&controller.protocol?.promiseObjects?.initialized){
+      const intrinsic=api.heapNode(controller,promiseIntrinsicIdV8('Object.prototype'));
+      api.require(!api.order(intrinsic).some(key=>typeof key==='string'&&api.ownDescriptor(intrinsic,['str',key]).enumerable),
+        'enumerable intrinsic prototype requires an explicit enumeration chain');
+    }
     controller.heap.set(record.name,{kind:'enumerator',source:api.copy(record.source),...selected,nextIndex:0,done:false,properties:new Map()});
   }else{
     const node=controller.heap.get(record.object);api.require(node?.kind==='enumerator','enumeration cursor identity required');
-    const selected=snapshot(controller,node.source,api);
-    api.require(api.eq(selected.chain,node.chain)&&api.eq(selected.keys,node.keys),'enumeration key descriptor or prototype changed');
+    // Once exhausted, later mutations cannot revive a cursor. Before that,
+    // keep captured order, ignore additions and skip names no longer present
+    // anywhere on the current live chain, without ever reading a property value.
+    if(!node.done){
+      const proxy=node.chain.some(row=>controller.heap.get(row.id)?.kind==='proxy');
+      if(proxy)api.require(api.eq(snapshot(controller,node.source,api).chain,node.chain),
+        'Proxy enumeration descriptor/prototype mutation requires its ordered continuation');
+      const source=node.source[0]==='ref'?enumerationTarget(controller,node.source[1],api).identity:null;
+      if(source!==null)while(node.nextIndex<node.keys.length&&
+        !api.resolveProperty(controller,source,['str',node.keys[node.nextIndex]],{forHas:true}).descriptor)node.nextIndex++;
+    }
     const done=node.nextIndex>=node.keys.length,result=done?['undefined']:['str',node.keys[node.nextIndex]];
     api.require(record.done===done&&api.eq(record.result,result),'false enumeration next result');
     api.allocate(controller,{name:record.name,objectKind:'object',length:null,code:null,captures:[],functionKind:null,lexicalReceiver:null,
@@ -81,7 +110,7 @@ export function restoreEnumerationStateV8(controller,api){
     const seen=new Set();
     for(const [index,row]of node.chain.entries()){
       assertAlgorithmFields(row,['id','prototype','keys'],'enumeration chain entry');id(row.id);
-      api.require(!seen.has(row.id)&&ordinary.has(api.heapNode(controller,row.id).kind),'enumeration chain identity');seen.add(row.id);
+      api.require(!seen.has(row.id)&&ordinary.has(enumerationTarget(controller,row.id,api).node.kind),'enumeration chain identity');seen.add(row.id);
       assertAlgorithmDataArray(row.keys,'enumeration own keys');const own=new Set();
       api.require(row.keys.length<=ENUMERATION_LIMITS_V8.keys,'enumeration own-key bound');
       let stringSeen=false,previousIndex=-1;
@@ -95,7 +124,8 @@ export function restoreEnumerationStateV8(controller,api){
     }
     api.require(api.eq(node.keys,selectedKeys(node.chain,api)),'enumeration snapshot key order or shadowing');
     // A checkpoint may follow a source write before the next step (or a break).
-    // Preserve that exact prefix; next checks its live key/prototype structure.
+    // Preserve that exact prefix; next checks current live existence and
+    // skips removed candidates. It never reconstructs a cursor from new keys.
   }
   return {valid:true,enumerators:count};
 }

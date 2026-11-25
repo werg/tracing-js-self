@@ -156,8 +156,8 @@ export function isPromiseConstructorRejection(before,event){
   const reason=rejected.after.value,allocation=event.stateChanges.find(change=>
     change.table==='heap'&&change.id===reason?.value?.[1]&&change.before===null)?.after;
   return typeof completion.errorType==='string'&&reason?.value?.[0]==='ref'&&reason.origin===event.eventId&&
-    allocation?.declaredError===completion.errorType&&equal(allocation.properties?.name,
-      {value:['str',completion.errorType],origin:event.eventId})&&equal(allocation.properties?.message,
+    allocation?.declaredError===completion.errorType&&allocation.prototype===completion.errorType+'.prototype'&&
+    !Object.hasOwn(allocation.properties??{},'name')&&equal(allocation.properties?.message,
       {value:['str',completion.message??''],origin:event.eventId});
 }
 export function validatePromiseResolutionState(state,fail){

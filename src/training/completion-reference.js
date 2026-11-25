@@ -265,7 +265,7 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
         else{
           const [base,property]=event.operands??[];
           const ordinaryReceiver=base?.[0]==='ref'||base?.[0]==='promise'||
-            base?.[0]==='intrinsic'&&base[1]==='Promise.prototype';
+            base?.[0]==='intrinsic'&&['Promise.prototype','Error.prototype','EvalError.prototype','RangeError.prototype','ReferenceError.prototype','SyntaxError.prototype','TypeError.prototype','URIError.prototype'].includes(base[1]);
           if(!ordinaryReceiver||!['str','num','bool','null','undefined','bigint','symbol'].includes(property?.[0]))
             throw new TypeError('Source assignment storage is outside the independently observed property profile');
           const object=base[0]==='promise'?state.promises[base[1]]:state.heap[base[1]];
@@ -296,6 +296,13 @@ export function ownedCompletionObservations(bundle,source,{onObservation=null,as
     if((!abrupt||resumedInvocation)&&event.operation==='call.enter'&&plan.sites.has('call:'+key)&&!pending.has(event.invocationId)){
       if(!event.causes.some(c=>c.kind==='invocation')&&Array.isArray(event.result)){emit(key,'call',event.result);calls.add(key);}
       else if(patch?.after)pending.set(event.invocationId,{site:key,kind:'call',depth:patch.after.stack.length,pc:patch.after.pc});
+    }
+    // Proxy.revocable is lowered as a bounded intrinsic allocation rather than
+    // a generic CALL frame, but the independent native source observer still
+    // wraps its original CallExpression and records that expression result.
+    if(!abrupt&&event.operation==='proxy.revocable.allocate'&&location&&
+      plan.sites.has('call:'+key)&&Array.isArray(event.result)){
+      emit(key,'call',event.result);calls.add(key);
     }
     if(event.operation==='stack.pop'&&plan.sites.has('statement:'+key))emit(key,'statement',event.operands[0]);
     if(event.operation==='call.return'&&plan.sites.has('return:'+key))emit(key,'return',event.result);

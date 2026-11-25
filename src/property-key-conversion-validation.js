@@ -10,13 +10,26 @@ const bindingFields=['envId','name','token','version'];
 const shape=(record,keys)=>record&&typeof record==='object'&&!Array.isArray(record)&&
   Object.keys(record).length===keys.length&&keys.every(key=>Object.hasOwn(record,key));
 function reference(frame,instruction,state,fail){
-  const op=instruction?.op,offset=op==='PUT_PROP'?2:
-    ['GET_PROP','GET_METHOD','UPDATE_PROP','PROPERTY_KEY'].includes(op)||op==='DUP2'&&instruction.arg?.cachePropertyKey===true?1:null;
+  const op=instruction?.op,offset=op==='PUT_PROP'?2:op==='BINARY'&&instruction.arg==='in'?2:
+    ['GET_PROP','GET_METHOD','UPDATE_PROP','DELETE_PROP','PROPERTY_KEY'].includes(op)||op==='DUP2'&&instruction.arg?.cachePropertyKey===true?1:
+      op==='CALL'&&Number.isSafeInteger(instruction.arg)&&instruction.arg>=2?instruction.arg-1:null;
   if(offset===null)fail('PropertyKey continuation does not belong to a reference instruction');
   const stackIndex=frame.stack.length-offset,key=frame.stack[stackIndex],base=frame.stack[stackIndex-1];
+  const binaryTarget=op==='BINARY'?frame.stack[stackIndex+1]?.value:null;
   if(key?.value[0]!=='ref'||!['object','array'].includes(state.heap[key.value[1]]?.kind)||
-    op!=='PROPERTY_KEY'&&(!base||['null','undefined'].includes(base.value[0])))
+    op==='BINARY'&&!['ref','promise','intrinsic','builtinfn','hostfn','host'].includes(binaryTarget?.[0])||
+    op!=='PROPERTY_KEY'&&op!=='BINARY'&&(!base||['null','undefined'].includes(base.value[0])))
     fail('PropertyKey continuation lacks an owned key or coercible base');
+  if(op==='CALL'){
+    const raw=frame.stack[stackIndex-2]?.value,callee=raw?.[0]==='method'?raw[1]:raw,target=base?.value,
+      object=target?.[0]==='ref'?state.heap[target[1]]:
+        target?.[0]==='promise'?state.promises[target[1]]:
+          target?.[0]==='intrinsic'&&target[1]==='Promise.prototype'?{kind:'object'}:null;
+    if(callee?.[0]!=='builtinfn'||!['Reflect.has','Reflect.deleteProperty'].includes(callee[1])||
+      !object||!(['object','array','function','promise'].includes(object.kind)||
+        callee[1]==='Reflect.deleteProperty'&&object.kind==='module-namespace'))
+      fail('PropertyKey call continuation requires its original Reflect operation and valid owned target');
+  }
   let cacheBinding=null;
   if(op==='GET_PROP'&&instruction.arg?.cachePropertyKey){
     const name=instruction.arg.cachePropertyKey;

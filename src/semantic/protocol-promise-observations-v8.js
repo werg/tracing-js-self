@@ -4,6 +4,8 @@
 import {types} from 'node:util';
 import {symbolPropertyKey} from '../property-keys.js';
 const profile='owned-promise-source/1';
+const errorNames=['Error','EvalError','RangeError','ReferenceError','SyntaxError','TypeError','URIError'];
+const errorPrototypes=errorNames.map(name=>name+'.prototype');
 const own=Object.getOwnPropertyDescriptors,keys=Reflect.ownKeys,getPrototype=Object.getPrototypeOf,
   extensible=Object.isExtensible;
 const objectMethods=['__defineGetter__','__defineSetter__','hasOwnProperty','__lookupGetter__',
@@ -20,7 +22,11 @@ function intrinsicRecord(name){
     record.properties[key]=valueToken(value);record.dataAttributes[key]={writable,enumerable:false,configurable:true};
     record.propertyOrder.push(key);
   };
-  if(name==='Promise.prototype'){
+  if(errorPrototypes.includes(name)){
+    const type=name.slice(0,-10);record.prototype=type==='Error'?'Object.prototype':'Error.prototype';
+    data('constructor',['intrinsic',type]);data('name',['str',type]);data('message',['str','']);
+    if(type==='Error')data('toString',functionTag('Error.prototype.toString'));
+  }else if(name==='Promise.prototype'){
     data('constructor',['intrinsic','Promise']);
     for(const method of ['then','catch','finally'])data(method,functionTag('Promise.prototype.'+method));
     data(symbolPropertyKey('well-known:toStringTag'),['str','Promise'],false);
@@ -34,7 +40,7 @@ function intrinsicRecord(name){
   return record;
 }
 const intrinsicNames=new Set(['Promise','Object',...['then','catch','finally'].map(name=>'Promise.prototype.'+name),
-  ...objectMethods.map(name=>'Object.prototype.'+name),'Object.prototype.__proto__.get','Object.prototype.__proto__.set']);
+  ...objectMethods.map(name=>'Object.prototype.'+name),'Object.prototype.__proto__.get','Object.prototype.__proto__.set',...errorNames,'Error.prototype.toString','Function.prototype.hasInstance']);
 const functionNode=name=>({kind:'function',annotations:[{name:'intrinsic-identity/1',values:[],data:{name}}]});
 function unchanged(value,captured){
   if(getPrototype(value)!==captured.prototype||extensible(value)!==captured.extensible)return false;
@@ -54,6 +60,10 @@ export function createPromiseObservationAdapterV8(){
     const capture=(name,value)=>nativeIntrinsics.set(value,{name,descriptors:own(value),
       prototype:getPrototype(value),extensible:extensible(value)});
     capture('Promise',promise);capture('Object',object);
+    const errors=evaluate('['+errorNames.join(',')+']');
+    errors.forEach((constructor,index)=>capture(errorNames[index],constructor));
+    capture('Error.prototype.toString',own(own(errors[0]).prototype.value).toString.value);
+    capture('Function.prototype.hasInstance',evaluate('Function.prototype[Symbol.hasInstance]'));
     const promises=own(promisePrototype),objects=own(objectPrototype);
     for(const name of ['then','catch','finally'])capture('Promise.prototype.'+name,promises[name].value);
     for(const name of objectMethods)capture('Object.prototype.'+name,objects[name].value);
@@ -67,7 +77,7 @@ export function createPromiseObservationAdapterV8(){
         if(!node||node.kind!=='promise')ctx.fail('unallocated owned Promise identity');
         return ctx.defaultNode(value,{node});
       }
-      if(value[0]==='intrinsic'&&['Promise.prototype','Object.prototype'].includes(value[1]))
+      if(value[0]==='intrinsic'&&['Promise.prototype','Object.prototype',...errorPrototypes].includes(value[1]))
         return ctx.defaultNode(value,{node:ctx.state.heap[value[1]]??intrinsicRecord(value[1])});
       if(['intrinsic','builtinfn'].includes(value[0])&&intrinsicNames.has(canonicalName(value[1])))
         return functionNode(canonicalName(value[1]));
