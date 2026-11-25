@@ -17,7 +17,7 @@
   "reference_kl_clip": 20.0,
   "lora_rank": 32,
   "dataset": "training/fixtures/executor.jsonl",
-  "output_dir": "runs/tinker-mini",
+  "output_dir": "runs/tinker-followup-smoke",
   "holdout_fraction": 0.2,
   "validation_fraction": 0.2,
   "sft_epochs": 1,

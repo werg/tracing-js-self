@@ -16,6 +16,7 @@ dependencies = [
 
 [project.scripts]
 tinker-js = "tinker_js.runner:main"
+tinker-study = "tinker_js.experiments:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

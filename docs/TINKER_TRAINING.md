@@ -2,7 +2,7 @@
 
 ## Objective and implementation plan
 
-See the [implementation validation record](TINKER_VALIDATION.md) for the executed checks and the remaining authentication prerequisite.
+See the [implementation validation record](TINKER_VALIDATION.md) for executed checks and live prerequisites. The [complete experiment guide](TINKER_EXPERIMENTS.md) covers the expanded corpus, independent verifier, supervision audits, curriculum, staged sweeps, learnability gates, and sealed final evaluation.
 
 Train `thinkingmachines/Inkling-2-Mini:peft:65536:free` to execute supplied JavaScript, then prefer shorter executions only after the complete externally observable behavior has been verified. Tinker supplies model compute. The owned JavaScript interpreter, controlled host environment, and independent Node reference execution run locally on CPU.
 
@@ -50,7 +50,7 @@ Each family has two input/environment variants. This is a varied integration and
 
 The initial experiment supplies source code and invocation arguments to the executor. Learning which code to choose against an actual agent task is a later objective. Supervised agent-call examples can teach the call format, but executor success alone does not establish agent-task success.
 
-The runner freezes dataset contents, realized random observations, a deterministic family split, and hashes of the runtime, runner, and dependency locks. A family, ancestor group, or identical source must not occur in multiple splits. Baseline, SFT, and RL evaluations use the same held-out cases and sampling settings. Training consumes only the training split. Test scores are for reporting, not checkpoint selection or reward tuning.
+The runner freezes dataset contents, realized random observations, a deterministic family split, and hashes of the runtime, runner, and dependency locks. A family, ancestor group, or identical source must not occur in multiple splits. Training consumes only the training split. Baseline and candidate checkpoints are compared on frozen validation cases; test scores are produced after selection is sealed. Split and evaluation seeds remain independent of the model-training seed. Template lineage and conservative generator clone identities remain grouped. The default evaluates the complete split; an explicit manifest or seeded stratified cap can select a smaller declared population.
 
 Default limits are deliberately small: one SFT epoch, one RL update, four samples per RL group, eight turns per execution, 2,048 sampled tokens per turn, and 8,192 total generated tokens per execution. All are configurable in `training/configs/inkling-mini.json`. The renderer uses the same explicit thinking effort for training and sampling. Context overflow fails explicitly; it does not silently drop earlier source, observations, or student history.
 
@@ -98,7 +98,7 @@ During rollout, the runner continues from the student's own messages. It never i
 
 Every sampled response retains its original prompt tokens, output token IDs, and token log probabilities. RL constructs training data from those exact sequences; it never decodes and re-tokenizes the student response. This includes Inkling thinking, public reasoning, formatting, action syntax, and termination tokens. External observations remain part of subsequent prompts and receive no direct prediction loss.
 
-Incorrect, malformed, over-budget, or incomplete executions receive zero success reward. The experiment runner uses `1 - length_penalty * min(generated_tokens / max_generated_tokens, 1)` for verified successes. With the default penalty of 0.25, every verified success earns at least 0.75, and shorter successes earn more. The standalone JS grader also exposes a monotonic diagnostic reward; the runner records that as `environmentReward` and applies the configured experiment reward consistently. Group-relative advantages may be negative for failed attempts even though their raw success reward is zero. A group with identical rewards has no relative learning signal and should be reported honestly.
+Incorrect, malformed, over-budget, or incomplete executions receive zero success reward. The experiment runner uses `1 - length_penalty * min(generated_tokens / length_scale_tokens, 1)` for verified successes. The length scale is independent of the hard token budget. Optimization uses separate correctness and success-conditional centered length advantages, with the compression coefficient applied afterward so it cannot cancel through joint standardization. With the default penalty of 0.25, every verified success earns at least 0.75, and shorter successes earn more. The standalone JS grader also exposes a monotonic diagnostic reward; the runner records that as `environmentReward` and applies the configured experiment reward consistently. Group-relative advantages may be negative for failed attempts even though their raw success reward is zero. A group with zero task advantages is reported and skipped unless explicit fixed-reference regularization is enabled. All-failure groups provide no execution-learning signal; all-success groups can still provide a length signal.
 
 Both training-state and sampler checkpoints are retained. Resume the full sequence with:
 
@@ -118,9 +118,15 @@ npm exec --yes --package=node@24.22.3 -- npm run contracts:check
 python training/run.py --config training/configs/inkling-mini.json report
 ```
 
-Artifacts are written under the configured output directory, normally `runs/tinker-mini/`, and are ignored by Git. Existing datasets are reused only when input, configuration, implementation, and stored-content hashes agree; `--refresh-export` deliberately regenerates a corpus before checkpoint state exists. They include frozen split/provenance data, exported conversations, rollout records, training metrics, checkpoint paths, and a compact JSON/Markdown report. Private grading fixtures and full trajectories can contain sensitive task data; keep them within the experiment's intended access boundary.
+Artifacts are written under the configured output directory, normally `runs/tinker-followup-smoke/` for the starter configuration, and are ignored by Git. Existing datasets are reused only when input, configuration, implementation, and stored-content hashes agree; `--refresh-export` deliberately regenerates a corpus before checkpoint state exists. They include frozen split/provenance data, exported conversations, rollout records, training metrics, checkpoint paths, and a compact JSON/Markdown report. Private grading fixtures and full trajectories can contain sensitive task data; keep them within the experiment's intended access boundary.
 
 Read complete-execution accuracy alongside mean generated tokens, successful-execution tokens, and failure/incompletion counts. A short failed attempt is not a compression success. Compare held-out runs with the same case IDs, seeds, budgets, and evaluation settings. The first model milestone is an actual trained checkpoint plus such a report; passing unit tests or replaying teacher examples establishes infrastructure correctness only.
+
+## Comprehensive follow-up workflow
+
+The larger qualified corpus is under `training/fixtures/expanded/`; `training/configs/inkling-pilot.json` enables curriculum and validation-only training. Use `training/experiment.py plan`, `run`, `probe`, `learnability`, and `report` for the staged study. Full, compact and actions-only teacher formats are available through `trace_format`. Every exported teacher conversation is replay-audited, and branch/return narration uses the causal event state.
+
+See [TINKER_EXPERIMENTS.md](TINKER_EXPERIMENTS.md) for exact commands, independent/adversarial checks, interpretation of coverage versus model accuracy, reference regularization, token/loss diagnostics and final-test rules.
 
 ## Primary implementation references
 
