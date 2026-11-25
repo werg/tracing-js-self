@@ -114,10 +114,7 @@ function expandTemplate(template, seed) {
     const original = template.fixture?.(i) ?? {calls:[]}, args=structuredClone(inputs[i]);
     const forms = [
       ['direct',template.source,args,original],
-      ['structured',core+'\nasync function run(...args){return {answer:await __benchmarkCore(...args)};}',args,original],
       ['packet',core+'\nasync function run(packet){packet.answer=await __benchmarkCore(...packet.inputs);return packet;}',[{inputs:args}],original],
-      ['observed-prefix',core+'\nasync function run(...args){const observed=await host.readAsync("offset");const answer=await __benchmarkCore(...args);return {answer,observed};}',args,
-        {calls:[{operation:'demo.readAsync',arguments:['offset'],result:[0,2,-3,7][i%4]},...original.calls]}],
       ['observed-branch',core+'\nasync function run(...args){const gate=await host.readAsync("gate");const answer=await __benchmarkCore(...args);host.store("selected",gate>0?gate:0);return answer;}',args,
         {calls:[{operation:'demo.readAsync',arguments:['gate'],result:[-2,0,3,7][i%4]},...original.calls,
           ...(template.throws?.(i)?[]:[{operation:'demo.store',arguments:['selected',Math.max(0,[-2,0,3,7][i%4])]}])]}],
@@ -155,7 +152,12 @@ function portableCandidate(raw, index, seed) {
 }
 
 export function repositoryCandidates({root=process.cwd(),seed=17,perFamily=4,streams=['utilities','exercism','production']}={}) {
-  return trustedRealSourceCases({root,streams,perFamily,mutationsPerFamily:0}).map((row,i)=>portableCandidate(row,i,seed));
+  // Exclude programs calling internal Math.random() from the LLM execution
+  // benchmark: expecting a language model to mentally compute 32-bit LCG math
+  // tests an artificial PRNG formula rather than JS execution semantics.
+  return trustedRealSourceCases({root,streams,perFamily,mutationsPerFamily:0})
+    .filter(row=>!/\bMath\.random\b/.test(row.source??''))
+    .map((row,i)=>portableCandidate(row,i,seed));
 }
 
 export function censusCandidates(options={}) {
@@ -175,10 +177,31 @@ export function assignFrozenSplits(rows,{seed=17,validationFraction=0.2,testFrac
     try{ids.push('exact-source:'+normalizedSourceHash(row.source));}catch{}
     ids.forEach(id=>union(ids[0],id));}
   const groups=new Map();for(const row of rows){const component=find(row.family);if(!groups.has(component))groups.set(component,[]);groups.get(component).push(row);}
-  const ordered=[...groups.keys()].sort((a,b)=>sha256(seed+':'+a).localeCompare(sha256(seed+':'+b)));
-  const nt=Math.max(1,Math.round(ordered.length*testFraction)),nv=Math.max(1,Math.round(ordered.length*validationFraction));
-  if(nt+nv>=ordered.length)throw Error('At least three independent family components required');
-  const splits=new Map(ordered.map((component,i)=>[component,i<nt?'test':i<nt+nv?'validation':'train']));
+  // Stratify independent components by primary sourceOrigin so train,
+  // validation, and test each receive balanced real-world vs synthetic ratios
+  // while keeping every connected family/lineage component 100% isolated.
+  const strata=new Map();
+  for(const [component,members] of groups){
+    const origins=[...new Set(members.map(r=>r.metadata?.sourceOrigin??'default'))].sort();
+    const stratum=origins[0];
+    if(!strata.has(stratum))strata.set(stratum,[]);
+    strata.get(stratum).push(component);
+  }
+  const splits=new Map(),remainder=[];
+  for(const [stratum,components] of [...strata.entries()].sort(([a],[b])=>a.localeCompare(b))){
+    if(components.length<3){remainder.push(...components);continue;}
+    const ordered=[...components].sort((a,b)=>sha256(seed+':'+stratum+':'+a).localeCompare(sha256(seed+':'+stratum+':'+b)));
+    const nt=Math.max(1,Math.round(ordered.length*testFraction)),nv=Math.max(1,Math.round(ordered.length*validationFraction));
+    ordered.forEach((component,i)=>splits.set(component,i<nt?'test':i<nt+nv?'validation':'train'));
+  }
+  if(remainder.length){
+    const ordered=[...remainder].sort((a,b)=>sha256(seed+':'+a).localeCompare(sha256(seed+':'+b)));
+    const nt=ordered.length>=3?Math.max(1,Math.round(ordered.length*testFraction)):0;
+    const nv=ordered.length>=3?Math.max(1,Math.round(ordered.length*validationFraction)):0;
+    ordered.forEach((component,i)=>splits.set(component,i<nt?'test':i<nt+nv?'validation':'train'));
+  }
+  const allSplits=new Set(splits.values());
+  if(groups.size<3||allSplits.size<3)throw Error('At least three independent family components required');
   return rows.map(row=>({...row,split:splits.get(find(row.family)),metadata:{...row.metadata,
     component:find(row.family),lineage:[...new Set([...row.metadata.lineage,'component:'+find(row.family)])]}}));
 }

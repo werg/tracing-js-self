@@ -13,7 +13,7 @@ import {boundedFuzzTask,verifyTaskBoundary,minimizeCounterexample,aggregateVerif
 
 test('seeded corpus preserves template lineage and actual independently grouped denominators',()=>{
   const candidates=generatedCandidates({seed:17});
-  assert.equal(candidates.length,1720);
+  assert.equal(candidates.length,1032);
   assert.deepEqual(candidates,generatedCandidates({seed:17}));
   const rows=assignFrozenSplits(candidates,{seed:17}),counts=datasetCounts(rows);
   assert.equal(counts.total.families,86);

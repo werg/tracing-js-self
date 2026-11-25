@@ -1,17 +1,17 @@
 {
-  "started": "2026-11-25T16:58:44.942Z",
-  "finished": "2026-11-25T17:12:54.276Z",
+  "started": "2026-11-25T20:02:17.402Z",
+  "finished": "2026-11-25T20:06:08.778Z",
   "implementation": {
     "schema": "tinker-local-verification-identity/1",
-    "sha256": "d7509068d530f508529249f528aff30dd44e65c1b0a271895d51439723937905",
+    "sha256": "7cda92964ab719a0f69e3afcb50eedf91d6cb997f6745710b437c9bb7f3e527e",
     "files": 559,
-    "node": "v24.22.3"
+    "node": "v22.22.1"
   },
   "implementationAtFinish": {
     "schema": "tinker-local-verification-identity/1",
-    "sha256": "d7509068d530f508529249f528aff30dd44e65c1b0a271895d51439723937905",
+    "sha256": "7cda92964ab719a0f69e3afcb50eedf91d6cb997f6745710b437c9bb7f3e527e",
     "files": 559,
-    "node": "v24.22.3"
+    "node": "v22.22.1"
   },
   "codeChangedDuringRun": false,
   "actualModelSamples": 0,
@@ -22,33 +22,33 @@
     "validation": 0.2,
     "test": 0.3
   },
-  "requestedCandidates": 2137,
+  "requestedCandidates": 1445,
   "limited": false,
   "includeUpstream": true,
   "perFamily": 4,
   "candidatePopulation": {
-    "candidateExecutions": 2137,
-    "candidateFamilies": 191,
+    "candidateExecutions": 1445,
+    "candidateFamilies": 190,
     "statuses": {
-      "admitted": 2103,
-      "refused": 34
+      "admitted": 1417,
+      "refused": 28
     },
     "refusals": {
-      "source-or-runtime-profile": 30,
+      "source-or-runtime-profile": 24,
       "source_unsupported": 4
     },
     "byOrigin": {
       "authored-generator": {
-        "candidates": 1720,
-        "admitted": 1720
+        "candidates": 1032,
+        "admitted": 1032
       },
       "utilities": {
-        "candidates": 312,
-        "admitted": 312
+        "candidates": 308,
+        "admitted": 308
       },
       "exercism": {
         "candidates": 79,
-        "admitted": 45
+        "admitted": 51
       },
       "production": {
         "candidates": 26,
@@ -57,193 +57,193 @@
     },
     "byFeature": {
       "arithmetic": {
-        "candidates": 320,
-        "admitted": 320
-      },
-      "external": {
-        "candidates": 736,
-        "admitted": 736
+        "candidates": 192,
+        "admitted": 192
       },
       "branch": {
-        "candidates": 1254,
-        "admitted": 1224
+        "candidates": 946,
+        "admitted": 922
+      },
+      "external": {
+        "candidates": 376,
+        "admitted": 376
       },
       "algorithm": {
-        "candidates": 840,
-        "admitted": 840
+        "candidates": 504,
+        "admitted": 504
       },
       "loop": {
-        "candidates": 1078,
-        "admitted": 1067
+        "candidates": 730,
+        "admitted": 722
       },
       "array": {
-        "candidates": 1130,
-        "admitted": 1098
+        "candidates": 790,
+        "admitted": 762
       },
       "alias": {
-        "candidates": 180,
-        "admitted": 180
+        "candidates": 108,
+        "admitted": 108
       },
       "mutation": {
-        "candidates": 260,
-        "admitted": 260
+        "candidates": 156,
+        "admitted": 156
       },
       "property-presence": {
-        "candidates": 40,
-        "admitted": 40
+        "candidates": 24,
+        "admitted": 24
       },
       "cycle": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "sparse": {
-        "candidates": 40,
-        "admitted": 40
+        "candidates": 24,
+        "admitted": 24
       },
       "exceptional-scalar": {
-        "candidates": 40,
-        "admitted": 40
+        "candidates": 24,
+        "admitted": 24
       },
       "bigint": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "null-prototype": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "object": {
-        "candidates": 80,
-        "admitted": 80
+        "candidates": 48,
+        "admitted": 48
       },
       "exception": {
-        "candidates": 132,
-        "admitted": 121
+        "candidates": 88,
+        "admitted": 80
       },
       "finally": {
-        "candidates": 40,
-        "admitted": 40
+        "candidates": 24,
+        "admitted": 24
       },
       "standard-error": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "nullish": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "nested-object": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "string": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "unicode": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "property-order": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "destructure": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "undefined": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "break": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "continue": {
-        "candidates": 20,
-        "admitted": 20
+        "candidates": 12,
+        "admitted": 12
       },
       "sequential": {
-        "candidates": 40,
-        "admitted": 40
+        "candidates": 24,
+        "admitted": 24
       },
       "real-source": {
-        "candidates": 417,
-        "admitted": 383
+        "candidates": 413,
+        "admitted": 385
       }
     },
-    "admissionFraction": 0.984089845577913,
+    "admissionFraction": 0.9806228373702423,
     "modelExecutionAccuracy": null,
     "agentTaskSuccess": null,
     "denominator": "every candidate in the declared inventory, including missing inputs and refusals"
   },
   "counts": {
     "total": {
-      "cases": 1870,
-      "families": 184,
+      "cases": 1277,
+      "families": 183,
       "independentComponents": 123,
-      "sourcePrograms": 582
+      "sourcePrograms": 406
     },
     "bySplit": {
       "train": {
-        "cases": 758,
-        "families": 65,
+        "cases": 482,
+        "families": 70,
         "independentComponents": 62,
-        "sourcePrograms": 270
+        "sourcePrograms": 177
       },
       "validation": {
-        "cases": 495,
-        "families": 52,
+        "cases": 235,
+        "families": 25,
         "independentComponents": 25,
-        "sourcePrograms": 127
+        "sourcePrograms": 71
       },
       "test": {
-        "cases": 617,
-        "families": 67,
+        "cases": 560,
+        "families": 88,
         "independentComponents": 36,
-        "sourcePrograms": 185
+        "sourcePrograms": 158
       }
     },
     "byFeature": {
-      "algorithm": 735,
-      "alias": 160,
-      "arithmetic": 265,
-      "array": 1007,
-      "bigint": 15,
-      "branch": 1095,
-      "break": 15,
-      "continue": 15,
-      "cycle": 15,
-      "destructure": 15,
-      "exception": 111,
-      "exceptional-scalar": 40,
-      "external": 635,
-      "finally": 35,
-      "loop": 961,
-      "mutation": 225,
-      "nested-object": 15,
-      "null-prototype": 15,
-      "nullish": 20,
-      "object": 60,
-      "property-order": 15,
-      "property-presence": 35,
-      "real-source": 380,
-      "sequential": 35,
-      "sparse": 30,
-      "standard-error": 20,
-      "string": 20,
-      "undefined": 15,
-      "unicode": 20
+      "algorithm": 444,
+      "alias": 96,
+      "arithmetic": 165,
+      "array": 704,
+      "bigint": 9,
+      "branch": 840,
+      "break": 12,
+      "continue": 12,
+      "cycle": 9,
+      "destructure": 12,
+      "exception": 71,
+      "exceptional-scalar": 21,
+      "external": 329,
+      "finally": 24,
+      "loop": 658,
+      "mutation": 138,
+      "nested-object": 12,
+      "null-prototype": 9,
+      "nullish": 9,
+      "object": 42,
+      "property-order": 12,
+      "property-presence": 24,
+      "real-source": 374,
+      "sequential": 24,
+      "sparse": 24,
+      "standard-error": 9,
+      "string": 9,
+      "undefined": 12,
+      "unicode": 9
     }
   },
   "diagnostics": {
     "familiarInputs": {
       "total": {
-        "cases": 227,
-        "families": 49,
+        "cases": 136,
+        "families": 54,
         "independentComponents": 48,
-        "sourcePrograms": 227
+        "sourcePrograms": 136
       },
       "bySplit": {
         "train": {
@@ -259,46 +259,41 @@
           "sourcePrograms": 0
         },
         "test": {
-          "cases": 227,
-          "families": 49,
+          "cases": 136,
+          "families": 54,
           "independentComponents": 48,
-          "sourcePrograms": 227
+          "sourcePrograms": 136
         }
       },
       "byFeature": {
-        "algorithm": 102,
-        "alias": 20,
-        "arithmetic": 55,
-        "array": 88,
-        "bigint": 5,
-        "branch": 126,
-        "break": 5,
-        "continue": 5,
-        "cycle": 5,
-        "destructure": 5,
+        "algorithm": 58,
+        "alias": 12,
+        "arithmetic": 27,
+        "array": 56,
+        "bigint": 3,
+        "branch": 80,
+        "cycle": 3,
         "exception": 7,
-        "external": 98,
-        "finally": 5,
-        "loop": 103,
-        "mutation": 35,
-        "nested-object": 5,
-        "null-prototype": 5,
-        "object": 20,
-        "property-order": 5,
-        "property-presence": 5,
-        "real-source": 3,
-        "sequential": 5,
-        "sparse": 10,
-        "undefined": 5
+        "exceptional-scalar": 3,
+        "external": 45,
+        "loop": 62,
+        "mutation": 18,
+        "null-prototype": 3,
+        "nullish": 3,
+        "object": 6,
+        "real-source": 11,
+        "standard-error": 3,
+        "string": 3,
+        "unicode": 3
       }
     },
-    "familiarInputDuplicateExclusions": 6,
+    "familiarInputDuplicateExclusions": 4,
     "challenge": {
       "total": {
-        "cases": 12,
-        "families": 12,
-        "independentComponents": 12,
-        "sourcePrograms": 12
+        "cases": 11,
+        "families": 11,
+        "independentComponents": 11,
+        "sourcePrograms": 11
       },
       "bySplit": {
         "train": {
@@ -314,74 +309,71 @@
           "sourcePrograms": 0
         },
         "test": {
-          "cases": 12,
-          "families": 12,
-          "independentComponents": 12,
-          "sourcePrograms": 12
+          "cases": 11,
+          "families": 11,
+          "independentComponents": 11,
+          "sourcePrograms": 11
         }
       },
       "byFeature": {
-        "algorithm": 11,
-        "alias": 1,
-        "array": 10,
+        "algorithm": 10,
+        "array": 7,
         "branch": 8,
-        "composition": 12,
-        "longer-execution": 12,
-        "loop": 12,
-        "mutation": 1
+        "break": 1,
+        "composition": 11,
+        "continue": 1,
+        "longer-execution": 11,
+        "loop": 11
       }
     },
     "challengePopulation": {
-      "candidateExecutions": 14,
-      "candidateFamilies": 14,
+      "candidateExecutions": 11,
+      "candidateFamilies": 11,
       "statuses": {
-        "admitted": 12,
-        "refused": 2
+        "admitted": 11
       },
-      "refusals": {
-        "source-or-runtime-profile": 2
-      },
+      "refusals": {},
       "byOrigin": {
         "authored-generator": {
-          "candidates": 14,
-          "admitted": 12
+          "candidates": 11,
+          "admitted": 11
         }
       },
       "byFeature": {
         "algorithm": {
-          "candidates": 13,
-          "admitted": 11
-        },
-        "loop": {
-          "candidates": 14,
-          "admitted": 12
-        },
-        "longer-execution": {
-          "candidates": 14,
-          "admitted": 12
-        },
-        "composition": {
-          "candidates": 14,
-          "admitted": 12
-        },
-        "array": {
-          "candidates": 11,
+          "candidates": 10,
           "admitted": 10
         },
+        "loop": {
+          "candidates": 11,
+          "admitted": 11
+        },
+        "longer-execution": {
+          "candidates": 11,
+          "admitted": 11
+        },
+        "composition": {
+          "candidates": 11,
+          "admitted": 11
+        },
+        "array": {
+          "candidates": 7,
+          "admitted": 7
+        },
         "branch": {
-          "candidates": 9,
+          "candidates": 8,
           "admitted": 8
         },
-        "alias": {
+        "break": {
           "candidates": 1,
           "admitted": 1
         },
-        "mutation": {
+        "continue": {
           "candidates": 1,
           "admitted": 1
         }
       },
-      "admissionFraction": 0.8571428571428571,
+      "admissionFraction": 1,
       "modelExecutionAccuracy": null,
       "agentTaskSuccess": null,
       "denominator": "every candidate in the declared inventory, including missing inputs and refusals"
@@ -389,32 +381,32 @@
   },
   "files": {
     "main.jsonl": {
-      "sha256": "7da11c6e4dafa4ca213bb843e5dfa812346ac34a9771d764d78c6863896ed743",
-      "bytes": 2665975
+      "sha256": "d8b7620848d8aa187c385bef55f05d254e0e7bfbd7cdebec3d6d66eb702d2286",
+      "bytes": 1940618
     },
     "familiar-inputs.jsonl": {
-      "sha256": "95990a3bb05be4233b70e337cb640f1dec6fe3ada66d737476b909048e61b578",
-      "bytes": 320120
+      "sha256": "404e2bd802e8b0bbb6040a994d2fafdf76132598111b7dbe4df8eb3e16bab5e0",
+      "bytes": 197007
     },
     "familiar-input-exclusions.jsonl": {
-      "sha256": "b9945a6a4fa1e0bf1ec3889ea0830e10e689c7475c8be340c84a56b9bd69d875",
-      "bytes": 1334
+      "sha256": "95bbe659aa33ef680b5d4e0f0a585e4b406db424ac5194a343ab82efd47d3f7a",
+      "bytes": 884
     },
     "challenge.jsonl": {
-      "sha256": "28102fe78f1fb130a8c7417756534268cd30f322faf972fe65f2ee5863c9584a",
-      "bytes": 15546
+      "sha256": "afea8c0f0ed35f2184524fcd330ab8058e4e1603398824ef81d0c8aa991ec4d9",
+      "bytes": 14151
     },
     "admission.jsonl": {
-      "sha256": "b3cad414dbbbaf47075b833b09fd327580ce1b316753d42ce3b8735fb4c4eded",
-      "bytes": 1980992
+      "sha256": "470ccec4596aa162161b8ff7cf359bb9b2c4d29a9c505598fe80b0bd791ec05e",
+      "bytes": 1341011
     },
     "challenge-admission.jsonl": {
-      "sha256": "2bf87cabb5b353f40c91df10af1d0fa48c0439832686e48a811fb91b1767f635",
-      "bytes": 13139
+      "sha256": "4451f2f63aea1653ef8153f1fd71953131c3030b0291b85c875267d39fff380c",
+      "bytes": 10513
     },
     "evaluation-manifest.json": {
-      "sha256": "51edaf96655981bd37676295d7eccb9cc4e5eeef39d4318013568f3436a200bb",
-      "bytes": 102089
+      "sha256": "638f4ad58ec17f8cca5a127fc5602ee406efae81b7bb669e49ac566882455444",
+      "bytes": 67373
     }
   },
   "splitPolicy": "union declared family, template, ancestors, exact source and conservative alpha/literal clone fingerprint before admission",
