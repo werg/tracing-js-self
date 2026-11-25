@@ -40,6 +40,7 @@ function bindingTdz(binding,name){
   throw error;
 }
 const copy = value => structuredClone(value);
+const DELETED = Symbol('deleted');
 const freezeJson = value => {
   if(value && typeof value==='object'){
     for(const member of Object.values(value))freezeJson(member);
@@ -47,7 +48,28 @@ const freezeJson = value => {
   }
   return value;
 };
-const equal = (a,b) => JSON.stringify(a) === JSON.stringify(b);
+function equal(a, b) {
+  if (a === b) return true;
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (!equal(a[i], b[i])) return false;
+    return true;
+  }
+  if (Array.isArray(b)) return false;
+  let countA = 0;
+  for (const k in a) {
+    if (!Object.hasOwn(a, k) || a[k] === undefined) continue;
+    countA++;
+    if (!Object.hasOwn(b, k) || !equal(a[k], b[k])) return false;
+  }
+  let countB = 0;
+  for (const k in b) {
+    if (!Object.hasOwn(b, k) || b[k] === undefined) continue;
+    countB++;
+  }
+  return countA === countB;
+}
 function requireDataOnly(value,path='state',seen=new WeakSet()){
   if(typeof value==='function'||typeof value==='symbol')
     throw new TypeError('Executable or symbol value in owned archive at '+path);
@@ -450,16 +472,86 @@ function deleteOrdinaryOwn(object,key){
   }
   return {accessor,present,success};
 }
-function diff(oldState, nextState) {
-  const patches=[];
-  for(const table of tableNames) {
-    for(const id of new Set([...Object.keys(oldState[table]),...Object.keys(nextState[table])])) {
-      const before=Object.hasOwn(oldState[table],id)?oldState[table][id]:null;
-      const after=Object.hasOwn(nextState[table],id)?nextState[table][id]:null;
-      if(!equal(before,after)) {
-        if(after && typeof after==='object')after.version=(before?.version??0)+1;
-        patches.push(table==='operations' ? operationMutation(before,after)
-          : {kind:`${table}.replace`,table,id,before:copy(before),after:copy(after)});
+function createDraftState(state) {
+  const touched = {};
+  const draft = {};
+  for (const table of tableNames) {
+    const base = state[table];
+    const map = new Map();
+    touched[table] = map;
+    draft[table] = new Proxy(base, {
+      get(target, prop, receiver) {
+        if (typeof prop !== 'string') return Reflect.get(target, prop, receiver);
+        if (map.has(prop)) {
+          const val = map.get(prop);
+          return val === DELETED ? undefined : val;
+        }
+        if (Object.hasOwn(target, prop)) {
+          const cloned = copy(target[prop]);
+          map.set(prop, cloned);
+          return cloned;
+        }
+        return undefined;
+      },
+      set(_target, prop, value) {
+        map.set(prop, value);
+        return true;
+      },
+      deleteProperty(_target, prop) {
+        map.set(prop, DELETED);
+        return true;
+      },
+      has(target, prop) {
+        if (map.has(prop)) return map.get(prop) !== DELETED;
+        return Object.hasOwn(target, prop);
+      },
+      ownKeys(target) {
+        const keys = [];
+        for (const k of Object.keys(target)) {
+          if (map.get(k) !== DELETED) keys.push(k);
+        }
+        for (const [k, v] of map) {
+          if (v !== DELETED && !Object.hasOwn(target, k)) keys.push(k);
+        }
+        return keys;
+      },
+      getOwnPropertyDescriptor(target, prop) {
+        if (map.has(prop)) {
+          const val = map.get(prop);
+          return val === DELETED ? undefined : {value: val, writable: true, enumerable: true, configurable: true};
+        }
+        return Object.getOwnPropertyDescriptor(target, prop);
+      }
+    });
+  }
+  return {draft, touched};
+}
+function applyTouchedDiff(state, touched) {
+  const patches = [];
+  for (const table of tableNames) {
+    const map = touched[table];
+    if (!map.size) continue;
+    const base = state[table];
+    let ids;
+    if (map.size === 1) {
+      ids = map.keys();
+    } else {
+      const existing = [];
+      for (const k of Object.keys(base)) if (map.has(k)) existing.push(k);
+      const added = [];
+      for (const k of map.keys()) if (!Object.hasOwn(base, k)) added.push(k);
+      ids = existing.concat(added);
+    }
+    for (const id of ids) {
+      const prev = Object.hasOwn(base, id) ? base[id] : null;
+      const raw = map.get(id);
+      const after = raw === DELETED ? null : raw;
+      if (!equal(prev, after)) {
+        if (after && typeof after === 'object') after.version = (prev?.version ?? 0) + 1;
+        patches.push(table === 'operations' ? operationMutation(prev, after)
+          : {kind: `${table}.replace`, table, id, before: copy(prev), after: copy(after)});
+        if (after === null) delete base[id];
+        else base[id] = after;
       }
     }
   }
@@ -1033,10 +1125,9 @@ export class Runtime {
   }
 
   commit(operation, callback, {siteId=null,sourceId=null,codeId=null,invocationId=null,operands=[]}={}) {
-    const before=this.state, draft=copy(before),eventId=`a0:e${this.events.length+1}`;
+    const {draft, touched}=createDraftState(this.state),eventId=`a0:e${this.events.length+1}`;
     const detail=callback(draft,eventId)??{};
-    const patches=diff(before,draft);
-    this.state=draft;
+    const patches=applyTouchedDiff(this.state,touched);
     const event={eventId,agentId:'a0',sequence:this.events.length+1,operation,catalogRef:`${operation}/1`,siteId,sourceId,codeId,invocationId,
       operands:detail.operands??operands,operandOrigins:detail.origins??[],result:detail.result??null,
       readObservations:detail.reads??[],causes:detail.causes??[],stateChanges:patches,

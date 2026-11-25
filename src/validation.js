@@ -22,7 +22,28 @@ import { validateSpecEvent, applySpecCommand } from './spec-validation.js';
 import {decode} from './values.js';
 import {symbolPropertyKey,stringPropertyKey} from './property-keys.js';
 const clone = x => structuredClone(x);
-const eq = (a,b) => JSON.stringify(a)===JSON.stringify(b);
+function eq(a, b) {
+  if (a === b) return true;
+  if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
+  if (Array.isArray(a)) {
+    if (!Array.isArray(b) || a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (!eq(a[i], b[i])) return false;
+    return true;
+  }
+  if (Array.isArray(b)) return false;
+  let countA = 0;
+  for (const k in a) {
+    if (!Object.hasOwn(a, k) || a[k] === undefined) continue;
+    countA++;
+    if (!Object.hasOwn(b, k) || !eq(a[k], b[k])) return false;
+  }
+  let countB = 0;
+  for (const k in b) {
+    if (!Object.hasOwn(b, k) || b[k] === undefined) continue;
+    countB++;
+  }
+  return countA === countB;
+}
 const operations = JSON.parse(readFileSync(new URL('../catalog/operations.json',import.meta.url),'utf8'));
 const known = new Set(operations.entries.map(e=>e.operationId));
 // Independently declared constructor paths which complete, throw or refuse
