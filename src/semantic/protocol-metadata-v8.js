@@ -86,10 +86,12 @@ export function createNativeProtocolMetadata({initialValues=[],intrinsicPrototyp
       errorIdentities.set(value,errorType);
     }
     if(typeof value==='function'&&!includeFunctions)return {kind:'function'};
-    const descriptors=Object.getOwnPropertyDescriptors(value),prototype=Object.getPrototypeOf(value);
+    // Older V8 versions materialize a lazy Error stack when its descriptor is
+    // inspected, which can invoke guest name/message getters. Omit it first.
+    const prototype=Object.getPrototypeOf(value);
     return {kind:isError?'error':typeof value==='function'?'function':Array.isArray(value)?'array':'object',...(isError?{errorType}:{}),prototype:intrinsicPrototype(prototype),
-      extensible:Object.isExtensible(value),properties:Reflect.ownKeys(descriptors).filter(key=>!isError||key!=='stack').map(key=>{
-        const d=descriptors[key];return {key,descriptor:Object.hasOwn(d,'value')?
+      extensible:Object.isExtensible(value),properties:Reflect.ownKeys(value).filter(key=>!isError||key!=='stack').map(key=>{
+        const d=Object.getOwnPropertyDescriptor(value,key);return {key,descriptor:Object.hasOwn(d,'value')?
           {kind:'data',value:d.value,writable:d.writable,enumerable:d.enumerable,configurable:d.configurable}:
           {kind:'accessor',get:d.get,set:d.set,enumerable:d.enumerable,configurable:d.configurable}};
       })};

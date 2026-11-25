@@ -130,7 +130,7 @@ jobs:
           cases=list(ET.parse(root/'module-artifact-source-controls.xml').getroot().iter('testcase'))
           assert len(cases)==9 and not any(case.find(k) is not None for case in cases for k in ('failure','error','skipped'))
           summary=json.loads((root/'module-artifact-source-controls.json').read_text())['summary']
-          assert summary=={'schema':'bound-module-source-admission-controls/1','sourceCases':1,'contexts':712,
+          assert summary=={'schema':'bound-module-source-admission-controls/1','sourceCases':1,'contexts':724,
             'sourceValidated':True,'projectionValidated':True,'replayValidated':True,'nativeAdmission':False,
             'productionPopulationChanged':False,'optimizerUpdates':0}
           print('BOUND_MODULE_ADMISSION_CONTROLS_JSON '+json.dumps(summary,separators=(',',':')))

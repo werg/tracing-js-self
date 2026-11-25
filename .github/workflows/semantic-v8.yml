@@ -179,13 +179,21 @@ jobs:
           cases = list(ET.parse(root / 'shared-async-source-tests.xml').getroot().iter('testcase'))
           if not cases or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
               raise ValueError('Every shared generator/Promise, async iteration and nested async control must run and pass')
-          for name, sources, contexts in [('shared-generator-source-evidence.json', 6, 191), ('nested-async-source-evidence.json', 10, 235)]:
+          context_counts = {}
+          for name, sources in [('shared-generator-source-evidence.json', 6), ('nested-async-source-evidence.json', 10)]:
               evidence = json.loads((root / name).read_text())
-              if evidence['sourceCases'] != sources or evidence['actualNativeCases'] != sources or evidence['generatedContexts'] != contexts:
+              receipts = evidence.get('nativeReceipts', [])
+              generated = evidence.get('generatedContexts', 0)
+              replayed = sum(receipt.get('counts', {}).get('contexts', 0) for receipt in receipts)
+              if (evidence['sourceCases'] != sources or evidence['actualNativeCases'] != sources
+                      or len(receipts) != sources or generated <= 0 or replayed != generated):
                   raise ValueError('Every original source and generated context requires independent native replay: ' + name)
               if evidence['moduleAdmission'] is not False or evidence['trainingAdmission'] is not False or evidence['optimizerUpdates'] != 0:
                   raise ValueError('Source composition cannot itself grant evaluated-module/data admission or optimizer exposure')
-          print(f'{len(cases)} source composition controls passed, zero skips; 6 generator/191 context and 10 async/235 context cases')
+              context_counts[name] = generated
+          print(f'{len(cases)} source composition controls passed, zero skips; '
+                f'6 generator/{context_counts["shared-generator-source-evidence.json"]} and '
+                f'10 async/{context_counts["nested-async-source-evidence.json"]} native contexts')
           PY
       - name: Check shared Promise objects and constructor getter jobs
         if: ${{ matrix.population == 'interoperability' }}

@@ -25,6 +25,22 @@ def save(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n")
 
 
+class GateManifestTests(unittest.TestCase):
+    def test_gate_spec_tracks_authoritative_contract_and_source_population(self):
+        import base64
+        import gzip
+
+        contract = json.loads((ROOT / "contracts/semantic-execution-v8.json").read_text())
+        for spec_key, contract_key in (("contractDigest", "digest"), ("fixtureDigest", "fixtureDigest"),
+                                       ("interoperabilityDigest", "interoperabilityDigest")):
+            with self.subTest(digest=spec_key):
+                self.assertEqual(gate.SPEC[spec_key], contract[contract_key])
+        source_path = ROOT / "test/fixtures/semantic-protocol-region-v8.json.gz.b64"
+        cases = json.loads(gzip.decompress(base64.b64decode(source_path.read_bytes())))
+        self.assertEqual(gate.SPEC["sourceExamples"], len(cases["cases"]))
+        self.assertEqual(len(gate.SPEC["payloads"]), 7)
+
+
 class RunPolicyTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()

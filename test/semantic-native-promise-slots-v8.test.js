@@ -103,16 +103,28 @@ test('full reference completion preserves a genuine rejected Error without readi
 
 test('metadata and final Error boundaries never invoke name, tag or stack getters',async()=>{
   let calls=0;const error=new Error('expected');
-  for(const key of ['name','stack',Symbol.toStringTag])Object.defineProperty(error,key,{
+  // Replace the lazy stack before installing getters used by old V8 formatting.
+  for(const key of ['stack','name',Symbol.toStringTag])Object.defineProperty(error,key,{
     get(){calls++;throw 99;},configurable:true});
   createNativeProtocolMetadata().observe('error','return',error);assert.equal(calls,0);
   for(const [resolution,reason]of [['resolve',/custom prototype/],['reject',/Error extensions/]]){
     const source=`function run(){const error=new Error('expected');
-      for(const key of ['name','stack',Symbol.toStringTag])Object.defineProperty(error,key,{get(){throw 'getter invoked';}});
+      for(const key of ['stack','name',Symbol.toStringTag])Object.defineProperty(error,key,{get(){throw 'getter invoked';}});
       return Promise.${resolution}(error);}`;
     await assert.rejects(independentProtocolSourceReference({source,entry:'run',inputGraph:encodeNativeGraph([]),
       awaitReturnedPromise:true,mode:'original'}),failure=>failure.category==='unsupported.protocol-reference'&&reason.test(failure.message));
   }
+});
+
+test('metadata omits a lazy Error stack before inspecting its descriptor',()=>{
+  let calls=0;const error=new TypeError('expected');
+  for(const key of ['name','message'])Object.defineProperty(error,key,{
+    get(){calls++;throw 99;},configurable:true});
+  const receipt=createNativeProtocolMetadata().observe('error','catch',error),
+    node=receipt.objects.find(node=>node.kind==='error');
+  assert.equal(calls,0);assert.equal(node.errorType,'TypeError');
+  assert.deepEqual(node.properties.map(({key,descriptor})=>[key,descriptor.kind]),[
+    [['str','message'],'accessor'],[['str','name'],'accessor']]);
 });
 
 test('protocol metadata authenticates intrinsic Error type without reading mutable own fields',()=>{
@@ -122,7 +134,7 @@ test('protocol metadata authenticates intrinsic Error type without reading mutab
       'ReferenceError.prototype','SyntaxError.prototype','TypeError.prototype','URIError.prototype'];
   context.calls=0;const metadata=createNativeProtocolMetadata();metadata.setIntrinsicPrototypes(prototypes,labels);
   const error=vm.runInContext(`(()=>{const error=new TypeError('expected');
-    for(const key of ['name','message','stack',Symbol.toStringTag])Object.defineProperty(error,key,{get(){calls++;throw 99;},configurable:true});
+    for(const key of ['stack','name','message',Symbol.toStringTag])Object.defineProperty(error,key,{get(){calls++;throw 99;},configurable:true});
     return error;})()`,context);
   const receipt=metadata.observe('error','catch',error);
   assert.deepEqual(receipt.objects.find(node=>node.kind==='error'),{
