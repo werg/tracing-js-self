@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import copy
 import importlib.metadata
+import json
 import math
 import re
 import statistics
@@ -102,6 +103,97 @@ def _log_ratio_metrics(sampling: Sequence[float], comparison: Sequence[float], p
             f"{prefix}_scored_tokens": len(ratios)}
 
 
+def _supervised_action_kind(text: str) -> str:
+    """Classify the bridge's final-action grammar; this does not grade execution."""
+    text = text.strip()
+    fences = list(re.finditer(r"```(?:json)?\s*\n?([\s\S]*?)```", text))
+    if fences:
+        if len(fences) != 1 or fences[0].end() != len(text):
+            return "unknown"
+        text = fences[0].group(1)
+    try:
+        action = json.loads(text)
+    except (ValueError, TypeError):
+        return "unknown"
+    if not isinstance(action, dict):
+        return "unknown"
+    if (set(action) == {"type", "operation", "arguments"} and action.get("type") == "call"
+            and isinstance(action.get("operation"), str)):
+        return "call_request"
+    if (set(action) == {"type", "kind", "value", "arguments"} and action.get("type") == "complete"
+            and isinstance(action.get("kind"), str) and action["kind"] in {"return", "throw"}):
+        return "completion"
+    return "unknown"
+
+
+def _sft_forward_diagnostics(layouts: list[dict], outputs: Any, long_threshold: int) -> dict:
+    """Aggregate existing forward logprobs using the exact submitted weights.
+
+    Output/mask misalignment is a diagnostics failure, never grounds to retry an
+    optimizer step that has already completed. Metadata remains available.
+    """
+    logprobs = None
+    unavailable = None
+    try:
+        if outputs is None or len(outputs) != len(layouts):
+            raise ValueError("forward output count does not match submitted datums")
+        values = [_tensor_values(output["logprobs"]) for output in outputs]
+        for layout, scores in zip(layouts, values):
+            if len(scores) != len(layout["weights"]):
+                raise ValueError("forward log probabilities are not target-token aligned")
+            for score, weight in zip(scores, layout["weights"]):
+                if weight > 0:
+                    _finite(score, "supervised target logprob")
+        logprobs = values
+    except (AttributeError, KeyError, TypeError, ValueError) as error:
+        unavailable = str(error)
+
+    def empty() -> dict:
+        return {"trainable_tokens": 0, "prediction_weight": 0.0,
+                "weighted_nll_sum": 0.0 if logprobs is not None else None}
+
+    total = empty()
+    grouped = {"by_action": {}, "by_execution_length": {}, "by_tier": {}, "by_feature": {}}
+    masked = 0
+    masked_nonassistant = 0
+    for index, layout in enumerate(layouts):
+        for position, weight in enumerate(layout["weights"]):
+            if weight <= 0:
+                masked += 1
+                masked_nonassistant += layout["roles"][position] not in {"model", "unknown"}
+                continue
+            labels = {"by_action": [layout["actions"][position]],
+                      "by_execution_length": [layout["length_band"]],
+                      "by_tier": [layout["tier"]],
+                      "by_feature": layout["features"] or ["unlabeled"]}
+            buckets = [total]
+            for group, names in labels.items():
+                for name in names:
+                    buckets.append(grouped[group].setdefault(name, empty()))
+            for bucket in buckets:
+                bucket["trainable_tokens"] += 1
+                bucket["prediction_weight"] += weight
+                if logprobs is not None:
+                    bucket["weighted_nll_sum"] -= weight * logprobs[index][position]
+
+    for bucket in [total, *(bucket for groups in grouped.values() for bucket in groups.values())]:
+        weight = bucket["prediction_weight"]
+        bucket["weighted_mean_nll"] = bucket["weighted_nll_sum"] / weight if logprobs is not None and weight else None
+        bucket["weighted_mean_target_logprob"] = -bucket["weighted_mean_nll"] if bucket["weighted_mean_nll"] is not None else None
+    return {"loss_available": logprobs is not None, "unavailable_reason": unavailable,
+            "source": "existing forward_backward token logprobs and original datum prediction weights"
+                      if logprobs is not None else "submitted-target metadata only; forward loss diagnostics unavailable",
+            "meaning": "Teacher-target negative log likelihood, not execution accuracy",
+            "action_scope": "Entire assistant message classified by its valid final action; unrecognized formats remain unknown",
+            "length_scope": "Positive-weight target tokens per original execution example across its rendered datums",
+            "long_execution_threshold_tokens": long_threshold,
+            "feature_scope": "Features are overlapping labels; action, length, and tier groups are disjoint partitions",
+            "executions": len({layout["execution_index"] for layout in layouts}), "datums": len(layouts),
+            "action_boundaries_available_datums": sum(layout["boundaries_available"] for layout in layouts),
+            "masked_target_tokens": masked, "masked_nonassistant_tokens": masked_nonassistant,
+            "total": total, **grouped}
+
+
 def rl_token_arrays(sample: Mapping[str, Any], advantage: float) -> dict[str, list]:
     """Build the next-token shift from the *actual* rollout, never from text.
 
@@ -165,6 +257,8 @@ class TinkerAdapter:
         self.sft_weighting = self.config.get("sft_weighting", "example")
         if self.sft_weighting not in {"example", "token"}:
             raise ValueError("sft_weighting must be example or token")
+        self.sft_diagnostic_long_tokens = _positive_int(
+            self.config.get("sft_diagnostic_long_tokens", 512), "sft_diagnostic_long_tokens")
         self.reference_kl_coef = _finite(self.config.get("reference_kl_coef", 0.0), "reference_kl_coef")
         self.reference_kl_clip = _finite(self.config.get("reference_kl_clip", 20.0), "reference_kl_clip")
         if self.reference_kl_coef < 0 or self.reference_kl_clip <= 0:
@@ -175,6 +269,7 @@ class TinkerAdapter:
         if self.timeout <= 0:
             raise ValueError("request_timeout_seconds must be positive")
         self._runtime = runtime
+        self._injected_runtime = runtime is not None
         self._service = service_client
         self.training_client = None
         self.sampling_client = None
@@ -183,6 +278,7 @@ class TinkerAdapter:
         self.reference_client = None
         self.reference_checkpoint = None
         self._token_pieces: dict[int, str] = {}
+        self.training_identity: dict = {}
 
     def _sdk(self):
         if self._runtime is None:
@@ -278,6 +374,7 @@ class TinkerAdapter:
         return result
 
     def create_training_client(self, checkpoint: str | None = None):
+        self.training_client = None
         if checkpoint:
             future = self._client().create_training_client_from_state_with_optimizer(
                 path=checkpoint, base_model=self.model
@@ -286,10 +383,37 @@ class TinkerAdapter:
             future = self._client().create_lora_training_client(
                 base_model=self.model, rank=self.lora_rank, seed=self.seed
             )
-        self.training_client = self._wait(future, "training client creation")
+        client = self._wait(future, "training client creation")
+        self.training_identity = self._verify_training_identity(client, checkpoint)
+        self.training_client = client
         # Sampling is changed only by an explicit refresh, so baseline evaluation
         # can use the base model while the new learner is initialized separately.
         return self.training_client
+
+    def _verify_training_identity(self, client, checkpoint: str | None) -> dict:
+        """Check SDK-cached model identity before accepting a fresh/restored learner."""
+        getter = getattr(client, "get_info", None)
+        if not callable(getter):
+            if self._injected_runtime:
+                return {"verified": False, "reason": "injected test client has no cached get_info"}
+            raise AdapterError("Training client has no cached get_info; model identity could not be verified before training")
+        try:
+            info = getter()  # SDK get_info is synchronous cached metadata, not model compute.
+            field = lambda value, name, default=None: value.get(name, default) if isinstance(value, Mapping) else getattr(value, name, default)
+            reported = field(field(info, "model_data"), "model_name")
+            rank = field(info, "lora_rank")
+        except Exception as error:
+            raise AdapterError(f"Could not read cached training model identity ({type(error).__name__}); no update was sent") from None
+        if not isinstance(reported, str) or not reported:
+            raise AdapterError("Training client did not report its base model; no update was sent")
+        # Tinker may report the canonical base without a ':peft:...' routing
+        # qualification. No other suffix stripping or fuzzy alias is accepted.
+        if reported.split(":peft:", 1)[0] != self.model.split(":peft:", 1)[0]:
+            raise AdapterError(f"Training checkpoint base model {reported!r} differs from configured model {self.model!r}; no update was sent")
+        if rank is not None and (isinstance(rank, bool) or not isinstance(rank, int) or rank != self.lora_rank):
+            raise AdapterError(f"Training checkpoint LoRA rank {rank!r} differs from configured rank {self.lora_rank}; no update was sent")
+        return {"verified": True, "configured_model": self.model, "reported_model": reported,
+                "lora_rank": rank, "restored_checkpoint": checkpoint is not None}
 
     def create_sampling_client(self, checkpoint: str | None = None):
         kwargs = {"model_path": checkpoint} if checkpoint else {"base_model": self.model}
@@ -455,6 +579,64 @@ class TinkerAdapter:
                                            reduction="mean" if self.sft_weighting == "example" else "none"))
         return datums
 
+    def _sft_layout(self, datum, metadata: Mapping[str, Any], execution_index: int,
+                    execution_tokens: int) -> dict:
+        """Map actual shifted target IDs to TML message-level action categories."""
+        weights = [_finite(value, "supervised prediction weight")
+                   for value in _tensor_values(datum.loss_fn_inputs["weights"])]
+        targets = _tensor_values(datum.loss_fn_inputs["target_tokens"])
+        if (len(weights) != len(targets) or any(weight < 0 for weight in weights)
+                or not math.isfinite(sum(weights))):
+            raise ValueError("Supervised diagnostic weights must align with the original target IDs")
+        actions, roles = ["unknown"] * len(targets), ["unknown"] * len(targets)
+        available = False
+        tokenizer = self._sdk().tokenizer
+        if tokenizer is not None and hasattr(tokenizer, "decode"):
+            try:
+                inputs = datum.model_input.to_ints()
+                if len(inputs) != len(targets) or inputs[1:] != targets[:-1] or not targets:
+                    raise ValueError("Supervised input/target shift is not intact")
+                tokens = inputs + [targets[-1]]
+                pieces = [tokenizer.decode([token]) for token in tokens]
+                starts = [(index, piece[len("<|message_"):-2]) for index, piece in enumerate(pieces)
+                          if re.fullmatch(r"<\|message_[a-z_]+\|>", piece)]
+                full_actions, full_roles = ["unknown"] * len(tokens), ["unknown"] * len(tokens)
+                available = any(role == "model" for _, role in starts)
+                for ordinal, (start, role) in enumerate(starts):
+                    end = starts[ordinal + 1][0] if ordinal + 1 < len(starts) else len(tokens)
+                    full_roles[start:end] = [role] * (end - start)
+                    if role != "model":
+                        continue
+                    text_parts, text_ids = [], []
+                    in_text = False
+                    def flush():
+                        if text_ids:
+                            text_parts.append(tokenizer.decode(text_ids))
+                            text_ids.clear()
+                    for token, piece in zip(tokens[start + 1:end], pieces[start + 1:end]):
+                        if re.fullmatch(r"<\|[^|]+\|>", piece):
+                            flush()
+                            in_text = piece == "<|content_text|>"
+                        elif in_text:
+                            text_ids.append(token)
+                    flush()
+                    kind = _supervised_action_kind("".join(text_parts))
+                    full_actions[start:end] = [kind] * (end - start)
+                actions, roles = full_actions[1:], full_roles[1:]
+            except (AttributeError, KeyError, TypeError, ValueError, UnicodeError):
+                available = False
+                actions, roles = ["unknown"] * len(targets), ["unknown"] * len(targets)
+        if any(weight > 0 and role not in {"model", "unknown"} for weight, role in zip(weights, roles)):
+            raise ValueError("Renderer assigned prediction weight to a non-assistant TML message; no update was sent")
+        tier = metadata.get("tier")
+        tier = str(tier) if isinstance(tier, int) and not isinstance(tier, bool) and tier > 0 else "unknown"
+        features = metadata.get("features", [])
+        features = sorted({feature for feature in features if isinstance(feature, str) and feature}) if isinstance(features, list) else []
+        return {"weights": weights, "actions": actions, "roles": roles,
+                "boundaries_available": available, "execution_index": execution_index,
+                "length_band": "long" if execution_tokens >= self.sft_diagnostic_long_tokens else "short",
+                "tier": tier, "features": features}
+
     def _generation_prompt(self, messages: Sequence[Mapping[str, Any]], max_tokens: int | None = None):
         prompt = self._sdk().renderer.build_generation_prompt(self._messages(messages), effort=self.effort)
         prompt_tokens = list(prompt.to_ints())
@@ -536,7 +718,8 @@ class TinkerAdapter:
 
     def _update(self, datums: list, loss_fn: str, learning_rate: float | None,
                 loss_fn_config: Mapping[str, float | str] | None = None,
-                diagnostic_samples: Sequence[Mapping[str, Any]] | None = None) -> dict:
+                diagnostic_samples: Sequence[Mapping[str, Any]] | None = None,
+                sft_layouts: list[dict] | None = None) -> dict:
         if not datums:
             raise ValueError("Cannot update with an empty training batch")
         rate = self.learning_rate if learning_rate is None else _finite(learning_rate, "learning_rate")
@@ -573,14 +756,31 @@ class TinkerAdapter:
                 # The optimizer has already committed. Report unavailable diagnostics
                 # without converting a completed update into a retryable failure.
                 metrics["learner_diagnostics_available"] = False
+        if sft_layouts is not None:
+            try:
+                metrics["sft_diagnostics"] = _sft_forward_diagnostics(
+                    sft_layouts, getattr(forward_result, "loss_fn_outputs", None), self.sft_diagnostic_long_tokens)
+            except Exception as error:
+                # Diagnostics must not turn a committed optimizer update into a
+                # retryable failure, including for unexpected future SDK output.
+                metrics["sft_diagnostics"] = {"loss_available": False,
+                    "source": "metadata only; diagnostic aggregation failed after completed optimizer step",
+                    "unavailable_reason": type(error).__name__, "datums": len(sft_layouts)}
         return {"step": self.training_steps, "examples": len(datums), "loss_fn": loss_fn,
-                "loss_fn_config": dict(loss_fn_config or {}), "learning_rate": rate, "metrics": metrics}
+                "loss_fn_config": dict(loss_fn_config or {}), "learning_rate": rate,
+                "training_identity": self.training_identity, "metrics": metrics}
 
     def sft_train(self, examples: Sequence[Mapping[str, Any]], learning_rate: float | None = None) -> dict:
-        datums = []
-        for example in examples:
-            datums.extend(self.render_sft(example["messages"]))
-        return self._update(datums, "cross_entropy", learning_rate)
+        datums, layouts = [], []
+        for index, example in enumerate(examples):
+            rendered = self.render_sft(example["messages"])
+            execution_tokens = sum(sum(weight > 0 for weight in _tensor_values(datum.loss_fn_inputs["weights"]))
+                                   for datum in rendered)
+            metadata = example.get("metadata", {})
+            metadata = metadata if isinstance(metadata, Mapping) else {}
+            layouts.extend(self._sft_layout(datum, metadata, index, execution_tokens) for datum in rendered)
+            datums.extend(rendered)
+        return self._update(datums, "cross_entropy", learning_rate, sft_layouts=layouts)
 
     def score_supervision(self, examples: Sequence[Mapping[str, Any]]) -> dict:
         """Forward-only live learnability diagnostic with exactly the SFT target mask."""
