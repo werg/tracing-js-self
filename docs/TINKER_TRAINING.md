@@ -2,6 +2,8 @@
 
 ## Objective and implementation plan
 
+See the [implementation validation record](TINKER_VALIDATION.md) for the executed checks and the remaining authentication prerequisite.
+
 Train `thinkingmachines/Inkling-2-Mini:peft:65536:free` to execute supplied JavaScript, then prefer shorter executions only after the complete externally observable behavior has been verified. Tinker supplies model compute. The owned JavaScript interpreter, controlled host environment, and independent Node reference execution run locally on CPU.
 
 The implementation is organized around five acceptance criteria:
