@@ -668,9 +668,11 @@ def live_diagnostic(repo: Path, config: dict, output: Path, *, live=False, learn
                 report["optimizer_updates"] = step
                 report["last_update"] = result
                 report["update_pending"] = False
-                report["checkpoint"] = adapter.checkpoint(f"diagnostic-{step:04d}")
+                should_eval = learnability and (step % evaluate_every == 0 or step == count)
+                if should_eval or step == count:
+                    report["checkpoint"] = adapter.checkpoint(f"diagnostic-{step:04d}")
                 runner.atomic_json(report_path, report)
-                if learnability and (step % evaluate_every == 0 or step == count):
+                if should_eval:
                     adapter.refresh_sampler()
                     stage = f"learnability-{step:04d}"
                     runner.evaluate(bridge, adapter, tiny, diagnostic_config, output, stage, "train",
