@@ -2692,7 +2692,7 @@ if(fn.value[0]!=='intrinsic'||!['Set','Map'].includes(fn.value[1])){
              else if(property==='length')v=['num',text.length];
              else if(arrayIndex(property)&&Number(property)<text.length)
                v=['str',text[Number(property)]];
-             else if(['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd','split','replace'].includes(property))
+             else if(['charAt','charCodeAt','codePointAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd','split','replace'].includes(property))
                v=['builtinfn','String.prototype.'+property];
              else if(['constructor','__proto__','valueOf','toString'].includes(property))
                throw new TypeError('Unmodeled String prototype property');
@@ -3933,7 +3933,7 @@ if(callable[0]==='builtinfn'&&/^(?:Set|Map)\.prototype\./.test(callable[1])){
           }
           if(callable[0]==='builtinfn' && callable[1].startsWith('String.prototype.')){
              const method=callable[1].slice('String.prototype.'.length);
-             if(receiver[0]!=='str'||!['charAt','charCodeAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(method))
+             if(receiver[0]!=='str'||!['charAt','charCodeAt','codePointAt','at','substring','substr','slice','indexOf','lastIndexOf','includes','startsWith','endsWith','toLowerCase','toUpperCase','trim','trimStart','trimEnd'].includes(method))
                guestFault('TypeError','String method requires a string receiver');
              if(receiver[1].length>10000||args.length>3)
                throw new RangeError('String operation outside the bounded profile');
@@ -3944,7 +3944,13 @@ if(callable[0]==='builtinfn'&&/^(?:Set|Map)\.prototype\./.test(callable[1])){
              });
              // Explicit primitive-only intrinsic leaf, with journaled inputs
              // and result. No callback, accessor or arbitrary host fallback.
-             const value=String.prototype[method].apply(receiver[1],values);
+             let value;
+             try{value=String.prototype[method].apply(receiver[1],values);}
+             catch(error){
+               if(error instanceof TypeError||error instanceof RangeError)
+                 guestFault(error.name,error.message);
+               throw error;
+             }
              if(typeof value==='string'&&value.length>100000)
                throw new RangeError('String result outside the bounded profile');
              return {...operands(fn,...args),...result(encode(value))};
