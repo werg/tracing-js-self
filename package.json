@@ -56,7 +56,9 @@
     },
     "./capabilities/node": "./src/host/selected-capabilities-node.js",
     "./capabilities/browser": "./src/host/selected-capabilities-browser.js",
-    "./capabilities/graph": "./src/host/graph-codec.js"
+    "./capabilities/graph": "./src/host/graph-codec.js",
+    "./training/tinker": "./src/training/tinker-execution.js",
+    "./training/tinker-import": "./src/training/tinker-import.js"
   },
   "description": "Experimental owned-machine JavaScript semantic tracing runtime",
   "engines": {
@@ -114,7 +116,11 @@
     "semantic:v8:costs": "node tools/measure-semantic-v8.mjs",
     "semantic:v8:experiment": "node tools/run-semantic-v8-experiment.mjs",
     "semantic:retained-costs": "node tools/measure-retained-serving.mjs",
-    "semantic:compare-costs": "node tools/compare-serving-costs.mjs"
+    "semantic:compare-costs": "node tools/compare-serving-costs.mjs",
+    "tinker": "python3 training/run.py",
+    "test:tinker": "node --experimental-vm-modules --test test/tinker-*.test.js && python3 training/run_tests.py",
+    "tinker:export": "python3 training/run.py --config training/configs/inkling-mini.json export",
+    "tinker:check": "python3 training/run.py --config training/configs/inkling-mini.json check"
   },
   "bin": {
     "tracing-js-self": "./bin/tracing.js"

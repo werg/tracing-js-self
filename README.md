@@ -4,6 +4,15 @@ An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstra
 
 This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
 
+## Inkling / Tinker execution training
+
+The [Tinker training guide](docs/TINKER_TRAINING.md) describes the readable
+execution-conversation adapter, controlled external observations, behavioral
+compression grader, and baseline → SFT → RL experiment runner. It targets the
+free Inkling 2 Mini model and keeps source families isolated across training and
+held-out evaluation. The JavaScript harness runs on CPU; model compute runs in
+Tinker. Run `npm run test:tinker` for the offline regression suite.
+
 ## Current work: V8 data preparation
 
 This repository and its companion, `werg/megatoken`, are pre-release. APIs and

@@ -1,0 +1,52 @@
+name: Tinker execution training infrastructure
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'training/**'
+      - 'src/**'
+      - 'tools/tinker-execution.mjs'
+      - 'test/tinker-*.test.js'
+      - 'package*.json'
+      - '.github/workflows/tinker-training.yml'
+  pull_request:
+    paths:
+      - 'training/**'
+      - 'src/**'
+      - 'tools/tinker-execution.mjs'
+      - 'test/tinker-*.test.js'
+      - 'package*.json'
+      - '.github/workflows/tinker-training.yml'
+permissions:
+  contents: read
+concurrency:
+  group: tinker-training-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  offline-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.8.4'
+          enable-cache: true
+          cache-dependency-glob: 'training/uv.lock'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: JS grading and dependency-free Python tests
+        run: npm run test:tinker
+      - name: Install pinned CPU SDK and check real renderer
+        run: uv sync --project training --locked
+      - name: Python tests with actual Tinker types available
+        run: uv run --project training --locked python -m unittest discover -s training/tests -v
+      - name: Export complete source-family dataset without model compute
+        run: uv run --project training --locked tinker-js --config training/configs/inkling-mini.json export
+      - name: Offline SDK and dataset preflight
+        run: uv run --project training --locked tinker-js --config training/configs/inkling-mini.json check

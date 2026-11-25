@@ -18,3 +18,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 pytest-of-*/
+
+# Tinker experiment environments, datasets, samples and private grading data
+.venv-tinker/
+training/.venv/
+training/*.egg-info/
+training/build/
+runs/
