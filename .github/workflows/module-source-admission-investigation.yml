@@ -152,8 +152,8 @@ jobs:
           lines=[line[len(prefix):] for line in (root/'module-artifact-packing.log').read_text().splitlines() if line.startswith(prefix)]
           assert len(lines)==1
           evidence=json.loads(lines[0])
-          assert evidence['logicalGeneratedTargets']==evidence['logicalContexts']==712
-          assert evidence['physicalSelectedTargets']>=712 and evidence['physicalContextParts']>=712
+          assert evidence['logicalGeneratedTargets']==evidence['logicalContexts']==724
+          assert evidence['physicalSelectedTargets']>=724 and evidence['physicalContextParts']>=724
           assert evidence['totalScoredPositions']>0 and evidence['packedWindows']>0
           assert 0<evidence['maxPackedWindowTokens']<=8192
           assert all(evidence[key] is True for key in ('allContextBytesReassembled','allTargetBytesReassembled',
