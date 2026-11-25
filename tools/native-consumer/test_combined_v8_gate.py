@@ -239,7 +239,7 @@ class RunPolicyTests(unittest.TestCase):
         names = ["promise-object-review-source-evidence.json", "promise-object-review-protocol-evidence.json"]
         originals = []
         for name, counts, population, artifact_key in (
-            (names[0], [21, 38, 23, 19, 23, 32, 20, 20], "sourceCases", "exported"),
+            (names[0], [21, 41, 23, 19, 23, 32, 20, 20], "sourceCases", "exported"),
             (names[1], [13, 17], "publicCases", "artifact"),
         ):
             cases, receipts = [], []
@@ -269,7 +269,7 @@ class RunPolicyTests(unittest.TestCase):
             originals.append(packet)
             save(self.root / name, packet)
         verified = gate.verify_review_promise_packets(self.root)
-        self.assertEqual([row["contexts"] for row in verified], [196, 30])
+        self.assertEqual([row["contexts"] for row in verified], [199, 30])
         self.assertEqual(verified[0]["checkpoints"], {"cases": 2, "actualNativeCases": 2, "contexts": 37})
         for index, mutation, message in (
             (0, lambda p: p["nativeReceipts"][0]["checks"].update(replay="failed"), "did not pass"),

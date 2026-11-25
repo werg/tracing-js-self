@@ -108,9 +108,9 @@
         "test/owned-promise-review-boundaries.test.js": 8,
         "test/semantic-async-call-source-v8.test.js": 18,
         "test/semantic-async-return-adoption-composition-source-v8.test.js": 4,
-        "test/semantic-native-promise-slots-v8.test.js": 8,
+        "test/semantic-native-promise-slots-v8.test.js": 10,
         "test/semantic-native-source-reader-v8.test.js": 6,
-        "test/semantic-promise-adoption-getter-source-v8.test.js": 7,
+        "test/semantic-promise-adoption-getter-source-v8.test.js": 9,
         "test/semantic-promise-mutation-profile-source-v8.test.js": 25,
         "test/semantic-promise-object-observations-v8.test.js": 19,
         "test/semantic-promise-object-profile-source-v8.test.js": 23,
@@ -129,7 +129,7 @@
         "test/semantic-protocol-v8.test.js": 14,
         "test/semantic-qualification-population-v8.test.js": 4,
         "test/semantic-shared-intrinsic-boundaries-v8.test.js": 11,
-        "test/semantic-shared-protocol-source-v8.test.js": 8,
+        "test/semantic-shared-protocol-source-v8.test.js": 9,
         "test/training-promise-job-projection.test.js": 3
       },
       "native": {
