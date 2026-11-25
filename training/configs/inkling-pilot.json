@@ -57,5 +57,5 @@
     "minimum_groups": 4,
     "advance_success_rate": 0.25
   },
-  "bridge_timeout_seconds": 60
+  "bridge_timeout_seconds": 300
 }

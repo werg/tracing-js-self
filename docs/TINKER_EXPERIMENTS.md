@@ -23,6 +23,13 @@ larger prepared experiment is configured in `training/configs/inkling-pilot.json
 The pilot's learning rates, reward settings and update counts are starting
 choices, not measured optima.
 
+The pilot gives each local bridge request a 300-second outer deadline. One
+qualified recursive Collatz case took 86 seconds to export in isolation, largely
+in runtime snapshot cloning/diffing. The starter keeps its shorter 60-second
+limit. Task-level timers are cooperative and cannot interrupt synchronous
+snapshot work; the separate bridge process provides the outer wall-time limit.
+This setting controls local JavaScript preparation, not model-generation cost.
+
 The expanded, qualified datasets are committed under `training/fixtures/expanded`.
 Regenerate them deliberately when changing the corpus:
 
@@ -53,6 +60,7 @@ sample on changes; its manual workflow supports the full 10,000-case gate.
 | `familiar-inputs.jsonl` | Withheld inputs for programs used during training | No; separate diagnostic evaluation only |
 | `challenge.jsonl` | Longer executions and composed behavior from held-out parent families | No; separate diagnostic evaluation only |
 | `evaluation-manifest.json` | Exact case IDs for each main split | Defines the frozen evaluation population |
+| `familiar-input-exclusions.jsonl` | Exact training-input duplicates excluded from the novel-input diagnostic | No; retained exclusion evidence |
 | `admission.jsonl` | Every considered candidate and its admission/refusal | Evidence of coverage, not model accuracy |
 | `manifest.json` | Source/lineage counts, hashes, split policy and qualification scope | Provenance |
 
