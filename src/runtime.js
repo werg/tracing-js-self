@@ -49,7 +49,7 @@ const freezeJson = value => {
   return value;
 };
 function equal(a, b) {
-  if (a === b) return true;
+  if (a === b || (typeof a === 'number' && typeof b === 'number' && Number.isNaN(a) && Number.isNaN(b))) return true;
   if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
   if (Array.isArray(a)) {
     if (!Array.isArray(b) || a.length !== b.length) return false;
@@ -528,10 +528,12 @@ function createDraftState(state) {
 }
 function applyTouchedDiff(state, touched) {
   const patches = [];
+  let nextState = state;
   for (const table of tableNames) {
     const map = touched[table];
     if (!map.size) continue;
     const base = state[table];
+    let nextTable = null;
     let ids;
     if (map.size === 1) {
       ids = map.keys();
@@ -550,12 +552,17 @@ function applyTouchedDiff(state, touched) {
         if (after && typeof after === 'object') after.version = (prev?.version ?? 0) + 1;
         patches.push(table === 'operations' ? operationMutation(prev, after)
           : {kind: `${table}.replace`, table, id, before: copy(prev), after: copy(after)});
-        if (after === null) delete base[id];
-        else base[id] = after;
+        if (!nextTable) {
+          if (nextState === state) nextState = {...state};
+          nextTable = {...base};
+          nextState[table] = nextTable;
+        }
+        if (after === null) delete nextTable[id];
+        else nextTable[id] = after;
       }
     }
   }
-  return patches;
+  return {patches, nextState};
 }
 /** Small, independent, fail-closed runtime profile: see docs/STATUS.md. */
 export class Runtime {
@@ -1127,7 +1134,8 @@ export class Runtime {
   commit(operation, callback, {siteId=null,sourceId=null,codeId=null,invocationId=null,operands=[]}={}) {
     const {draft, touched}=createDraftState(this.state),eventId=`a0:e${this.events.length+1}`;
     const detail=callback(draft,eventId)??{};
-    const patches=applyTouchedDiff(this.state,touched);
+    const {patches, nextState}=applyTouchedDiff(this.state,touched);
+    this.state=nextState;
     const event={eventId,agentId:'a0',sequence:this.events.length+1,operation,catalogRef:`${operation}/1`,siteId,sourceId,codeId,invocationId,
       operands:detail.operands??operands,operandOrigins:detail.origins??[],result:detail.result??null,
       readObservations:detail.reads??[],causes:detail.causes??[],stateChanges:patches,

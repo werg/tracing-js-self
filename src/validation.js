@@ -23,7 +23,7 @@ import {decode} from './values.js';
 import {symbolPropertyKey,stringPropertyKey} from './property-keys.js';
 const clone = x => structuredClone(x);
 function eq(a, b) {
-  if (a === b) return true;
+  if (a === b || (typeof a === 'number' && typeof b === 'number' && Number.isNaN(a) && Number.isNaN(b))) return true;
   if (!a || !b || typeof a !== 'object' || typeof b !== 'object') return false;
   if (Array.isArray(a)) {
     if (!Array.isArray(b) || a.length !== b.length) return false;
