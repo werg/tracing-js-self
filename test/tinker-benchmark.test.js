@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {generatedCandidates,nearCloneHash,assignFrozenSplits,splitDiagnosticInputs,challengeCandidates,
+import {generatedCandidates,repositoryCandidates,nearCloneHash,assignFrozenSplits,splitDiagnosticInputs,challengeCandidates,
   datasetCounts,sha256,censusCandidates,executionInputSignature} from '../src/training/tinker-benchmark.js';
 import {independentDecode,independentGraph,independentNativeExecution,independentTranscriptMatches,independentConversationMatches} from '../src/training/tinker-independent.js';
 import {encodeReadable,prepareTinkerTask,readableMessagesFromJournal} from '../src/training/tinker-execution.js';
@@ -13,12 +13,12 @@ import {boundedFuzzTask,verifyTaskBoundary,minimizeCounterexample,aggregateVerif
 
 test('seeded corpus preserves template lineage and actual independently grouped denominators',()=>{
   const candidates=generatedCandidates({seed:17});
-  assert.equal(candidates.length,1032);
+  assert.equal(candidates.length,1176);
   assert.deepEqual(candidates,generatedCandidates({seed:17}));
   const rows=assignFrozenSplits(candidates,{seed:17}),counts=datasetCounts(rows);
-  assert.equal(counts.total.families,86);
+  assert.equal(counts.total.families,110);
   assert(counts.total.sourcePrograms>counts.total.independentComponents);
-  assert(counts.total.independentComponents<=86);
+  assert(counts.total.independentComponents<=110);
   const seen=new Map();
   for(const row of rows){
     assert(row.metadata.features.length);
@@ -28,6 +28,12 @@ test('seeded corpus preserves template lineage and actual independently grouped 
     }
   }
   for(const split of ['train','validation','test'])assert(counts.bySplit[split].independentComponents>0);
+  const repoRows=assignFrozenSplits(repositoryCandidates({seed:17,perFamily:2}),{seed:17});
+  for(const origin of ['utilities','exercism','production']){
+    for(const split of ['train','validation','test']){
+      assert(repoRows.some(r=>r.split===split&&r.metadata.sourceOrigin===origin),`expected ${origin} in ${split}`);
+    }
+  }
 });
 
 test('renaming identifiers or changing constants cannot produce independent source families',()=>{

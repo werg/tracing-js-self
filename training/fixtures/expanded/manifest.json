@@ -1,16 +1,16 @@
 {
-  "started": "2026-11-25T20:02:17.402Z",
-  "finished": "2026-11-25T20:06:08.778Z",
+  "started": "2026-11-25T23:08:23.272Z",
+  "finished": "2026-11-25T23:14:26.671Z",
   "implementation": {
     "schema": "tinker-local-verification-identity/1",
-    "sha256": "7cda92964ab719a0f69e3afcb50eedf91d6cb997f6745710b437c9bb7f3e527e",
-    "files": 559,
+    "sha256": "c9df9d3060d66eb1be75bf1736da72222055db8e14a08eda306cf1a8b443f9f0",
+    "files": 93,
     "node": "v22.22.1"
   },
   "implementationAtFinish": {
     "schema": "tinker-local-verification-identity/1",
-    "sha256": "7cda92964ab719a0f69e3afcb50eedf91d6cb997f6745710b437c9bb7f3e527e",
-    "files": 559,
+    "sha256": "c9df9d3060d66eb1be75bf1736da72222055db8e14a08eda306cf1a8b443f9f0",
+    "files": 93,
     "node": "v22.22.1"
   },
   "codeChangedDuringRun": false,
@@ -22,37 +22,41 @@
     "validation": 0.2,
     "test": 0.3
   },
-  "requestedCandidates": 1445,
+  "requestedCandidates": 1783,
   "limited": false,
   "includeUpstream": true,
-  "perFamily": 4,
+  "perFamily": 6,
   "candidatePopulation": {
-    "candidateExecutions": 1445,
-    "candidateFamilies": 190,
+    "candidateExecutions": 1783,
+    "candidateFamilies": 214,
     "statuses": {
-      "admitted": 1417,
-      "refused": 28
+      "admitted": 1732,
+      "refused": 51
     },
     "refusals": {
-      "source-or-runtime-profile": 24,
-      "source_unsupported": 4
+      "source-or-runtime-profile": 45,
+      "source_unsupported": 6
     },
     "byOrigin": {
       "authored-generator": {
         "candidates": 1032,
         "admitted": 1032
       },
+      "authored-long-program": {
+        "candidates": 144,
+        "admitted": 142
+      },
       "utilities": {
-        "candidates": 308,
-        "admitted": 308
+        "candidates": 462,
+        "admitted": 462
       },
       "exercism": {
-        "candidates": 79,
-        "admitted": 51
+        "candidates": 116,
+        "admitted": 67
       },
       "production": {
-        "candidates": 26,
-        "admitted": 26
+        "candidates": 29,
+        "admitted": 29
       }
     },
     "byFeature": {
@@ -61,32 +65,32 @@
         "admitted": 192
       },
       "branch": {
-        "candidates": 946,
-        "admitted": 922
+        "candidates": 1233,
+        "admitted": 1188
       },
       "external": {
-        "candidates": 376,
-        "admitted": 376
+        "candidates": 412,
+        "admitted": 412
       },
       "algorithm": {
         "candidates": 504,
         "admitted": 504
       },
       "loop": {
-        "candidates": 730,
-        "admitted": 722
+        "candidates": 977,
+        "admitted": 956
       },
       "array": {
-        "candidates": 790,
-        "admitted": 762
+        "candidates": 1073,
+        "admitted": 1027
       },
       "alias": {
         "candidates": 108,
         "admitted": 108
       },
       "mutation": {
-        "candidates": 156,
-        "admitted": 156
+        "candidates": 186,
+        "admitted": 186
       },
       "property-presence": {
         "candidates": 24,
@@ -109,16 +113,16 @@
         "admitted": 12
       },
       "null-prototype": {
-        "candidates": 12,
-        "admitted": 12
-      },
-      "object": {
         "candidates": 48,
         "admitted": 48
       },
+      "object": {
+        "candidates": 114,
+        "admitted": 114
+      },
       "exception": {
-        "candidates": 88,
-        "admitted": 80
+        "candidates": 126,
+        "admitted": 114
       },
       "finally": {
         "candidates": 24,
@@ -129,16 +133,16 @@
         "admitted": 12
       },
       "nullish": {
-        "candidates": 12,
-        "admitted": 12
+        "candidates": 30,
+        "admitted": 30
       },
       "nested-object": {
         "candidates": 12,
         "admitted": 12
       },
       "string": {
-        "candidates": 12,
-        "admitted": 12
+        "candidates": 66,
+        "admitted": 64
       },
       "unicode": {
         "candidates": 12,
@@ -165,74 +169,89 @@
         "admitted": 12
       },
       "sequential": {
-        "candidates": 24,
-        "admitted": 24
+        "candidates": 60,
+        "admitted": 60
+      },
+      "longer-execution": {
+        "candidates": 144,
+        "admitted": 142
+      },
+      "multi-function": {
+        "candidates": 120,
+        "admitted": 118
+      },
+      "recursion": {
+        "candidates": 6,
+        "admitted": 6
       },
       "real-source": {
-        "candidates": 413,
-        "admitted": 385
+        "candidates": 607,
+        "admitted": 558
       }
     },
-    "admissionFraction": 0.9806228373702423,
+    "admissionFraction": 0.971396522714526,
     "modelExecutionAccuracy": null,
     "agentTaskSuccess": null,
     "denominator": "every candidate in the declared inventory, including missing inputs and refusals"
   },
   "counts": {
     "total": {
-      "cases": 1277,
-      "families": 183,
-      "independentComponents": 123,
-      "sourcePrograms": 406
+      "cases": 1556,
+      "families": 207,
+      "independentComponents": 205,
+      "sourcePrograms": 464
     },
     "bySplit": {
       "train": {
-        "cases": 482,
-        "families": 70,
-        "independentComponents": 62,
-        "sourcePrograms": 177
+        "cases": 700,
+        "families": 105,
+        "independentComponents": 103,
+        "sourcePrograms": 226
       },
       "validation": {
-        "cases": 235,
-        "families": 25,
-        "independentComponents": 25,
-        "sourcePrograms": 71
+        "cases": 342,
+        "families": 41,
+        "independentComponents": 41,
+        "sourcePrograms": 105
       },
       "test": {
-        "cases": 560,
-        "families": 88,
-        "independentComponents": 36,
-        "sourcePrograms": 158
+        "cases": 514,
+        "families": 61,
+        "independentComponents": 61,
+        "sourcePrograms": 133
       }
     },
     "byFeature": {
       "algorithm": 444,
       "alias": 96,
       "arithmetic": 165,
-      "array": 704,
+      "array": 937,
       "bigint": 9,
-      "branch": 840,
+      "branch": 1077,
       "break": 12,
       "continue": 12,
       "cycle": 9,
       "destructure": 12,
-      "exception": 71,
+      "exception": 103,
       "exceptional-scalar": 21,
-      "external": 329,
+      "external": 363,
       "finally": 24,
-      "loop": 658,
-      "mutation": 138,
+      "longer-execution": 130,
+      "loop": 867,
+      "multi-function": 108,
+      "mutation": 166,
       "nested-object": 12,
-      "null-prototype": 9,
-      "nullish": 9,
-      "object": 42,
+      "null-prototype": 42,
+      "nullish": 25,
+      "object": 104,
       "property-order": 12,
       "property-presence": 24,
-      "real-source": 374,
-      "sequential": 24,
+      "real-source": 523,
+      "recursion": 5,
+      "sequential": 58,
       "sparse": 24,
       "standard-error": 9,
-      "string": 9,
+      "string": 57,
       "undefined": 12,
       "unicode": 9
     }
@@ -240,10 +259,10 @@
   "diagnostics": {
     "familiarInputs": {
       "total": {
-        "cases": 136,
-        "families": 54,
-        "independentComponents": 48,
-        "sourcePrograms": 136
+        "cases": 172,
+        "families": 90,
+        "independentComponents": 88,
+        "sourcePrograms": 172
       },
       "bySplit": {
         "train": {
@@ -259,31 +278,35 @@
           "sourcePrograms": 0
         },
         "test": {
-          "cases": 136,
-          "families": 54,
-          "independentComponents": 48,
-          "sourcePrograms": 136
+          "cases": 172,
+          "families": 90,
+          "independentComponents": 88,
+          "sourcePrograms": 172
         }
       },
       "byFeature": {
         "algorithm": 58,
         "alias": 12,
         "arithmetic": 27,
-        "array": 56,
+        "array": 88,
         "bigint": 3,
-        "branch": 80,
+        "branch": 109,
         "cycle": 3,
-        "exception": 7,
+        "exception": 9,
         "exceptional-scalar": 3,
-        "external": 45,
-        "loop": 62,
-        "mutation": 18,
-        "null-prototype": 3,
-        "nullish": 3,
-        "object": 6,
-        "real-source": 11,
+        "external": 47,
+        "longer-execution": 12,
+        "loop": 87,
+        "multi-function": 10,
+        "mutation": 20,
+        "null-prototype": 6,
+        "nullish": 5,
+        "object": 10,
+        "real-source": 35,
+        "recursion": 1,
+        "sequential": 2,
         "standard-error": 3,
-        "string": 3,
+        "string": 7,
         "unicode": 3
       }
     },
@@ -381,12 +404,12 @@
   },
   "files": {
     "main.jsonl": {
-      "sha256": "d8b7620848d8aa187c385bef55f05d254e0e7bfbd7cdebec3d6d66eb702d2286",
-      "bytes": 1940618
+      "sha256": "ffc2ef16c3932438e24bfda6bb65c3cbc2107aaf1ed012c1e4e0e0b2b53661a3",
+      "bytes": 2538392
     },
     "familiar-inputs.jsonl": {
-      "sha256": "404e2bd802e8b0bbb6040a994d2fafdf76132598111b7dbe4df8eb3e16bab5e0",
-      "bytes": 197007
+      "sha256": "51e2d32ef0bcbd6e0cf0c50d9f2bc4a0f346a7b5d242ce2821df4d03c10b9bf9",
+      "bytes": 279544
     },
     "familiar-input-exclusions.jsonl": {
       "sha256": "95bbe659aa33ef680b5d4e0f0a585e4b406db424ac5194a343ab82efd47d3f7a",
@@ -397,16 +420,16 @@
       "bytes": 14151
     },
     "admission.jsonl": {
-      "sha256": "470ccec4596aa162161b8ff7cf359bb9b2c4d29a9c505598fe80b0bd791ec05e",
-      "bytes": 1341011
+      "sha256": "a768599ad0e85842eb45aa68916934f5246295169d62f0ce4f1967b0461918d9",
+      "bytes": 1668632
     },
     "challenge-admission.jsonl": {
-      "sha256": "4451f2f63aea1653ef8153f1fd71953131c3030b0291b85c875267d39fff380c",
-      "bytes": 10513
+      "sha256": "f44ec723b12c5f59f5a5de284ab3d0baaa17a48fcba54a45b16c5b9cbfd26b05",
+      "bytes": 10515
     },
     "evaluation-manifest.json": {
-      "sha256": "638f4ad58ec17f8cca5a127fc5602ee406efae81b7bb669e49ac566882455444",
-      "bytes": 67373
+      "sha256": "333a02c2be5cdb6aec7ce5920ed55a215bf0d3a9d5b827541e80934ceb736f6d",
+      "bytes": 80410
     }
   },
   "splitPolicy": "union declared family, template, ancestors, exact source and conservative alpha/literal clone fingerprint before admission",

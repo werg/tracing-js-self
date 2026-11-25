@@ -8,7 +8,7 @@ import unittest
 from tinker_js.runner import (
     BridgeError, RolloutError, UpdateRecoveryError, compression_reward, config_fingerprint, digest, evaluate, export_dataset,
     group_advantages, load_config, load_state, make_report, rollout,
-    save_state, split_examples, summarize_records, train_rl, train_sft, write_jsonl,
+    save_state, scheduled_learning_rate, split_examples, summarize_records, train_rl, train_sft, write_jsonl,
 )
 
 
@@ -467,6 +467,73 @@ class ReportTests(unittest.TestCase):
             write_jsonl(path / "evaluations/sft-test.jsonl", [dict(after, source_hash="changed")])
             with self.assertRaisesRegex(ValueError, "identical sources"):
                 make_report(path, config)
+
+
+class ConcurrencyAndScheduleTests(unittest.TestCase):
+    def test_scheduled_learning_rate_constant_linear_and_cosine_with_warmup(self):
+        cfg_const = load_config(overrides={"lr_schedule": "constant"})
+        self.assertEqual(scheduled_learning_rate(1e-4, 5, 10, cfg_const), 1e-4)
+
+        cfg_cos = load_config(overrides={"lr_schedule": "cosine", "lr_warmup_fraction": 0.2, "lr_min_ratio": 0.1})
+        self.assertAlmostEqual(scheduled_learning_rate(1e-4, 0, 10, cfg_cos), 5.5e-5, places=10)
+        self.assertAlmostEqual(scheduled_learning_rate(1e-4, 1, 10, cfg_cos), 1e-4, places=10)
+        self.assertAlmostEqual(scheduled_learning_rate(1e-4, 2, 10, cfg_cos), 1e-4, places=10)
+        self.assertAlmostEqual(scheduled_learning_rate(1e-4, 9, 10, cfg_cos), 1e-5, places=10)
+
+        cfg_lin = load_config(overrides={"lr_schedule": "linear", "lr_warmup_fraction": 0.0, "lr_min_ratio": 0.2})
+        self.assertAlmostEqual(scheduled_learning_rate(1e-4, 0, 5, cfg_lin), 1e-4, places=10)
+        self.assertAlmostEqual(scheduled_learning_rate(1e-4, 2, 5, cfg_lin), 6e-5, places=10)
+        self.assertAlmostEqual(scheduled_learning_rate(1e-4, 4, 5, cfg_lin), 2e-5, places=10)
+
+    def test_thinking_without_text_is_tagged_as_distinct_failure_category(self):
+        class ThinkingOnlyAdapter:
+            backend_name = "tinker"
+            def sample(self, messages, max_tokens=None, seed=None):
+                return {
+                    "message": {"role": "assistant", "content": [{"type": "thinking", "thinking": "{\"type\":\"complete\"}"}]},
+                    "text": "",
+                    "prompt_tokens": [1, 2],
+                    "token_ids": [10, 11, 12],
+                    "logprobs": [-0.1, -0.1, -0.1],
+                    "stop_reason": "stop",
+                    "complete": True,
+                }
+
+        config = load_config()
+        record = rollout(ControlledBridge(), ThinkingOnlyAdapter(), row("a")["task"], config, seed=17)
+        self.assertFalse(record["grade"]["success"])
+        self.assertEqual(record["grade"]["failureCategory"], "thinking_without_text")
+        summary = summarize_records([record])
+        self.assertEqual(summary["failure_categories"], {"thinking_without_text": 1})
+
+    def test_concurrent_evaluate_preserves_deterministic_order(self):
+        import threading
+        import time
+
+        class ThreadSafeBridge(ControlledBridge):
+            def __init__(self):
+                super().__init__()
+                self._lock = threading.Lock()
+            def request(self, op, **payload):
+                with self._lock:
+                    return super().request(op, **payload)
+
+        class DelayAdapter:
+            backend_name = "tinker"
+            def sample(self, messages, max_tokens=None, seed=None):
+                # Delay inversely by seed so tasks finish out of order.
+                time.sleep(0.01 * (seed % 5))
+                return sample("complete", 4)
+
+        config = load_config(overrides={"rollout_concurrency": 4})
+        rows = [row(f"task-{i}", split="test") for i in range(6)]
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            summary = evaluate(ThreadSafeBridge(), DelayAdapter(), rows, config, output, "baseline", split="test")
+            self.assertEqual(summary["executions"], 6)
+            self.assertEqual(summary["successes"], 6)
+            saved = [json.loads(line) for line in (output / "evaluations/baseline-test.jsonl").read_text().splitlines()]
+            self.assertEqual([r["task_id"] for r in saved], [f"task-{i}" for i in range(6)])
 
 
 if __name__ == "__main__":

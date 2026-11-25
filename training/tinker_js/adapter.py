@@ -13,6 +13,7 @@ import json
 import math
 import re
 import statistics
+import threading
 from collections.abc import Mapping, Sequence
 from types import SimpleNamespace
 from typing import Any
@@ -293,37 +294,41 @@ class TinkerAdapter:
         self.reference_client = None
         self.reference_checkpoint = None
         self._token_pieces: dict[int, str] = {}
+        self._lock = threading.RLock()
         self.training_identity: dict = {}
 
     def _sdk(self):
-        if self._runtime is None:
-            try:
-                import tinker
-                from tinker_cookbook import model_info
-                from tinker_cookbook.renderers import TrainOnWhat, get_renderer
-                from tinker_cookbook.supervised.common import datum_from_model_input_weights
-                from tinker_cookbook.tokenizer_utils import get_tokenizer
+        if self._runtime is not None:
+            return self._runtime
+        with self._lock:
+            if self._runtime is None:
+                try:
+                    import tinker
+                    from tinker_cookbook import model_info
+                    from tinker_cookbook.renderers import TrainOnWhat, get_renderer
+                    from tinker_cookbook.supervised.common import datum_from_model_input_weights
+                    from tinker_cookbook.tokenizer_utils import get_tokenizer
 
-                tokenizer = get_tokenizer(self.model)
-                renderer_name = model_info.get_recommended_renderer_name(self.model)
-                renderer = get_renderer(renderer_name, tokenizer)
-                self._runtime = SimpleNamespace(
-                    types=tinker.types,
-                    renderer=renderer,
-                    renderer_name=renderer_name,
-                    tokenizer=tokenizer,
-                    datum_builder=datum_from_model_input_weights,
-                    customized=TrainOnWhat.CUSTOMIZED,
-                    service_factory=tinker.ServiceClient,
-                    rest_factory=tinker.RestClient,
-                )
-            except Exception as exc:
-                raise AdapterError(
-                    f"Could not load the Inkling SDK/renderer ({type(exc).__name__}). "
-                    "Install the pinned training dependencies with Python 3.11+; "
-                    "tml-renderers requires PyTorch >=2.10."
-                ) from None
-        return self._runtime
+                    tokenizer = get_tokenizer(self.model)
+                    renderer_name = model_info.get_recommended_renderer_name(self.model)
+                    renderer = get_renderer(renderer_name, tokenizer)
+                    self._runtime = SimpleNamespace(
+                        types=tinker.types,
+                        renderer=renderer,
+                        renderer_name=renderer_name,
+                        tokenizer=tokenizer,
+                        datum_builder=datum_from_model_input_weights,
+                        customized=TrainOnWhat.CUSTOMIZED,
+                        service_factory=tinker.ServiceClient,
+                        rest_factory=tinker.RestClient,
+                    )
+                except Exception as exc:
+                    raise AdapterError(
+                        f"Could not load the Inkling SDK/renderer ({type(exc).__name__}). "
+                        "Install the pinned training dependencies with Python 3.11+; "
+                        "tml-renderers requires PyTorch >=2.10."
+                    ) from None
+            return self._runtime
 
     def _client(self):
         if self._service is None:
@@ -693,14 +698,19 @@ class TinkerAdapter:
 
     def sample(self, messages: Sequence[Mapping[str, Any]], max_tokens: int | None = None, seed: int | None = None) -> dict:
         sdk = self._sdk()
-        prompt, prompt_tokens, budget = self._generation_prompt(messages, max_tokens)
-        if self.sampling_client is None:
-            self.create_sampling_client()
-        params = {"max_tokens": budget, "temperature": self.temperature, "stop": sdk.renderer.get_stop_sequences()}
-        if seed is not None:
-            params["seed"] = _seed(seed)
+        with self._lock:
+            prompt, prompt_tokens, budget = self._generation_prompt(messages, max_tokens)
+            if self.sampling_client is None:
+                self.create_sampling_client()
+            client = self.sampling_client
+            revision = self.sampling_revision
+            params = {"max_tokens": budget, "temperature": self.temperature, "stop": sdk.renderer.get_stop_sequences()}
+            if seed is not None:
+                params["seed"] = _seed(seed)
+            sampling_params = sdk.types.SamplingParams(**params)
+        # Network sampling runs unlocked so concurrent rollout threads pipeline I/O.
         response = self._wait(
-            self.sampling_client.sample(prompt=prompt, num_samples=1, sampling_params=sdk.types.SamplingParams(**params)),
+            client.sample(prompt=prompt, num_samples=1, sampling_params=sampling_params),
             "sampling",
         )
         # Once a response arrives, even a broken response must retain its full
@@ -725,14 +735,16 @@ class TinkerAdapter:
         termination_name = "malformed"
         clean = False
         parse_error = None
-        if len(sequences) == 1:
-            try:
-                parsed, termination = sdk.renderer.parse_response(tokens)
-                message = _json_value(parsed)
-                termination_name = str(getattr(termination, "value", termination))
-                clean = bool(getattr(termination, "is_clean", termination_name in {"stop_sequence", "eos"}))
-            except Exception as exc:
-                parse_error = f"Renderer parsing failed ({type(exc).__name__})"
+        with self._lock:
+            if len(sequences) == 1:
+                try:
+                    parsed, termination = sdk.renderer.parse_response(tokens)
+                    message = _json_value(parsed)
+                    termination_name = str(getattr(termination, "value", termination))
+                    clean = bool(getattr(termination, "is_clean", termination_name in {"stop_sequence", "eos"}))
+                except Exception as exc:
+                    parse_error = f"Renderer parsing failed ({type(exc).__name__})"
+            accounting = self.token_accounting(tokens)
         stop_reason = str(sequences[0].stop_reason) if len(sequences) == 1 else "invalid_response"
         complete = bool(tokens) and clean and not provenance_errors and stop_reason not in {"length", "max_tokens", "max_length"}
         record = {
@@ -746,8 +758,8 @@ class TinkerAdapter:
             "complete": complete,
             "generated_tokens": len(tokens),
             "model": self.model,
-            "sampler_revision": self.sampling_revision,
-            "token_accounting": self.token_accounting(tokens),
+            "sampler_revision": revision,
+            "token_accounting": accounting,
         }
         if provenance_errors:
             record["provenance_error"] = "; ".join(provenance_errors)

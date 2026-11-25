@@ -26,10 +26,11 @@ function originalExercism(source){
     if(modifier.kind===ts.SyntaxKind.ExportKeyword){parts.push(source.slice(end,modifier.getStart(tree)));end=modifier.end;}
   return parts.join('')+source.slice(end);
 }
-function candidate({stream,family,index,source,entry,args,originalSource,provenance,refusal=null}){
+function candidate({stream,family,index,source,entry,args,originalSource,provenance,upstreamSymbol=null,refusal=null}){
   const id='real-'+stream+'-'+sha(JSON.stringify([family,index,provenance.upstream])).slice(0,24);
+  const upstreamKey='upstream:'+provenance.upstream.repository+':'+provenance.upstream.path+(upstreamSymbol?'#'+upstreamSymbol:'');
   return {id,family,source,entry,args,fixture:{calls:[]},license:provenance.license,
-    trustTier:'trusted-owned-source',ancestorIds:['upstream:'+provenance.upstream.repository+':'+provenance.upstream.path],
+    trustTier:'trusted-owned-source',ancestorIds:[upstreamKey],
     provenance:{...provenance,sourceStream:stream,inputIndex:index,
       originalSourceSha256:sha(originalSource),transformedSourceSha256:sha(source),
       originalSource,transformedSource:source},
@@ -65,7 +66,7 @@ function utilityCandidates(root,perFamily){
           source+='\n'+wrapper.source;originalSource+='\n'+wrapper.source;entry=wrapper.entry;args=[];}
         catch(error){refusal={status:'guest_fixture_not_portable',reason:String(error.message)};}
       }
-      output.push(candidate({stream:'utilities',family,index,source,entry,args,originalSource,refusal,
+      output.push(candidate({stream:'utilities',family,index,source,entry,args,originalSource,refusal,upstreamSymbol:spec.entry,
         provenance:{upstream:{repository,revision:pin.revision,path:pin.sourcePrefix+spec.file,
           sha256:sha(pinned.sourceFile)},license:pin.license,notice,noticePath,
           originalFile:pinned.sourceFile,sourceURL:pinned.sourceURL,
@@ -96,7 +97,7 @@ function exercismCandidates(root,perFamily,mutationsPerFamily){
       if(fixture.status!=='candidate')rejected={status:'fixture_unsupported',reason:fixture.status};
       else if(lowered&&!lowered.exported.includes(entry))rejected={status:'fixture_unsupported',reason:'Entry not exported by original pinned source'};
       output.push(candidate({stream:'exercism',family:'exercism/javascript:'+pair.slug,index:fixture.caseId,
-        source,entry,args:fixture.args??[],originalSource:originalExercism(pair.source),refusal:rejected,
+        source,entry,args:fixture.args??[],originalSource:originalExercism(pair.source),refusal:rejected,upstreamSymbol:pair.slug,
         provenance:{upstream:pair.provenance.solution,canonical:pair.provenance.canonical,
           license:'MIT',notice,noticePath,originalFile:pair.source,
           canonicalNotice:{repository:pair.provenance.canonical.repository,revision:pair.provenance.canonical.revision,
@@ -125,7 +126,7 @@ function productionCandidates(root,perFamily){
     // are explicit metadata, never silently replaced by an invented license.
     try{notice=readFileSync(resolve(root,noticePath),'utf8');}catch{notice=null;}
     output.push(candidate({stream:'production',family:'production:'+pin.repository+':'+pin.path+':'+artifact.entry,
-      index,source:artifact.projected,entry:artifact.entry,args,
+      index,source:artifact.projected,entry:artifact.entry,args,upstreamSymbol:artifact.entry,
       originalSource:artifact.originalArrow?'"use strict";\n'+artifact.originalArrow:artifact.projected,
       provenance:{upstream:{repository:pin.repository,revision:pin.revision,path:pin.path,sha256:pin.sha256},
         license:pin.license,notice,noticePath:notice?noticePath:null,

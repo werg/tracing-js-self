@@ -8,6 +8,7 @@ log probabilities are saved verbatim and handed unchanged to the RL adapter.
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import copy
 import hashlib
 import json
@@ -21,6 +22,7 @@ import statistics
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from typing import Any
 
@@ -83,6 +85,10 @@ DEFAULTS: dict[str, Any] = {
     "prompt_style": "standard",
     "rl_prompts_per_step": 1,
     "rl_token_normalization": "none",
+    "rollout_concurrency": 1,
+    "lr_schedule": "constant",
+    "lr_warmup_fraction": 0.0,
+    "lr_min_ratio": 0.1,
     "checkpoint_every_update": True,
     "recovery_checkpoint_ttl_seconds": 86400,
     "enforce_turn_budget": False,
@@ -97,6 +103,23 @@ def resolve_reasoning_channel(config: dict) -> str:
     if channel == "auto":
         return "thinking" if config.get("effort", 0.5) > 0 else "text"
     return channel
+
+
+def scheduled_learning_rate(base_lr: float, step_index: int, total_steps: int, config: dict) -> float:
+    """Optional linear warmup + cosine/linear decay; constant by default."""
+    schedule = config.get("lr_schedule", "constant")
+    if schedule == "constant" or total_steps <= 1:
+        return base_lr
+    min_lr = base_lr * config.get("lr_min_ratio", 0.1)
+    warmup_steps = int(round(total_steps * config.get("lr_warmup_fraction", 0.0)))
+    step = max(0, min(step_index, total_steps - 1))
+    if warmup_steps > 0 and step < warmup_steps:
+        return min_lr + (base_lr - min_lr) * ((step + 1) / warmup_steps)
+    decay_steps = max(1, total_steps - warmup_steps - 1)
+    progress = min(1.0, max(0.0, (step - warmup_steps) / decay_steps))
+    if schedule == "linear":
+        return base_lr - (base_lr - min_lr) * progress
+    return min_lr + 0.5 * (base_lr - min_lr) * (1.0 + math.cos(math.pi * progress))
 
 
 def json_text(value: Any) -> str:
@@ -233,7 +256,7 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
     for name in ("max_context_tokens", "max_tokens", "batch_size", "group_size", "max_turns",
                  "max_generated_tokens", "evaluation_samples", "checkpoint_every", "length_scale_tokens",
                  "bootstrap_samples", "minimum_evaluation_families", "rl_prompts_per_step",
-                 "recovery_checkpoint_ttl_seconds"):
+                 "rollout_concurrency", "recovery_checkpoint_ttl_seconds"):
         value = config[name]
         if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
             raise ValueError(f"{name} must be a positive integer")
@@ -275,9 +298,16 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
                           ("trace_format", {"full", "compact", "actions-only"}),
                           ("reasoning_channel", {"auto", "thinking", "text"}),
                           ("rl_token_normalization", {"none", "trajectory"}),
+                          ("lr_schedule", {"constant", "cosine", "linear"}),
                           ("prompt_style", {"standard", "concise"})):
         if config[name] not in choices:
             raise ValueError(f"{name} must be one of {sorted(choices)}")
+    if (isinstance(config["lr_warmup_fraction"], bool) or not isinstance(config["lr_warmup_fraction"], (int, float))
+            or not math.isfinite(config["lr_warmup_fraction"]) or not 0 <= config["lr_warmup_fraction"] <= 0.5):
+        raise ValueError("lr_warmup_fraction must be finite in [0, 0.5]")
+    if (isinstance(config["lr_min_ratio"], bool) or not isinstance(config["lr_min_ratio"], (int, float))
+            or not math.isfinite(config["lr_min_ratio"]) or not 0 < config["lr_min_ratio"] <= 1):
+        raise ValueError("lr_min_ratio must be finite in (0, 1]")
     loss_config = config["rl_loss_fn_config"]
     if (not isinstance(loss_config, dict)
             or any(not isinstance(key, str) or isinstance(value, bool) or not isinstance(value, (int, float))
@@ -333,6 +363,7 @@ class Bridge:
         self.timeout = timeout
         self._sequence = 0
         self._buffer = b""
+        self._lock = threading.Lock()
         self._stderr = tempfile.TemporaryFile()
         self.process = subprocess.Popen(
             ["node", str(self.repo / "tools/tinker-execution.mjs")], cwd=self.repo,
@@ -342,54 +373,56 @@ class Bridge:
         self._selector.register(self.process.stdout, selectors.EVENT_READ)
 
     def request(self, op: str, **payload: Any) -> dict:
-        self._sequence += 1
-        request = {"id": self._sequence, "op": op, **payload}
-        assert self.process.stdin is not None
-        try:
-            self.process.stdin.write((json_text(request) + "\n").encode())
-            self.process.stdin.flush()
-        except BrokenPipeError as error:
-            raise BridgeError("JS environment exited before accepting a request") from error
-        deadline = time.monotonic() + self.timeout
-        while b"\n" not in self._buffer:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0 or not self._selector.select(remaining):
-                raise BridgeError(f"JS environment exceeded {self.timeout:g}s for {op}")
-            data = os.read(self.process.stdout.fileno(), 65536)
-            if not data:
-                self._stderr.seek(0)
-                detail = self._stderr.read().decode(errors="replace")[-2000:]
-                raise BridgeError(f"JS environment exited during {op}: {detail}")
-            self._buffer += data
-            if len(self._buffer) > 128 * 1024 * 1024:
-                raise BridgeError("JS environment response exceeded 128 MiB")
-        line, self._buffer = self._buffer.split(b"\n", 1)
-        try:
-            response = json.loads(line)
-        except ValueError as error:
-            raise BridgeError("JS environment emitted non-JSON stdout") from error
-        if response.get("id") != self._sequence:
-            raise BridgeError("JS environment response ID mismatch")
-        if not response.get("ok"):
-            raise BridgeError(f"JS environment {op} failed: {response.get('error', 'unknown error')}")
-        return response["result"]
+        with self._lock:
+            self._sequence += 1
+            request = {"id": self._sequence, "op": op, **payload}
+            assert self.process.stdin is not None
+            try:
+                self.process.stdin.write((json_text(request) + "\n").encode())
+                self.process.stdin.flush()
+            except BrokenPipeError as error:
+                raise BridgeError("JS environment exited before accepting a request") from error
+            deadline = time.monotonic() + self.timeout
+            while b"\n" not in self._buffer:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0 or not self._selector.select(remaining):
+                    raise BridgeError(f"JS environment exceeded {self.timeout:g}s for {op}")
+                data = os.read(self.process.stdout.fileno(), 65536)
+                if not data:
+                    self._stderr.seek(0)
+                    detail = self._stderr.read().decode(errors="replace")[-2000:]
+                    raise BridgeError(f"JS environment exited during {op}: {detail}")
+                self._buffer += data
+                if len(self._buffer) > 128 * 1024 * 1024:
+                    raise BridgeError("JS environment response exceeded 128 MiB")
+            line, self._buffer = self._buffer.split(b"\n", 1)
+            try:
+                response = json.loads(line)
+            except ValueError as error:
+                raise BridgeError("JS environment emitted non-JSON stdout") from error
+            if response.get("id") != self._sequence:
+                raise BridgeError("JS environment response ID mismatch")
+            if not response.get("ok"):
+                raise BridgeError(f"JS environment {op} failed: {response.get('error', 'unknown error')}")
+            return response["result"]
 
     def close(self) -> None:
-        if self.process.stdin:
-            self.process.stdin.close()
-        try:
-            self.process.wait(timeout=2)
-        except subprocess.TimeoutExpired:
-            self.process.terminate()
+        with self._lock:
+            if self.process.stdin:
+                self.process.stdin.close()
             try:
                 self.process.wait(timeout=2)
             except subprocess.TimeoutExpired:
-                self.process.kill()
-                self.process.wait()
-        self._selector.close()
-        if self.process.stdout:
-            self.process.stdout.close()
-        self._stderr.close()
+                self.process.terminate()
+                try:
+                    self.process.wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+                    self.process.wait()
+            self._selector.close()
+            if self.process.stdout:
+                self.process.stdout.close()
+            self._stderr.close()
 
     def __enter__(self) -> Bridge:
         return self
@@ -619,6 +652,16 @@ def compression_reward(success: bool, generated_tokens: int, config: dict) -> fl
     return 1.0 - coefficient * min(generated_tokens / config["length_scale_tokens"], 1.0)
 
 
+def _has_thinking_without_text(message: dict, text: str) -> bool:
+    if text.strip():
+        return False
+    content = message.get("content")
+    return isinstance(content, list) and any(
+        isinstance(part, dict) and part.get("type") == "thinking" and str(part.get("thinking", "")).strip()
+        for part in content
+    )
+
+
 def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> dict:
     """Sample a complete execution, never showing private task fields to the model."""
     started = bridge.request("start", task=task)
@@ -628,6 +671,7 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> d
     total = 0
     done = False
     forced_failure = None
+    thinking_only_turn = False
     grade: dict = {}
     try:
         for turn in range(config["max_turns"]):
@@ -660,6 +704,8 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> d
             text = sample.get("text")
             if text is None:
                 text = visible_text(message)
+            if _has_thinking_without_text(message, text):
+                thinking_only_turn = True
             response = bridge.request("step", sessionId=session_id, action=text, generatedTokens=total)
             observations = response.get("messages", [])
             if any(not isinstance(observation, dict) or observation.get("role") != "user" for observation in observations):
@@ -682,6 +728,8 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> d
             grade.pop("failureCategory", None)
             grade.update(success=False, reason=forced_failure)
         grade["success"] = bool(done and grade.get("success") and not forced_failure)
+        if not grade["success"] and not forced_failure and thinking_only_turn:
+            grade["failureCategory"] = "thinking_without_text"
         grade["reward"] = compression_reward(grade["success"], total, config)
         grade["generatedTokens"] = total
         return {"task_id": task.get("id"), "family": task.get("family"), "seed": seed,
@@ -810,33 +858,83 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             raise ValueError("saved evaluation differs in config, task, or checkpoint")
         completed.add(key)
     write_jsonl(partial, records)
-    for row in selected:
-        for repeat in range(config["evaluation_samples"]):
-            if (row["id"], repeat) in completed:
-                continue
-            # Stage-independent seeds and task selection permit paired reports.
-            seed = int(digest([config["evaluation_seed"], row["id"], repeat])[:8], 16) % 2147483647
+    selected_order = {row["id"]: index for index, row in enumerate(selected)}
+    pending_jobs = [
+        (row, repeat, int(digest([config["evaluation_seed"], row["id"], repeat])[:8], 16) % 2147483647)
+        for row in selected for repeat in range(config["evaluation_samples"])
+        if (row["id"], repeat) not in completed
+    ]
+    total_jobs = len(expected)
+    done_count = len(records)
+    ok_count = sum(1 for r in records if r["grade"]["success"])
+    tok_sum = sum(r["generated_tokens"] for r in records)
+    started_at = time.monotonic()
+
+    def _run_eval_job(row: dict, repeat: int, seed: int) -> dict:
+        record = rollout(bridge, adapter, row["task"], config, seed)
+        record.update(task_id=row["id"], family=row["family"], source_hash=row["sourceHash"],
+                      stage=stage, split=split, repeat=repeat,
+                      configuration_hash=config_fingerprint(config), model=config["model"],
+                      task_hash=digest(row["task"]), sampling_checkpoint=checkpoint,
+                      implementation_hash=implementation_hash, selection_hash=selection["hash"],
+                      split_component=row.get("split_component"),
+                      features=task_metadata(row)["features"], tier=task_metadata(row)["tier"])
+        return record
+
+    def _record_eval_result(record: dict) -> None:
+        nonlocal done_count, ok_count, tok_sum
+        records.append(record)
+        append_jsonl(partial, record)
+        done_count += 1
+        ok_count += int(bool(record["grade"]["success"]))
+        tok_sum += record["generated_tokens"]
+        print(f"[{done_count}/{total_jobs}] {stage}/{split}: {record['task_id']} sample {record['repeat'] + 1}: "
+              f"success={record['grade']['success']} tokens={record['generated_tokens']} "
+              f"(acc={ok_count / done_count:.1%}, mean_tok={tok_sum / done_count:.0f})",
+              file=sys.stderr, flush=True)
+
+    concurrency = max(1, int(config.get("rollout_concurrency", 1)))
+    if concurrency == 1 or len(pending_jobs) <= 1:
+        for row, repeat, seed in pending_jobs:
             try:
-                record = rollout(bridge, adapter, row["task"], config, seed)
+                _record_eval_result(_run_eval_job(row, repeat, seed))
             except RolloutError as error:
                 append_jsonl(output_dir / "infrastructure-errors.jsonl", {
                     **error.record, "phase": "evaluation", "stage": stage, "split": split,
                     "repeat": repeat, "configuration_hash": config_fingerprint(config),
                     "sampling_checkpoint": checkpoint})
                 raise
-            record.update(task_id=row["id"], family=row["family"], source_hash=row["sourceHash"],
-                          stage=stage, split=split, repeat=repeat,
-                          configuration_hash=config_fingerprint(config), model=config["model"],
-                          task_hash=digest(row["task"]), sampling_checkpoint=checkpoint,
-                          implementation_hash=implementation_hash, selection_hash=selection["hash"],
-                          split_component=row.get("split_component"),
-                          features=task_metadata(row)["features"], tier=task_metadata(row)["tier"])
-            records.append(record)
-            append_jsonl(partial, record)
-            print(f"{stage}: {row['id']} sample {repeat + 1}: success={record['grade']['success']} "
-                  f"tokens={record['generated_tokens']}", file=sys.stderr, flush=True)
+    else:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(concurrency, len(pending_jobs))) as pool:
+            futures = {pool.submit(_run_eval_job, row, repeat, seed): (row, repeat)
+                       for row, repeat, seed in pending_jobs}
+            try:
+                for future in concurrent.futures.as_completed(futures):
+                    row, repeat = futures[future]
+                    try:
+                        record = future.result()
+                    except RolloutError as error:
+                        append_jsonl(output_dir / "infrastructure-errors.jsonl", {
+                            **error.record, "phase": "evaluation", "stage": stage, "split": split,
+                            "repeat": repeat, "configuration_hash": config_fingerprint(config),
+                            "sampling_checkpoint": checkpoint})
+                        raise
+                    _record_eval_result(record)
+            except Exception:
+                for future in futures:
+                    future.cancel()
+                raise
+        records.sort(key=lambda r: (selected_order[r["task_id"]], r["repeat"]))
+        write_jsonl(partial, records)
     partial.replace(destination)
     summary = summarize_records(records)
+    elapsed = time.monotonic() - started_at
+    acc = summary["complete_execution_accuracy"] or 0.0
+    mean_tok = summary["mean_generated_tokens"] or 0.0
+    med_tok = summary["median_generated_tokens"] or 0.0
+    print(f"{stage}/{split} done ({elapsed:.1f}s): acc={acc:.1%} ({summary['successes']}/{summary['executions']}) "
+          f"mean_tok={mean_tok:.0f} median_tok={med_tok:.0f} failures={summary['failure_categories']}",
+          file=sys.stderr, flush=True)
     atomic_json(output_dir / "evaluations" / f"{stage}-{split}.summary.json", summary)
     return summary
 
@@ -1265,16 +1363,19 @@ def train_sft(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_
         raise ValueError("no training rows")
     adapter.create_training_client(checkpoint=state.get("training_path"))
     _ensure_initial_checkpoint(adapter, output_dir, state, rng, "sft")
+    epoch_plans = [sft_epoch_rows(train_rows, config, epoch) for epoch in range(config["sft_epochs"])]
+    total_batches = sum((len(ordered) + config["batch_size"] - 1) // config["batch_size"] for ordered in epoch_plans)
     batch_index = 0
-    for epoch in range(config["sft_epochs"]):
-        ordered = sft_epoch_rows(train_rows, config, epoch)
+    for epoch, ordered in enumerate(epoch_plans):
         for start in range(0, len(ordered), config["batch_size"]):
             batch_index += 1
             if batch_index <= state["sft_batches_completed"]:
                 continue
+            batch_started = time.monotonic()
             batch = ordered[start:start + config["batch_size"]]
             examples = [{"messages": row["messages"], "metadata": task_metadata(row)} for row in batch]
-            options = {"learning_rate": config["sft_learning_rate"]}
+            lr = scheduled_learning_rate(config["sft_learning_rate"], batch_index - 1, total_batches, config)
+            options = {"learning_rate": lr}
             metrics, pending = _submit_update(adapter, output_dir, state, config, stage="sft", step=batch_index,
                 payload={"method": "sft_train", "examples": examples, "options": options},
                 context={"epoch": epoch, "ids": [row["id"] for row in batch],
@@ -1284,9 +1385,15 @@ def train_sft(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_
             append_jsonl(output_dir / "metrics.jsonl", {"stage": "sft", "batch": batch_index,
                          "update_attempt_id": pending["attempt_id"],
                          "epoch": epoch, "ids": [row["id"] for row in batch], "metrics": metrics,
-                         "learning_rate": config["sft_learning_rate"], "weighting": config["sft_weighting"],
+                         "learning_rate": lr, "weighting": config["sft_weighting"],
                          "tiers": [task_metadata(row)["tier"] for row in batch],
                          "features": sorted({feature for row in batch for feature in task_metadata(row)["features"]})})
+            inner_metrics = metrics.get("metrics", {}) if isinstance(metrics, dict) else {}
+            loss_val = inner_metrics.get("loss:sum", inner_metrics.get("loss"))
+            loss_str = f"{loss_val:.4f}" if isinstance(loss_val, (int, float)) else "n/a"
+            print(f"sft batch {batch_index}/{total_batches} (epoch {epoch + 1}/{config['sft_epochs']}): "
+                  f"lr={lr:.2e} loss={loss_str} ({time.monotonic() - batch_started:.1f}s)",
+                  file=sys.stderr, flush=True)
             validate = bool(config["validation_every"] and batch_index % config["validation_every"] == 0)
             _commit_update(adapter, output_dir, state, rng, pending,
                            published=batch_index % config["checkpoint_every"] == 0 or validate,
@@ -1336,8 +1443,10 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             raise ValueError("reference KL requires the recorded SFT sampler checkpoint")
         adapter.set_reference_checkpoint(state["sft_sampler_path"])
     prompts_per_step = config.get("rl_prompts_per_step", 1)
+    concurrency = max(1, int(config.get("rollout_concurrency", 1)))
     ephemeral_sampler_active = False
     for step in range(state["rl_steps_completed"], config["rl_steps"]):
+        step_started = time.monotonic()
         if not ephemeral_sampler_active:
             adapter.create_sampling_client(checkpoint=state["sampler_path"])
         active_sampler = getattr(adapter, "sampling_revision", state["sampler_path"]) if ephemeral_sampler_active else state["sampler_path"]
@@ -1374,21 +1483,51 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                 for index, record in enumerate(records)):
             raise ValueError("saved RL group differs in task, seeds, configuration, or policy checkpoint")
         write_jsonl(partial, records)
-        for row, _curriculum_selection, seed in flat_plan[len(records):]:
-            try:
-                record = rollout(bridge, adapter, row["task"], config, seed)
-            except RolloutError as error:
-                append_jsonl(output_dir / "infrastructure-errors.jsonl", {
-                    **error.record, "phase": "rl", "step": step + 1,
-                    "group_context": group_context, "configuration_hash": config_fingerprint(config)})
-                raise
+        pending_plan = flat_plan[len(records):]
+
+        def _run_rl_rollout(row: dict, seed: int) -> dict:
+            record = rollout(bridge, adapter, row["task"], config, seed)
             record.update(group_context=group_context, task_id=row["id"], family=row["family"],
                           source_hash=row["sourceHash"], split="train", step=step + 1,
                           policy=copy.deepcopy(policy),
                           split_component=row.get("split_component"), features=task_metadata(row)["features"],
                           tier=task_metadata(row)["tier"])
-            records.append(record)
-            append_jsonl(partial, record)
+            return record
+
+        if concurrency == 1 or len(pending_plan) <= 1:
+            for row, _curriculum_selection, seed in pending_plan:
+                try:
+                    record = _run_rl_rollout(row, seed)
+                except RolloutError as error:
+                    append_jsonl(output_dir / "infrastructure-errors.jsonl", {
+                        **error.record, "phase": "rl", "step": step + 1,
+                        "group_context": group_context, "configuration_hash": config_fingerprint(config)})
+                    raise
+                records.append(record)
+                append_jsonl(partial, record)
+        else:
+            ordered_results: list[dict | None] = [None] * len(pending_plan)
+            with concurrent.futures.ThreadPoolExecutor(max_workers=min(concurrency, len(pending_plan))) as pool:
+                futures = {pool.submit(_run_rl_rollout, row, seed): idx
+                           for idx, (row, _c, seed) in enumerate(pending_plan)}
+                try:
+                    for future in concurrent.futures.as_completed(futures):
+                        idx = futures[future]
+                        try:
+                            ordered_results[idx] = future.result()
+                        except RolloutError as error:
+                            append_jsonl(output_dir / "infrastructure-errors.jsonl", {
+                                **error.record, "phase": "rl", "step": step + 1,
+                                "group_context": group_context, "configuration_hash": config_fingerprint(config)})
+                            raise
+                except Exception:
+                    for future in futures:
+                        future.cancel()
+                    raise
+            for record in ordered_results:
+                assert record is not None
+                records.append(record)
+                append_jsonl(partial, record)
         if any(sample.get("sampler_revision", policy["sampler_path"]) != policy["sampler_path"]
                for record in records for sample in record["samples"]):
             raise ValueError("sampled RL sequence does not match the durable sampler checkpoint")
@@ -1423,12 +1562,13 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         nonzero = [record for record in records if abs(record["advantage"]) > 1e-12]
         update_records = records if config["reference_kl_coef"] else nonzero
         regularization_only = bool(update_records) and not nonzero
+        lr = scheduled_learning_rate(config["rl_learning_rate"], step, config["rl_steps"], config)
         pending = None
         if update_records:
             trajectories = [{"samples": record["samples"], "advantage": record["advantage"]}
                             for record in update_records]
             options = {"loss_fn": config["rl_loss_fn"], "loss_fn_config": config["rl_loss_fn_config"],
-                       "learning_rate": config["rl_learning_rate"]}
+                       "learning_rate": lr}
             metrics, pending = _submit_update(adapter, output_dir, state, config, stage="rl", step=step + 1,
                 payload={"method": "rl_train", "trajectories": trajectories, "options": options},
                 context={"group_context": group_context, "rollout_hash": digest(records),
@@ -1443,11 +1583,14 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         state["rl_generated_tokens"] = state.get("rl_generated_tokens", 0) + sum(record["generated_tokens"] for record in records)
         curriculum_result = curriculum_results[-1]
         state.update(rl_steps_completed=step + 1, phase="rl")
+        step_summary = summarize_records(records)
+        useful_in_step = sum(not s["zero_advantage_group"] for s in all_signals)
         append_jsonl(output_dir / "metrics.jsonl", {"stage": "rl", "step": step + 1,
                      "update_attempt_id": pending["attempt_id"] if pending else None,
+                     "learning_rate": lr,
                      "task_id": batch_groups[0][0]["id"] if prompts_per_step == 1 else [g[0]["id"] for g in batch_groups],
                      "prompts_in_step": prompts_per_step,
-                     **summarize_records(records), "metrics": metrics,
+                     **step_summary, "metrics": metrics,
                      "group_kind": signals["group_kind"], "zero_advantage_group": signals["zero_advantage_group"],
                      "compression_coefficient": coefficient, "length_signal": signals["length_signal"],
                      "correctness_signal": signals["correctness_signal"], "curriculum": curriculum_result,
@@ -1455,6 +1598,14 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                      "group_counts": dict(counters), "optimizer_updates": state.get("rl_optimizer_updates", 0),
                      "useful_groups_per_thousand_tokens": 1000 * counters["useful"] / state["rl_generated_tokens"]
                      if state["rl_generated_tokens"] else None})
+        step_acc = step_summary["complete_execution_accuracy"] or 0.0
+        step_tok = step_summary["mean_generated_tokens"] or 0.0
+        status_label = "updated" if pending else "skipped"
+        print(f"rl step {step + 1}/{config['rl_steps']}: lr={lr:.2e} "
+              f"acc={step_acc:.1%} ({step_summary['successes']}/{step_summary['executions']}) "
+              f"mean_tok={step_tok:.0f} useful={useful_in_step}/{len(all_signals)} "
+              f"coef={coefficient:.3f} {status_label} ({time.monotonic() - step_started:.1f}s)",
+              file=sys.stderr, flush=True)
         validate = bool(config["validation_every"] and (step + 1) % config["validation_every"] == 0)
         published = (step + 1) % config["checkpoint_every"] == 0 or validate
         name = f"rl-{step + 1:06d}"
@@ -1733,6 +1884,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--checkpoint", help="Sampler checkpoint for evaluate/rollout; training state for sft/rl")
     parser.add_argument("--split", choices=("train", "validation", "test"))
     parser.add_argument("--stage", default="baseline")
+    parser.add_argument("--rollout-concurrency", type=int, help="Concurrent rollout threads for eval and RL")
     parser.add_argument("--live", action="store_true", help="For check: query service capabilities without model compute")
     parser.add_argument("--skip-sdk", action="store_true", help="For check: validate CPU fixtures without installing the SDK")
     args = parser.parse_args(argv)
@@ -1741,7 +1893,11 @@ def main(argv: list[str] | None = None) -> int:
         config_path = args.config
         if config_path is not None and not config_path.is_absolute():
             config_path = repo / config_path
-        config = load_config(config_path, {"output_dir": args.output_dir, "dataset": args.dataset})
+        config = load_config(config_path, {
+            "output_dir": args.output_dir,
+            "dataset": args.dataset,
+            "rollout_concurrency": args.rollout_concurrency,
+        })
         if isinstance(config["evaluation_manifest"], str):
             selection_path = Path(config["evaluation_manifest"])
             if not selection_path.is_absolute():
