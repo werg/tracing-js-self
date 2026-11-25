@@ -15,6 +15,7 @@ import {compileBoundedTypeScript} from '../typescript.js';
 import {decode} from '../values.js';
 
 export const TINKER_EXECUTION_SCHEMA = 'readable-js-execution/1';
+export const TINKER_TRACE_FORMATS = Object.freeze(['full', 'compact', 'actions-only']);
 const clone = structuredClone;
 const demand = (condition, message) => { if (!condition) throw new TypeError(message); };
 const hash = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
@@ -278,13 +279,83 @@ function scalarText(token) {
   try { return JSON.stringify(encodeReadable(decode(token))); } catch { return null; }
 }
 
-function traceLine(row, source) {
-  if (!row.source || !['value', 'branch', 'return', 'throw', 'write'].includes(row.op)) return null;
-  const code = source.slice(row.source.start, row.source.end).replace(/\s+/g, ' ').trim();
-  if (!code || code.length > 512) return null;
+function traceFormat(options = {}) {
+  const value = options.traceFormat ?? 'full';
+  demand(TINKER_TRACE_FORMATS.includes(value), 'traceFormat must be full, compact, or actions-only');
+  return value;
+}
+
+function sourceNodes(source) {
+  const nodes = new Map();
+  function visit(node, owner = null) {
+    if (!node || typeof node !== 'object') return;
+    if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type))
+      owner = node.id?.name ?? (node.type === 'ArrowFunctionExpression' ? 'the callback' : 'the anonymous function');
+    if (typeof node.type === 'string' && Number.isInteger(node.start) && Number.isInteger(node.end))
+      nodes.set(node.start + ':' + node.end, {node, owner});
+    for (const value of Object.values(node)) {
+      if (Array.isArray(value)) value.forEach(child => visit(child, owner));
+      else if (value && typeof value === 'object') visit(value, owner);
+    }
+  }
+  visit(parse(source, {ecmaVersion: 'latest', sourceType: 'script'}));
+  return nodes;
+}
+
+const sourceText = (source, node) => node ? source.slice(node.start, node.end).replace(/\s+/g, ' ').trim() : '';
+const isReference = token => Array.isArray(token) && token[0] === 'ref';
+
+/** Describe only this event's source and recorded scalar/write values. In
+ * particular, reference descriptions never inspect the final heap or print
+ * object/event handles. A source expression names the reference evaluated for
+ * this operation, not a reconstructed future object snapshot. */
+function traceLines(row, source, nodes, format) {
+  if (format === 'actions-only' || !row.source || !['value', 'branch', 'return', 'throw', 'write'].includes(row.op)) return [];
+  const code = sourceText(source, row.source), {node, owner} = nodes.get(row.source.start + ':' + row.source.end) ?? {};
+  if (!code || code.length > 512) return [];
   const value = scalarText(row.result);
-  if (row.op === 'branch') return 'Branch ' + code + (value === null ? '.' : ' evaluates to ' + value + '.');
-  return value === null ? null : code + ' => ' + value;
+  if (row.op === 'branch') {
+    // result/decision is a VM jump decision, which can invert the condition.
+    // test is the actual JavaScript condition evaluated at this event.
+    const condition = scalarText(row.test ?? row.operands?.[0]);
+    const path = ['then', 'else'].includes(row.path) ? '; take the ' + row.path + ' path' : '';
+    return ['Branch ' + code + (condition === null ? '' : ' evaluates to ' + condition) + path + '.'];
+  }
+  const lines = [];
+  const operand = node?.type === 'VariableDeclarator' ? node.init : node?.type === 'AssignmentExpression' ? node.right : null;
+  const referenceText = expression => expression && ['Identifier', 'MemberExpression'].includes(expression.type) ?
+    'the same object as ' + sourceText(source, expression) : 'an object';
+  for (const write of row.writes ?? []) {
+    if (write.kind === 'property') {
+      const target = node?.type === 'AssignmentExpression' ? node.left :
+        ['UpdateExpression', 'UnaryExpression'].includes(node?.type) ? node.argument : null;
+      // Literal construction has no pre-existing state to explain. Its complete
+      // value is already present in the later call/completion action. In compact
+      // traces, omit those allocation writes while retaining explicit mutation.
+      if (format === 'compact' && !target && ['ArrayExpression', 'ObjectExpression', 'Literal', 'Property', 'SpreadElement'].includes(node?.type)) continue;
+      const name = target ? sourceText(source, target) : 'property ' + JSON.stringify(write.key) + ' during ' + code;
+      if (write.present === false) lines.push('Delete ' + name + '.');
+      else {
+        const written = scalarText(write.value);
+        if (written !== null) lines.push('Write ' + name + ' = ' + written + '.');
+        else if (isReference(write.value)) lines.push('Write ' + name + ' to refer to ' + referenceText(operand) + '.');
+      }
+    } else if (write.kind === 'cell' && /^[A-Za-z_$][\w$]*$/.test(write.key)) {
+      const written = scalarText(write.value);
+      if (format === 'compact' && written !== null) lines.push(write.key + ' becomes ' + written + '.');
+      else if (isReference(write.value)) lines.push(write.key + ' refers to ' + referenceText(operand) + '.');
+    }
+  }
+  if (['return', 'throw'].includes(row.op)) {
+    // A return event can precede finally mutations or an overriding completion.
+    // Identify its source function and keep it explicitly pending until the
+    // verified completion action ends the episode.
+    const label = 'Pending ' + row.op + (owner ? ' from ' + owner : '') + ': ';
+    if (isReference(row.result)) lines.push(label + referenceText(node?.argument) + '.');
+    else if (format === 'compact' && value !== null) lines.push(label + value + '.');
+  }
+  if (format === 'full' && value !== null) lines.unshift(code + ' => ' + value);
+  return lines;
 }
 
 function actionText(action, trace = []) { return (trace.length ? trace.join('\n') + '\n' : '') + '```json\n' + JSON.stringify(action) + '\n```'; }
@@ -295,7 +366,8 @@ function observation(operation, status, value) {
 
 /** Converts canonical journal events into causal readable turns, using source
  * text and values rather than event IDs, heap IDs, hashes, or controller state. */
-export function readableMessagesFromJournal(bundle, prepared) {
+export function readableMessagesFromJournal(bundle, prepared, options = {}) {
+  const format = traceFormat(options), nodes = format === 'actions-only' ? null : sourceNodes(prepared.source);
   const messages = initialMessages(prepared), rows = normalizeJournal(bundle).events;
   const dispatches = prepared.effects.filter(row => row.kind === 'dispatch');
   const settlements = new Map(prepared.effects.filter(row => row.kind === 'settlement').map(row => [row.call, row]));
@@ -315,8 +387,7 @@ export function readableMessagesFromJournal(bundle, prepared) {
       messages.push(observation(pending.operation, receipt.status, graphRoots(receipt.result)[0])); pending = null;
     } else {
       // Appended host-call wrapper internals are bookkeeping, not targets.
-      const line = row.source?.end <= prepared.source.length ? traceLine(row, prepared.source) : null;
-      if (line) trace.push(line);
+      if (row.source?.end <= prepared.source.length) trace.push(...traceLines(row, prepared.source, nodes, format));
     }
   }
   demand(pending === null && called === dispatches.length, 'Incomplete readable episode');
@@ -327,14 +398,57 @@ export function readableMessagesFromJournal(bundle, prepared) {
   return messages;
 }
 
-export async function exportTinkerExample(input) {
+export async function exportTinkerExample(input, options = {}) {
+  const format = traceFormat(options);
   const prepared = await prepareTinkerTask(input);
+  const messages = readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: format});
+  const traceAudit = await auditTeacherConversation(prepared, messages, {traceFormat: format});
   return {schema: TINKER_EXECUTION_SCHEMA, id: prepared.id, family: prepared.family, sourceHash: prepared.sourceHash,
-    task: prepared.task, messages: readableMessagesFromJournal(prepared.bundle, prepared),
-    metadata: {sourceVerified: true, teacher: 'owned-runtime+native-reference',
+    task: prepared.task, messages,
+    metadata: {...clone(input.metadata ?? {}),
+      ...(input.features ? {features: clone(input.features)} : {}), ...(input.tier !== undefined ? {tier: input.tier} : {}),
+      sourceVerified: true, teacher: 'owned-runtime+native-reference', traceFormat: format, traceAudit,
+      traceRenderer: 'causal-event-source', referenceNarrationScope: 'event-source-aliases-without-final-heap-inference',
       externalObservationsTrainable: false, runtimeIdentifiersInTargets: false,
       externalCalls: prepared.fixture.calls.length, profile: 'sequential-data-execution',
       exceptionProfile: 'declared-error/name-message/1', optimizerSteps: 0}};
+}
+
+/** Replay all teacher actions through a fresh student boundary and match every
+ * observation byte-for-byte. Canonical comparison additionally establishes
+ * that narration came only from the causal event renderer for the named
+ * format. This is supervision provenance, not a claim about learned reasoning. */
+export async function auditTeacherConversation(prepared, messages, options = {}) {
+  const format = traceFormat(options);
+  demand(Array.isArray(messages), 'Teacher conversation must be an array');
+  demand(isDeepStrictEqual(messages.slice(0, 2), initialMessages(prepared)), 'Teacher initial prompt differs from live prompt');
+  demand(isDeepStrictEqual(messages, readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: format})),
+    'Teacher narration or observations differ from causal source events');
+  const session = createTinkerSession(prepared);
+  let index = 2, calls = 0, narrationLines = 0, assistantBytes = 0, observationBytes = 0;
+  try {
+    while (index < messages.length) {
+      const message = messages[index++];
+      demand(message.role === 'assistant' && typeof message.content === 'string', 'Expected a teacher action');
+      const action = parseStudentAction(message.content);
+      const fence = message.content.indexOf('```');
+      const narration = fence < 0 ? '' : message.content.slice(0, fence).trim();
+      if (narration) narrationLines += narration.split('\n').length;
+      assistantBytes += Buffer.byteLength(message.content);
+      const next = await session.step(message.content, 0);
+      demand(!next.done || next.grade.success, 'Teacher replay failed complete execution');
+      if (action.type === 'call') calls++;
+      for (const observation of next.messages) {
+        demand(isDeepStrictEqual(messages[index++], observation), 'Teacher observation differs from the actual environment');
+        observationBytes += Buffer.byteLength(observation.content);
+      }
+      demand(!next.done || index === messages.length, 'Teacher conversation continues after completion');
+    }
+    demand(session.grade().success, 'Teacher conversation never completed');
+    if (format === 'actions-only') demand(narrationLines === 0, 'Removed teacher narration remains in the input');
+    return {replayVerified: true, canonicalCausalNarration: true, observationsMatched: true,
+      traceFormat: format, messages: messages.length, calls, narrationLines, assistantBytes, observationBytes};
+  } finally { session.close(); }
 }
 
 export function parseStudentAction(text) {
@@ -361,7 +475,7 @@ export function parseStudentAction(text) {
  * ends the rollout without disclosing the expected next operation or result. */
 export function createTinkerSession(prepared) {
   const broker = createFixtureBroker(prepared.fixture);
-  let done = false, completed = false, success = false, reason = 'incomplete', generatedTokens = 0, calls = 0, turns = 0;
+  let done = false, completed = false, success = false, reason = 'incomplete', failureCategory = 'incomplete', generatedTokens = 0, calls = 0, turns = 0;
   const maxTurns = prepared.task.maxTurns ?? 256;
   demand(Number.isSafeInteger(maxTurns) && maxTurns > 0 && maxTurns <= 4096, 'Invalid rollout turn limit');
   const count = total => {
@@ -371,9 +485,10 @@ export function createTinkerSession(prepared) {
   const grade = total => {
     if (total !== undefined) count(total);
     return {success: done && success, reward: done && success ? 1 / (1 + generatedTokens / 1000) : 0,
-      reason, generatedTokens, externalCalls: calls, complete: completed};
+      reason, failureCategory, generatedTokens, externalCalls: calls, complete: completed};
   };
-  const reject = why => { done = true; success = false; reason = why; broker.abort(); return {messages: [], done, grade: grade()}; };
+  const reject = (why, category = why) => { done = true; success = false; reason = why; failureCategory = category;
+    broker.abort(); return {messages: [], done, grade: grade()}; };
   return {
     messages: initialMessages(prepared),
     async step(text, total = generatedTokens) {
@@ -381,18 +496,31 @@ export function createTinkerSession(prepared) {
       if (done) return {messages: [], done, grade: grade()};
       if (++turns > maxTurns) return reject('turn-limit');
       let action;
-      try { action = parseStudentAction(text); } catch { return reject('invalid-action'); }
+      try { action = parseStudentAction(text); } catch { return reject('invalid-action', 'malformed-action'); }
       if (action.type === 'complete') {
         try {
           const result = decodeReadable({arguments: action.arguments, value: action.value});
           demand(Array.isArray(result.arguments) && result.arguments.length === prepared.args.length, 'Input argument arity changed');
           const actual = {kind: action.kind, graph: describeGraph([...result.arguments, result.value])};
+          if (calls !== prepared.fixture.calls.length) return reject('incomplete-or-invalid-completion', 'missing-external-effects');
           const effects = broker.finish();
           completed = true;
           done = true; success = isDeepStrictEqual(actual, prepared.outcome) && isDeepStrictEqual(effects, prepared.effects);
           reason = success ? 'verified-complete-execution' : 'outcome-mismatch';
+          failureCategory = null;
+          if (!success) {
+            const expected = graphRoots(prepared.outcome.graph), value = expected.pop();
+            if (actual.kind !== prepared.outcome.kind) failureCategory = 'wrong-completion-kind';
+            else if (!isDeepStrictEqual(describeGraph(result.arguments), describeGraph(expected))) {
+              failureCategory = result.arguments.every((arg, i) => isDeepStrictEqual(describeGraph([arg]), describeGraph([expected[i]]))) ?
+                'alias-mismatch' : 'mutation-mismatch';
+            } else if (!isDeepStrictEqual(describeGraph([result.value]), describeGraph([value])))
+              failureCategory = action.kind === 'throw' ? 'wrong-exception' : 'wrong-return';
+            else if (!isDeepStrictEqual(actual.graph, prepared.outcome.graph)) failureCategory = 'alias-mismatch';
+            else failureCategory = 'effect-mismatch';
+          }
           return {messages: [], done, grade: grade()};
-        } catch { return reject('incomplete-or-invalid-completion'); }
+        } catch { return reject('incomplete-or-invalid-completion', 'invalid-completion'); }
       }
       try {
         const args = decodeReadable(action.arguments);
@@ -410,7 +538,7 @@ export function createTinkerSession(prepared) {
         }
         calls++;
         return {messages: [observation(action.operation, status, value)], done: false};
-      } catch { return reject('external-request-mismatch'); }
+      } catch { return reject('external-request-mismatch', 'incorrect-external-request'); }
     },
     grade,
     close() { broker.abort(); done = true; }

@@ -2,7 +2,7 @@
 // One private CPU execution worker; newline-delimited JSON is its only stdout.
 import {createInterface} from 'node:readline';
 import {createHash, randomUUID} from 'node:crypto';
-import {prepareTinkerTask, createTinkerSession, readableMessagesFromJournal,
+import {prepareTinkerTask, createTinkerSession, exportTinkerExample,
   TINKER_EXECUTION_SCHEMA} from '../src/training/tinker-execution.js';
 
 const sessions = new Map(), preparedTasks = new Map();
@@ -26,20 +26,25 @@ async function dispatch(request) {
   switch (request.op) {
     case 'health': return {schema: TINKER_EXECUTION_SCHEMA, node: process.version};
     case 'export': {
+      const traceFormat = request.traceFormat ?? 'full';
       if (request.task?.canonicalArtifact) {
         const {exportCanonicalTinkerExample} = await import('../src/training/tinker-import.js');
-        return await exportCanonicalTinkerExample(request.task.canonicalArtifact, request.task);
+        const exported = await exportCanonicalTinkerExample(request.task.canonicalArtifact, request.task);
+        if (traceFormat === 'full') return exported;
+        const transformed = await exportTinkerExample(exported.task, {traceFormat});
+        return {...exported, messages: transformed.messages, metadata: {...exported.metadata,
+          traceFormat, traceAudit: transformed.metadata.traceAudit}};
       }
       if (request.task?.agentTrajectory) {
+        if (traceFormat !== 'full') throw new TypeError('Trace ablations apply to executor teachers; supplied agent decisions have their own supervision');
         const {exportAgentTinkerExample} = await import('../src/training/tinker-import.js');
         return await exportAgentTinkerExample(request.task.agentTrajectory, request.task);
       }
-      const prepared = await prepare(request.task);
-      return {schema: TINKER_EXECUTION_SCHEMA, id: prepared.id, family: prepared.family, sourceHash: prepared.sourceHash,
-        task: prepared.task, messages: readableMessagesFromJournal(prepared.bundle, prepared),
-        metadata: {sourceVerified: true, teacher: 'owned-runtime+native-reference', externalObservationsTrainable: false,
-          runtimeIdentifiersInTargets: false, externalCalls: prepared.fixture.calls.length,
-          profile: 'sequential-data-execution', exceptionProfile: 'declared-error/name-message/1', optimizerSteps: 0}};
+      return await exportTinkerExample(request.task, {traceFormat});
+    }
+    case 'audit': {
+      const {auditTinkerSupervision} = await import('../src/training/tinker-supervision.js');
+      return await auditTinkerSupervision(request.tasks, request.options ?? {});
     }
     case 'start': {
       if (sessions.size >= 128) throw new RangeError('Too many live execution sessions');
