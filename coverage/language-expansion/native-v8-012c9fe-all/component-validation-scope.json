@@ -1,9 +1,0 @@
-{
-  "schema": "semantic-v8-component-validation-scope/1",
-  "populationProducerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
-  "populationConsumerRevision": "39c4036564428e44cc89caf261f517d856482695",
-  "componentProducerRevision": "012c9fe49a082319bf98ac0c571596da925741a4",
-  "componentConsumerRevision": "39c4036564428e44cc89caf261f517d856482695",
-  "producerChangedPaths": [],
-  "scope": "Native component tests and complete final source/native populations are distinct executed gates at the exact same producer and consumer revisions. Earlier receipts retain their own pins and are not relabeled."
-}

@@ -1,7 +1,0 @@
-{
-  "status": "not-attempted-size-exceeds-observed-artifact-tool-limit",
-  "reason": "The artifact metadata reports a ZIP larger than the 536870912-byte hard limit explicitly returned by the same GitHub artifact download tool for final real-source.",
-  "artifactBytes": 1027025111,
-  "toolMaximumBytes": 536870912,
-  "alternative": "Original decoded job log and source/release/sampler receipts printed in that log retained; full artifact member files not downloaded."
-}

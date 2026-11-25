@@ -1,9 +1,0 @@
-{
-  "schema": "optimization-initial-state-recheck/1",
-  "performedAfterOriginalRun": true,
-  "exact": true,
-  "baseCheckpointSha256": "7c32acfe25f51dd1164b44b1bd9818fcfc201fdb7c890aa1ebd91b3887db0dfa",
-  "phaseStartCheckpointSha256": "67474d3c7e4ecebfba4ddd52acddbaa33e61f4cfb0162dc2da5d5d5bfc9f3941",
-  "modelTensorIdentity": "865e158069ef76bdadc37a41c0f69da8ca8c70d5a2742ad6400b6838d9de0a90",
-  "optimizerSteps": 0
-}

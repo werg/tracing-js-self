@@ -1,9 +1,0 @@
-# Required model selection evidence in the combined gate
-
-Gate-only source commit `dd23d343bbd9608b6816769cb7782608d88c2095` adds the entire `tests/test_semantic_model_v8.py` file to the structural native lane. The strict existing JUnit verifier accepted the original actual **17 named testcase leaves**, with zero failures, errors, or skips. The complete original XML is retained byte for byte; its SHA-256 is `7240e3c46a8f5a1c9cd140f5937f9c7f083b7e8347a0ca72dee9a3fe42fca84c`.
-
-The native implementation correction is local `6d5ea69109ce26c2baa04a24575f675174066480`, published as `9bbc534211297aa6fa58c59f09bc83a67362b99f`; its independently retained proof is published native `5f9ddd14`. That source preserves fourteen prior tests and adds three controls for rejected-fragment bookkeeping. Multiple rejected-envelope subcases inside a test are not inflated into additional leaf counts.
-
-The updated required gate contains **182 structural native cases**, of which 165 retain the recovery scope and 17 are the model selection evidence group. The aggregate separately reports recovery **165 native / 193 producer**, Promise **106 native / 185 producer**, and model selection evidence **17 native**: **288 native + 378 producer = 666 actual required leaves**. The twelve adjacent ordinary Promise controls account for the earlier 637-to-649 increase; this separate seventeen-case group accounts for 649-to-666.
-
-The source increment changes only `tools/combined-v8-gate.json` and `tools/verify-combined-v8-gate.py`. It does not change runtime behavior, Promise queue semantics, payloads, or source admission. The local evidence verifies the actual seventeen-case XML and the specification totals. The full 666-case hosted qualification remains required on its own exact producer/native pair. Earlier 637-case artifacts and the local twelve-case ordinary-contract proof retain their original scopes.

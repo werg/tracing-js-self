@@ -1,7 +1,0 @@
-# Actual two-child unclocked recovery baseline profile
-
-The complete hosted bootstrap/commit history group took about 27 minutes and emitted its JUnit only at completion. A targeted diagnostic profiled the existing two-child baseline on producer `90cc10a87814c4dd75e84dc1846d0f56453c83b8` / native `15844c00c095849755ca6f0e1d207f7db79a9264`. The baseline deliberately uses no execution clock; no substitute clock authority was supplied. The actual native runtime completed all 13 durable requests and the complete public history. The one selected test passed with zero failures/errors/skips in 174.560247 seconds. This is not a real-clock recovery test or a full 193-case gate.
-
-The original spec output, JUnit and empty runner stdout/stderr are retained, along with the lossless compressed CPU profile and original profile hash. Profiling adds overhead; this is a diagnostic observation, not a production throughput benchmark. The hosted group later completed normally with 20/21 passes and one outdated refusal-message assertion. Its final result, rather than a guessed hang, controls qualification.
-
-The corrected hosted workflow splits the nine commit-history and twelve bootstrap-history leaves into independent groups while retaining the same full 193-leaf population. Each test has a ten-minute cap, and both live spec progress and exact JUnit are saved. Existing application clock limits remain unchanged.

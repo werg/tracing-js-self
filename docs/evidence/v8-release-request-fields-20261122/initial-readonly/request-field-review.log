@@ -1,9 +1,0 @@
-{"name":"ordinary ownership session","changedQualified":true,"wrongTaskAccepted":true,"publicEqual":false,"contextsEqual":false,"metadata":["projectionOptions"]}
-{"name":"ordinary generated-record cap","changedQualified":false,"wrongTaskAccepted":true,"publicEqual":null,"contextsEqual":null,"metadata":[]}
-{"name":"ordinary expression operator cap","changedQualified":true,"wrongTaskAccepted":true,"publicEqual":true,"contextsEqual":true,"metadata":["projectionOptions","executionLimits"]}
-{"name":"ordinary non-guest seed metadata","changedQualified":true,"wrongTaskAccepted":true,"publicEqual":true,"contextsEqual":true,"metadata":["seeds"]}
-{"name":"ordinary original split seed","changedQualified":true,"wrongTaskAccepted":true,"publicEqual":true,"contextsEqual":true,"metadata":["seeds","splitIdentity","sourceProvenance"]}
-{"name":"module ownership session","changedQualified":true,"wrongTaskAccepted":true,"publicEqual":false,"contextsEqual":false,"metadata":["projectionOptions"]}
-{"name":"session outer ignored projection options","changedQualified":true,"wrongTaskAccepted":true,"publicEqual":true,"contextsEqual":true,"metadata":[]}
-{"name":"session overridden component ownership","changedQualified":true,"wrongTaskAccepted":true,"publicEqual":true,"contextsEqual":true,"metadata":[]}
-{"name":"direct protocol ignored ownership option","changedQualified":true,"wrongTaskAccepted":true,"publicEqual":true,"contextsEqual":true,"metadata":[]}

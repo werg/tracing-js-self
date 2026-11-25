@@ -1,3 +1,0 @@
-test/semantic-known-close-builder-v8.test.js
-test/semantic-known-close-history-v8.test.js
-test/semantic-known-service-close-history-v8.test.js

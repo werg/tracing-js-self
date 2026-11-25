@@ -1,14 +1,11 @@
 # Preparing and running a credible execution-learning experiment
 
-This guide covers the complete follow-up work around the Tinker training loop.
-The [scope checklist](TINKER_FOLLOWUP_PLAN.md) maps every requested area; the
-[validation record](TINKER_VALIDATION.md) distinguishes executed local checks from
-live model evidence. Run the commands from `/home/werg/tracing-js-self`.
+This guide covers the Tinker training and staged study workflow.
+See [TINKER_TRAINING.md](TINKER_TRAINING.md) for architecture, context lengths, and quickstart commands.
 
 ## Local preparation
 
-Use the repository's pinned Node from `.nvmrc` for reference-contract checks. The
-experiment environment is CPU-only; Tinker performs the model computation.
+The experiment environment is CPU-only; Tinker performs the model computation.
 
 ```sh
 UV_PROJECT_ENVIRONMENT="$PWD/.venv-tinker" uv sync --project training --locked
@@ -17,18 +14,11 @@ npm run test:tinker
 python training/run.py --config training/configs/inkling-mini.json check
 ```
 
-`inkling-mini.json` is the small integration configuration. Its output directory
-is `runs/tinker-followup-smoke`, preserving earlier frozen experiments. The
-larger prepared experiment is configured in `training/configs/inkling-pilot.json`.
-The pilot's learning rates, reward settings and update counts are starting
-choices, not measured optima.
+- `training/configs/inkling-mini.json` — small 36-task smoke & integration configuration (65K free).
+- `training/configs/inkling-pilot.json` — expanded-corpus pilot (65K free, 16K turn / 32K episode budget, batched RL).
+- `training/configs/inkling-long-context.json` — long-trace training on `thinkingmachines/Inkling-2-Mini:peft:262144` (256K train / up to 1M sample context, 64K turn / 128K episode budget).
 
-The pilot gives each local bridge request a 300-second outer deadline. One
-qualified recursive Collatz case took 86 seconds to export in isolation, largely
-in runtime snapshot cloning/diffing. The starter keeps its shorter 60-second
-limit. Task-level timers are cooperative and cannot interrupt synchronous
-snapshot work; the separate bridge process provides the outer wall-time limit.
-This setting controls local JavaScript preparation, not model-generation cost.
+The runtime uses copy-on-write state diffing in `src/runtime.js` (reducing worst-case recursive exports like `collatz(1000000)` from ~86s to ~3.7s), `tools/tinker-execution.mjs` caches lightweight prepared outcomes across up to 4,096 tasks, and `training/tinker_js/experiments.py` caches frozen exports across staged study jobs so jobs do not re-export the corpus from scratch.
 
 The expanded, qualified datasets are committed under `training/fixtures/expanded`.
 Regenerate them deliberately when changing the corpus:

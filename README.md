@@ -1,573 +1,68 @@
 # tracing-js-self
 
-An **experimental, owned-machine JavaScript semantic tracing runtime**, bootstrapped from the *Complete JavaScript Semantic Tracing Runtime* revision 2 implementation plan.
+An owned-machine JavaScript execution tracer and training harness for teaching small language models (starting with **Inkling-2-Mini** via the **Tinker API**) to execute JavaScript with concise, natural reasoning traces and verified external-effect behavior.
 
-This is a working **bounded prototype**, **not** a complete JavaScript interpreter or complete Node/browser runtime. Unsupported language features fail explicitly rather than running guest JavaScript outside the tracer. See [current semantic-execution scope](docs/SEMANTIC_REASONING_TRACE.md) and [coverage ledger](coverage/required.json).
+> Pre-release repository: APIs, trace formats, and datasets evolve in place without compatibility shims. See [AGENTS.md](AGENTS.md).
 
-## Inkling / Tinker execution training
+## Architecture
 
-The [Tinker training guide](docs/TINKER_TRAINING.md) describes the readable
-execution-conversation adapter, controlled external observations, behavioral
-compression grader, and baseline → SFT → RL experiment runner. It targets the
-free Inkling 2 Mini model and keeps source families isolated across training and
-held-out evaluation. The JavaScript harness runs on CPU; model compute runs in
-Tinker. Run `npm run test:tinker` for the offline regression suite.
+1. **Owned JS Interpreter & Trace Core (`src/runtime.js`, `src/frontend.js`, `src/validation.js`, `src/replay.js`, `src/causal.js`, `src/host/`)**
+   - Bounded, deterministic JavaScript VM with copy-on-write state diffing, causal event journaling, host-capability boundary (`demo.*`, `fs.*`, `platform.*`, `natlang.*`), and TypeScript lowering (`src/typescript.js`).
+   - Verified against independent native Node execution (`src/semantic/source-reference.js`).
+2. **Readable Execution Traces & Behavioral Grader (`src/training/tinker-*.js`, `tools/tinker-*.mjs`)**
+   - Converts causal execution journals into concise, natural scratchpad traces (`full`, `compact`, `actions-only`) formatted for Inkling's native `<|content_thinking|>` + `<|content_text|>` framing (or plain text at `effort = 0`).
+   - Grades student rollouts solely on externally observable behavior: return/throw outcome, final input mutations & object aliases, and exact ordered external calls/arguments. Internal wording and intermediate steps may vary freely.
+   - Stratified, lineage-isolated benchmark builder and independent native boundary verifier (`tools/tinker-benchmark.mjs`, `tools/tinker-supervision.mjs`).
+3. **Tinker / Inkling-2-Mini Training Runner (`training/`)**
+   - Reproducible SFT + group-relative RL (`importance_sampling` / `ppo`) runner (`training/tinker_js/runner.py`, `adapter.py`, `learning.py`, `metrics.py`, `experiments.py`).
+   - Supports both the 65K free tier (`thinkingmachines/Inkling-2-Mini:peft:65536:free`) and long-context variants up to 256K train / 1M sample (`thinkingmachines/Inkling-2-Mini:peft:262144` or `thinkingmachines/Inkling-2-Mini`).
 
-## Current work: V8 data preparation
+## Quick Start
 
-This repository and its companion, `werg/megatoken`, are pre-release. APIs and
-saved formats change in place; affected producers, consumers and fixtures are
-updated together. Existing numeric labels identify implementation paths and
-do not promise compatibility. See the [development instructions](AGENTS.md).
-
-The root `package-lock.json` is the authoritative dependency lock for `npm ci`.
-It preserves exact dependency versions and integrity pins. Because npm omits that
-filename from package archives, `contracts/npm-lock.json` retains an exact-byte
-generated copy for original-source certification after installation. Run
-`node tools/generate-dependency-lock.mjs` after changing the root lock;
-`npm run contracts:check` rejects a stale copy. Ordinary `npm pack --ignore-scripts`
-includes that evidence without a lifecycle hook. This works with current npm,
-[which removed shrinkwrap support in npm 12](https://github.com/npm/cli/blob/v12.2.2/CHANGELOG.md).
-The optional specification oracle keeps its separate lock in `tools/spec-oracle`.
-
-The [compositional v8 candidate](docs/SEMANTIC_REGIONS_V8.md) combines compact
-calculations with checked property access, calls, cleanup and suspension in one
-shared state. Its bounded source profiles cover Symbols and ordinary properties,
-ordinary `for…in` snapshots with live candidate-existence checks, stable transparent
-Proxy enumeration, operation-derived Error values with standard TypeError
-properties/prototype identity, shared binary views, base/derived construction
-and private fields (including authenticated constructor arrows and derived-this
-ReferenceErrors before `super`), Number conversion and ordinary cleanup, live
-Map/Set iterators, bounded array/string literal spread, flat and selected nested
-ordinary-array bindings, synchronous generators and delegation, Promise
-joins/executors and selected adoption jobs, plus ordinary Proxy get/set/has/delete,
-revocation, transparent nested routes through outer links with absent traps and a
-single selected inner trap, and a separate bounded reflection profile. Effectful
-Proxy enumeration, arbitrary nested custom iterables and general nested
-active-trap invariant dispatch remain outside those boundaries. Each profile
-documents its supported limits; the candidate does not claim unrestricted
-ECMAScript coverage. The
-[Promise scheduling profile](docs/V8_PROMISE_SCHEDULER.md) documents the resolution
-and cleanup jobs that require separate checked protocols.
-
-The current work prepares verified V8 data: original-source correspondence,
-independent native admission, causal contexts and targets, frozen source-family
-splits, and exact tokenizer, loss-mask and physical-packing checks. The
-[V8 data-preparation status](docs/LANGUAGE_COVERAGE_V8_CUTOVER_STATUS.md)
-defines the completion criteria, records validation and links all deferred work.
-Model performance and production cutover are later milestones.
-
-Earlier [qualification](coverage/language-expansion/native-v8-012c9fe-all/README.md)
-and [dataset results](coverage/language-expansion/dataset-v8-012c9fe/README.md)
-remain evidence for their recorded source revisions. Current checks use the
-producer and native consumer selected by the V8 policy.
-
-```js
-import {verifyRegionTrainingCase} from 'tracing-js-self/semantic/v8';
-
-const checked = await verifyRegionTrainingCase({
-  id: 'double-elements', family: 'ordered-map', entry: 'run',
-  source: '"use strict";function run(xs){return xs.map(x=>x*2);}',
-  args: [[2, 3, 4]], fixture: {calls: []}
-});
-console.log(checked.status, checked.exported?.sidecar.regionCoverage);
-```
-
-The explicit `tracing-js-self/semantic/v8` entry exposes the V8 runtime, source
-verification, native-admission and dataset APIs without loading historical wire
-clients. The existing `tracing-js-self/semantic` and `tracing-js-self/training`
-entries keep their current exports. This package boundary does not promote V8
-command defaults or establish whole-population parity.
+Requires **Node >= 20** (pinned in `.nvmrc`) and **Python 3.11–3.14** with `uv` for Tinker training.
 
 ```sh
-npm run test:semantic-v8
-npm run contracts:check
-node tools/language-expansion-benchmark.mjs --out ../v8-coverage \
-  --mode coverage --population all --inputs all --trace-version 8
-node tools/qualify-semantic-v8.mjs --out ../v8-source-check \
-  --population interoperability --prepare-only
-```
-
-The interoperability command includes every declared protocol source example.
-The full benchmark retains all 665 declared attempts and their actual
-dispositions; the original 11-case gallery is a separate population.
-[Evaluation instructions](docs/LANGUAGE_EXPANSION_EVALUATION.md)
-cover exact token measurements and independent native admission. Source checks,
-native replay and token accounting do not establish model comprehension or
-learned execution; those measurements remain separate. The existing default
-command path is v6, and v8 is selected explicitly through these APIs and tools.
-
-The [algorithm representation refactor](docs/SEMANTIC_ALGORITHM_IMPLEMENTATION.md)
-builds on the v6 baseline: several certified source forms should share a typed
-core that states the computation and relevant effects. Its
-[semantic and observation contract](docs/SEMANTIC_ALGORITHM_CONTRACT.md)
-defines the bounded equivalences, causal boundaries, and qualification gates.
-The ledger separates completed work from validation evidence; historical artifacts
-keep their original versions.
-
-The current v6 pipeline includes bounded synchronous and asynchronous
-execution, explicit guest throws, independent source verification, immutable
-candidate identities, frozen source components, resumable generation and
-pinned native admission. See [current status](docs/STATUS.md),
-[measured capability evidence](coverage/README.md), and
-[release gates](docs/RELEASE_GATES.md). The original arithmetic and narrow
-Test262 evidence remain documented in
-[owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md).
-
-The executed [v6 feature-level capability ladder](coverage/current-v6.json) records 43 passed native admissions from 52 declared probes, with unsupported, refused and untested stages kept explicit. The [saved-checkpoint qualification](docs/evidence/native-v6-qualification-20261118/README.md) measures two actual native prediction boundaries and the complete short-episode supervision audit. Reports name the exact revisions they measured; earlier synchronous coverage remains in [the historical ledger](coverage/historical/required-v1.json).
-
-The [18 November resumption implementation](docs/RESUMPTION_IMPLEMENTATION.md)
-tracks semantic repairs, immutable provenance, global split isolation,
-resumable source campaigns, native releases, and actual optimization diagnostics.
-The subsequent [execution-training roadmap implementation](docs/EXECUTION_TRAINING_IMPLEMENTATION.md)
-adds independent checks for overwritten intermediate errors, a reproduced
-native training/serving input mismatch, a causal-LM diagnostic bridge, checked
-trace-abstraction experiments and coverage-aware sampling. Its ledger separates
-implemented tools from the learning and release gates still awaiting evidence.
-See [owned arithmetic and evidence](docs/OWNED_ARITHMETIC.md) for the earlier
-spec-operation milestone.
-
-## Algorithm trace candidate
-
-The bounded algorithm pipeline is available through `tracing-js-self/semantic`.
-It lowers lexical renaming, private temporaries, bounded pure helpers, private
-ordinary-object state, pure selections, and certified ordered numeric folds to
-one typed core. Indexed `for`, matching `while`, and eligible `for...of` sums
-share this explanation:
-
-```text
-v0 = fold_left($a0, 0, add) => 9
-return 9
-```
-
-The serial counter profile exposes its actual interaction:
-
-```text
-request r0 b0: demo.readAsync("counter")
-observe r0 as v0: fulfilled 7
-v1 = add(%v0, 1) => 8
-request r1 b1: demo.store("counter", 8)
-observe r1 as v2: fulfilled undefined
-return 8
-```
-
-Observations are environment-supplied and receive zero native prediction loss.
-The independent v7 consumer checks the actual encoded masks and visible context.
-The trusted source definition binds
-`b0` and `b1` to capability authorization; the selected request supplies evaluated
-arguments once, and the host codec derives its payload. Cleanup, callbacks,
-concurrent outstanding requests, escaping identities, and other unproved forms
-use the independently checked detailed representation inside the same v7 contract.
-`result.exported` explicitly declares `representation: 'algorithm'` or
-`representation: 'detailed'`; unsupported compact lowering no longer drops a
-source-qualified example from v7 training.
-
-```js
-import {verifyAlgorithmTrainingCase} from 'tracing-js-self/semantic';
-
-const checked = await verifyAlgorithmTrainingCase({
-  family: 'ordered-sum-example', entry: 'run', args: [[2, 3, 4]],
-  source: '"use strict";function run(xs){let sum=0;for(const x of xs){sum+=x;}return sum;}',
-  fixture: {calls: []}
-});
-console.log(checked.status);
-console.log(checked.exported?.public.timeline);
-```
-
-`AlgorithmController` checks canonical or truthfully decomposed claims against
-committed state. `AlgorithmExecutionHarness` provides definition/input caching,
-live context, exact host routing, checkpoints, and durable intent handling.
-`persistCheckpoint()` and `restoreFromJournal()` use `SelectedIntentJournal`;
-restoration never dispatches automatically, and uncertain effects require
-explicit reconciliation.
-
-```sh
-npm run test:semantic-algorithm
-npm run semantic:contract
-npm run semantic:compare -- --out ../algorithm-comparison
-```
-
-For real pinned-tokenizer counts, add `--python PYTHON --consumer-root DIR
---tokenizer-json FILE` to the comparison command. Reports keep target,
-observation, framing, and actual JavaScript context costs separate. Byte counts
-are never substituted for missing token measurements.
-
-The candidate uses `semantic-trace/7`, `semantic-execution/7`,
-`semantic-context/7`, and `semantic-continuation/7`. The independent companion
-now implements both representations, native admission, model serving, and the
-prepared-training gate. Each production candidate still requires fresh source
-and native receipts under the exact committed policy. The production default
-remains v6 pending the separate serving-cost and comprehension qualification.
-No old-format decoder or checkpoint migration was added. See the
-[native integration](docs/SEMANTIC_V7_NATIVE_INTEGRATION.md),
-[v7 training and export commands](docs/SEMANTIC_V7_TRAINING.md),
-[implementation ledger](docs/SEMANTIC_ALGORITHM_IMPLEMENTATION.md) and
-[comparison evidence](docs/evidence/semantic-algorithm-v7/README.md).
-
-The earlier [paired run](docs/evidence/semantic-algorithm-v7/paired-e96dd4e/MEASUREMENTS.md)
-retained all 98 declared executions: 93 normalized and five detailed fallbacks,
-with zero execution failures. All 87 equivalence-family executions converged
-and all 28 negative checks passed. On the unchanged eleven-case gallery,
-generated targets used 1,154 tokens versus 1,307 for v6 with the exact pinned
-tokenizer. These are generated-target counts; native serving cost and reader
-comprehension remain unqualified.
-
-## Reproduce the current baseline
-
-Use the Node version in `.nvmrc`, then install the committed dependency locks:
-
-```sh
-npm ci --ignore-scripts
-npm run oracle:install
-npm run baseline:v6 -- --out ../current-v6-baseline --jobs 2
-```
-
-For actual native admission, prepare the hash-locked Python environment and
-exact consumer/tokenizer described in
-[native environment setup](tools/native-consumer/README.md), then add
-`--megatoken DIR --tokenizer FILE --python PYTHON` to the baseline command.
-The baseline freezes one global source registry with project and composition
-holdouts, retains each check's logs, and reports exact per-stage counts.
-[Optimization smoke instructions](docs/OPTIMIZATION_SMOKE.md) describe the
-separate real optimizer/checkpoint/rollout diagnostic; corpus qualification
-alone does not establish model learning.
-
-## Model-facing semantic execution traces
-
-Production uses **`semantic-execution/6`, `semantic-trace/6`,
-`semantic-context/6`**, and `selected-harness/2`.
-The strict machine archive and its exact replay remain private certification
-evidence. Earlier group-shaped corpus exporters and their public formats are
-removed; old bytes can only be recovered from pinned Git history.
-
-The training target is **an execution explanation**, not a bijection with
-interpreter instructions. Source-grounded, independently checked expressions
-pair a term with the actual value computed at that moment. A source binding
-uses its original name (`current`, `next`, `seen`); shadowed bindings
-receive a disambiguating suffix. Anonymous pure subexpressions get no synthetic
-temporary identities. For instance:
-
-```text
-current = 7
-compute (current + 1) => 8 as next in @invocation1
-request @e2 demo.store("counter", 8) payload ["counter",8] in @invocation1 at 98..118
-observe @e2 fulfilled undefined
-```
-
-The external request, ordered response, state mutations, event/callback
-activations, Promise transitions and completion remain explicit and must agree
-with the independently executed source. Checked reasoning claims are evaluated
-against **prior committed public state**, never private future results.
-Calls, getters, proxies, updates and other effectful terms cannot be silently
-flattened into pure arithmetic; unsupported projections fail closed.
-The `observe` line is supplied context and receives no prediction loss.
-See the [production language](docs/PRODUCTION_TRACE_V6.md),
-[reasoning trace design](docs/SEMANTIC_REASONING_TRACE.md), and
-[exact target gallery](docs/evidence/semantic-target-gallery-v2/README.md).
-
-Bounded pure helpers and dense numeric sums now produce a single checked
-result followed by completion. These are actual production targets:
-
-```text
-evaluate run(4) => 5
-end return
-```
-
-The same eleven source examples use 1,307 target tokens in v6 versus 3,784 in
-the archived v5 format, measured with the same production tokenizer. This
-measures target size; learned execution quality still requires model evaluation.
-The grammar, native consumer, saved artifacts and generated fixtures move
-together to v6. Old JSON witness records are rejected.
-
-From an installed checkout:
-
-```sh
-npm ci
+# 1. Install JS dependencies and run core tests
+npm ci --ignore-scripts --no-audit --no-fund
 npm test
-node tools/inspect-semantic-reasoning.mjs
-npm run training:generate -- --out /tmp/semantic-v6
-npm run baseline:v6 -- --out /tmp/semantic-v6-baseline --jobs 4
+
+# 2. Install locked CPU Python environment for Tinker
+UV_PROJECT_ENVIRONMENT="$PWD/.venv-tinker" uv sync --project training --locked
+source .venv-tinker/bin/activate
+
+# 3. Run full Tinker JS + Python regression suite
+npm run test:tinker
+
+# 4. Offline preflight (no API key or model compute needed)
+python training/run.py --config training/configs/inkling-mini.json check
 ```
 
-The inspection tool executes real pinned counter, choice, compound
-arithmetic, callback and rejection/finally fixtures and independently verifies
-each before printing its actual model-visible trace. The source verifier,
-selected-state controller and external reference compare **observable
-completion and effects** separately from witness consistency and exact
-reference trace bytes. Local verification is not final training admission:
-that also requires the pinned native Megatoken consumer, tokenizer and
-visibility/loss checks. Model learning gains are not established by a
-shorter trace alone.
-
-## Executable external effects
-
-`compileExternalEffectsJS(bundle)` returns a JavaScript **function body** for
-the external operations actually dispatched by a validated owned run. This is
-for deliberate effect replay in an independent JS engine, **not** for rebuilding
-the whole guest program, its results, or async scheduling. It does not perform
-any external effects until you execute the returned string.
-
-```js
-import {compileExternalEffectsJS} from 'tracing-js-self';
-
-const javascript = compileExternalEffectsJS(bundle);
-const effects = {'demo.store': (key, value) => save(key, value)};
-new Function('effects','bridge',javascript)(effects); // bridge needed only for registered callbacks
-```
-
-For an **active** external effect, the live entry point also returns code
-that routes both synchronous exceptions and native Promise settlements into
-the journalled owned input path:
-
-```js
-import {compilePendingEffectJS,createOwnedEffectBridge} from 'tracing-js-self';
-const effect = Object.values(runtime.state.effects).find(e => e.dispatch === 'dispatched' && e.external === 'pending');
-const js = compilePendingEffectJS(runtime,effect.id);
-new Function('effects','bridge',js)(effects,createOwnedEffectBridge(runtime));
-// After the service settles, drive the owned runtime at the next legal point.
-```
-
-The live bridge invokes `recordInputArrival` and `deliverInput` for
-both normal and rejected native Promise settlements. For a **declared callback
-slot**, `bridge.callback(effectId, callbackId)` constructs a native callable
-which queues `external.callback.enqueue` and runs the *original guest closure*
-through the owned VM's FIFO scheduler; it never runs guest source natively.
-The currently implemented example is `host.withCallback(key, fn)`, exposed as
-the versioned `demo.withCallback/1` capability. The native service receives
-`{args:[key,callback], effectId, request, signal,...}`, and callback arguments
-must be primitives. The host's synchronous callback return value is always
-`undefined`; callbacks needing a synchronous guest return are unsupported.
-
-```js
-const result=await executeWithNativeServices({
-  text:`async function run(){
-    let total=0;
-    await host.withCallback('value', function(n){total+=n;});
-    host.store('total',total);
-  } run();`,
-  services:{
-    'demo.withCallback':({args})=>{
-      args[1](7); // queue the owned guest closure, not native guest execution
-      return Promise.resolve();
-    },
-    'demo.store':({args})=>console.log(args)
-  }
-});
-replayExact(result.bundle); // does NOT repeat native calls
-```
-
-Declared subscription callbacks also survive registration settlement and the
-original call's completion. `demo.listen`/`demo.unlisten` retain and close the
-owned handler; queued and late events have explicit dispositions. The selected
-browser adapter supplies scoped passive event notifications and timers, and the
-Natlang adapter supplies registered graph-valued asynchronous callback returns.
-These are separate declared operation profiles. General DOM Event objects and
-native-dependent synchronous guest return/propagation control remain outside
-the passive profile. See [the v5 capability and lifetime contract](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md).
-
-The emitted JavaScript calls `effects["operation"](...materializedArgs)` in
-recorded dispatch order. The argument values are copied directly from the
-verified immutable request payload (including the snapshot of a later-mutated
-object). All required handlers are checked before the first call. Handler
-results do not resume the source program, and asynchronous completions are not
-reconstructed. Running the generated string **executes effects again**;
-use only trusted archives and deliberately supplied handlers.
-
-## Quick start
-
-Requires Node.js 20 or later. Acorn 8.15.0 is the integrity-locked parser dependency
-for `training-js/1`; engine262 is an optional, separately pinned reference oracle.
+## Running Live Inkling-2-Mini Training on Tinker
 
 ```sh
-npm ci
-npm test
-npm run demo
-node bin/tracing.js demo --output demo.trace.json
-node bin/tracing.js validate demo.trace.json
-node bin/tracing.js replay demo.trace.json
-node bin/tracing.js causal demo.trace.json a0:e20
-node bin/tracing.js run examples/async-demo.js --output waiting.trace.json
+tinker auth login
+python training/run.py --config training/configs/inkling-mini.json check --live
+
+# Small contract probe + 12-example learnability check before any sweep:
+python training/experiment.py probe --config training/configs/inkling-mini.json --output-dir runs/tinker-probe --live
+python training/experiment.py learnability --config training/configs/inkling-pilot.json --output-dir runs/tinker-learnability --live
+
+# Pilot run (65K free tier) or long-context run (256K train / 1M sample):
+python training/run.py --config training/configs/inkling-pilot.json run
+python training/run.py --config training/configs/inkling-long-context.json run
 ```
 
-The demo issues two asynchronous mock operations, keeps an aggregate chunk open across an internally fulfilled `await`, then delivers B=20 before A=10. It computes `10 + 20 + 5` and records exactly one synchronous `host.store('sum', 35)`.
+## Key Scripts & Configs
 
-### Embedded API
+- `npm test` — Core VM, validation, replay, causal, and Tinker JS tests.
+- `npm run test:tinker` — All Tinker JS + Python tests.
+- `npm run demo` / `npm run trace` — Run the core tracer CLI (`bin/tracing.js`).
+- `npm run tinker:build` — Rebuild stratified `training/fixtures/expanded/` corpus.
+- `npm run tinker:fuzz` — Run independent boundary + adversarial grader verification.
+- `npm run tinker:audit` — Audit supervision formats and causal prefix privacy.
+- Configs:
+  - `training/configs/inkling-mini.json` — 36-task smoke & integration suite (65K free).
+  - `training/configs/inkling-pilot.json` — Expanded corpus pilot (65K free, 16K turn / 32K episode budget, batched RL).
+  - `training/configs/inkling-long-context.json` — Long-trace training on `Inkling-2-Mini:peft:262144` (256K context, 64K turn / 128K episode budget).
 
-```js
-import { createRuntime, validateBundle, replayExact } from 'tracing-js-self';
-const runtime = createRuntime({ adapters: {
-  'demo.store': () => ({ kind: 'normal', value: undefined })
-}});
-runtime.start('let x = 2; x += 3; host.store("x", x);');
-const progress = runtime.drive();
-if (progress.kind !== 'terminated') throw new Error(progress.kind);
-const bundle = runtime.exportRun();
-validateBundle(bundle);
-replayExact(bundle); // independently recompile source and reproduce recorded steps
-```
-
-Mock host adapters receive `{effectId, operation, args, request}`.
-Here `args` is a deeply frozen plain JavaScript array parsed from the
-`canonical-json/1` request, **not** guest reference tags. `request.payload` is
-the immutable JSON argument array string with a versioned operation signature.
-Object/property versions and all guest identities remain private in the journal:
-the adapter's `request` object contains no `graphVersions` or guest handles.
-Cycles, repeated object identities,
-unsupported numeric encodings and unknown host methods fail closed before an
-effect can be dispatched. The private archived `effect.args` retains the
-original identity-bearing tuples solely for verification and replay.
-
-Low-level runtime adapters publish arrivals using `recordInputArrival` and `deliverInput` at a legal service point. The production selected harness provides the higher-level Promise/callback bridge, source and capability checks, owned resource lifetimes, durable intent journal, and checkpoint/reconciliation interface. See [the v5 runtime contract](docs/SELECTED_HARNESS_V4.md).
-
-The package root also exports `Runtime`, `encode`/`decode`, `reconstruct`,
-`causalPrefix`, and the trace validation/replay error classes. The package is an
-embedded Node.js ESM API. The opt-in `tracing-js-self/natlang-selected` adapter
-supports asynchronous fresh and retained Natlang evaluation, including module
-loading and registered native resources. The [implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
-describes the supported profile, independent checks, and paired repository pins.
-The [engineering completion ledger](docs/SEMANTIC_HARNESS_V4_COMPLETION.md)
-records all M0–M8 results, admitted source/native data, controlled evaluation and
-the separate inputs still needed for later training.
-
-For programmatic fixture verification and training export, use the separate
-`tracing-js-self/training` entry point:
-
-```js
-import { verifyEffectfulTrainingCase } from 'tracing-js-self/training';
-const checked = await verifyEffectfulTrainingCase({
-  source: '"use strict"; function run(x) { return x * 2 + 1; }',
-  entry: 'run', args: [7], fixture: { calls: [] }, family: 'example-arithmetic'
-});
-if (checked.status !== 'locally_verified') throw new Error(checked.status);
-const candidate = checked.exported; // public targets plus a private audit sidecar
-```
-
-The production entry point also exports `SelectedExecutionHarness`,
-`SelectedModelDriver`, `SelectedIntentJournal`, `verifyEffectfulSession`,
-`recheckEffectfulAdmission`, and the Megatoken process selectors. Code publication
-precedes explicit invocation; requests carry evaluated arguments and exact source
-provenance; external results remain observations. The teacher compiler supports
-async effects, reactions, callbacks, cleanup, graph feedback and checkpoint/source
-rereads. Fully admitted data additionally requires the real production tokenizer,
-native consumer, visibility and loss gates. A locally verified result is not
-automatically admitted data or learned model success.
-
-The only supported model-facing training producer, controller and serializer are
-the v6 source-certified semantic trace language. Independent V8 reference checks and
-private journal replay are verification authorities, not alternative trace
-formats. No diagnostic subpath, legacy exporter or representation selector exists.
-
-`drive()` reports `terminated`, `waiting`, `runtime.failure`, or `unsupported`.
-Owned catch/finally, Promise rejection, continuation and callback semantics are
-covered by the declared profile and independent fixtures. New archives and supported readers use `semantic-tracing-run/2`; older `/1`
-archives require an explicit offline migration and are not silently accepted. The language profiles remain separate:
-`bounded-js-subset/2` for the original script path and `training-js/1` for strict
-function entry.
-
-## Pinned spec-reference baseline (Node.js 24 only)
-
-The **optional** engine262 oracle compares pure scalar outcomes while retaining
-the owned runtime as the only trace authority. The checks have separate evidence
-boundaries:
-
-- 12 existing scalar source probes and **1,958 owned-arithmetic comparisons**, each
-  with independent oracle observations, state reconstruction and exact replay.
-- A SHA-verified **14-file Test262 syntax-only** baseline.
-- The existing **11-file selected execution** smoke ledger, with explicit passes,
-  known failures and skips. Its diagnostic host-thrown errors remain separate
-  from owned guest completions.
-- An **eight-file Test262 execution** slice with a guest scalar assertion harness:
-  six non-strict variants pass, two remain unsupported, and eight strict variants
-  are explicitly omitted. This is not the full official harness or full conformance.
-- A pinned engine262 source inventory with explicit partial/unowned classifications.
-
-The normal `npm test` requires the locked Acorn dependency but does not require
-engine262. The strict training path also uses an independent Node V8 `vm`
-reference for fixture comparisons; that reference runs outside the owned tracer.
-
-```sh
-npm ci --prefix tools/spec-oracle --ignore-scripts --no-audit --no-fund
-node scripts/run-spec-probes.mjs
-node scripts/run-owned-arithmetic-probes.mjs
-node scripts/run-conformance.mjs --output /tmp/test262-baseline.json
-node tools/test262-baseline.mjs --output /tmp/test262-execution.json
-node scripts/run-runtime-conformance.mjs --oracle --output /tmp/test262-runtime.json
-node scripts/audit-engine262.mjs
-```
-
-The reference engine and suite commits, fixture blob hashes, remaining ownership
-gaps and acceptance gates are documented in [engine262 adoption](docs/ENGINE262_ADOPTION.md),
-[source inventory](docs/ENGINE262_INVENTORY.md), and [Test262 execution](docs/TEST262_RUNTIME_SLICE.md).
-CI verifies the source inventory against exact upstream Git objects and publishes
-the arithmetic, parser and execution reports.
-
-## Bounded TypeScript and static ESM entry points
-
-The opt-in `tracing-js-self/natlang` adapter now lowers TypeScript syntax
-to ES2022 with pinned TypeScript 5.9.3, then executes only JavaScript supported
-by the owned strict training profile. Validated archives include generated
-source sites; the `onTrace` callback also receives the original TS and V3
-source-map metadata. A bounded data-only `__live` synchronization path
-and data-only retained `module.exports` adapter now exist; callable helpers,
-full natlang module caching/closures and general native integrations still fail
-closed. There is no host runtime fallback or complete TS/JS conformance claim.
-
-`tracing-js-self/modules` additionally links a supplied graph of
-function-only TypeScript/ESM modules into an owned replayable entry. It supports
-named and default function exports, import aliases and cycles, while rejecting
-top-level effects, mutable exports, native packages and dynamic imports.
-See [integration boundaries](docs/NATLANG_INTEGRATION.md) and
-[static module profile](docs/STATIC_MODULES.md).
-
-For mutable ESM exports, import-cell aliasing, dependency initialization and
-bounded top-level `await`, the separate opt-in
-`tracing-js-self/evaluated-modules` entry point executes an explicit
-in-memory source graph, including synchronous cycles and live imported cells, through the owned interpreter. Optional versioned native
-services record guest input arrival and delivery; replay invokes no native
-service. This is neither a persistent ESM realm nor a general module loader.
-See [evaluated module profile](docs/EVALUATED_MODULES.md).
-
-
-## Main modules
-
-`src/frontend.js` implements the bounded lexer/parser and source-mapped bytecode
-compiler; `src/training/profile.js` supplies the strict Acorn frontend.
-`src/runtime.js` contains the explicit machine, direct function entry, state
-versions, jobs, effects and chunk accumulator. `src/spec-operations.js` implements the owned
-arithmetic phases; `src/spec-mutations.js` writes their typed commands and
-`src/spec-validation.js` independently checks them. `src/values.js` implements
-exact scalar tagging. `src/validation.js` reconstructs state and checks structural
-invariants, including the lifecycle checks in `src/host-journal.js`.
-`src/replay.js` recompiles source and reproduces events, state and chunks without
-host adapters. `src/causal.js` provides the restricted model view without private
-arrival payloads. `src/semantic/normalize.js` and `src/training/` provide the
-bounded training projection, formatting, scheduling, visibility and local
-verification path. `src/index.js` is the public package facade.
-
-**Evidence boundary:** exact replay checks the interpreter against its recorded
-journal. Independent source execution, source-operation certificates, native
-consumer validation and selected-model evaluation provide separate authorities.
-Replay requires a complete sealed run and uses external values at their recorded
-arrival boundaries; it calls no native adapter. The historical v4 engineering gate
-covers the declared profile at its frozen revisions; current v5 verification is
-recorded by the current cross-repository workflows. `completeSemanticTrace: false`
-still applies to the broader complete-JavaScript target, and this package does
-not claim arbitrary JavaScript compatibility, a hostile-code sandbox or learned
-execution quality. The [v5 implementation guide](docs/SEMANTIC_HARNESS_V4_IMPLEMENTATION.md)
-records the current supported profile.
-The historical [completion receipt](contracts/semantic-engineering-completion.json)
-pins its original three tested implementations; it does not qualify v5 artifacts
-or certify learned model quality.
-
-
-
-## Language coverage expansion
-
-The [coverage plan](docs/LANGUAGE_COVERAGE_PLAN.md) distinguishes parser acceptance,
-owned execution, independent source checks, compact recognition, detailed
-fallback, native admission, and actual model success. Generate a fresh v7
-report with `npm run coverage:current -- --out coverage/current-v7.json`; add
-`--population gallery` for the unchanged eleven-case regression gallery.
-`--version 6` explicitly selects the historical producer. A historical receipt
-is not a result for the current revision. Unconfigured native, tokenizer, and
-model stages remain untested; bytes are never reported as token estimates.
+See [docs/TINKER_TRAINING.md](docs/TINKER_TRAINING.md) and [docs/TINKER_EXPERIMENTS.md](docs/TINKER_EXPERIMENTS.md) for full training and study details.

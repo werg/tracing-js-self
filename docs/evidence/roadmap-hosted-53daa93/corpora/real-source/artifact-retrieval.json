@@ -1,7 +1,0 @@
-{
-  "status": "unavailable-via-artifact-download-tool",
-  "reason": "InvalidInputException: Artifact exceeds max size of 536870912 bytes: 844662195 bytes.",
-  "artifactBytes": 844662195,
-  "toolMaximumBytes": 536870912,
-  "alternative": "Original decoded job log and source/release/sampler receipts printed in that log retained; full artifact member files not downloaded."
-}

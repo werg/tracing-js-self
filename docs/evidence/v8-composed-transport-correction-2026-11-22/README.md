@@ -1,7 +1,0 @@
-# Five actual-native transport corrections
-
-The original complete transport group in run `45034849522` executed 33 leaf cases: 28 passed and five failed, zero skips. Four failed before reaching the intended producer storage ambiguity controls because the controlled peer rejected explicit `--fault none`, which is used to retain the complete RPC log without introducing process loss. The fifth correctly refused a bootstrap receipt passed to commit recovery before any RPC, but asserted an obsolete error message.
-
-The peer now explicitly accepts its no-loss mode, and the refusal assertion names the exact current operation guard. All **five selected actual-native cases pass**, zero failures/errors/skips, against native `15844c00c095849755ca6f0e1d207f7db79a9264`. The original corrected producer commit, source-file hashes, case names/times and runtime are recorded in `summary.json`. This was a filtered run; it is not the full 33-case transport group or the complete 193-leaf hosted gate.
-
-The complete original hosted failure is retained separately with its original uploaded ZIP and log. The later service-owned terminal-close driver correction is a separate implementation change: the driver had already validated the same retained owner against the independently owned service journals but omitted that owner from the policy passed into strict closed-state reconstruction. Passing that verified owner to the builder keeps the exact policy validation intact. That driver change requires the real-clock hosted controls; no local fake clock is supplied or claimed.

@@ -1,8 +1,0 @@
-[
-  "test/semantic-causal-lm-v8.test.js",
-  "test/semantic-native-process-v8.test.js",
-  "test/semantic-protocol-completion-source-v8.test.js",
-  "test/semantic-protocol-custom-iterator-source-v8.test.js",
-  "test/semantic-protocol-iterable-binding-source-v8.test.js",
-  "test/semantic-selected-execution-v8.test.js"
-]

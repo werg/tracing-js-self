@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/scratch/23f61543c052/tracing-semantics/tools/audit-exploratory-evidence.py", line 171, in <module>
-    main()
-  File "/workspace/scratch/23f61543c052/tracing-semantics/tools/audit-exploratory-evidence.py", line 105, in main
-    smoke.run_logged(command, root / 'inventory-cohort-audit.log', env=env, timeout=240)
-  File "/workspace/scratch/23f61543c052/tracing-semantics/tools/run-optimization-smoke.py", line 62, in run_logged
-    raise RuntimeError(f'Command exited {result.returncode}; retained log: {path}')
-RuntimeError: Command exited 1; retained log: /workspace/scratch/23f61543c052/release-evidence/exploratory-heldout-audit/inventory-cohort-audit.log

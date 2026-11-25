@@ -1,9 +1,0 @@
-test/native-request-journal-v8.test.js
-test/selected-orchestration-clock.test.js
-test/semantic-known-commit-builder-v8.test.js
-test/semantic-known-bootstrap-builder-v8.test.js
-test/semantic-selected-orchestration-checkpoint-v8.test.js
-test/semantic-selected-history-tail-v8.test.js
-test/semantic-selected-orchestration-v8.test.js
-test/semantic-selected-history-v8.test.js
-test/semantic-selected-history-automatic-v8.test.js
