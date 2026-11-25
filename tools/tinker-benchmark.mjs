@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
 import {generatedCandidates,repositoryCandidates,censusCandidates,assignFrozenSplits,splitDiagnosticInputs,
   challengeCandidates,datasetCounts,readCandidateJsonl,sha256,BENCHMARK_SCHEMA} from '../src/training/tinker-benchmark.js';
-import {prepareTinkerTask,readableMessagesFromJournal} from '../src/training/tinker-execution.js';
+import {prepareTinkerTask,readableMessagesFromJournal,assistantVisibleText,assistantThinkingText} from '../src/training/tinker-execution.js';
 import {verifyFuzzCase,aggregateVerification,failureCategory,validateFuzzResumeRecord} from '../src/training/tinker-verification.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -67,7 +67,7 @@ async function qualify(task){
       elapsedMs:Math.round(performance.now()-before),externalCalls:prepared.fixture.calls.length,
       externalOperations:prepared.fixture.calls.map(c=>c.operation),
       observationPattern:prepared.fixture.calls.map(c=>(c.status??'fulfilled')+':'+c.operation),
-      traceCharacters:messages.filter(m=>m.role==='assistant').reduce((n,m)=>n+m.content.length,0),
+      traceCharacters:messages.filter(m=>m.role==='assistant').reduce((n,m)=>n+assistantVisibleText(m).length+assistantThinkingText(m).length,0),
       completeKind:prepared.outcome.kind,task:prepared.task};
   }catch(error){return {...record,status:'refused',category:failureCategory(error),reason:String(error.message),elapsedMs:Math.round(performance.now()-before)};}
 }

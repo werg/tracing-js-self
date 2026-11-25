@@ -1,6 +1,6 @@
 import {isDeepStrictEqual} from 'node:util';
 import {parse} from 'acorn';
-import {prepareTinkerTask, readableMessagesFromJournal, createTinkerSession, encodeReadable, normalizedSourceHash} from './tinker-execution.js';
+import {prepareTinkerTask, readableMessagesFromJournal, createTinkerSession, encodeReadable, normalizedSourceHash, assistantVisibleText} from './tinker-execution.js';
 import {seededRandom, sha256} from './tinker-benchmark.js';
 import {independentNativeExecution, independentTranscriptMatches, independentConversationMatches, independentDecode, independentAction} from './tinker-independent.js';
 
@@ -58,7 +58,7 @@ export function adversarialTranscripts(texts) {
 
 export async function verifyTaskBoundary(task,{independent=true,negativeControls=true}={}) {
   const prepared=await prepareTinkerTask(task),messages=readableMessagesFromJournal(prepared.bundle,prepared);
-  const texts=messages.filter(m=>m.role==='assistant').map(m=>m.content);
+  const texts=messages.filter(m=>m.role==='assistant').map(m=>assistantVisibleText(m));
   const actions=texts.map(independentAction).map(a=>JSON.stringify(a));
   const original=await gradeTranscript(prepared,texts),short=await gradeTranscript(prepared,actions);
   const changed=await gradeTranscript(prepared,actions.map(a=>'A different concise derivation.\n```json\n'+a+'\n```'));

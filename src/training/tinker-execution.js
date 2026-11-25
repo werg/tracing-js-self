@@ -6,8 +6,7 @@ import {executeWithNativeServices} from '../host/native-driver.js';
 import {hostOperation, HOST_METHODS, HOST_OPERATIONS} from '../host/operations.js';
 import {encodeNativeGraph, decodeOwnedGraph} from '../host/graph-codec.js';
 import {createFixtureBroker, canonicalFixturePlan} from './fixture-broker.js';
-import {ownedEffectfulOutcome} from './effectful-compiler.js';
-import {describeGraph} from './graph.js';
+import {describeGraph, realizeGraph} from './graph.js';
 import {inspectDataObject} from './data-graph-contract.js';
 import {normalizeJournal} from '../semantic/normalize.js';
 import {independentEffectfulReference} from '../semantic/source-reference.js';
@@ -16,6 +15,7 @@ import {decode} from '../values.js';
 
 export const TINKER_EXECUTION_SCHEMA = 'readable-js-execution/1';
 export const TINKER_TRACE_FORMATS = Object.freeze(['full', 'compact', 'actions-only']);
+export const TINKER_REASONING_CHANNELS = Object.freeze(['thinking', 'text']);
 const clone = structuredClone;
 const demand = (condition, message) => { if (!condition) throw new TypeError(message); };
 const hash = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
@@ -25,6 +25,44 @@ const plain = value => value !== null && typeof value === 'object' && !Array.isA
 const pointer = (path, key) => path + '/' + String(key).replaceAll('~', '~0').replaceAll('/', '~1');
 const setOwn = (object, key, value) => Object.defineProperty(object, key,
   {value, writable: true, configurable: true, enumerable: true});
+
+function graphValue(value) {
+  return Array.isArray(value) && ['undefined', 'null', 'bool', 'num', 'str', 'bigint', 'ref'].includes(value[0]);
+}
+
+export function ownedEffectfulOutcome(bundle) {
+  const entryId = bundle.initialState.control.a0.activeFrameId;
+  const entry = bundle.initialState.frames[entryId], frame = bundle.finalState.frames[entryId];
+  demand(!entry?.asyncPromiseId || (frame?.asyncPromiseId === entry.asyncPromiseId &&
+    ['completed', 'thrown'].includes(frame.status)), 'async root body has not completed');
+  const root = entry?.asyncPromiseId ? {kind: 'return', value: ['promise', entry.asyncPromiseId]} :
+    ['completed', 'thrown'].includes(frame?.status) && frame.completion?.value ?
+      {kind: frame.completion.type, value: frame.completion.value.value} :
+      bundle.finalState.control.a0.completion;
+  demand(root, 'missing completed root outcome');
+  let kind = root.kind, value = root.value;
+  if (value?.[0] === 'promise') {
+    const promise = bundle.finalState.promises[value[1]];
+    demand(promise && promise.status !== 'pending', 'root returned an unsettled Promise');
+    kind = promise.status === 'fulfilled' ? 'return' : 'throw'; value = promise.value?.value;
+  }
+  demand(graphValue(value), 'completion is outside the declared data boundary');
+  return {kind, graph: describeGraph(realizeGraph(bundle.finalState.heap,
+    [...bundle.entrySpec.arguments, value], {exceptionProfile: true}))};
+}
+
+export function assistantVisibleText(message) {
+  const content = typeof message === 'string' ? message : message?.content ?? '';
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) return content.filter(part => part?.type === 'text').map(part => part.text ?? '').join('');
+  return '';
+}
+
+export function assistantThinkingText(message) {
+  const content = message?.content;
+  if (!Array.isArray(content)) return '';
+  return content.filter(part => part?.type === 'thinking').map(part => part.thinking ?? '').join('\n');
+}
 
 /** JSON with readable JavaScript scalar tags and semantic paths for aliases.
  * Paths name argument/property locations, never owned-runtime object handles. */
@@ -144,17 +182,14 @@ export function normalizedSourceHash(source) {
   return hash(clean(ast));
 }
 
-const SYSTEM = `You execute the supplied JavaScript program, using your own reasoning and the observations that arrive.
-You may write a readable trace. End each assistant turn with exactly one JSON action, optionally in a json code fence.
-When writing prose, put the final action in a json code fence. Bare JSON is allowed only when the entire turn is that one object.
-To call the external environment: {"type":"call","operation":"operation name","arguments":[evaluated arguments]}.
-To finish: {"type":"complete","kind":"return" or "throw","arguments":[final input argument values],"value":result or exception}.
-Final arguments include all mutations. For a standard Error exception, report {"name":"TypeError","message":"..."}.
-External reads, writes, clocks, console output, and supplied native functions require real calls. Never invent their observations.
-You may shorten or omit internal reasoning, but must complete the execution and every externally visible operation.
-Values are ordinary JSON, with {"$js":"undefined"}, {"$js":"NaN"}, {"$js":"-0"}, {"$js":"Infinity"}, {"$js":"-Infinity"}, and {"$js":"bigint","value":"123"} for JavaScript scalars.
-Aliased or cyclic objects use {"$js":"ref","path":"/arguments/0"}; completion paths refer to locations in the final {arguments,value} object, not runtime identifiers. For input or external-call argument arrays, paths are rooted at that array (for example /0). Sparse arrays use {"$js":"array","length":3,"entries":{"1":2}}. Objects containing a $js key or null prototype use {"$js":"object","nullPrototype":false,"entries":{...}}.
-Math.random() is deterministic internal computation using the declared uint32 seed and recurrence state=(Math.imul(state,1664525)+1013904223)>>>0; return state/4294967296. Fresh randomness is available only through a supplied native callable. All generated tokens count, including reasoning and formatting.`;
+const SYSTEM = `Execute the supplied JavaScript program accurately. End each turn with one JSON action in a \`\`\`json code fence (or bare JSON when no prose precedes it):
+- External call: {"type":"call","operation":"name","arguments":[...]}
+- Final completion: {"type":"complete","kind":"return"|"throw","arguments":[final input args],"value":resultOrError}
+
+Rules:
+- Request every external read, write, clock, console, or native function call in order; never invent observations.
+- Final "arguments" must reflect all input mutations and aliases. Standard Error throws use {"name":"TypeError","message":"..."}.
+- Special JS values: {"$js":"undefined"|"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$js":"bigint","value":"123"}, {"$js":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the array for call args), {"$js":"array","length":3,"entries":{"1":2}} for sparse arrays, {"$js":"object","nullPrototype":true,"entries":{...}} for null-prototype or $js-keyed objects.`;
 
 function normalizeTask(input) {
   demand(plain(input), 'Task must be an object');
@@ -206,8 +241,6 @@ function normalizeTask(input) {
   const sourceHash = normalizedSourceHash(source);
   const preamble = nativeBindings.map(binding => 'function ' + binding.name + '(...args){return host.' +
     (binding.kind === 'promise' ? 'natlangCall' : 'natlangCallSync') + '(' + JSON.stringify(binding.name) + ',undefined,args);}').join('\n');
-  // Preserve the single strict directive accepted by the owned entry profile;
-  // hoisted native wrappers come after the user's source and its prologue.
   const executableSource = source + '\n' + preamble;
   const maxSteps = input.maxSteps ?? 100000, timeoutMs = input.timeoutMs ?? 10000;
   demand(Number.isSafeInteger(maxSteps) && maxSteps > 0 && maxSteps <= 1000000, 'Invalid teacher step limit');
@@ -244,14 +277,22 @@ function initialMessages(prepared) {
   if (/\bDate\.now\b/.test(prepared.source)) names.add('platform.dateNow');
   for (const match of prepared.source.matchAll(/\bconsole\.(log|info|warn|error)\b/g)) names.add('platform.console.' + match[1]);
   const operations = [...names].sort();
-  return [{role: 'system', content: SYSTEM}, {role: 'user', content:
-    'Execute this JavaScript program.\n```javascript\n' + prepared.source + '\n```\n' +
-    'Call: ' + prepared.entry + '(' + JSON.stringify(encodeReadable(prepared.args)) + ' spread as arguments).\n' +
-    'Input arguments: ' + JSON.stringify(encodeReadable(prepared.args)) + '\n' +
-    'Deterministic Math.random seed: ' + prepared.randomSeed + '\n' +
-    'Granted external operations: ' + JSON.stringify(operations) + '\n' +
-    (prepared.nativeBindings.length ? 'Supplied native functions: ' + JSON.stringify(prepared.nativeBindings.map(({name, kind, description}) => ({name, kind, ...(description ? {description} : {})}))) + '\n' : '') +
-    'Predict the complete return or exception and all input mutations. Request external observations when needed.'}];
+  const usesMathRandom = /\bMath\.random\b/.test(prepared.source);
+  const parts = [
+    'Execute this JavaScript program:',
+    '```javascript\n' + prepared.source + '\n```',
+    'Entry: ' + prepared.entry + ' with arguments ' + JSON.stringify(encodeReadable(prepared.args)),
+  ];
+  if (usesMathRandom) {
+    parts.push('Math.random() uses uint32 seed ' + prepared.randomSeed +
+      ' with state=(Math.imul(state,1664525)+1013904223)>>>0; return state/4294967296.');
+  }
+  if (operations.length) parts.push('External operations: ' + JSON.stringify(operations));
+  if (prepared.nativeBindings.length) {
+    parts.push('Native functions: ' + JSON.stringify(prepared.nativeBindings.map(({name, kind, description}) =>
+      ({name, kind, ...(description ? {description} : {})}))));
+  }
+  return [{role: 'system', content: SYSTEM}, {role: 'user', content: parts.join('\n')}];
 }
 
 /** Execute trusted dataset source on the existing CPU host boundary and compare
@@ -285,12 +326,18 @@ function traceFormat(options = {}) {
   return value;
 }
 
+function reasoningChannel(options = {}) {
+  const value = options.reasoningChannel ?? 'thinking';
+  demand(TINKER_REASONING_CHANNELS.includes(value), 'reasoningChannel must be thinking or text');
+  return value;
+}
+
 function sourceNodes(source) {
   const nodes = new Map();
   function visit(node, owner = null) {
     if (!node || typeof node !== 'object') return;
     if (['FunctionDeclaration', 'FunctionExpression', 'ArrowFunctionExpression'].includes(node.type))
-      owner = node.id?.name ?? (node.type === 'ArrowFunctionExpression' ? 'the callback' : 'the anonymous function');
+      owner = node.id?.name ?? (node.type === 'ArrowFunctionExpression' ? 'callback' : 'anonymous');
     if (typeof node.type === 'string' && Number.isInteger(node.start) && Number.isInteger(node.end))
       nodes.set(node.start + ':' + node.end, {node, owner});
     for (const value of Object.values(node)) {
@@ -305,11 +352,10 @@ function sourceNodes(source) {
 const sourceText = (source, node) => node ? source.slice(node.start, node.end).replace(/\s+/g, ' ').trim() : '';
 const isReference = token => Array.isArray(token) && token[0] === 'ref';
 
-/** Describe only this event's source and recorded scalar/write values. In
- * particular, reference descriptions never inspect the final heap or print
- * object/event handles. A source expression names the reference evaluated for
- * this operation, not a reconstructed future object snapshot. */
-function traceLines(row, source, nodes, format) {
+/** Describe only this event's source and recorded scalar/write values in a
+ * concise, natural scratchpad format without duplicating branch/write steps
+ * or inspecting the future heap. */
+function traceLines(row, source, nodes, format, entryName) {
   if (format === 'actions-only' || !row.source || !['value', 'branch', 'return', 'throw', 'write'].includes(row.op)) return [];
   const code = sourceText(source, row.source), {node, owner} = nodes.get(row.source.start + ':' + row.source.end) ?? {};
   if (!code || code.length > 512) return [];
@@ -318,47 +364,69 @@ function traceLines(row, source, nodes, format) {
     // result/decision is a VM jump decision, which can invert the condition.
     // test is the actual JavaScript condition evaluated at this event.
     const condition = scalarText(row.test ?? row.operands?.[0]);
-    const path = ['then', 'else'].includes(row.path) ? '; take the ' + row.path + ' path' : '';
-    return ['Branch ' + code + (condition === null ? '' : ' evaluates to ' + condition) + path + '.'];
+    const path = ['then', 'else'].includes(row.path) ? ' (' + row.path + ')' : '';
+    return ['branch ' + code + (condition === null ? '' : ' => ' + condition) + path];
   }
   const lines = [];
   const operand = node?.type === 'VariableDeclarator' ? node.init : node?.type === 'AssignmentExpression' ? node.right : null;
   const referenceText = expression => expression && ['Identifier', 'MemberExpression'].includes(expression.type) ?
-    'the same object as ' + sourceText(source, expression) : 'an object';
+    sourceText(source, expression) : 'object';
+  let coveredByWrite = false;
   for (const write of row.writes ?? []) {
     if (write.kind === 'property') {
       const target = node?.type === 'AssignmentExpression' ? node.left :
         ['UpdateExpression', 'UnaryExpression'].includes(node?.type) ? node.argument : null;
-      // Literal construction has no pre-existing state to explain. Its complete
-      // value is already present in the later call/completion action. In compact
-      // traces, omit those allocation writes while retaining explicit mutation.
       if (format === 'compact' && !target && ['ArrayExpression', 'ObjectExpression', 'Literal', 'Property', 'SpreadElement'].includes(node?.type)) continue;
-      const name = target ? sourceText(source, target) : 'property ' + JSON.stringify(write.key) + ' during ' + code;
-      if (write.present === false) lines.push('Delete ' + name + '.');
+      const name = target ? sourceText(source, target) : JSON.stringify(write.key) + ' in ' + code;
+      if (write.present === false) { lines.push('delete ' + name); coveredByWrite = true; }
       else {
         const written = scalarText(write.value);
-        if (written !== null) lines.push('Write ' + name + ' = ' + written + '.');
-        else if (isReference(write.value)) lines.push('Write ' + name + ' to refer to ' + referenceText(operand) + '.');
+        if (written !== null) { lines.push(name + ' = ' + written); coveredByWrite = true; }
+        else if (isReference(write.value)) { lines.push(name + ' -> ' + referenceText(operand)); coveredByWrite = true; }
       }
     } else if (write.kind === 'cell' && /^[A-Za-z_$][\w$]*$/.test(write.key)) {
       const written = scalarText(write.value);
-      if (format === 'compact' && written !== null) lines.push(write.key + ' becomes ' + written + '.');
-      else if (isReference(write.value)) lines.push(write.key + ' refers to ' + referenceText(operand) + '.');
+      if (written !== null) { lines.push(write.key + ' = ' + written); coveredByWrite = true; }
+      else if (isReference(write.value)) { lines.push(write.key + ' -> ' + referenceText(operand)); coveredByWrite = true; }
     }
   }
   if (['return', 'throw'].includes(row.op)) {
-    // A return event can precede finally mutations or an overriding completion.
-    // Identify its source function and keep it explicitly pending until the
-    // verified completion action ends the episode.
-    const label = 'Pending ' + row.op + (owner ? ' from ' + owner : '') + ': ';
-    if (isReference(row.result)) lines.push(label + referenceText(node?.argument) + '.');
-    else if (format === 'compact' && value !== null) lines.push(label + value + '.');
+    const scope = owner && owner !== entryName ? ' (' + owner + ')' : '';
+    if (isReference(row.result)) lines.push(row.op + scope + ' -> ' + referenceText(node?.argument));
+    else if (value !== null) lines.push(row.op + scope + ' ' + value);
+    return lines;
   }
-  if (format === 'full' && value !== null) lines.unshift(code + ' => ' + value);
+  if (format === 'full' && value !== null && !coveredByWrite) lines.unshift(code + ' => ' + value);
   return lines;
 }
 
-function actionText(action, trace = []) { return (trace.length ? trace.join('\n') + '\n' : '') + '```json\n' + JSON.stringify(action) + '\n```'; }
+function appendTraceLines(trace, added, row, source) {
+  if (!added.length) return;
+  // When a branch immediately follows the evaluation of its own condition
+  // (`i<xs.length => true` -> `branch i<xs.length => true (then)`), drop the
+  // redundant preceding scalar evaluation line.
+  if (row.op === 'branch' && trace.length) {
+    const code = sourceText(source, row.source);
+    const cond = scalarText(row.test ?? row.operands?.[0]);
+    if (cond !== null && trace.at(-1) === code + ' => ' + cond) trace.pop();
+  }
+  for (const line of added) {
+    if (trace.at(-1) !== line) trace.push(line);
+  }
+}
+
+function assistantMessage(action, trace, channel) {
+  const actionBlock = '```json\n' + JSON.stringify(action) + '\n```';
+  if (channel === 'thinking') {
+    if (!trace.length) return {role: 'assistant', content: actionBlock};
+    return {role: 'assistant', content: [
+      {type: 'thinking', thinking: trace.join('\n')},
+      {type: 'text', text: actionBlock},
+    ]};
+  }
+  return {role: 'assistant', content: (trace.length ? trace.join('\n') + '\n' : '') + actionBlock};
+}
+
 function observation(operation, status, value) {
   return {role: 'user', content: 'External observation for ' + operation + ': ' +
     JSON.stringify({status, value: encodeReadable(value)})};
@@ -367,7 +435,8 @@ function observation(operation, status, value) {
 /** Converts canonical journal events into causal readable turns, using source
  * text and values rather than event IDs, heap IDs, hashes, or controller state. */
 export function readableMessagesFromJournal(bundle, prepared, options = {}) {
-  const format = traceFormat(options), nodes = format === 'actions-only' ? null : sourceNodes(prepared.source);
+  const format = traceFormat(options), channel = reasoningChannel(options);
+  const nodes = format === 'actions-only' ? null : sourceNodes(prepared.source);
   const messages = initialMessages(prepared), rows = normalizeJournal(bundle).events;
   const dispatches = prepared.effects.filter(row => row.kind === 'dispatch');
   const settlements = new Map(prepared.effects.filter(row => row.kind === 'settlement').map(row => [row.call, row]));
@@ -378,7 +447,7 @@ export function readableMessagesFromJournal(bundle, prepared, options = {}) {
       const receipt = dispatches[called++];
       demand(receipt && receipt.operation === row.operation, 'Journal request/receipt mismatch');
       const call = publicOperation(prepared, receipt.operation, graphRoots(receipt.arguments));
-      messages.push({role: 'assistant', content: actionText({type: 'call', operation: call.operation, arguments: encodeReadable(call.arguments)}, trace)});
+      messages.push(assistantMessage({type: 'call', operation: call.operation, arguments: encodeReadable(call.arguments)}, trace, channel));
       trace = []; pending = {effect: row.effect, call: receipt.call, operation: call.operation};
     } else if (row.op === 'observe' && row.effect) {
       demand(pending && row.effect === pending.effect, 'Observation without its pending request');
@@ -386,28 +455,28 @@ export function readableMessagesFromJournal(bundle, prepared, options = {}) {
       demand(receipt, 'Missing external settlement');
       messages.push(observation(pending.operation, receipt.status, graphRoots(receipt.result)[0])); pending = null;
     } else {
-      // Appended host-call wrapper internals are bookkeeping, not targets.
-      if (row.source?.end <= prepared.source.length) trace.push(...traceLines(row, prepared.source, nodes, format));
+      if (row.source?.end <= prepared.source.length)
+        appendTraceLines(trace, traceLines(row, prepared.source, nodes, format, prepared.entry), row, prepared.source);
     }
   }
   demand(pending === null && called === dispatches.length, 'Incomplete readable episode');
   const roots = graphRoots(prepared.outcome.graph), value = roots.pop();
   const completion = encodeReadable({arguments: roots, value});
-  messages.push({role: 'assistant', content: actionText({type: 'complete', kind: prepared.outcome.kind,
-    arguments: completion.arguments, value: completion.value}, trace)});
+  messages.push(assistantMessage({type: 'complete', kind: prepared.outcome.kind,
+    arguments: completion.arguments, value: completion.value}, trace, channel));
   return messages;
 }
 
 export async function exportTinkerExample(input, options = {}) {
-  const format = traceFormat(options);
+  const format = traceFormat(options), channel = reasoningChannel(options);
   const prepared = await prepareTinkerTask(input);
-  const messages = readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: format});
-  const traceAudit = await auditTeacherConversation(prepared, messages, {traceFormat: format});
+  const messages = readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: format, reasoningChannel: channel});
+  const traceAudit = await auditTeacherConversation(prepared, messages, {traceFormat: format, reasoningChannel: channel});
   return {schema: TINKER_EXECUTION_SCHEMA, id: prepared.id, family: prepared.family, sourceHash: prepared.sourceHash,
     task: prepared.task, messages,
     metadata: {...clone(input.metadata ?? {}),
       ...(input.features ? {features: clone(input.features)} : {}), ...(input.tier !== undefined ? {tier: input.tier} : {}),
-      sourceVerified: true, teacher: 'owned-runtime+native-reference', traceFormat: format, traceAudit,
+      sourceVerified: true, teacher: 'owned-runtime+native-reference', traceFormat: format, reasoningChannel: channel, traceAudit,
       traceRenderer: 'causal-event-source', referenceNarrationScope: 'event-source-aliases-without-final-heap-inference',
       externalObservationsTrainable: false, runtimeIdentifiersInTargets: false,
       externalCalls: prepared.fixture.calls.length, profile: 'sequential-data-execution',
@@ -417,58 +486,91 @@ export async function exportTinkerExample(input, options = {}) {
 /** Replay all teacher actions through a fresh student boundary and match every
  * observation byte-for-byte. Canonical comparison additionally establishes
  * that narration came only from the causal event renderer for the named
- * format. This is supervision provenance, not a claim about learned reasoning. */
+ * format and reasoning channel. */
 export async function auditTeacherConversation(prepared, messages, options = {}) {
-  const format = traceFormat(options);
+  const format = traceFormat(options), channel = reasoningChannel(options);
   demand(Array.isArray(messages), 'Teacher conversation must be an array');
   demand(isDeepStrictEqual(messages.slice(0, 2), initialMessages(prepared)), 'Teacher initial prompt differs from live prompt');
-  demand(isDeepStrictEqual(messages, readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: format})),
+  demand(isDeepStrictEqual(messages, readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: format, reasoningChannel: channel})),
     'Teacher narration or observations differ from causal source events');
   const session = createTinkerSession(prepared);
   let index = 2, calls = 0, narrationLines = 0, assistantBytes = 0, observationBytes = 0;
   try {
     while (index < messages.length) {
       const message = messages[index++];
-      demand(message.role === 'assistant' && typeof message.content === 'string', 'Expected a teacher action');
-      const action = parseStudentAction(message.content);
-      const fence = message.content.indexOf('```');
-      const narration = fence < 0 ? '' : message.content.slice(0, fence).trim();
+      demand(message.role === 'assistant' && (typeof message.content === 'string' || Array.isArray(message.content)), 'Expected a teacher action');
+      const visible = assistantVisibleText(message);
+      const thinking = assistantThinkingText(message);
+      const action = parseStudentAction(visible);
+      const fence = visible.indexOf('```');
+      const prose = fence < 0 ? '' : visible.slice(0, fence).trim();
+      const narration = [thinking.trim(), prose].filter(Boolean).join('\n');
       if (narration) narrationLines += narration.split('\n').length;
-      assistantBytes += Buffer.byteLength(message.content);
-      const next = await session.step(message.content, 0);
+      assistantBytes += Buffer.byteLength(visible) + Buffer.byteLength(thinking);
+      const next = await session.step(visible, 0);
       demand(!next.done || next.grade.success, 'Teacher replay failed complete execution');
       if (action.type === 'call') calls++;
-      for (const observation of next.messages) {
-        demand(isDeepStrictEqual(messages[index++], observation), 'Teacher observation differs from the actual environment');
-        observationBytes += Buffer.byteLength(observation.content);
+      for (const obs of next.messages) {
+        demand(isDeepStrictEqual(messages[index++], obs), 'Teacher observation differs from the actual environment');
+        observationBytes += Buffer.byteLength(obs.content);
       }
       demand(!next.done || index === messages.length, 'Teacher conversation continues after completion');
     }
     demand(session.grade().success, 'Teacher conversation never completed');
     if (format === 'actions-only') demand(narrationLines === 0, 'Removed teacher narration remains in the input');
     return {replayVerified: true, canonicalCausalNarration: true, observationsMatched: true,
-      traceFormat: format, messages: messages.length, calls, narrationLines, assistantBytes, observationBytes};
+      traceFormat: format, reasoningChannel: channel, messages: messages.length, calls, narrationLines, assistantBytes, observationBytes};
   } finally { session.close(); }
 }
 
-export function parseStudentAction(text) {
+function validateActionObject(action) {
+  demand(plain(action), 'Expected a JSON action object');
+  if (action.type === 'call') {
+    const fields = Object.keys(action).sort().join(',');
+    demand(fields === 'arguments,operation,type' && typeof action.operation === 'string', 'Invalid external call action');
+    return action;
+  }
+  if (action.type === 'complete') {
+    const keys = Object.keys(action).sort();
+    const allowed = keys.join(',') === 'arguments,kind,type,value' || keys.join(',') === 'kind,type,value';
+    demand(allowed && ['return', 'throw'].includes(action.kind), 'Invalid completion action');
+    return own(action, 'arguments') ? action : {...action, arguments: []};
+  }
+  throw new TypeError('Unknown action type');
+}
+
+export function parseStudentAction(input) {
+  const text = typeof input === 'string' ? input : assistantVisibleText(input);
   demand(typeof text === 'string' && text.length <= 1048576, 'Invalid action text');
-  const trimmed = text.trim(), fenced = [...trimmed.matchAll(/```(?:json)?\s*\n([\s\S]*?)\n```/g)];
-  let payload = trimmed;
+  const trimmed = text.trim();
+  // Match fenced json or unfenced-language blocks; ignore non-action code fences (e.g. ```js ...```) in reasoning prose.
+  const fenced = [...trimmed.matchAll(/```(?:json)?[ \t]*\r?\n?([\s\S]*?)```/g)];
+  const actionFences = [];
+  for (const match of fenced) {
+    try {
+      const parsed = JSON.parse(match[1].trim());
+      if (plain(parsed) && typeof parsed.type === 'string') actionFences.push({match, parsed});
+    } catch { /* Non-JSON prose code block; ignore. */ }
+  }
+  if (actionFences.length) {
+    demand(actionFences.length === 1, 'Expected exactly one action fence');
+    const {match, parsed} = actionFences[0];
+    const trailing = trimmed.slice(match.index + match[0].length).trim();
+    demand(trailing.length === 0 || /^[.!?]+$/.test(trailing), 'Action fence must end the turn');
+    return validateActionObject(parsed);
+  }
   if (fenced.length) {
-    demand(fenced.length === 1, 'Expected exactly one action fence');
+    // There was a json/plain fence at the end that failed JSON parsing.
     const last = fenced.at(-1);
-    demand(last.index + last[0].length === trimmed.length, 'Action fence must end the turn');
-    payload = last[1];
+    const trailing = trimmed.slice(last.index + last[0].length).trim();
+    demand(trailing.length === 0 || /^[.!?]+$/.test(trailing), 'Action fence must end the turn');
+    let parsed;
+    try { parsed = JSON.parse(last[1].trim()); } catch { throw new TypeError('Expected one JSON action'); }
+    return validateActionObject(parsed);
   }
   let action;
-  try { action = JSON.parse(payload); } catch { throw new TypeError('Expected one JSON action'); }
-  demand(plain(action), 'Expected a JSON action object');
-  const fields = Object.keys(action).sort().join(',');
-  if (action.type === 'call') demand(fields === 'arguments,operation,type' && typeof action.operation === 'string', 'Invalid external call action');
-  else if (action.type === 'complete') demand(fields === 'arguments,kind,type,value' && ['return', 'throw'].includes(action.kind), 'Invalid completion action');
-  else throw new TypeError('Unknown action type');
-  return action;
+  try { action = JSON.parse(trimmed); } catch { throw new TypeError('Expected one JSON action'); }
+  return validateActionObject(action);
 }
 
 /** Live student state has no teacher trace continuation. A rejected request

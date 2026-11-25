@@ -4,7 +4,8 @@ import {spawn} from 'node:child_process';
 import {createInterface} from 'node:readline';
 import {fileURLToPath} from 'node:url';
 import {encodeReadable, decodeReadable, prepareTinkerTask, exportTinkerExample,
-  createTinkerSession, parseStudentAction, normalizedSourceHash} from '../src/training/tinker-execution.js';
+  createTinkerSession, parseStudentAction, normalizedSourceHash,
+  assistantVisibleText, assistantThinkingText} from '../src/training/tinker-execution.js';
 
 const task = (source, options = {}) => ({id: 'case', family: 'family', source, args: [], ...options});
 const complete = (value, args = [], kind = 'return') => {
@@ -30,27 +31,33 @@ test('readable data preserves scalars, aliases, cycles, holes and null prototype
   assert.throws(() => decodeReadable({$js: 'bigint', value: '1.5'}), /bigint/);
 });
 
-test('student action parser allows shorter prose while rejecting ambiguous or malformed completions', () => {
+test('student action parser allows natural prose, code snippets, and trailing punctuation while rejecting ambiguous actions', () => {
   assert.equal(parseStudentAction('I computed the answer.\n```json\n' + complete(2) + '\n```').value, 2);
-  assert.throws(() => parseStudentAction('{"type":"complete","kind":"return","value":2}'), /completion/);
-  assert.throws(() => parseStudentAction('```json\n' + complete(2) + '\n```\nmore'), /end the turn/);
+  assert.equal(parseStudentAction('In `run`:\n```js\nreturn 2;\n```\n```json\n' + complete(2) + '\n```.').value, 2);
+  assert.equal(parseStudentAction('```json ' + complete(2) + '```').value, 2);
+  assert.deepEqual(parseStudentAction('{"type":"complete","kind":"return","value":2}').arguments, []);
+  assert.throws(() => parseStudentAction('```json\n' + complete(2) + '\n```\nextra explanation'), /end the turn/);
   assert.throws(() => parseStudentAction('```json\n' + complete(2) + '\n```\n```json\n' + complete(2) + '\n```'), /exactly one/);
   assert.throws(() => parseStudentAction('{"type":"call","operation":"demo.readNumber","arguments":[],"answer":3}'), /call action/);
+  assert.throws(() => parseStudentAction('{"type":"complete","kind":"return","arguments":[],"value":2,"extra":1}'), /completion/);
 });
 
-test('readable exporter retains source computation and masks real observations by role', async () => {
+test('readable exporter uses Inkling thinking blocks by default and masks real observations by role', async () => {
   const input = task('function run(x){const y=host.readNumber("x")+x;host.store("y",y);return y;}', {
     args: [1], fixture: {calls: [{operation: 'demo.readNumber', arguments: ['x'], result: 4},
       {operation: 'demo.store', arguments: ['y', 5], result: {$js: 'undefined'}}]}});
   const exported = await exportTinkerExample(input);
   assert.deepEqual(exported.messages.map(message => message.role), ['system', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant']);
-  assert.match(exported.messages[4].content, /host\.readNumber\("x"\)\+x => 5/);
+  assert.equal(exported.metadata.reasoningChannel, 'thinking');
+  assert.match(assistantThinkingText(exported.messages[4]), /host\.readNumber\("x"\)\+x => 5/);
+  assert.match(assistantVisibleText(exported.messages[4]), /```json\n\{"type":"call"/);
   assert.equal(exported.metadata.externalObservationsTrainable, false);
   assert.equal(exported.metadata.sourceVerified, true);
-  const generated = exported.messages.filter(message => message.role === 'assistant').map(message => message.content).join('\n');
+  const generated = exported.messages.filter(message => message.role === 'assistant')
+    .map(message => assistantThinkingText(message) + '\n' + assistantVisibleText(message)).join('\n');
   assert.doesNotMatch(generated, /invocationId|effectId|sourceAdmission|prefixDigest|a0:e/);
   const session = createTinkerSession(await prepareTinkerTask(exported.task));
-  for (const message of exported.messages.filter(message => message.role === 'assistant')) await session.step(message.content, 100);
+  for (const message of exported.messages.filter(message => message.role === 'assistant')) await session.step(assistantVisibleText(message), 100);
   assert.equal(session.grade(100).success, true);
 });
 
@@ -146,9 +153,9 @@ test('an existing strict directive is preserved when hoisted native wrappers are
     nativeBindings: [{name: 'lookup', kind: 'synchronous'}], fixture: {calls: [
       {operation: 'natlang.callSync', arguments: ['lookup', {$js: 'undefined'}, ['key']], result: 9}]}}));
   const generated = exported.messages.filter(message => message.role === 'assistant');
-  assert.doesNotMatch(generated.map(message => message.content).join('\n'), /natlangCallSync/);
+  assert.doesNotMatch(generated.map(message => assistantThinkingText(message) + '\n' + assistantVisibleText(message)).join('\n'), /natlangCallSync/);
   const session = createTinkerSession(await prepareTinkerTask(exported.task));
-  for (const message of generated) await session.step(message.content, 50);
+  for (const message of generated) await session.step(assistantVisibleText(message), 50);
   assert.equal(session.grade(50).success, true);
 });
 

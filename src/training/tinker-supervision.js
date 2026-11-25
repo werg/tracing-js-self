@@ -73,7 +73,8 @@ export async function auditTinkerSupervision(inputs, {formats = TINKER_TRACE_FOR
     if (original) {
       demand(original.sourceHash === prepared.sourceHash, 'Exported source identity differs from its frozen task');
       suppliedConversationAudits.push({id: input.id, ...await auditTeacherConversation(prepared,
-        original.messages, {traceFormat: original.metadata?.traceFormat ?? 'full'})});
+        original.messages, {traceFormat: original.metadata?.traceFormat ?? 'full',
+          reasoningChannel: original.metadata?.reasoningChannel ?? 'thinking'})});
     }
     for (const traceFormat of formats) {
       const messages = readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat});

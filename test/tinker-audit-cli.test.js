@@ -5,7 +5,7 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
-import {exportTinkerExample} from '../src/training/tinker-execution.js';
+import {exportTinkerExample, assistantVisibleText} from '../src/training/tinker-execution.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const task = {id: 'cli-audit', family: 'cli-audit', source: 'function run(x){const y=x+1;return y;}',
@@ -27,8 +27,8 @@ test('audit CLI verifies the supplied frozen conversation without replacing it',
   const good = audit(row);
   assert.equal(good.status, 0, good.stderr);
   assert.equal(good.report.summary.conversations, 3);
-  row.messages.find(message => message.role === 'assistant').content =
-    'PRIVATE_TEACHER_CORRECTION\n' + row.messages.find(message => message.role === 'assistant').content;
+  const idx = row.messages.findIndex(message => message.role === 'assistant');
+  row.messages[idx] = {role: 'assistant', content: 'PRIVATE_TEACHER_CORRECTION\n' + assistantVisibleText(row.messages[idx])};
   const bad = audit(row);
   assert.equal(bad.status, 1);
   assert.match(bad.stderr, /causal|narration|teacher/i);

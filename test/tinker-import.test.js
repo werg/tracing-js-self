@@ -1,8 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {verifyRegionTrainingCase} from '../src/semantic/compiler-v8.js';
-import {prepareRegionFamilyRegistry,bindRegionFamilySplit} from '../src/semantic/dataset-v8.js';
-import {exportCanonicalTinkerExample, readableAgentMessages, exportAgentTinkerExample} from '../src/training/tinker-import.js';
+import {readableAgentMessages, exportAgentTinkerExample} from '../src/training/tinker-import.js';
 
 const task = {id: 'agent-add', family: 'agent-addition',
   source: '"use strict";function run(x){return x+1;}', entry: 'run', args: [4], fixture: {calls: []}};
@@ -56,37 +54,6 @@ test('agent conversation import retains an independently runnable source task wi
   assert.equal(exported.messages.at(-1).content, 'The result is 5.');
   assert(!Object.hasOwn(exported.task, 'agentTrajectory'));
   assert(!JSON.stringify(exported.messages).includes('sidecar'));
-});
-
-test('canonical V8 source is rechecked and imported without runtime records or private sidecars', async () => {
-  const verified = await verifyRegionTrainingCase({...task, id: 'canonical-add', family: 'canonical-addition'});
-  assert(verified.exported, verified.reason);
-  const imported = await exportCanonicalTinkerExample(verified.exported, {id: 'canonical-readable'});
-  assert.equal(imported.id, 'canonical-readable');
-  assert.equal(imported.family, verified.exported.sidecar.sourceFamily);
-  assert.equal(imported.metadata.canonicalSourceRechecked, true);
-  assert.equal(imported.metadata.canonicalAdmissionClaim, false);
-  assert.match(imported.messages.at(-1).content, /"value":5/);
-  const text = JSON.stringify(imported.messages);
-  for (const privateName of ['sourceArtifactDigest', 'prefixDigest', 'invocationId', 'sidecar', 'nativeAdmission'])
-    assert(!text.includes(privateName), privateName + ' leaked');
-  await assert.rejects(exportCanonicalTinkerExample(verified.exported, {family: 'relabeled'}), /cannot be relabeled/);
-  assert.equal(imported.metadata.canonicalDatasetBinding, null);
-  assert.equal(Object.hasOwn(imported.task, 'split'), false);
-  const fixture = {...task, id: 'canonical-add', family: 'canonical-addition'};
-  const candidate = {...fixture, ...verified};
-  const {registry,members} = prepareRegionFamilyRegistry([candidate], {seed:17, families:[fixture.family]});
-  const bound = bindRegionFamilySplit(candidate,members[0],registry);
-  const heldout = await exportCanonicalTinkerExample(bound, {id:'held-out-canonical'});
-  assert.equal(heldout.task.split, 'test');
-  assert.equal(heldout.metadata.canonicalDatasetBinding.split, 'test');
-  assert(heldout.task.ancestors.some(value => value.startsWith('canonical-component:')));
-  const relabeled = structuredClone(bound);
-  relabeled.sidecar.splitIdentity.split = 'train';
-  await assert.rejects(exportCanonicalTinkerExample(relabeled));
-  const changed = structuredClone(verified.exported);
-  changed.sidecar.sourceArtifact.sidecar.referenceInput.inputGraph.roots[0] = ['num', 99];
-  await assert.rejects(exportCanonicalTinkerExample(changed));
 });
 
 test('parallel same-tool observations keep argument context after private IDs are removed', () => {

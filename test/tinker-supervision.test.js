@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TINKER_TRACE_FORMATS, encodeReadable, prepareTinkerTask, exportTinkerExample,
   readableMessagesFromJournal, auditTeacherConversation, createTinkerSession,
-  parseStudentAction} from '../src/training/tinker-execution.js';
+  parseStudentAction, assistantVisibleText, assistantThinkingText} from '../src/training/tinker-execution.js';
 import {auditCausalPrefixPair, auditTinkerSupervision} from '../src/training/tinker-supervision.js';
 
 const task = (source, options = {}) => ({id: 'case', family: 'family', source, args: [], ...options});
@@ -11,10 +11,11 @@ const complete = (value, args = [], kind = 'return') => {
   const encoded = encodeReadable({arguments: args, value});
   return JSON.stringify({type: 'complete', kind, arguments: encoded.arguments, value: encoded.value});
 };
-const actions = messages => messages.filter(message => message.role === 'assistant').map(message => parseStudentAction(message.content));
+const actions = messages => messages.filter(message => message.role === 'assistant').map(message => parseStudentAction(message));
 const observations = messages => messages.filter((message, index) => index > 1 && message.role === 'user');
+const allText = message => [assistantThinkingText(message), assistantVisibleText(message)].filter(Boolean).join('\n');
 
-test('all three teacher formats replay and compact supervision removes actual input steps', async () => {
+test('all three teacher formats replay, deduplicate writes, and compact removes intermediate steps', async () => {
   const input = task('function run(box){const alias=box;const step=box.count+2;alias.count=step;if(box.count>2){box.marker=host.readNumber("marker");}return alias;}', {
     args: [{count: 1}], fixture: {calls: [{operation: 'demo.readNumber', arguments: ['marker'], result: 991}]},
     metadata: {features: ['mutation', 'alias', 'branch', 'external'], tier: 3}});
@@ -31,23 +32,30 @@ test('all three teacher formats replay and compact supervision removes actual in
   assert(full.metadata.traceAudit.narrationLines > compact.metadata.traceAudit.narrationLines);
   assert(compact.metadata.traceAudit.narrationLines > 0);
   assert.equal(bare.metadata.traceAudit.narrationLines, 0);
-  assert.match(full.messages.map(message => message.content).join('\n'), /box\.count\+2 => 3/);
-  assert.doesNotMatch(compact.messages.filter(message => message.role === 'assistant').map(message => message.content).join('\n'), /box\.count\+2 => 3/);
-  for (const message of bare.messages.filter(message => message.role === 'assistant')) assert(message.content.startsWith('```json\n'));
+  assert.match(full.messages.map(allText).join('\n'), /box\.count\+2 => 3/);
+  assert.doesNotMatch(compact.messages.filter(m => m.role === 'assistant').map(allText).join('\n'), /box\.count\+2 => 3/);
+  for (const message of bare.messages.filter(m => m.role === 'assistant')) {
+    assert.equal(typeof message.content, 'string');
+    assert(message.content.startsWith('```json\n'));
+  }
   assert(bare.metadata.traceAudit.assistantBytes < compact.metadata.traceAudit.assistantBytes);
   await assert.rejects(exportTinkerExample(input, {traceFormat: 'not-a-format'}), /traceFormat/);
+  // Verify compound assignment loop has no duplicate consecutive lines.
+  const loop = await exportTinkerExample(task('function run(xs){let total=0;for(let i=0;i<xs.length;i++){total+=xs[i];}return total;}', {args: [[2, 3]]}), {traceFormat: 'full'});
+  const lines = assistantThinkingText(loop.messages.at(-1)).split('\n');
+  for (let i = 1; i < lines.length; i++) assert.notEqual(lines[i], lines[i - 1], 'Duplicate consecutive trace line: ' + lines[i]);
 });
 
 test('branch narration reports the JavaScript test rather than its inverse VM jump decision', async () => {
   for (const traceFormat of ['full', 'compact']) for (const [value, expected, path] of [[2, 'true', 'then'], [-2, 'false', 'else']]) {
     const exported = await exportTinkerExample(task('function run(x){if(x>0){return 1;}else{return 2;}}', {args: [value]}), {traceFormat});
-    const text = exported.messages.at(-1).content;
-    assert.match(text, new RegExp('Branch x>0 evaluates to ' + expected + '; take the ' + path + ' path'));
-    assert.doesNotMatch(text, new RegExp('Branch x>0 evaluates to ' + (expected === 'true' ? 'false' : 'true')));
+    const text = allText(exported.messages.at(-1));
+    assert.match(text, new RegExp('branch x>0 => ' + expected + ' \\(' + path + '\\)'));
+    assert.doesNotMatch(text, new RegExp('branch x>0 => ' + (expected === 'true' ? 'false' : 'true')));
   }
   const loop = await exportTinkerExample(task('function run(){let i=0;while(i<2){i++;}return i;}'), {traceFormat: 'compact'});
-  assert.match(loop.messages.at(-1).content, /Branch i<2 evaluates to true/);
-  assert.match(loop.messages.at(-1).content, /Branch i<2 evaluates to false/);
+  assert.match(allText(loop.messages.at(-1)), /branch i<2 => true \(then\)/);
+  assert.match(allText(loop.messages.at(-1)), /branch i<2 => false \(else\)/);
 });
 
 test('mutation and alias narration comes from the current event, never the future heap', async () => {
@@ -56,12 +64,12 @@ test('mutation and alias narration comes from the current event, never the futur
     metadata: {privateSentinel: 'PRIVATE_TEACHER_METADATA'}});
   for (const traceFormat of ['full', 'compact']) {
     const exported = await exportTinkerExample(input, {traceFormat});
-    const before = exported.messages[2].content, after = exported.messages.at(-1).content;
-    assert.match(before, /alias refers to the same object as box/);
-    assert.match(before, /Write alias\.count = 2/);
+    const before = allText(exported.messages[2]), after = allText(exported.messages.at(-1));
+    assert.match(before, /alias -> box/);
+    assert.match(before, /alias\.count = 2/);
     assert.doesNotMatch(before, /773991|PRIVATE_TEACHER_METADATA|"ref","o[0-9]+"|a0:e[0-9]+/);
-    assert.match(after, /Write box\.count = 773991/);
-    assert.match(after, /Pending return from run: the same object as alias/);
+    assert.match(after, /box\.count = 773991/);
+    assert.match(after, /return -> alias/);
     assert.doesNotMatch(JSON.stringify(exported.messages), /PRIVATE_TEACHER_METADATA/);
   }
 });
@@ -79,7 +87,7 @@ test('second-observation branch counterfactual preserves every earlier conversat
     assert.equal(audit.divergenceObservation, 1);
     assert.doesNotMatch(JSON.stringify(left.messages.slice(0, audit.identicalPrefixMessages)), /23817/);
     const leaked = structuredClone(left);
-    leaked.messages[2].content = 'Future private observation: 23817.\n' + leaked.messages[2].content;
+    leaked.messages[2] = {role: 'assistant', content: 'Future private observation: 23817.\n' + assistantVisibleText(leaked.messages[2])};
     assert.throws(() => auditCausalPrefixPair(leaked, right, {divergenceObservation: 1}), /earlier model-visible prefix/);
   }
 });
@@ -138,7 +146,8 @@ test('teacher audit rejects altered observations, injected prose, and absent com
   assert.equal((await auditTeacherConversation(prepared, messages)).replayVerified, true);
   const observation = structuredClone(messages); observation[3].content += ' forged';
   await assert.rejects(auditTeacherConversation(prepared, observation), /causal source events/);
-  const prose = structuredClone(messages); prose[2].content = 'Future result 10.\n' + prose[2].content;
+  const prose = structuredClone(messages);
+  prose[2] = {role: 'assistant', content: 'Future result 10.\n' + assistantVisibleText(prose[2])};
   await assert.rejects(auditTeacherConversation(prepared, prose), /causal source events/);
   await assert.rejects(auditTeacherConversation(prepared, messages.slice(0, -1)), /causal source events/);
 });
@@ -180,21 +189,21 @@ test('private failure categories distinguish wrong values, mutations, aliases, e
 test('runtime-looking user data remains valid data rather than being censored by audit heuristics', async () => {
   const exported = await exportTinkerExample(task('function run(){return "a0:e2";}'));
   assert.equal(exported.metadata.traceAudit.replayVerified, true);
-  assert.match(exported.messages.at(-1).content, /a0:e2/);
+  assert.match(allText(exported.messages.at(-1)), /a0:e2/);
 });
 
 test('compact trace distinguishes callback returns and pending returns before finally', async () => {
   const cleanup = await exportTinkerExample(task('function run(box){try{return box.count;}finally{box.count++;}}', {args: [{count: 2}]}), {traceFormat: 'compact'});
-  const text = cleanup.messages.at(-1).content;
-  assert.match(text, /Pending return from run: 2/);
-  assert.match(text, /Write box\.count = 3/);
-  assert(text.indexOf('Pending return') < text.indexOf('Write box.count'));
+  const text = allText(cleanup.messages.at(-1));
+  assert.match(text, /return 2/);
+  assert.match(text, /box\.count = 3/);
+  assert(text.indexOf('return 2') < text.indexOf('box.count = 3'));
   const callbacks = await exportTinkerExample(task('function run(xs){return xs.map(x=>x+1);}', {args: [[2, 3]]}), {traceFormat: 'compact'});
-  assert.match(callbacks.messages.at(-1).content, /Pending return from the callback: 3/);
-  assert.match(callbacks.messages.at(-1).content, /Pending return from run: an object/);
+  assert.match(allText(callbacks.messages.at(-1)), /return \(callback\) 3/);
+  assert.match(allText(callbacks.messages.at(-1)), /return -> object/);
   const literal = await exportTinkerExample(task('function run(){console.log(["value",3]);return 4;}', {
     fixture: {calls: [{operation: 'platform.console.log', arguments: [['value', 3]]}]}}), {traceFormat: 'compact'});
-  assert.doesNotMatch(literal.messages[2].content, /Write property/);
+  assert.doesNotMatch(allText(literal.messages[2]), /in \[/);
 });
 
 test('aggregate audit checks supplied frozen training conversations instead of silently replacing them', async () => {
@@ -203,6 +212,6 @@ test('aggregate audit checks supplied frozen training conversations instead of s
   assert.equal(audited.suppliedConversationAudits.length, 1);
   assert.equal(audited.suppliedConversationAudits[0].traceFormat, 'compact');
   const injected = structuredClone(exported);
-  injected.messages.at(-1).content = 'Extra private teacher guidance.\n' + injected.messages.at(-1).content;
+  injected.messages[injected.messages.length - 1] = {role: 'assistant', content: 'Extra private teacher guidance.\n' + assistantVisibleText(injected.messages.at(-1))};
   await assert.rejects(auditTinkerSupervision([injected]), /causal source events/);
 });

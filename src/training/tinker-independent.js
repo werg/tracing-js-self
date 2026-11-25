@@ -87,10 +87,17 @@ function completionValue(value, kind) {
   return value;
 }
 
+function visibleContent(content) {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) return content.filter(part => part?.type === 'text').map(part => part.text ?? '').join('');
+  throw Error('Invalid assistant message content');
+}
+
 export function independentAction(text) {
-  const trimmed = text.trim(), match = /```(?:json)?\s*\n([^]*?)\n```\s*$/.exec(trimmed);
-  const action = JSON.parse(match ? match[1] : trimmed);
+  const trimmed = visibleContent(text).trim(), match = /```(?:json)?[ \t]*\r?\n?([^]*?)```(?:\s*[.!?]*)?$/.exec(trimmed);
+  const action = JSON.parse((match ? match[1] : trimmed).trim());
   if (!action || !['call', 'complete'].includes(action.type)) throw Error('Invalid independent action');
+  if (action.type === 'complete' && !Object.hasOwn(action, 'arguments')) return {...action, arguments: []};
   return action;
 }
 
@@ -178,7 +185,8 @@ export function independentConversationMatches(native,messages,task) {
     const texts=[];let observation=0,completed=false;
     for(let i=2;i<messages.length;i++){
       const message=messages[i];if(completed||message.role!=='assistant')return false;
-      texts.push(message.content);const action=independentAction(message.content);
+      const visible=visibleContent(message.content);
+      texts.push(visible);const action=independentAction(visible);
       if(action.type==='complete'){completed=true;continue;}
       const response=messages[++i],expected=native.observations[observation++];
       const prefix='External observation for '+action.operation+': ';

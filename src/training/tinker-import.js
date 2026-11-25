@@ -1,5 +1,4 @@
-// Import trusted existing traces and agent conversations into readable SFT data.
-// Canonical artifacts are rechecked before any of their source/input is reused.
+// Import supplied agent conversations into readable SFT data.
 import {createHash} from 'node:crypto';
 import {tokenizer} from 'acorn';
 import {exportTinkerExample, normalizedSourceHash} from './tinker-execution.js';
@@ -8,53 +7,6 @@ const requireValue = (value, message) => { if (!value) throw new TypeError(messa
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value) &&
   [Object.prototype, null].includes(Object.getPrototypeOf(value));
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
-
-/** Reexecute the independently checked source behind a canonical V8 artifact.
- * Hashes, heap IDs, and controller bookkeeping remain outside the conversation.
- * The old trace's admission claim stays separate from this SFT conversation.
- */
-export async function exportCanonicalTinkerExample(artifact, options = {}) {
-  requireValue(artifact?.public?.schema === 'semantic-execution/8' &&
-    artifact?.sidecar?.referenceStatus === 'agreed', 'A source-verified canonical V8 artifact is required');
-  const {recheckRegionEvidence} = await import('../semantic/compiler-v8.js');
-  const checked = await recheckRegionEvidence(artifact);
-  requireValue(checked.sourceValidated === true, 'Canonical artifact source recheck failed');
-  const side = artifact.sidecar, original = side.sourceArtifact?.sidecar;
-  const input = original?.referenceInput;
-  requireValue(input && typeof input.source === 'string' && typeof input.entry === 'string' &&
-    input.inputGraph && input.fixture, 'Canonical artifact lacks its original source/input/environment');
-  const family = side.sourceFamily ?? side.family ?? original.sourceFamily;
-  requireValue(typeof family === 'string' && family, 'Canonical artifact lacks source-family lineage');
-  requireValue(options.family === undefined || options.family === family,
-    'Canonical source family cannot be relabeled during import');
-  const sourceDigest = digest(artifact);
-  const task = {
-    id: options.id ?? 'canonical-' + sourceDigest.slice(0, 20),
-    family, source: input.source, entry: input.entry,
-    inputGraph: structuredClone(input.inputGraph),
-    fixture: structuredClone(input.fixture),
-    randomSeed: input.randomSeed ?? 17,
-    ancestors: [...new Set(original.ancestorIds ?? [])],
-  };
-  let binding = null;
-  if (side.splitIdentity || side.datasetBinding || side.familyRegistryDigest) {
-    const {verifyRegionDatasetBinding} = await import('../semantic/family-registry-v8.js');
-    const result = verifyRegionDatasetBinding(artifact, {expectedSplit: side.splitIdentity?.split});
-    requireValue(result.valid, 'Canonical V8 dataset binding failed');
-    task.split = side.splitIdentity.split;
-    task.ancestors.push('canonical-component:' + side.splitIdentity.componentId);
-    binding = {split: task.split, componentId: side.splitIdentity.componentId,
-      sourceId: side.splitIdentity.sourceId, registryDigest: side.familyRegistryDigest};
-  }
-  // The nested source's default family-hash split is not a frozen V8 binding.
-  const exported = await exportTinkerExample(task);
-  exported.metadata = {...exported.metadata,
-    importedFrom: 'semantic-execution/8', canonicalArtifactDigest: sourceDigest,
-    canonicalSourceRechecked: true, canonicalAdmissionClaim: false,
-    canonicalDatasetBinding: binding, projection: 'rechecked-source-to-readable-owned-journal',
-  };
-  return exported;
-}
 
 function contentText(message) {
   requireValue(message.content === undefined || message.content === null || typeof message.content === 'string',
@@ -82,13 +34,9 @@ function parseToolCall(call) {
 function programHashes(source) {
   try {
     const hashes = [normalizedSourceHash(source)];
-    // The executor supplies strict semantics. Also link a tool snippet that
-    // omits that directive to the otherwise identical strict source program.
     hashes.push(normalizedSourceHash('"use strict";\n' + source));
     return hashes;
   } catch {
-    // Agent tools often accept function bodies (top-level return) or TS.
-    // Token identity still links copies without claiming source qualification.
     try {
       const tokens = [...tokenizer(source, {ecmaVersion: 'latest'})].map(token =>
         [token.type.label, typeof token.value === 'bigint' ? String(token.value) : token.value ?? null]);
@@ -98,8 +46,7 @@ function programHashes(source) {
 }
 
 /** Normalize actual agent turns without putting tool routing IDs in the text.
- * Supplied assistant decisions are not certified agent-task successes.
- */
+ * Supplied assistant decisions are not certified agent-task successes. */
 export function readableAgentMessages(trajectory) {
   requireValue(plain(trajectory) && Array.isArray(trajectory.messages) &&
     trajectory.messages.length > 0 && trajectory.messages.length <= 4096,
@@ -164,13 +111,11 @@ export function readableAgentMessages(trajectory) {
 
 /** A normal executable task plus agentTrajectory:{messages}. The task can also
  * live in agentTrajectory.task. Independent verification covers that attached
- * task; the supplied agent objective and embedded programs remain uncertified.
- */
+ * task; the supplied agent objective and embedded programs remain uncertified. */
 export async function exportAgentTinkerExample(trajectory, options = {}) {
   const normalized = readableAgentMessages(trajectory);
   const task = {...(trajectory.task ?? {}), ...options};
   delete task.agentTrajectory;
-  delete task.canonicalArtifact;
   const exported = await exportTinkerExample(task);
   return {...exported, messages: normalized.messages,
     sourceHashes: [...new Set([exported.sourceHash, ...normalized.sourceHashes])].sort(),
