@@ -14,7 +14,8 @@ jobs:
     concurrency:
       group: semantic-v8-${{ github.ref }}-${{ matrix.population }}
       cancel-in-progress: ${{ github.event_name == 'pull_request' }}
-    runs-on: ubuntu-24.04
+    # The interoperability lane executes the confined Promise worker.
+    runs-on: ${{ matrix.population == 'interoperability' && 'ubuntu-22.04' || 'ubuntu-24.04' }}
     # The paired consumer run 45532216199 reached 120 minutes before packing
     # and lifecycle checks finished. This gate also runs the full support cohort.
     timeout-minutes: 240
@@ -35,6 +36,9 @@ jobs:
       MEGATOKEN_PYTHON: python
       V8_POPULATION: ${{ matrix.population }}
     steps:
+      - name: Require unprivileged namespace support for the confined worker
+        if: ${{ matrix.population == 'interoperability' }}
+        run: /usr/bin/unshare --user --map-root-user --mount --net --pid --fork true
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -221,9 +225,9 @@ jobs:
           from pathlib import Path
           root = Path(os.environ['RUNNER_TEMP'])
           cases = list(ET.parse(root / 'promise-object-tests.xml').getroot().iter('testcase'))
-          if len(cases) != 133 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
+          if len(cases) != 137 or any(case.find(kind) is not None for case in cases for kind in ('failure', 'error', 'skipped')):
               raise ValueError('Every Promise object and constructor job control must pass with actual native replay')
-          for name, sources, contexts in [('promise-object-source-evidence.json', 15, 320), ('promise-adoption-getter-source-evidence.json', 5, 213), ('promise-object-review-source-evidence.json', 8, 196)]:
+          for name, sources, contexts in [('promise-object-source-evidence.json', 15, 326), ('promise-adoption-getter-source-evidence.json', 7, 307), ('promise-object-review-source-evidence.json', 8, 199)]:
               evidence = json.loads((root / name).read_text())
               if [evidence[key] for key in ('sourceCases', 'actualNativeCases', 'generatedContexts')] != [sources, sources, contexts]:
                   raise ValueError('Promise source/native population differs: ' + name)
@@ -235,10 +239,10 @@ jobs:
           if sum(row['rejectedAlterations'] for row in direct['nativeReceipts']) != 23 or sum(row['rejectedRestorations'] for row in direct['nativeReceipts']) != 32:
               raise ValueError('Every retained altered record and checkpoint must be rejected')
           adoption = json.loads((root / 'promise-adoption-getter-source-evidence.json').read_text())
-          if sum(row['rejectedRecords'] for row in adoption['nativeReceipts']) != 10 or sum(row['rejectedRestorations'] for row in adoption['nativeReceipts']) != 20:
+          if sum(row['rejectedRecords'] for row in adoption['nativeReceipts']) != 14 or sum(row['rejectedRestorations'] for row in adoption['nativeReceipts']) != 28:
               raise ValueError('Every retained adoption getter record and checkpoint alteration must be rejected')
           runpy.run_path('tools/verify-combined-v8-gate.py')['verify_review_promise_packets'](root)
-          print(f'{len(cases)} Promise and source-ingestion controls passed; 28 original sources, seven direct protocols and two first-await checkpoints independently replayed')
+          print(f'{len(cases)} Promise and source-ingestion controls passed; 30 original sources, seven direct protocols and two first-await checkpoints independently replayed')
           PY
       - id: qualification
         name: Recollect exact source and native admission receipts
