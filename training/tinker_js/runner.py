@@ -24,15 +24,28 @@ import tempfile
 import time
 from typing import Any
 
+from .learning import (choose_validation_checkpoint, compression_coefficient, curriculum_pick,
+                       execution_advantages, sft_epoch_rows, task_metadata, update_curriculum)
+from .metrics import paired_statistics, summarize_records
+
 
 DEFAULTS: dict[str, Any] = {
     "model": "thinkingmachines/Inkling-2-Mini:peft:65536:free",
     "seed": 17,
+    "split_seed": 17,
+    "evaluation_seed": 17,
     "effort": 0.5,
     "max_context_tokens": 65536,
     "max_tokens": 2048,
     "temperature": 1.0,
     "learning_rate": 1e-4,
+    "sft_learning_rate": 1e-4,
+    "rl_learning_rate": 1e-5,
+    "sft_weighting": "example",
+    "rl_loss_fn": "importance_sampling",
+    "rl_loss_fn_config": {},
+    "reference_kl_coef": 0.0,
+    "reference_kl_clip": 20.0,
     "lora_rank": 32,
     "dataset": "training/fixtures/executor.jsonl",
     "output_dir": "runs/tinker-mini",
@@ -45,9 +58,30 @@ DEFAULTS: dict[str, Any] = {
     "max_turns": 8,
     "max_generated_tokens": 8192,
     "evaluation_samples": 1,
-    "max_eval_tasks": 8,
+    "max_eval_tasks": None,
+    "evaluation_manifest": None,
     "checkpoint_every": 1,
     "length_penalty": 0.25,
+    "length_scale_tokens": 2048,
+    "advantage_mode": "decoupled",
+    "rl_objective": "compression",
+    "compression_warmup_steps": 0,
+    "compression_ramp_steps": 4,
+    "compression_min_accuracy": 0.5,
+    "validation_every": 25,
+    "accuracy_tolerance": 0.02,
+    "min_token_saving": 0.1,
+    "bootstrap_samples": 1000,
+    "confidence_level": 0.95,
+    "minimum_evaluation_families": 30,
+    "final_test": True,
+    "evaluation_only": False,
+    "diagnostic_only": False,
+    "initial_sft_checkpoint": None,
+    "trace_format": "full",
+    "prompt_style": "standard",
+    "curriculum": {"enabled": False, "retention_fraction": 0.25, "groups_per_tier": 20,
+                   "window_groups": 20, "minimum_groups": 4, "advance_success_rate": 0.25},
     "bridge_timeout_seconds": 60,
 }
 
@@ -125,26 +159,45 @@ def read_jsonl(path: Path) -> list[dict]:
 
 
 def load_config(path: Path | None = None, overrides: dict | None = None) -> dict:
-    config = dict(DEFAULTS)
+    config = copy.deepcopy(DEFAULTS)
     if path:
         supplied = json.loads(path.read_text())
         if not isinstance(supplied, dict):
             raise ValueError("experiment config must be an object")
         config.update(supplied)
     config.update({key: value for key, value in (overrides or {}).items() if value is not None})
-    if (isinstance(config["seed"], bool) or not isinstance(config["seed"], int)
-            or not 0 <= config["seed"] < 2147483648):
-        raise ValueError("seed must be an integer in [0, 2**31)")
+    for name in ("seed", "split_seed", "evaluation_seed"):
+        if (isinstance(config[name], bool) or not isinstance(config[name], int)
+                or not 0 <= config[name] < 2147483648):
+            raise ValueError(f"{name} must be an integer in [0, 2**31)")
+    if not isinstance(config["final_test"], bool):
+        raise ValueError("final_test must be a boolean")
+    for name in ("evaluation_only", "diagnostic_only"):
+        if not isinstance(config[name], bool):
+            raise ValueError(f"{name} must be a boolean")
+    if config["diagnostic_only"]:
+        config["evaluation_only"] = True
+        if config["holdout_fraction"] != 0 or config["validation_fraction"] != 0:
+            raise ValueError("diagnostic_only datasets require zero holdout_fraction and validation_fraction and explicit test splits")
+    initial = config["initial_sft_checkpoint"]
+    if initial is not None:
+        if (not isinstance(initial, dict) or set(initial) != {"training_path", "sampler_path"}
+                or any(not isinstance(value, str) or not value.startswith("tinker://") or len(value) <= 9 for value in initial.values())):
+            raise ValueError("initial_sft_checkpoint requires Tinker training_path and sampler_path")
     for name in ("max_context_tokens", "max_tokens", "batch_size", "group_size", "max_turns",
-                 "max_generated_tokens", "evaluation_samples", "max_eval_tasks", "checkpoint_every"):
+                 "max_generated_tokens", "evaluation_samples", "checkpoint_every", "length_scale_tokens",
+                 "bootstrap_samples", "minimum_evaluation_families"):
         value = config[name]
         if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
             raise ValueError(f"{name} must be a positive integer")
-    for name in ("sft_epochs", "rl_steps"):
+    for name in ("sft_epochs", "rl_steps", "validation_every", "compression_warmup_steps", "compression_ramp_steps"):
         if isinstance(config[name], bool) or not isinstance(config[name], int) or config[name] < 0:
             raise ValueError(f"{name} must be a nonnegative integer")
     if config["group_size"] < 2:
         raise ValueError("group_size must be at least two for group-relative RL")
+    maximum = config["max_eval_tasks"]
+    if maximum is not None and (isinstance(maximum, bool) or not isinstance(maximum, int) or maximum <= 0):
+        raise ValueError("max_eval_tasks must be null for the full split or a positive integer")
     for name in ("holdout_fraction", "validation_fraction"):
         if not 0 <= config[name] < 1:
             raise ValueError(f"{name} must be in [0, 1)")
@@ -152,6 +205,55 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
         raise ValueError("held-out fractions must leave training families")
     if not 0 <= config["length_penalty"] < 1:
         raise ValueError("length_penalty must be in [0, 1), so every verified success beats failure")
+    for name in ("learning_rate", "sft_learning_rate", "rl_learning_rate", "reference_kl_clip", "bridge_timeout_seconds"):
+        value = config[name]
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            raise ValueError(f"{name} must be finite and positive")
+    if (isinstance(config["reference_kl_coef"], bool) or not isinstance(config["reference_kl_coef"], (int, float))
+            or not math.isfinite(config["reference_kl_coef"]) or config["reference_kl_coef"] < 0):
+        raise ValueError("reference_kl_coef must be finite and nonnegative")
+    for name in ("accuracy_tolerance", "min_token_saving", "compression_min_accuracy"):
+        value = config[name]
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= 1:
+            raise ValueError(f"{name} must be finite in [0, 1]")
+    if not isinstance(config["confidence_level"], (int, float)) or not 0 < config["confidence_level"] < 1:
+        raise ValueError("confidence_level must be in (0, 1)")
+    for name, choices in (("advantage_mode", {"decoupled", "centered"}),
+                          ("rl_objective", {"compression", "correctness"}),
+                          ("sft_weighting", {"example", "token"}),
+                          ("rl_loss_fn", {"importance_sampling", "ppo"}),
+                          ("trace_format", {"full", "compact", "actions-only"}),
+                          ("prompt_style", {"standard", "concise"})):
+        if config[name] not in choices:
+            raise ValueError(f"{name} must be one of {sorted(choices)}")
+    loss_config = config["rl_loss_fn_config"]
+    if (not isinstance(loss_config, dict)
+            or any(not isinstance(key, str) or isinstance(value, bool) or not isinstance(value, (int, float))
+                   or not math.isfinite(value) or value <= 0 for key, value in loss_config.items())):
+        raise ValueError("rl_loss_fn_config must map names to finite positive numbers")
+    if config["rl_loss_fn"] == "importance_sampling" and loss_config:
+        raise ValueError("importance_sampling does not accept PPO clipping configuration")
+    if config["rl_loss_fn"] == "ppo" and set(loss_config) - {"clip_low_threshold", "clip_high_threshold"}:
+        raise ValueError("PPO supports clip_low_threshold and clip_high_threshold")
+    if loss_config.get("clip_low_threshold", 0.8) >= 1 or loss_config.get("clip_high_threshold", 1.2) <= 1:
+        raise ValueError("PPO clipping thresholds must bracket one")
+    if config["evaluation_manifest"] is not None and not isinstance(config["evaluation_manifest"], (str, dict)):
+        raise ValueError("evaluation_manifest must be a path or a split-to-IDs object")
+    curriculum = config["curriculum"]
+    if not isinstance(curriculum, dict) or not isinstance(curriculum.get("enabled", False), bool):
+        raise ValueError("curriculum must be an object with boolean enabled")
+    curriculum = {**DEFAULTS["curriculum"], **curriculum}
+    for name in ("groups_per_tier", "window_groups", "minimum_groups"):
+        value = curriculum[name]
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ValueError(f"curriculum.{name} must be a positive integer")
+    if curriculum["minimum_groups"] > curriculum["window_groups"]:
+        raise ValueError("curriculum.minimum_groups exceeds its history window")
+    for name, upper in (("retention_fraction", .9), ("advance_success_rate", 1.0)):
+        value = curriculum[name]
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= upper:
+            raise ValueError(f"curriculum.{name} must be finite in [0, {upper}]")
+    config["curriculum"] = curriculum
     if not 0 <= config["effort"] < 1:
         raise ValueError("effort must be in [0, 1)")
     if config["bridge_timeout_seconds"] <= 0:
@@ -245,7 +347,7 @@ class Bridge:
 
 
 def split_examples(rows: list[dict], seed: int, holdout_fraction: float,
-                   validation_fraction: float) -> tuple[list[dict], dict]:
+                   validation_fraction: float, *, evaluation_only: bool = False) -> tuple[list[dict], dict]:
     """Split connected components of family, lineage and source identity.
 
     Ancestors share the family namespace, so descendants also connect to rows
@@ -279,8 +381,9 @@ def split_examples(rows: list[dict], seed: int, holdout_fraction: float,
         task = row.get("task", {})
         if not isinstance(task, dict):
             raise ValueError(f"task {row['id']} task must be an object")
+        metadata = task_metadata(row)
         ancestors = set()
-        for declared in (row.get("ancestors", []), task.get("ancestors", [])):
+        for declared in (row.get("ancestors", []), task.get("ancestors", []), metadata.get("lineage", [])):
             if (not isinstance(declared, list) or len(declared) > 256
                     or any(not isinstance(name, str) or not name.strip() or len(name) > 1024
                            for name in declared)):
@@ -291,6 +394,11 @@ def split_examples(rows: list[dict], seed: int, holdout_fraction: float,
         lineage[index] = ancestors
         identities = [("family", name) for name in {row["family"], *ancestors}] + [("sourceHash", source)
                        for source in {row["sourceHash"], *additional_sources}]
+        template = metadata.get("template")
+        if template is not None:
+            if not isinstance(template, str) or not template.strip() or len(template) > 1024:
+                raise ValueError("metadata.template must be a nonempty string of at most 1024 characters")
+            identities.append(("template", template))
         for key in identities:
             if key in seen:
                 parents[find(index)] = find(seen[key])
@@ -327,21 +435,25 @@ def split_examples(rows: list[dict], seed: int, holdout_fraction: float,
                 raise ValueError("explicit splits leave no families for required held-out split")
             assignments[unassigned.pop(0)] = split
     assignments.update({i: "train" for i in unassigned})
-    if "train" not in assignments.values():
+    if not evaluation_only and "train" not in assignments.values():
         raise ValueError("explicit splits leave no training families")
     output = [copy.deepcopy(row) for row in rows]
     manifest_groups = []
     for component_index, indexes in enumerate(components):
         split = assignments[component_index]
         members = sorted(rows[i]["id"] for i in indexes)
+        component = digest(members)
         for index in indexes:
             output[index]["split"] = split
-        manifest_groups.append({"split": split, "ids": members,
+            output[index]["split_component"] = component
+        manifest_groups.append({"split": split, "ids": members, "component": component,
                                 "families": sorted({rows[i]["family"] for i in indexes}),
+                                "templates": sorted({task_metadata(rows[i])["template"] for i in indexes
+                                                     if task_metadata(rows[i]).get("template")}),
                                 "ancestor_families": sorted({name for i in indexes for name in lineage[i]}),
                                 "source_hashes": sorted({source for i in indexes
                                     for source in [rows[i]["sourceHash"], *rows[i].get("sourceHashes", [])]})})
-    manifest = {"seed": seed, "holdout_fraction": holdout_fraction,
+    manifest = {"seed": seed, "holdout_fraction": holdout_fraction, "evaluation_only": evaluation_only,
                 "validation_fraction": validation_fraction,
                 "components": sorted(manifest_groups, key=lambda group: group["ids"])}
     manifest["hash"] = digest(manifest)
@@ -355,6 +467,7 @@ def export_dataset(repo: Path, config: dict, output_dir: Path, bridge: Any,
         source = repo / source
     input_hash = hashlib.sha256(source.read_bytes()).hexdigest()
     implementation = implementation_identity(repo)
+    export_settings = {key: config[key] for key in ("trace_format", "prompt_style", "evaluation_only", "diagnostic_only")}
     state_path = output_dir / "state.json"
     state = json.loads(state_path.read_text()) if state_path.exists() else None
     if state and state.get("config_hash") != config_fingerprint(config):
@@ -370,8 +483,10 @@ def export_dataset(repo: Path, config: dict, output_dir: Path, bridge: Any,
         if frozen.get("implementation_hash") != implementation["hash"]:
             raise ValueError("implementation changed since frozen export; use --refresh-export before training or a new directory")
         split = frozen.get("split_manifest", {})
-        matches = frozen.get("input_sha256") == input_hash and all(
-            split.get(key) == config[key] for key in ("seed", "holdout_fraction", "validation_fraction"))
+        matches = (frozen.get("input_sha256") == input_hash and frozen.get("export_settings") == export_settings
+            and split.get("seed") == config["split_seed"] and all(
+            split.get(key) == config[key] for key in ("holdout_fraction", "validation_fraction"))
+        )
         if matches:
             rows = read_jsonl(dataset_path)
             if digest(rows) != frozen["dataset_hash"]:
@@ -384,17 +499,29 @@ def export_dataset(repo: Path, config: dict, output_dir: Path, bridge: Any,
         if state:
             raise ValueError("dataset input or split settings changed since checkpoint; use a new output directory")
     tasks = read_jsonl(source)
+    diagnostic_flags = [bool(task.get("diagnosticOnly") or task.get("metadata", {}).get("diagnosticOnly")) for task in tasks]
+    if config["diagnostic_only"]:
+        if not all(diagnostic_flags) or any(task.get("split") != "test" for task in tasks):
+            raise ValueError("diagnostic_only requires every input task marked diagnosticOnly with explicit test split")
+    elif any(diagnostic_flags):
+        raise ValueError("diagnosticOnly tasks require a separate diagnostic_only evaluation dataset")
     exported = []
     for task in tasks:
         try:
-            exported.append(bridge.request("export", task=task))
+            row = bridge.request("export", task=task, traceFormat=config["trace_format"])
+            row["metadata"] = {**task.get("metadata", {}), **row.get("metadata", {})}
+            if task.get("diagnosticOnly"):
+                row["metadata"]["diagnosticOnly"] = True
+            row["metadata"] = task_metadata(row)
+            row["messages"] = prompt_messages(row["messages"], config)
+            exported.append(row)
         except BridgeError as error:
             raise BridgeError(f"task {task.get('id', '(missing id)')}: {error}") from error
-    rows, split_manifest = split_examples(exported, config["seed"], config["holdout_fraction"],
-                                          config["validation_fraction"])
+    rows, split_manifest = split_examples(exported, config["split_seed"], config["holdout_fraction"],
+                                          config["validation_fraction"], evaluation_only=config["evaluation_only"])
     if implementation_identity(repo)["hash"] != implementation["hash"]:
         raise ValueError("implementation changed during dataset export; retry after edits finish")
-    manifest = {"schema": "tinker-js-dataset-v1", "input_sha256": input_hash,
+    manifest = {"schema": "tinker-js-dataset-v1", "input_sha256": input_hash, "export_settings": export_settings,
                 "implementation_hash": implementation["hash"], "implementation_files": implementation["files"],
                 "git_revision": implementation["git_revision"],
                 "dataset_hash": digest(rows), "split_manifest": split_manifest,
@@ -420,17 +547,29 @@ def visible_text(message: dict) -> str:
     raise ValueError("sampled assistant message content must be text or structured parts")
 
 
+CONCISE_INSTRUCTION = ("Execute the supplied program accurately. Keep any explanation concise; "
+                       "include every required external action and the complete observable outcome.")
+
+
+def prompt_messages(messages: list[dict], config: dict) -> list[dict]:
+    result = copy.deepcopy(messages)
+    if config.get("prompt_style", "standard") == "concise":
+        result.insert(0, {"role": "system", "content": CONCISE_INSTRUCTION})
+    return result
+
+
 def compression_reward(success: bool, generated_tokens: int, config: dict) -> float:
     if not success:
         return 0.0
-    return 1.0 - config["length_penalty"] * min(generated_tokens / config["max_generated_tokens"], 1.0)
+    coefficient = config["length_penalty"] if config.get("rl_objective", "compression") == "compression" else 0.0
+    return 1.0 - coefficient * min(generated_tokens / config["length_scale_tokens"], 1.0)
 
 
 def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> dict:
     """Sample a complete execution, never showing private task fields to the model."""
     started = bridge.request("start", task=task)
     session_id = started["sessionId"]
-    messages = copy.deepcopy(started["messages"])
+    messages = prompt_messages(started["messages"], config)
     samples: list[dict] = []
     total = 0
     done = False
@@ -469,8 +608,8 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> d
                 text = visible_text(message)
             response = bridge.request("step", sessionId=session_id, action=text, generatedTokens=total)
             observations = response.get("messages", [])
-            if any(observation.get("role") == "assistant" for observation in observations):
-                raise BridgeError("environment attempted to insert a teacher assistant correction")
+            if any(not isinstance(observation, dict) or observation.get("role") != "user" for observation in observations):
+                raise BridgeError("environment attempted to insert a teacher assistant correction or non-observation role")
             messages.extend(copy.deepcopy(observations))
             done = bool(response.get("done"))
             if done:
@@ -509,6 +648,7 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> d
 
 
 def group_advantages(rewards: list[float]) -> list[float]:
+    """Generic standardization retained for diagnostics, never the RL objective."""
     if not rewards or any(not math.isfinite(reward) for reward in rewards):
         raise ValueError("group rewards must be finite and nonempty")
     mean = statistics.fmean(rewards)
@@ -518,18 +658,71 @@ def group_advantages(rewards: list[float]) -> list[float]:
     return [(reward - mean) / deviation for reward in rewards]
 
 
-def summarize_records(records: list[dict]) -> dict:
-    successes = [record for record in records if record["grade"]["success"]]
-    lengths = [record["generated_tokens"] for record in records]
-    return {"executions": len(records), "successes": len(successes),
-            "complete_execution_accuracy": len(successes) / len(records) if records else None,
-            "mean_generated_tokens": statistics.fmean(lengths) if lengths else None,
-            "median_generated_tokens": statistics.median(lengths) if lengths else None,
-            "mean_successful_tokens": statistics.fmean(record["generated_tokens"] for record in successes)
-            if successes else None,
-            "incomplete": sum(not record["complete"] for record in records),
-            "all_generated_tokens": sum(lengths),
-            "mean_reward": statistics.fmean(record["grade"]["reward"] for record in records) if records else None}
+def evaluation_selection(rows: list[dict], config: dict, output_dir: Path, split: str) -> tuple[list[dict], dict]:
+    population = sorted((row for row in rows if row["split"] == split), key=lambda row: row["id"])
+    if not population:
+        raise ValueError(f"no {split} tasks are available for evaluation")
+    declared = config.get("evaluation_manifest")
+    if isinstance(declared, str):
+        declared = json.loads(Path(declared).read_text())
+    if declared is not None:
+        if not isinstance(declared, dict):
+            raise ValueError("evaluation manifest must map split names to task IDs")
+        declared = declared.get("splits", declared)
+        if not isinstance(declared, dict) or split not in declared:
+            raise ValueError(f"evaluation manifest has no {split} selection")
+        ids = declared[split]
+        if not isinstance(ids, list) or not ids or any(not isinstance(item, str) for item in ids) or len(set(ids)) != len(ids):
+            raise ValueError("evaluation manifest IDs must be a nonempty list of unique strings")
+        indexed = {row["id"]: row for row in population}
+        if set(ids) - set(indexed):
+            raise ValueError("evaluation manifest selects missing tasks or tasks from another split")
+        selected = [indexed[identifier] for identifier in ids]
+        if config["max_eval_tasks"] is not None and len(selected) > config["max_eval_tasks"]:
+            raise ValueError("explicit evaluation manifest exceeds max_eval_tasks; do not silently truncate it")
+        method = "explicit_manifest"
+    elif config["max_eval_tasks"] is not None and len(population) > config["max_eval_tasks"]:
+        # Round-robin families within tier strata. Ordering is seeded, then
+        # frozen, so an ID prefix cannot accidentally define the benchmark.
+        strata: dict[int, dict[str, list[dict]]] = {}
+        for row in population:
+            tier = task_metadata(row)["tier"]
+            family = row.get("split_component") or row["family"]
+            strata.setdefault(tier, {}).setdefault(family, []).append(row)
+        queues = []
+        for tier, families in sorted(strata.items()):
+            rng = random.Random(config["evaluation_seed"] + tier)
+            names = sorted(families)
+            rng.shuffle(names)
+            for family in names:
+                rng.shuffle(families[family])
+            queue = []
+            while any(families.values()):
+                for family in names:
+                    if families[family]:
+                        queue.append(families[family].pop())
+            queues.append(queue)
+        selected = []
+        while len(selected) < config["max_eval_tasks"]:
+            for queue in queues:
+                if queue and len(selected) < config["max_eval_tasks"]:
+                    selected.append(queue.pop(0))
+        method = "seeded_tier_and_family_round_robin"
+    else:
+        selected, method = population, "full_split"
+    identity = lambda row: {"id": row["id"], "task_hash": digest(row["task"]), "source_hash": row["sourceHash"],
+                            "family": row["family"], "component": row.get("split_component"),
+                            "metadata": task_metadata(row)}
+    selection = {"split": split, "method": method, "evaluation_seed": config["evaluation_seed"],
+                 "evaluation_samples": config["evaluation_samples"], "population_size": len(population),
+                 "population_hash": digest([identity(row) for row in population]),
+                 "selected": [identity(row) for row in selected]}
+    selection["hash"] = digest(selection)
+    path = output_dir / "evaluations" / f"selection-{split}.json"
+    if path.exists() and json.loads(path.read_text()) != selection:
+        raise ValueError("frozen evaluation selection changed; use a new run directory")
+    atomic_json(path, selection)
+    return selected, selection
 
 
 def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_dir: Path,
@@ -539,10 +732,7 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         raise ValueError("stage must be a short filename-safe name")
     manifest_path = output_dir / "dataset-manifest.json"
     implementation_hash = json.loads(manifest_path.read_text()).get("implementation_hash") if manifest_path.exists() else None
-    selected = sorted((row for row in rows if row["split"] == split), key=lambda row: row["id"])
-    selected = selected[:config["max_eval_tasks"]]
-    if not selected:
-        raise ValueError(f"no {split} tasks are available for evaluation")
+    selected, selection = evaluation_selection(rows, config, output_dir, split)
     destination = output_dir / "evaluations" / f"{stage}-{split}.jsonl"
     partial = destination.with_suffix(".partial.jsonl")
     records = read_jsonl(destination if destination.exists() else partial) if resume and (destination.exists() or partial.exists()) else []
@@ -555,7 +745,11 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         if (record.get("configuration_hash") != config_fingerprint(config)
                 or record.get("task_hash") != digest(expected[key]["task"])
                 or record.get("sampling_checkpoint") != checkpoint
-                or record.get("implementation_hash") != implementation_hash):
+                or record.get("implementation_hash") != implementation_hash
+                or record.get("selection_hash") != selection["hash"]
+                or record.get("source_hash") != expected[key]["sourceHash"]
+                or record.get("family") != expected[key]["family"]
+                or record.get("seed") != int(digest([config["evaluation_seed"], key[0], key[1]])[:8], 16) % 2147483647):
             raise ValueError("saved evaluation differs in config, task, or checkpoint")
         completed.add(key)
     write_jsonl(partial, records)
@@ -564,7 +758,7 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             if (row["id"], repeat) in completed:
                 continue
             # Stage-independent seeds and task selection permit paired reports.
-            seed = int(digest([config["seed"], row["id"], repeat])[:8], 16) % 2147483647
+            seed = int(digest([config["evaluation_seed"], row["id"], repeat])[:8], 16) % 2147483647
             try:
                 record = rollout(bridge, adapter, row["task"], config, seed)
             except RolloutError as error:
@@ -577,7 +771,9 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                           stage=stage, split=split, repeat=repeat,
                           configuration_hash=config_fingerprint(config), model=config["model"],
                           task_hash=digest(row["task"]), sampling_checkpoint=checkpoint,
-                          implementation_hash=implementation_hash)
+                          implementation_hash=implementation_hash, selection_hash=selection["hash"],
+                          split_component=row.get("split_component"),
+                          features=task_metadata(row)["features"], tier=task_metadata(row)["tier"])
             records.append(record)
             append_jsonl(partial, record)
             print(f"{stage}: {row['id']} sample {repeat + 1}: success={record['grade']['success']} "
@@ -618,6 +814,11 @@ def load_state(output_dir: Path, config: dict, manifest: dict, resume: bool) -> 
              "sft_batches_completed": 0, "rl_steps_completed": 0, "phase": "created",
              "rl_optimizer_updates": 0,
              "training_path": None, "sampler_path": None, "evaluations": [], "backend": "tinker"}
+    if config.get("initial_sft_checkpoint"):
+        initial = config["initial_sft_checkpoint"]
+        state.update(training_path=initial["training_path"], sampler_path=initial["sampler_path"],
+                     sft_training_path=initial["training_path"], sft_sampler_path=initial["sampler_path"],
+                     phase="sft_done", initial_sft_checkpoint=copy.deepcopy(initial))
     return state, rng
 
 
@@ -626,22 +827,114 @@ def save_state(output_dir: Path, state: dict, rng: random.Random) -> None:
     atomic_json(output_dir / "state.json", state)
 
 
-def save_checkpoint(adapter: Any, output_dir: Path, state: dict, rng: random.Random, name: str) -> None:
+def save_checkpoint(adapter: Any, output_dir: Path, state: dict, rng: random.Random, name: str,
+                    *, validation_pending: bool = False) -> None:
     saved = adapter.checkpoint(name)
     if not saved.get("training_path") or not saved.get("sampler_path"):
         raise RuntimeError("checkpoint must contain optimizer-resumable state and separate sampler weights")
     state.update(saved)
     if state["phase"] == "sft_done":
         state.update(sft_training_path=saved["training_path"], sft_sampler_path=saved["sampler_path"])
+    if validation_pending:
+        state["pending_validation"] = {"stage": name, "training_path": saved["training_path"],
+                                       "sampler_path": saved["sampler_path"]}
     save_state(output_dir, state, rng)
     append_jsonl(output_dir / "checkpoints.jsonl", {"name": name, **copy.deepcopy(state)})
 
 
+def record_validation(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_dir: Path,
+                      state: dict, rng: random.Random, stage: str,
+                      training_path: str | None, sampler_path: str | None) -> dict | None:
+    """Durably record validation and select checkpoints without consulting test."""
+    if config.get("diagnostic_only") or any(task_metadata(row).get("diagnosticOnly") for row in rows):
+        raise ValueError("diagnostic-only tasks cannot drive validation or checkpoint selection")
+    if not any(row["split"] == "validation" for row in rows):
+        state["compression_gate_open"] = False
+        state["validation_unavailable"] = True
+        state["pending_validation"] = None
+        save_state(output_dir, state, rng)
+        return None
+    if state.get("final_selection_hash"):
+        raise ValueError("final test selection is sealed; further validation requires a new experiment")
+    pending = {"stage": stage, "training_path": training_path, "sampler_path": sampler_path}
+    if state.get("pending_validation") not in (None, pending):
+        raise ValueError("another checkpoint has unfinished validation")
+    state["pending_validation"] = pending
+    save_state(output_dir, state, rng)
+    adapter.create_sampling_client(checkpoint=sampler_path)
+    summary = evaluate(bridge, adapter, rows, config, output_dir, stage, "validation", resume=True,
+                       checkpoint=sampler_path)
+    candidate = {**pending, "split": "validation", "summary": summary,
+                 "sft_batches_completed": state.get("sft_batches_completed", 0),
+                 "rl_steps_completed": state.get("rl_steps_completed", 0)}
+    candidates = state.setdefault("validation_candidates", [])
+    existing = next((item for item in candidates if item["stage"] == stage), None)
+    if existing is not None and existing != candidate:
+        raise ValueError("validation stage changed its checkpoint or summary")
+    if existing is None:
+        candidates.append(candidate)
+    state["selected_checkpoint"] = choose_validation_checkpoint(candidates, config)
+    trained = [item for item in candidates if item["training_path"]]
+    state["best_trained_checkpoint"] = choose_validation_checkpoint(trained, config)
+    anchor = max(item["summary"]["complete_execution_accuracy"] for item in candidates)
+    accuracy = summary["complete_execution_accuracy"]
+    gate = accuracy >= config["compression_min_accuracy"] and accuracy >= anchor - config["accuracy_tolerance"]
+    state["compression_gate_open"] = gate
+    previous = state.get("last_validation_summary")
+    alert = bool(previous and accuracy < previous["complete_execution_accuracy"]
+                 and summary["mean_generated_tokens"] < previous["mean_generated_tokens"])
+    state["last_validation_summary"] = summary
+    state["pending_validation"] = None
+    append_jsonl(output_dir / "metrics.jsonl", {"stage": "validation", "checkpoint_stage": stage,
+                 "accuracy_anchor": anchor, "compression_gate_open": gate,
+                 "accuracy_fell_while_tokens_fell": alert, "summary": summary,
+                 "selected_stage": state["selected_checkpoint"]["stage"]})
+    # Keep rollback inside the durable validation transaction. Resuming a
+    # partially completed validation must perform the same restoration as an
+    # uninterrupted run, even when the RL step itself was already checkpointed.
+    best = state.get("best_trained_checkpoint")
+    if stage.startswith("rl-") and not gate and best and best["training_path"] != state.get("training_path"):
+        event = {"step": state.get("rl_steps_completed", 0), "validation_stage": stage,
+                 "from": state.get("training_path"), "to": best["training_path"],
+                 "reason": "validation accuracy below compression gate; restore selected optimizer state"}
+        adapter.create_training_client(checkpoint=best["training_path"])
+        state.update(training_path=best["training_path"], sampler_path=best["sampler_path"])
+        state.setdefault("rollback_events", []).append(event)
+        append_jsonl(output_dir / "metrics.jsonl", {"stage": "rollback", **event})
+    save_state(output_dir, state, rng)
+    return candidate
+
+
+def resume_validation(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_dir: Path,
+                      state: dict, rng: random.Random) -> None:
+    pending = state.get("pending_validation")
+    if pending:
+        record_validation(bridge, adapter, rows, config, output_dir, state, rng, **pending)
+
+
+def maybe_validate_checkpoint(bridge: Any, adapter: Any, rows: list[dict], config: dict,
+                              output_dir: Path, state: dict, rng: random.Random,
+                              name: str, *, force: bool = False) -> dict | None:
+    if not force and not config["validation_every"]:
+        return None
+    return record_validation(bridge, adapter, rows, config, output_dir, state, rng, name,
+                             state.get("training_path"), state.get("sampler_path"))
+
+
+def require_training_data(rows: list[dict], config: dict) -> None:
+    if (config.get("evaluation_only") or config.get("diagnostic_only")
+            or any(row.get("diagnosticOnly") or task_metadata(row).get("diagnosticOnly") for row in rows)):
+        raise ValueError("evaluation-only or diagnosticOnly datasets are prohibited from training")
+
+
 def train_sft(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_dir: Path,
               state: dict, rng: random.Random) -> None:
+    require_training_data(rows, config)
+    resume_validation(bridge, adapter, rows, config, output_dir, state, rng)
     if state["phase"] in ("rl", "rl_done"):
         raise ValueError("cannot restart the SFT stage after RL in the same run directory")
     if state["phase"] == "sft_done":
+        finish_sft_selection(adapter, config, output_dir, state, rng)
         return
     train_rows = sorted((row for row in rows if row["split"] == "train"), key=lambda row: row["id"])
     if not train_rows:
@@ -649,26 +942,50 @@ def train_sft(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_
     adapter.create_training_client(checkpoint=state.get("training_path"))
     batch_index = 0
     for epoch in range(config["sft_epochs"]):
-        ordered = list(train_rows)
-        random.Random(config["seed"] + epoch).shuffle(ordered)
+        ordered = sft_epoch_rows(train_rows, config, epoch)
         for start in range(0, len(ordered), config["batch_size"]):
             batch_index += 1
             if batch_index <= state["sft_batches_completed"]:
                 continue
             batch = ordered[start:start + config["batch_size"]]
-            metrics = adapter.sft_train([{"messages": row["messages"]} for row in batch])
+            metrics = adapter.sft_train([{"messages": row["messages"],
+                                          "metadata": task_metadata(row)} for row in batch],
+                                        learning_rate=config["sft_learning_rate"])
             state.update(sft_batches_completed=batch_index, phase="sft")
             append_jsonl(output_dir / "metrics.jsonl", {"stage": "sft", "batch": batch_index,
-                         "epoch": epoch, "ids": [row["id"] for row in batch], "metrics": metrics})
-            if batch_index % config["checkpoint_every"] == 0:
-                save_checkpoint(adapter, output_dir, state, rng, f"sft-{batch_index:06d}")
+                         "epoch": epoch, "ids": [row["id"] for row in batch], "metrics": metrics,
+                         "learning_rate": config["sft_learning_rate"], "weighting": config["sft_weighting"],
+                         "tiers": [task_metadata(row)["tier"] for row in batch],
+                         "features": sorted({feature for row in batch for feature in task_metadata(row)["features"]})})
+            validate = bool(config["validation_every"] and batch_index % config["validation_every"] == 0)
+            if batch_index % config["checkpoint_every"] == 0 or validate:
+                name = f"sft-{batch_index:06d}"
+                save_checkpoint(adapter, output_dir, state, rng, name, validation_pending=validate)
+                if validate:
+                    maybe_validate_checkpoint(bridge, adapter, rows, config, output_dir, state, rng, name)
     state["phase"] = "sft_done"
-    save_checkpoint(adapter, output_dir, state, rng, f"sft-final-{batch_index:06d}")
+    final_name = f"sft-final-{batch_index:06d}"
+    save_checkpoint(adapter, output_dir, state, rng, final_name, validation_pending=True)
+    maybe_validate_checkpoint(bridge, adapter, rows, config, output_dir, state, rng, final_name, force=True)
+    finish_sft_selection(adapter, config, output_dir, state, rng)
     adapter.refresh_sampler()
+
+
+def finish_sft_selection(adapter: Any, config: dict, output_dir: Path, state: dict, rng: random.Random) -> None:
+    sft_candidates = [candidate for candidate in state.get("validation_candidates", [])
+                      if candidate["stage"].startswith("sft-")]
+    selected = choose_validation_checkpoint(sft_candidates, config)
+    if selected:
+        state.update(sft_training_path=selected["training_path"], sft_sampler_path=selected["sampler_path"],
+                     training_path=selected["training_path"], sampler_path=selected["sampler_path"])
+        adapter.create_training_client(checkpoint=state["training_path"])
+        save_state(output_dir, state, rng)
 
 
 def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_dir: Path,
              state: dict, rng: random.Random, training_ready: bool = False) -> None:
+    require_training_data(rows, config)
+    resume_validation(bridge, adapter, rows, config, output_dir, state, rng)
     if state["phase"] == "rl_done":
         return
     train_rows = sorted((row for row in rows if row["split"] == "train"), key=lambda row: row["id"])
@@ -676,12 +993,22 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         raise ValueError("no training rows")
     if not training_ready:
         adapter.create_training_client(checkpoint=state.get("training_path"))
+    if (state.get("sft_sampler_path") and not any(candidate["sampler_path"] == state["sft_sampler_path"]
+            for candidate in state.get("validation_candidates", []))):
+        record_validation(bridge, adapter, rows, config, output_dir, state, rng, "sft-initial",
+                          state.get("sft_training_path", state.get("training_path")), state["sft_sampler_path"])
+    if config["reference_kl_coef"]:
+        if not state.get("sft_sampler_path"):
+            raise ValueError("reference KL requires the recorded SFT sampler checkpoint")
+        adapter.set_reference_checkpoint(state["sft_sampler_path"])
     adapter.refresh_sampler()
     for step in range(state["rl_steps_completed"], config["rl_steps"]):
-        row = train_rows[rng.randrange(len(train_rows))]
+        row, curriculum_selection = curriculum_pick(train_rows, config, state, rng)
         seeds = [rng.randrange(2147483647) for _ in range(config["group_size"])]
+        coefficient = compression_coefficient(config, step, gate_open=state.get("compression_gate_open", False))
         group_context = digest({"step": step + 1, "task": row["task"], "seeds": seeds,
-                                "config_hash": config_fingerprint(config),
+                                "config_hash": config_fingerprint(config), "compression_coefficient": coefficient,
+                                "curriculum": curriculum_selection,
                                 "implementation_hash": state.get("implementation_hash"),
                                 "training_checkpoint": state.get("training_path"),
                                 "optimizer_updates": state.get("rl_optimizer_updates", 0)})
@@ -702,115 +1029,158 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                     "group_context": group_context, "configuration_hash": config_fingerprint(config)})
                 raise
             record.update(group_context=group_context, task_id=row["id"], family=row["family"],
-                          source_hash=row["sourceHash"], split="train", step=step + 1)
+                          source_hash=row["sourceHash"], split="train", step=step + 1,
+                          split_component=row.get("split_component"), features=task_metadata(row)["features"],
+                          tier=task_metadata(row)["tier"])
             records.append(record)
             append_jsonl(partial, record)
-        advantages = group_advantages([record["grade"]["reward"] for record in records])
-        for record, advantage in zip(records, advantages):
-            record.update(task_id=row["id"], family=row["family"], source_hash=row["sourceHash"],
-                          split="train", step=step + 1, advantage=advantage)
+        signals = execution_advantages(records, config, coefficient)
+        for index, record in enumerate(records):
+            record.update(advantage=signals["advantages"][index],
+                          correctness_advantage=signals["correctness_advantages"][index],
+                          length_advantage=signals["length_advantages"][index],
+                          length_contribution=signals["length_contributions"][index],
+                          compression_coefficient=coefficient)
         write_jsonl(destination, records)
         partial.unlink(missing_ok=True)
         if any(sample.get("provenance_error") for record in records for sample in record["samples"]):
             raise RuntimeError("sampled RL provenance is invalid; saved raw rollout and aborted the entire update")
         nonzero = [record for record in records if abs(record["advantage"]) > 1e-12]
-        if nonzero:
+        update_records = records if config["reference_kl_coef"] else nonzero
+        regularization_only = bool(update_records) and not nonzero
+        if update_records:
             metrics = adapter.rl_train([{"samples": record["samples"], "advantage": record["advantage"]}
-                                        for record in nonzero])
+                                        for record in update_records], loss_fn=config["rl_loss_fn"],
+                                        loss_fn_config=config["rl_loss_fn_config"], learning_rate=config["rl_learning_rate"])
             state["rl_optimizer_updates"] = state.get("rl_optimizer_updates", 0) + 1
+            if regularization_only:
+                state["rl_regularization_only_updates"] = state.get("rl_regularization_only_updates", 0) + 1
             adapter.refresh_sampler()
         else:
-            metrics = {"skipped": True, "reason": "all rewards equal; zero policy-gradient advantage"}
+            metrics = {"skipped": True, "reason": "zero correctness and controlled length advantages"}
+        counters = state.setdefault("rl_group_counts", {"all_failure": 0, "mixed_success": 0,
+                                                         "all_success": 0, "zero_advantage": 0, "useful": 0})
+        counters[signals["group_kind"]] += 1
+        counters["zero_advantage" if signals["zero_advantage_group"] else "useful"] += 1
+        state["rl_generated_tokens"] = state.get("rl_generated_tokens", 0) + sum(record["generated_tokens"] for record in records)
+        curriculum_result = update_curriculum(train_rows, config, state, curriculum_selection, records)
         state.update(rl_steps_completed=step + 1, phase="rl")
         append_jsonl(output_dir / "metrics.jsonl", {"stage": "rl", "step": step + 1,
-                     "task_id": row["id"], **summarize_records(records), "metrics": metrics})
-        if (step + 1) % config["checkpoint_every"] == 0:
-            save_checkpoint(adapter, output_dir, state, rng, f"rl-{step + 1:06d}")
+                     "task_id": row["id"], **summarize_records(records), "metrics": metrics,
+                     "group_kind": signals["group_kind"], "zero_advantage_group": signals["zero_advantage_group"],
+                     "compression_coefficient": coefficient, "length_signal": signals["length_signal"],
+                     "correctness_signal": signals["correctness_signal"], "curriculum": curriculum_result,
+                     "regularization_only_update": regularization_only,
+                     "group_counts": dict(counters), "optimizer_updates": state.get("rl_optimizer_updates", 0),
+                     "useful_groups_per_thousand_tokens": 1000 * counters["useful"] / state["rl_generated_tokens"]
+                     if state["rl_generated_tokens"] else None})
+        validate = bool(config["validation_every"] and (step + 1) % config["validation_every"] == 0)
+        if (step + 1) % config["checkpoint_every"] == 0 or validate:
+            name = f"rl-{step + 1:06d}"
+            save_checkpoint(adapter, output_dir, state, rng, name, validation_pending=validate)
+            if validate:
+                maybe_validate_checkpoint(bridge, adapter, rows, config, output_dir, state, rng, name)
+                adapter.refresh_sampler()
     state["phase"] = "rl_done"
-    save_checkpoint(adapter, output_dir, state, rng, f"rl-final-{state['rl_steps_completed']:06d}")
+    name = f"rl-final-{state['rl_steps_completed']:06d}"
+    save_checkpoint(adapter, output_dir, state, rng, name, validation_pending=True)
+    maybe_validate_checkpoint(bridge, adapter, rows, config, output_dir, state, rng, name, force=True)
+
 
 
 def make_report(output_dir: Path, config: dict | None = None) -> dict:
     config = config or json.loads((output_dir / "config.json").read_text())
     stages: dict[str, list[dict]] = {}
-    for path in sorted((output_dir / "evaluations").glob("*-test.jsonl")):
-        stages[path.name.removesuffix("-test.jsonl")] = read_jsonl(path)
+    validation_stages: dict[str, list[dict]] = {}
+    for split, destination in (("test", stages), ("validation", validation_stages)):
+        for path in sorted((output_dir / "evaluations").glob(f"*-{split}.jsonl")):
+            destination[path.name.removesuffix(f"-{split}.jsonl")] = read_jsonl(path)
     report: dict[str, Any] = {"schema": "tinker-js-report-v1", "model": config["model"],
         "backend": "tinker", "generated_token_scope": "All sampled token IDs, including reasoning, protocol formatting and stop tokens",
-        "test_used_for": "fixed final comparisons only; never gradient updates or checkpoint selection",
-        "stages": {name: summarize_records(rows) for name, rows in stages.items()}, "paired": {}}
+        "test_used_for": "fixed final comparisons after validation selection; never gradient updates or checkpoint selection",
+        "stages": {name: summarize_records(rows) for name, rows in stages.items()},
+        "validation_stages": {name: summarize_records(rows) for name, rows in validation_stages.items()},
+        "evaluation_unit": "Single attempt; repetitions are separate attempts and all sampled tokens count",
+        "diagnostic_only": config.get("diagnostic_only", False),
+        "paired": {}, "acceptance_criteria": {key: config[key] for key in
+            ("accuracy_tolerance", "min_token_saving", "minimum_evaluation_families", "confidence_level")}}
     manifest_path = output_dir / "dataset-manifest.json"
     if manifest_path.exists():
         manifest = json.loads(manifest_path.read_text())
         report.update(dataset_hash=manifest["dataset_hash"], split_hash=manifest["split_manifest"]["hash"],
                       implementation_hash=manifest.get("implementation_hash"), git_revision=manifest.get("git_revision"))
-    for rows in stages.values():
-        if any(row.get("backend") != "tinker" for row in rows):
+    for records in [*stages.values(), *validation_stages.values()]:
+        if any(row.get("backend") != "tinker" for row in records):
             raise ValueError("a Tinker performance report cannot contain fixture/mock backend records")
-        if any(row.get("configuration_hash") != config_fingerprint(config) for row in rows):
+        if any(row.get("configuration_hash") != config_fingerprint(config) for row in records):
             raise ValueError("evaluation configuration differs; use separate run directories")
-        if any(row.get("implementation_hash") != report.get("implementation_hash") for row in rows):
+        if any(row.get("implementation_hash") != report.get("implementation_hash") for row in records):
             raise ValueError("evaluation implementation differs; use separate run directories")
     errors_path = output_dir / "infrastructure-errors.jsonl"
     errors = read_jsonl(errors_path) if errors_path.exists() else []
     report["interrupted_attempts"] = {"attempts": len(errors),
         "received_generated_tokens": sum(record["generated_tokens"] for record in errors),
         "note": "Infrastructure failures abort updates and are excluded from model accuracy; all received sample tokens remain in the audit."}
-    baseline = {(row["task_id"], row.get("repeat", 0)): row for row in stages.get("baseline", [])}
-    for name, rows in stages.items():
-        if name == "baseline":
-            continue
-        pairs = []
-        for row in rows:
-            before = baseline.get((row["task_id"], row.get("repeat", 0)))
-            if before is None:
-                continue
-            if before.get("source_hash") != row.get("source_hash") or before.get("seed") != row.get("seed"):
-                raise ValueError("paired evaluation requires identical sources and sampling seeds")
-            pairs.append({"task_id": row["task_id"], "repeat": row.get("repeat", 0),
-                          "baseline_success": before["grade"]["success"], "success": row["grade"]["success"],
-                          "baseline_tokens": before["generated_tokens"], "tokens": row["generated_tokens"]})
-        both = [pair for pair in pairs if pair["baseline_success"] and pair["success"]]
-        report["paired"][name] = {"matched_executions": len(pairs), "both_correct": len(both),
-            "accuracy_change": statistics.fmean(int(pair["success"]) - int(pair["baseline_success"])
-                                                 for pair in pairs) if pairs else None,
-            "mean_token_change": statistics.fmean(pair["tokens"] - pair["baseline_tokens"] for pair in pairs)
-            if pairs else None,
-            "mean_token_change_when_both_correct": statistics.fmean(pair["tokens"] - pair["baseline_tokens"]
-                                                                      for pair in both) if both else None,
-            "executions": pairs}
+    for name, records in stages.items():
+        if name != "baseline" and "baseline" in stages:
+            report["paired"][name] = paired_statistics(stages["baseline"], records, config)
     state_path = output_dir / "state.json"
     if state_path.exists():
         state = json.loads(state_path.read_text())
         report.update(checkpoint={key: state.get(key) for key in ("training_path", "sampler_path")},
+                      selected_checkpoint=state.get("selected_checkpoint"),
+                      validation_candidates=state.get("validation_candidates", []),
+                      compression_gate_open=state.get("compression_gate_open", False),
+                      rollback_events=state.get("rollback_events", []),
+                      curriculum=state.get("curriculum"), curriculum_transitions=state.get("curriculum_transitions", []),
                       dataset_hash=state.get("dataset_hash"), split_hash=state.get("split_hash"),
                       implementation_hash=state.get("implementation_hash"), git_revision=state.get("git_revision"),
                       training_updates={"sft_batches": state.get("sft_batches_completed", 0),
-                                        "rl_optimizer_steps": state.get("rl_optimizer_updates", 0)})
+                                        "rl_optimizer_steps": state.get("rl_optimizer_updates", 0),
+                                        "rl_regularization_only_steps": state.get("rl_regularization_only_updates", 0),
+                                        "sampled_rl_groups": state.get("rl_steps_completed", 0)},
+                      rl_group_counts=state.get("rl_group_counts", {}),
+                      rl_generated_tokens=state.get("rl_generated_tokens", 0))
+    selections = {}
+    for path in sorted((output_dir / "evaluations").glob("selection-*.json")):
+        selection = json.loads(path.read_text())
+        selections[selection["split"]] = selection
+    report["evaluation_selections"] = selections
     atomic_json(output_dir / "report.json", report)
     lines = ["# JavaScript execution training report", "", f"Model: `{config['model']}`", "",
              "All sampled tokens count, including reasoning and formatting. Accuracy requires the complete "
              "return/exception, input mutations, and externally visible behavior to match.", "",
-             "| Stage | Executions | Complete accuracy | Mean generated tokens | Mean successful tokens | Incomplete |",
-             "| --- | ---: | ---: | ---: | ---: | ---: |"]
-    ordered_stages = ["baseline", "sft", "rl"] + sorted(set(report["stages"]) - {"baseline", "sft", "rl"})
-    for name in ordered_stages:
+             "| Stage | Attempts | Complete accuracy | Mean tokens | P95 tokens | Failed tokens | Tokens per success |",
+             "| --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
+    order = ["baseline", "sft", "selected", "rl"] + sorted(set(stages) - {"baseline", "sft", "selected", "rl"})
+    for name in order:
         if name not in report["stages"]:
             continue
         summary = report["stages"][name]
         accuracy = summary["complete_execution_accuracy"]
-        mean = summary["mean_generated_tokens"]
-        successful = summary["mean_successful_tokens"]
-        lines.append(f"| {name} | {summary['executions']} | {accuracy:.1%} | {mean:.1f} | "
-                     f"{successful if successful is not None else '—'} | {summary['incomplete']} |")
-    if not report["stages"]:
-        lines.extend(["", "No live model evaluation has been recorded."])
-    lines.extend(["", "Held-out source families are fixed before training. Test results are reporting only; "
-                  "the runner never uses test trajectories for updates or checkpoint selection.", "",
-                  "`report.json` includes paired task-level comparisons and checkpoint paths. "
-                  "Small fixture runs establish plumbing; a compression claim requires a larger held-out evaluation.", ""])
+        cost = summary["tokens_per_verified_success"]
+        lines.append(f"| {name} | {summary['executions']} | {accuracy:.1%} | {summary['mean_generated_tokens']:.1f} | "
+                     f"{summary['p95_generated_tokens']:.1f} | {summary['failed_execution_tokens']} | "
+                     f"{cost if cost is not None else 'undefined: no successes'} |")
+    if not stages:
+        lines.extend(["", "No final test evaluation has been recorded. Validation-only results are development evidence."])
+    selected = report.get("selected_checkpoint")
+    if selected:
+        lines.extend(["", f"Selected on validation: `{selected['stage']}`. "
+                      "The selection applies the predeclared accuracy tolerance and minimum cost saving."])
+    for name, pair in report["paired"].items():
+        lines.extend(["", f"## Baseline versus {name}", "",
+                      f"Independent family components: {pair['uncertainty']['independent_components']}. "
+                      f"Acceptance status: **{pair['acceptance']['status']}**.", "",
+                      "Paired family-bootstrap intervals, both-correct comparisons, full failure costs, and task-level "
+                      "identities are retained in `report.json`. Degenerate or small samples do not establish a precise accuracy margin."])
+    lines.extend(["", "Held-out source families and evaluation selections are frozen before use. "
+                  "Validation drives checkpoint selection; final test results never drive updates.", "",
+                  "The JSON report includes per-family/feature/tier failures, token categories, useful-group counts, "
+                  "curriculum transitions, checkpoint selection, and infrastructure interruption costs.", ""])
     (output_dir / "report.md").write_text("\n".join(lines))
     return report
+
 
 
 def validate_fixtures(bridge: Any, rows: list[dict]) -> dict:
@@ -861,7 +1231,7 @@ def validate_token_budgets(bridge: Any, adapter: Any, rows: list[dict], config: 
                     train_tokens.append(len(datum.loss_fn_inputs["target_tokens"].data))
             started = bridge.request("start", task=row["task"])
             try:
-                checked = adapter.validate_prompt(started["messages"], max_tokens=config["max_tokens"])
+                checked = adapter.validate_prompt(prompt_messages(started["messages"], config), max_tokens=config["max_tokens"])
                 prompt_tokens.append(checked["prompt_tokens"])
             finally:
                 bridge.request("close", sessionId=started["sessionId"])
@@ -876,6 +1246,32 @@ def validate_token_budgets(bridge: Any, adapter: Any, rows: list[dict], config: 
 def _backend(config: dict) -> Any:
     from .adapter import TinkerAdapter
     return TinkerAdapter(config)
+
+
+def final_test(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_dir: Path,
+               state: dict, rng: random.Random) -> None:
+    selected = state.get("selected_checkpoint")
+    if selected is None:
+        raise ValueError("final test requires a checkpoint selected on validation")
+    identity = digest(selected)
+    if state.get("final_selection_hash") not in (None, identity):
+        raise ValueError("checkpoint selection changed after final test was unsealed")
+    state["final_selection_hash"] = identity
+    comparisons = {"baseline": None, "selected": selected["sampler_path"]}
+    if state.get("sft_sampler_path"):
+        comparisons["sft"] = state["sft_sampler_path"]
+    if state.get("final_stage_checkpoints") not in (None, comparisons):
+        raise ValueError("final comparison checkpoints changed after test was unsealed")
+    state["final_stage_checkpoints"] = comparisons
+    save_state(output_dir, state, rng)
+    for stage, checkpoint in comparisons.items():
+        marker = f"{stage}-test"
+        if marker in state["evaluations"]:
+            continue
+        adapter.create_sampling_client(checkpoint=checkpoint)
+        evaluate(bridge, adapter, rows, config, output_dir, stage, "test", resume=True, checkpoint=checkpoint)
+        state["evaluations"].append(marker)
+        save_state(output_dir, state, rng)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -899,6 +1295,10 @@ def main(argv: list[str] | None = None) -> int:
         if config_path is not None and not config_path.is_absolute():
             config_path = repo / config_path
         config = load_config(config_path, {"output_dir": args.output_dir, "dataset": args.dataset})
+        if isinstance(config["evaluation_manifest"], str):
+            selection_path = Path(config["evaluation_manifest"])
+            if not selection_path.is_absolute():
+                config["evaluation_manifest"] = str(repo / selection_path)
         output_dir = Path(config["output_dir"])
         if not output_dir.is_absolute():
             output_dir = repo / output_dir
@@ -933,7 +1333,7 @@ def main(argv: list[str] | None = None) -> int:
                 if args.command == "evaluate" and args.checkpoint and args.stage == "baseline":
                     raise ValueError("a trained checkpoint cannot be labeled baseline; pass --stage sft, rl, or a distinct name")
                 adapter.create_sampling_client(checkpoint=args.checkpoint)
-                split = args.split or ("train" if args.command == "rollout" else "test")
+                split = args.split or ("train" if args.command == "rollout" else "validation")
                 stage = "rollout" if args.command == "rollout" else args.stage
                 print(json_text(evaluate(bridge, adapter, rows, config, output_dir, stage, split,
                                         resume=args.resume, checkpoint=args.checkpoint)))
@@ -948,31 +1348,18 @@ def main(argv: list[str] | None = None) -> int:
                 state["training_path"] = args.checkpoint
             atomic_json(output_dir / "config.json", config)
             if args.command == "run":
-                if "baseline" not in state["evaluations"]:
-                    adapter.create_sampling_client()
-                    evaluate(bridge, adapter, rows, config, output_dir, "baseline", resume=args.resume)
-                    state["evaluations"].append("baseline")
+                resume_validation(bridge, adapter, rows, config, output_dir, state, rng)
+                if "baseline-validation" not in state["evaluations"]:
+                    record_validation(bridge, adapter, rows, config, output_dir, state, rng, "baseline", None, None)
+                    state["evaluations"].append("baseline-validation")
                     save_state(output_dir, state, rng)
                 training_ready = False
-                if state["phase"] not in ("sft_done", "rl", "rl_done"):
+                if state["phase"] not in ("rl", "rl_done"):
                     train_sft(bridge, adapter, rows, config, output_dir, state, rng)
-                    training_ready = True
-                if "sft" not in state["evaluations"]:
-                    if not state.get("sft_sampler_path"):
-                        raise ValueError("no SFT checkpoint exists for the SFT comparison")
-                    adapter.create_sampling_client(checkpoint=state["sft_sampler_path"])
-                    evaluate(bridge, adapter, rows, config, output_dir, "sft", resume=args.resume,
-                             checkpoint=state["sft_sampler_path"])
-                    state["evaluations"].append("sft")
-                    save_state(output_dir, state, rng)
                 if state["phase"] != "rl_done":
                     train_rl(bridge, adapter, rows, config, output_dir, state, rng, training_ready)
-                if "rl" not in state["evaluations"]:
-                    adapter.create_sampling_client(checkpoint=state["sampler_path"])
-                    evaluate(bridge, adapter, rows, config, output_dir, "rl", resume=args.resume,
-                             checkpoint=state["sampler_path"])
-                    state["evaluations"].append("rl")
-                    save_state(output_dir, state, rng)
+                if config["final_test"]:
+                    final_test(bridge, adapter, rows, config, output_dir, state, rng)
                 print(json_text(make_report(output_dir, config)))
             elif args.command == "sft":
                 train_sft(bridge, adapter, rows, config, output_dir, state, rng)

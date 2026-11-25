@@ -47,7 +47,7 @@ class ScriptedAdapter:
     def refresh_sampler(self):
         pass
 
-    def rl_train(self, trajectories):
+    def rl_train(self, trajectories, **kwargs):
         self.trained.append(copy.deepcopy(trajectories))
         return {"trained": len(trajectories)}
 
@@ -357,7 +357,7 @@ class RecoveryTests(unittest.TestCase):
             def create_training_client(self, checkpoint=None):
                 self.restored = checkpoint
 
-            def sft_train(self, examples):
+            def sft_train(self, examples, **kwargs):
                 self.batch_ids.append(examples[0]["messages"][0]["content"])
                 return {}
 

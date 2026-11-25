@@ -49,12 +49,12 @@ class ScriptedModel:
     def refresh_sampler(self):
         self.sampling_revision = f"fixture-step-{self.training_steps}"
 
-    def sft_train(self, examples):
+    def sft_train(self, examples, **kwargs):
         self.sft_batches.append(copy.deepcopy(examples))
         self.training_steps += 1
         return {"step": self.training_steps}
 
-    def rl_train(self, trajectories):
+    def rl_train(self, trajectories, **kwargs):
         self.rl_batches.append(copy.deepcopy(trajectories))
         self.training_steps += 1
         return {"step": self.training_steps}
