@@ -1,16 +1,16 @@
 {
-  "started": "2026-11-26T00:03:39.108Z",
-  "finished": "2026-11-26T00:17:32.751Z",
+  "started": "2026-11-26T02:39:08.789Z",
+  "finished": "2026-11-26T02:55:08.804Z",
   "implementation": {
     "schema": "tinker-local-verification-identity/1",
-    "sha256": "cfefe1e53b3410fd66aefdf9d1320047fa245a958d582861b87ff9c9518241a5",
-    "files": 94,
+    "sha256": "b7861491af66e30f4377a67499176fb03867d3fcfe0135c82ccb1253fe7b29ac",
+    "files": 96,
     "node": "v22.22.1"
   },
   "implementationAtFinish": {
     "schema": "tinker-local-verification-identity/1",
-    "sha256": "cfefe1e53b3410fd66aefdf9d1320047fa245a958d582861b87ff9c9518241a5",
-    "files": 94,
+    "sha256": "b7861491af66e30f4377a67499176fb03867d3fcfe0135c82ccb1253fe7b29ac",
+    "files": 96,
     "node": "v22.22.1"
   },
   "codeChangedDuringRun": false,
@@ -22,20 +22,20 @@
     "validation": 0.2,
     "test": 0.3
   },
-  "requestedCandidates": 1963,
+  "requestedCandidates": 2763,
   "limited": false,
   "includeUpstream": true,
-  "perFamily": 6,
+  "perFamily": 4,
   "candidatePopulation": {
-    "candidateExecutions": 1963,
-    "candidateFamilies": 244,
+    "candidateExecutions": 2763,
+    "candidateFamilies": 784,
     "statuses": {
-      "admitted": 1911,
-      "refused": 52
+      "admitted": 2704,
+      "refused": 59
     },
     "refusals": {
-      "source-or-runtime-profile": 46,
-      "source_unsupported": 6
+      "source-or-runtime-profile": 55,
+      "source_unsupported": 4
     },
     "byOrigin": {
       "authored-generator": {
@@ -44,23 +44,43 @@
       },
       "authored-long-program": {
         "candidates": 144,
-        "admitted": 137
+        "admitted": 138
       },
       "authored-effectful-workflow": {
         "candidates": 180,
         "admitted": 180
       },
+      "authored-hard-task": {
+        "candidates": 125,
+        "admitted": 100
+      },
       "utilities": {
-        "candidates": 462,
-        "admitted": 462
+        "candidates": 308,
+        "admitted": 308
       },
       "exercism": {
-        "candidates": 116,
-        "admitted": 71
+        "candidates": 79,
+        "admitted": 51
       },
       "production": {
-        "candidates": 29,
-        "admitted": 29
+        "candidates": 26,
+        "admitted": 26
+      },
+      "oss-esm-library": {
+        "candidates": 325,
+        "admitted": 325
+      },
+      "oss-effectful": {
+        "candidates": 42,
+        "admitted": 42
+      },
+      "dgx-oss-repo": {
+        "candidates": 392,
+        "admitted": 392
+      },
+      "dgx-oss-unit-test": {
+        "candidates": 110,
+        "admitted": 110
       }
     },
     "byFeature": {
@@ -69,44 +89,44 @@
         "admitted": 192
       },
       "external": {
-        "candidates": 864,
-        "admitted": 864
+        "candidates": 946,
+        "admitted": 941
       },
       "branch": {
-        "candidates": 1377,
-        "admitted": 1331
+        "candidates": 1359,
+        "admitted": 1304
       },
       "algorithm": {
         "candidates": 504,
         "admitted": 504
       },
       "loop": {
-        "candidates": 1079,
-        "admitted": 1057
+        "candidates": 1131,
+        "admitted": 1092
       },
       "array": {
-        "candidates": 1163,
-        "admitted": 1112
+        "candidates": 1149,
+        "admitted": 1090
       },
       "alias": {
-        "candidates": 132,
-        "admitted": 132
+        "candidates": 162,
+        "admitted": 162
       },
       "mutation": {
-        "candidates": 210,
-        "admitted": 210
+        "candidates": 255,
+        "admitted": 252
       },
       "property-presence": {
         "candidates": 24,
         "admitted": 24
       },
       "cycle": {
-        "candidates": 12,
-        "admitted": 12
+        "candidates": 17,
+        "admitted": 17
       },
       "sparse": {
-        "candidates": 24,
-        "admitted": 24
+        "candidates": 29,
+        "admitted": 29
       },
       "exceptional-scalar": {
         "candidates": 24,
@@ -117,36 +137,36 @@
         "admitted": 12
       },
       "null-prototype": {
-        "candidates": 48,
-        "admitted": 48
+        "candidates": 78,
+        "admitted": 76
       },
       "object": {
-        "candidates": 132,
-        "admitted": 128
+        "candidates": 172,
+        "admitted": 166
       },
       "exception": {
-        "candidates": 186,
-        "admitted": 174
+        "candidates": 202,
+        "admitted": 189
       },
       "finally": {
-        "candidates": 114,
-        "admitted": 114
+        "candidates": 144,
+        "admitted": 144
       },
       "standard-error": {
         "candidates": 12,
         "admitted": 12
       },
       "nullish": {
-        "candidates": 30,
-        "admitted": 30
+        "candidates": 40,
+        "admitted": 39
       },
       "nested-object": {
         "candidates": 12,
         "admitted": 12
       },
       "string": {
-        "candidates": 90,
-        "admitted": 86
+        "candidates": 110,
+        "admitted": 99
       },
       "unicode": {
         "candidates": 12,
@@ -165,143 +185,253 @@
         "admitted": 12
       },
       "break": {
-        "candidates": 12,
-        "admitted": 12
+        "candidates": 17,
+        "admitted": 17
       },
       "continue": {
-        "candidates": 12,
-        "admitted": 12
+        "candidates": 17,
+        "admitted": 17
       },
       "sequential": {
-        "candidates": 240,
-        "admitted": 240
+        "candidates": 322,
+        "admitted": 317
       },
       "longer-execution": {
         "candidates": 144,
-        "admitted": 137
+        "admitted": 138
       },
       "multi-function": {
-        "candidates": 150,
-        "admitted": 146
+        "candidates": 160,
+        "admitted": 152
       },
       "recursion": {
-        "candidates": 6,
-        "admitted": 6
+        "candidates": 36,
+        "admitted": 29
       },
       "platform": {
-        "candidates": 102,
-        "admitted": 102
+        "candidates": 149,
+        "admitted": 144
       },
       "fs": {
-        "candidates": 36,
-        "admitted": 36
+        "candidates": 46,
+        "admitted": 44
       },
       "http": {
-        "candidates": 36,
-        "admitted": 36
+        "candidates": 41,
+        "admitted": 41
       },
       "net": {
-        "candidates": 18,
-        "admitted": 18
+        "candidates": 23,
+        "admitted": 23
       },
       "dom": {
-        "candidates": 24,
-        "admitted": 24
+        "candidates": 29,
+        "admitted": 29
       },
       "promise": {
-        "candidates": 6,
-        "admitted": 6
+        "candidates": 36,
+        "admitted": 36
       },
       "microtask": {
         "candidates": 6,
         "admitted": 6
       },
+      "hard-algorithm": {
+        "candidates": 45,
+        "admitted": 26
+      },
+      "vm": {
+        "candidates": 5,
+        "admitted": 4
+      },
+      "closure": {
+        "candidates": 32,
+        "admitted": 26
+      },
+      "parser": {
+        "candidates": 5,
+        "admitted": 2
+      },
+      "backtracking": {
+        "candidates": 10,
+        "admitted": 7
+      },
+      "graph": {
+        "candidates": 10,
+        "admitted": 8
+      },
+      "cellular-automaton": {
+        "candidates": 5,
+        "admitted": 1
+      },
+      "dp": {
+        "candidates": 5,
+        "admitted": 1
+      },
+      "class": {
+        "candidates": 5,
+        "admitted": 4
+      },
+      "getter": {
+        "candidates": 10,
+        "admitted": 9
+      },
+      "hard-semantics": {
+        "candidates": 40,
+        "admitted": 39
+      },
+      "inheritance": {
+        "candidates": 5,
+        "admitted": 4
+      },
+      "gc": {
+        "candidates": 5,
+        "admitted": 5
+      },
+      "rollback": {
+        "candidates": 5,
+        "admitted": 5
+      },
+      "descriptor": {
+        "candidates": 5,
+        "admitted": 5
+      },
+      "prototype": {
+        "candidates": 5,
+        "admitted": 5
+      },
+      "hard-workflow": {
+        "candidates": 40,
+        "admitted": 35
+      },
+      "native-bindings": {
+        "candidates": 35,
+        "admitted": 30
+      },
       "real-source": {
-        "candidates": 607,
-        "admitted": 562
+        "candidates": 413,
+        "admitted": 385
+      },
+      "real-oss": {
+        "candidates": 869,
+        "admitted": 869
+      },
+      "pipeline": {
+        "candidates": 12,
+        "admitted": 12
+      },
+      "dgx-repo": {
+        "candidates": 502,
+        "admitted": 502
+      },
+      "unit-test-input": {
+        "candidates": 110,
+        "admitted": 110
       }
     },
-    "admissionFraction": 0.9735099337748344,
+    "admissionFraction": 0.9786463988418386,
     "modelExecutionAccuracy": null,
     "agentTaskSuccess": null,
     "denominator": "every candidate in the declared inventory, including missing inputs and refusals"
   },
   "counts": {
     "total": {
-      "cases": 1720,
-      "families": 237,
-      "independentComponents": 235,
-      "sourcePrograms": 494
+      "cases": 2500,
+      "families": 777,
+      "independentComponents": 718,
+      "sourcePrograms": 1046
     },
     "bySplit": {
       "train": {
-        "cases": 778,
-        "families": 120,
-        "independentComponents": 118,
-        "sourcePrograms": 241
+        "cases": 1198,
+        "families": 410,
+        "independentComponents": 360,
+        "sourcePrograms": 548
       },
       "validation": {
-        "cases": 375,
-        "families": 47,
-        "independentComponents": 47,
-        "sourcePrograms": 111
+        "cases": 513,
+        "families": 144,
+        "independentComponents": 143,
+        "sourcePrograms": 198
       },
       "test": {
-        "cases": 567,
-        "families": 70,
-        "independentComponents": 70,
-        "sourcePrograms": 142
+        "cases": 789,
+        "families": 223,
+        "independentComponents": 215,
+        "sourcePrograms": 300
       }
     },
     "byFeature": {
-      "algorithm": 444,
-      "alias": 117,
-      "arithmetic": 165,
-      "array": 1013,
-      "bigint": 9,
-      "branch": 1198,
-      "break": 12,
-      "continue": 12,
-      "cycle": 9,
-      "destructure": 12,
-      "dom": 21,
-      "exception": 165,
-      "exceptional-scalar": 18,
-      "external": 765,
-      "finally": 107,
-      "fs": 34,
-      "http": 33,
-      "longer-execution": 125,
-      "loop": 960,
+      "algorithm": 450,
+      "alias": 143,
+      "arithmetic": 162,
+      "array": 985,
+      "backtracking": 7,
+      "bigint": 12,
+      "branch": 1172,
+      "break": 16,
+      "cellular-automaton": 1,
+      "class": 3,
+      "closure": 24,
+      "continue": 16,
+      "cycle": 13,
+      "descriptor": 4,
+      "destructure": 9,
+      "dgx-repo": 502,
+      "dom": 25,
+      "dp": 1,
+      "exception": 171,
+      "exceptional-scalar": 21,
+      "external": 832,
+      "finally": 129,
+      "fs": 41,
+      "gc": 5,
+      "getter": 7,
+      "graph": 7,
+      "hard-algorithm": 25,
+      "hard-semantics": 34,
+      "hard-workflow": 31,
+      "http": 37,
+      "inheritance": 3,
+      "longer-execution": 126,
+      "loop": 990,
       "microtask": 5,
-      "multi-function": 134,
-      "mutation": 187,
+      "multi-function": 140,
+      "mutation": 224,
+      "native-bindings": 27,
       "nested-object": 12,
-      "net": 16,
-      "null-prototype": 42,
-      "nullish": 25,
-      "object": 116,
-      "platform": 94,
-      "promise": 6,
+      "net": 20,
+      "null-prototype": 68,
+      "nullish": 36,
+      "object": 148,
+      "parser": 2,
+      "pipeline": 10,
+      "platform": 131,
+      "promise": 33,
       "property-order": 12,
       "property-presence": 24,
-      "real-source": 527,
-      "recursion": 5,
-      "sequential": 220,
-      "sparse": 24,
-      "standard-error": 9,
-      "string": 78,
-      "undefined": 12,
-      "unicode": 9
+      "prototype": 4,
+      "real-oss": 865,
+      "real-source": 351,
+      "recursion": 27,
+      "rollback": 5,
+      "sequential": 286,
+      "sparse": 28,
+      "standard-error": 12,
+      "string": 91,
+      "undefined": 9,
+      "unicode": 9,
+      "unit-test-input": 110,
+      "vm": 4
     }
   },
   "diagnostics": {
     "familiarInputs": {
       "total": {
-        "cases": 190,
-        "families": 105,
-        "independentComponents": 103,
-        "sourcePrograms": 190
+        "cases": 202,
+        "families": 118,
+        "independentComponents": 116,
+        "sourcePrograms": 202
       },
       "bySplit": {
         "train": {
@@ -317,52 +447,69 @@
           "sourcePrograms": 0
         },
         "test": {
-          "cases": 190,
-          "families": 105,
-          "independentComponents": 103,
-          "sourcePrograms": 190
+          "cases": 202,
+          "families": 118,
+          "independentComponents": 116,
+          "sourcePrograms": 202
         }
       },
       "byFeature": {
-        "algorithm": 59,
-        "alias": 15,
-        "arithmetic": 27,
-        "array": 99,
-        "bigint": 3,
-        "branch": 132,
-        "cycle": 3,
-        "dom": 3,
-        "exception": 9,
-        "exceptional-scalar": 6,
-        "external": 99,
-        "finally": 7,
-        "fs": 2,
-        "http": 3,
+        "algorithm": 53,
+        "alias": 19,
+        "arithmetic": 30,
+        "array": 104,
+        "branch": 131,
+        "break": 1,
+        "class": 1,
+        "closure": 2,
+        "continue": 1,
+        "cycle": 4,
+        "descriptor": 1,
+        "destructure": 3,
+        "dom": 4,
+        "exception": 17,
+        "exceptional-scalar": 3,
+        "external": 108,
+        "finally": 15,
+        "fs": 3,
+        "getter": 2,
+        "graph": 1,
+        "hard-algorithm": 1,
+        "hard-semantics": 5,
+        "hard-workflow": 4,
+        "http": 4,
+        "inheritance": 1,
         "longer-execution": 12,
-        "loop": 96,
+        "loop": 101,
         "microtask": 1,
         "multi-function": 12,
-        "mutation": 23,
-        "net": 2,
-        "null-prototype": 6,
-        "nullish": 5,
-        "object": 12,
-        "platform": 8,
-        "real-source": 35,
-        "recursion": 1,
-        "sequential": 20,
-        "standard-error": 3,
+        "mutation": 28,
+        "native-bindings": 3,
+        "net": 3,
+        "null-prototype": 8,
+        "nullish": 3,
+        "object": 18,
+        "pipeline": 2,
+        "platform": 13,
+        "promise": 3,
+        "prototype": 1,
+        "real-oss": 4,
+        "real-source": 34,
+        "recursion": 2,
+        "sequential": 31,
+        "sparse": 1,
         "string": 8,
+        "undefined": 3,
         "unicode": 3
       }
     },
-    "familiarInputDuplicateExclusions": 1,
+    "familiarInputDuplicateExclusions": 2,
     "challenge": {
       "total": {
-        "cases": 13,
-        "families": 13,
-        "independentComponents": 13,
-        "sourcePrograms": 13
+        "cases": 14,
+        "families": 14,
+        "independentComponents": 14,
+        "sourcePrograms": 14
       },
       "bySplit": {
         "train": {
@@ -378,60 +525,60 @@
           "sourcePrograms": 0
         },
         "test": {
-          "cases": 13,
-          "families": 13,
-          "independentComponents": 13,
-          "sourcePrograms": 13
+          "cases": 14,
+          "families": 14,
+          "independentComponents": 14,
+          "sourcePrograms": 14
         }
       },
       "byFeature": {
-        "algorithm": 12,
+        "algorithm": 13,
         "array": 8,
-        "branch": 8,
+        "branch": 9,
         "break": 1,
-        "composition": 13,
+        "composition": 14,
         "continue": 1,
-        "longer-execution": 13,
-        "loop": 13
+        "longer-execution": 14,
+        "loop": 14
       }
     },
     "challengePopulation": {
-      "candidateExecutions": 13,
-      "candidateFamilies": 13,
+      "candidateExecutions": 14,
+      "candidateFamilies": 14,
       "statuses": {
-        "admitted": 13
+        "admitted": 14
       },
       "refusals": {},
       "byOrigin": {
         "authored-generator": {
-          "candidates": 13,
-          "admitted": 13
+          "candidates": 14,
+          "admitted": 14
         }
       },
       "byFeature": {
         "algorithm": {
-          "candidates": 12,
-          "admitted": 12
+          "candidates": 13,
+          "admitted": 13
         },
         "loop": {
-          "candidates": 13,
-          "admitted": 13
+          "candidates": 14,
+          "admitted": 14
         },
         "longer-execution": {
-          "candidates": 13,
-          "admitted": 13
+          "candidates": 14,
+          "admitted": 14
         },
         "composition": {
-          "candidates": 13,
-          "admitted": 13
+          "candidates": 14,
+          "admitted": 14
         },
         "array": {
           "candidates": 8,
           "admitted": 8
         },
         "branch": {
-          "candidates": 8,
-          "admitted": 8
+          "candidates": 9,
+          "admitted": 9
         },
         "break": {
           "candidates": 1,
@@ -450,32 +597,32 @@
   },
   "files": {
     "main.jsonl": {
-      "sha256": "9791f3beeae1e3b2dda41e079a0ca4ed579b5e2fc55f039106bcdb4ccf67fd93",
-      "bytes": 2955760
+      "sha256": "c478bc4f60ab588ad04d5317d7ea7724da5048693092aa99efa4066936622e88",
+      "bytes": 4801538
     },
     "familiar-inputs.jsonl": {
-      "sha256": "0ee9ace521dda6f49d2df7872c4afa3574ace5f19dd23ca47c21aad0ac4c6a08",
-      "bytes": 330169
+      "sha256": "60d8dd224fb60017274bfd48fe3b80d4a89ef45c0afbc884a52346e50e1ab352",
+      "bytes": 374402
     },
     "familiar-input-exclusions.jsonl": {
-      "sha256": "38d6532210f1c16e6b3773408db4833ca9eb759a8b558f30f963e076568bc99d",
-      "bytes": 231
+      "sha256": "5c42359d8323cb31c796f591c8aa935edf82e6c17ec3faa1c98e483930052a20",
+      "bytes": 442
     },
     "challenge.jsonl": {
-      "sha256": "8eb98dca6816a2eff2d3a879c8b00139930046c7c8388f0ed7f4026dd5659ff5",
-      "bytes": 16671
+      "sha256": "5dc104c84d17ee753617443b3c7e5f92262d502c2a89cf5f0bb81055a4cdf368",
+      "bytes": 17819
     },
     "admission.jsonl": {
-      "sha256": "20f882cdc7e4e574b1a661db16ee190551b8cecbfb52ea160f8d7a4f4e283615",
-      "bytes": 1917519
+      "sha256": "5f216b7c4b7557abe9d7608dc7b956fc361a75115af608e226a4e6141939c473",
+      "bytes": 2693639
     },
     "challenge-admission.jsonl": {
-      "sha256": "6477588e449c98ac00a99f35b83ae1ae5695433568592a07c15e2afb1d402866",
-      "bytes": 12385
+      "sha256": "7b41049232db60b42c6cfe15e17607ee1b51f6838d5546256b718d97d849a6fa",
+      "bytes": 13314
     },
     "evaluation-manifest.json": {
-      "sha256": "31afbe879bf61188196d2afd1b2d5acadc725e721b17e057c788d354c3cf200d",
-      "bytes": 90207
+      "sha256": "5eb0952eb71eac3c0b89797c7802911fe9e336e7fc89b95e7da48be42560d490",
+      "bytes": 124638
     }
   },
   "splitPolicy": "union declared family, template, ancestors, exact source and conservative alpha/literal clone fingerprint before admission",
