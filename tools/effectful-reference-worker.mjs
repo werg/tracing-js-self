@@ -13,6 +13,7 @@ import {instrumentBranchSource} from '../src/training/branch-reference.js';
 import {instrumentCompletionSource,createCompletionCapture,COMPLETION_HOOK} from '../src/training/completion-reference.js';
 import {instrumentNativeTraceSource,createNativeTraceCollector} from '../src/training/native-trace.js';
 import {normalizeFetchRequest,VM_FETCH_RUNTIME_SCRIPT} from '../src/training/tinker-http-fetch.js';
+import {VM_BROWSER_DOM_RUNTIME_SCRIPT,DEFAULT_BROWSER_HTML,DEFAULT_BROWSER_URL} from '../src/training/tinker-browser-dom.js';
 
 let mode='original',phase='input';
 try{
@@ -84,6 +85,11 @@ try{
     ? {
         URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone,
         __platformFetch: (reqInput, reqInit) => invoke('http.request', normalizeFetchRequest(reqInput, reqInit)),
+        ...(input.environment === 'browser' ? {
+          __browserInvoke: (op, opArgs) => invoke(op, Array.from(opArgs ?? [])),
+          __browserInitialHtml: input.initialHtml ?? DEFAULT_BROWSER_HTML,
+          __browserInitialUrl: input.initialUrl ?? DEFAULT_BROWSER_URL,
+        } : {}),
       }
     : {};
   const context=vm.createContext({...extraGlobals,...(traceCollector?traceCollector.hooks:{}),host,__args:args,__result:undefined,__kind:'return',
@@ -114,6 +120,9 @@ try{
     context.__platformDateNow=()=>invoke('platform.dateNow',[]);
     new vm.Script('Date.now = __platformDateNow;').runInContext(context,{timeout:input.timeoutMs??5000});
   }
+  if (input.executionMode === 'native' && input.environment === 'browser') {
+    new vm.Script(VM_BROWSER_DOM_RUNTIME_SCRIPT).runInContext(context, {timeout: input.timeoutMs ?? 5000});
+  }
   phase='instrumentation';
   const source=mode==='operations'?instrumentOperationSource(input.source):
     mode==='branches'?instrumentBranchSource(input.source):
@@ -129,7 +138,29 @@ try{
   phase='execute';
   script.runInContext(context,{timeout:input.timeoutMs??5000});
   let value=context.__result,kind=context.__kind;
-  if(kind==='return')try{value=await value;}catch(error){kind='throw';value=error;}
+  if(kind==='return'){
+    if(input.environment==='browser'&&value&&typeof value.then==='function'){
+      let settled=false;
+      const tracked=Promise.resolve(value).then(
+        res=>{settled=true;return {ok:true,res};},
+        err=>{settled=true;return {ok:false,err};}
+      );
+      for(let steps=0;steps<2000&&!settled;steps++){
+        await new Promise(resolve=>setImmediate(resolve));
+        if(settled)break;
+        if(context.__browserHasPendingTimers&&context.__browserHasPendingTimers()){
+          try{context.__browserStepNextTimer();}catch(error){failure(error);}
+        }else{
+          break;
+        }
+      }
+      const outcomeBox=await tracked;
+      if(outcomeBox.ok)value=outcomeBox.res;
+      else{kind='throw';value=outcomeBox.err;}
+    }else{
+      try{value=await value;}catch(error){kind='throw';value=error;}
+    }
+  }
   // Allow queued callback failures to settle before certifying quiescence.
   await new Promise(resolve=>setImmediate(resolve));
   if(infrastructureFailures.length){

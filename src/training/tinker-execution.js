@@ -13,6 +13,7 @@ import {independentEffectfulReference} from '../semantic/source-reference.js';
 import {compileBoundedTypeScript} from '../typescript.js';
 import {decode} from '../values.js';
 import {sourceUsesGlobalFetch} from './tinker-http-fetch.js';
+import {BROWSER_TOOL_DESCRIPTIONS, DEFAULT_BROWSER_HTML, DEFAULT_BROWSER_URL, scanPublicSourceBrowserTools} from './tinker-browser-dom.js';
 
 export const TINKER_EXECUTION_SCHEMA = 'readable-js-execution/1';
 export const TINKER_TRACE_FORMATS = Object.freeze(['full', 'compact', 'actions-only']);
@@ -242,19 +243,29 @@ function normalizeTask(input) {
   const preamble = nativeBindings.map(binding => 'function ' + binding.name + '(...args){return host.' +
     (binding.kind === 'promise' ? 'natlangCall' : 'natlangCallSync') + '(' + JSON.stringify(binding.name) + ',undefined,args);}').join('\n');
   const executableSource = source + '\n' + preamble;
-  const executionMode = input.executionMode ?? 'owned';
+  const environment = input.environment ?? null;
+  demand(environment === null || environment === 'browser', 'environment must be omitted or "browser"');
+  const executionMode = input.executionMode ?? (environment === 'browser' ? 'native' : 'owned');
   demand(['owned', 'native'].includes(executionMode), 'executionMode must be owned or native');
+  demand(environment !== 'browser' || executionMode === 'native', 'Browser environment requires executionMode "native"');
+  const initialUrl = environment === 'browser' ? (input.initialUrl ?? DEFAULT_BROWSER_URL) : undefined;
+  const initialHtml = environment === 'browser' ? (input.initialHtml ?? DEFAULT_BROWSER_HTML) : undefined;
+  if (environment === 'browser') {
+    demand(typeof initialUrl === 'string' && initialUrl.length > 0 && initialUrl.length <= 4096, 'Invalid browser initialUrl');
+    demand(typeof initialHtml === 'string' && initialHtml.length <= 131072, 'Invalid browser initialHtml');
+  }
   const randomMode = input.randomMode ?? 'seeded';
   demand(['seeded', 'tool'].includes(randomMode), 'randomMode must be seeded or tool');
   const maxSteps = input.maxSteps ?? 100000, timeoutMs = input.timeoutMs ?? 10000;
   demand(Number.isSafeInteger(maxSteps) && maxSteps > 0 && maxSteps <= 1000000, 'Invalid teacher step limit');
   demand(Number.isSafeInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 60000, 'Invalid teacher timeout');
   const task = {...clone(input), entry, language, ...(executionMode !== 'owned' ? {executionMode} : {}),
+    ...(environment ? {environment, initialUrl, initialHtml} : {}),
     ...(randomMode !== 'seeded' ? {randomMode} : {}), randomSeed, nativeBindings, args: encodeReadable(args), freshRandomCalls: 0,
     fixture: {calls: decodedCalls.map(call => ({operation: call.operation, arguments: encodeReadable(call.arguments),
       status: call.status ?? 'fulfilled', result: encodeReadable(call.result)})), settlementOrder: fixture.settlementOrder}, maxSteps, timeoutMs};
   return {id: input.id, family: input.family, sourceHash, source, executableSource, entry, args, fixture, nativeBindings,
-    executionMode, randomMode, randomSeed, maxSteps, timeoutMs, task};
+    environment, initialUrl, initialHtml, executionMode, randomMode, randomSeed, maxSteps, timeoutMs, task};
 }
 
 function publicOperation(prepared, operation, args) {
@@ -276,10 +287,11 @@ function toolDeclaration(operation, prepared) {
   const binding = prepared.nativeBindings.find(item => item.name === operation);
   const spec = own(HOST_OPERATIONS, operation) ? HOST_OPERATIONS[operation] : null;
   const arity = spec ? spec.arity : null;
-  const fetchHint = operation === 'http.request' && sourceUsesGlobalFetch(prepared.source)
+  const fetchHint = operation === 'http.request' && (sourceUsesGlobalFetch(prepared.source) || prepared.environment === 'browser')
     ? 'Invoke JS external operation http.request (promise, 4 arguments: [url, method, headersObject, bodyOrNull]).'
     : null;
-  const description = binding?.description ?? fetchHint ?? (spec
+  const browserHint = own(BROWSER_TOOL_DESCRIPTIONS, operation) ? BROWSER_TOOL_DESCRIPTIONS[operation] : null;
+  const description = binding?.description ?? fetchHint ?? browserHint ?? (spec
     ? `Invoke JS external operation ${operation} (${spec.kind}, ${arity} argument${arity === 1 ? '' : 's'}).`
     : `Invoke JS external operation ${operation}.`);
   return {
@@ -314,12 +326,19 @@ function initialMessages(prepared) {
   const usesMathRandom = /\bMath\.random\b/.test(prepared.source);
   if (usesMathRandom && prepared.randomMode === 'tool') names.add('platform.random');
   if (sourceUsesGlobalFetch(prepared.source)) names.add('http.request');
+  if (prepared.environment === 'browser') {
+    for (const op of scanPublicSourceBrowserTools(prepared.source)) names.add(op);
+  }
   const operations = [...names].sort();
   const parts = [
     'Execute this JavaScript program:',
     '```javascript\n' + prepared.source + '\n```',
     'Entry: ' + prepared.entry + ' with arguments ' + JSON.stringify(encodeReadable(prepared.args)),
   ];
+  if (prepared.environment === 'browser') {
+    parts.push('Initial URL: ' + prepared.initialUrl);
+    parts.push('Initial DOM:\n```html\n' + prepared.initialHtml + '\n```');
+  }
   if (usesMathRandom) {
     if (prepared.randomMode === 'tool') {
       parts.push('Math.random() is non-deterministic: invoke the platform.random tool with {"arguments":[]} for each Math.random() call.');
@@ -348,7 +367,8 @@ export async function prepareTinkerTask(input, options = {}) {
     const baseRefInput = {source: prepared.executableSource, entry: prepared.entry,
       inputGraph: encodeNativeGraph(prepared.args), fixture: prepared.fixture,
       randomSeed: prepared.randomMode === 'tool' ? null : prepared.randomSeed,
-      randomMode: prepared.randomMode, executionMode: 'native'};
+      randomMode: prepared.randomMode, executionMode: 'native',
+      ...(prepared.environment ? {environment: prepared.environment, initialHtml: prepared.initialHtml, initialUrl: prepared.initialUrl} : {})};
     let reference, traceTurns = null;
     if (format !== 'actions-only') {
       try {

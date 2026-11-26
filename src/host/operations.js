@@ -64,17 +64,25 @@ const DECLARED_OPERATIONS={
   'dom.on':Object.freeze({kind:'promise',signature:'dom.on/1',arity:3,key:0,callbackIndices:Object.freeze([2]),callbackLifetime:'subscription',codec:JSON_CODEC}),
   'dom.off':Object.freeze({kind:'promise',signature:'dom.off/1',arity:1,key:0,codec:JSON_CODEC}),
   'dom.startTimer':Object.freeze({kind:'promise',signature:'dom.startTimer/1',arity:2,key:null,callbackIndices:Object.freeze([1]),callbackLifetime:'subscription',codec:JSON_CODEC}),
-  'dom.stopTimer':Object.freeze({kind:'promise',signature:'dom.stopTimer/1',arity:1,key:0,codec:JSON_CODEC})
+  'dom.stopTimer':Object.freeze({kind:'promise',signature:'dom.stopTimer/1',arity:1,key:0,codec:JSON_CODEC}),
+  'browser.storageGet':Object.freeze({kind:'synchronous',signature:'browser.storageGet/1',arity:2,key:0,codec:JSON_CODEC}),
+  'browser.storageSet':Object.freeze({kind:'synchronous',signature:'browser.storageSet/1',arity:3,key:0,codec:JSON_CODEC}),
+  'browser.storageRemove':Object.freeze({kind:'synchronous',signature:'browser.storageRemove/1',arity:2,key:0,codec:JSON_CODEC}),
+  'browser.storageClear':Object.freeze({kind:'synchronous',signature:'browser.storageClear/1',arity:1,key:0,codec:JSON_CODEC}),
+  'browser.alert':Object.freeze({kind:'synchronous',signature:'browser.alert/1',arity:1,key:null,codec:JSON_CODEC}),
+  'browser.confirm':Object.freeze({kind:'synchronous',signature:'browser.confirm/1',arity:1,key:null,codec:JSON_CODEC}),
+  'browser.prompt':Object.freeze({kind:'synchronous',signature:'browser.prompt/1',arity:2,key:null,codec:JSON_CODEC})
 };
 
 // One public descriptor supplies collection, serving, emission and the native
 // Python consumer. Host embeddings can narrow grants, never widen them through
 // request data. Replay always consumes observations without calling services.
 const scopes={platform:'embedding',demo:'fixture',http:'origin',fs:'filesystem-root',
-  net:'endpoint',dom:'dom-root',natlang:'registered-resource'};
+  net:'endpoint',dom:'dom-root',natlang:'registered-resource',browser:'origin'};
 const readers=new Set(['platform.dateNow','platform.random','demo.readAsync','demo.readNumber',
   'http.get','http.responseStatus','http.responseHeaders','http.responseState',
-  'fs.readText','fs.list','dom.query','dom.getText','dom.getAttribute','natlang.readCell']);
+  'fs.readText','fs.list','dom.query','dom.getText','dom.getAttribute','natlang.readCell',
+  'browser.storageGet','browser.confirm','browser.prompt']);
 const resources=new Set(['http.get','http.post','http.request','fs.openRead','fs.openWrite',
   'net.connect','dom.query','demo.listen','dom.on','dom.startTimer']);
 export const HOST_OPERATION_SCHEMA='host-operations/4';
