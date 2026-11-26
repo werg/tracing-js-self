@@ -12,6 +12,7 @@ import {instrumentOperationSource} from '../src/training/operation-reference.js'
 import {instrumentBranchSource} from '../src/training/branch-reference.js';
 import {instrumentCompletionSource,createCompletionCapture,COMPLETION_HOOK} from '../src/training/completion-reference.js';
 import {instrumentNativeTraceSource,createNativeTraceCollector} from '../src/training/native-trace.js';
+import {normalizeFetchRequest,VM_FETCH_RUNTIME_SCRIPT} from '../src/training/tinker-http-fetch.js';
 
 let mode='original',phase='input';
 try{
@@ -80,7 +81,10 @@ try{
       operator==='||'?Boolean(value):value!==null&&value!==undefined]});return value;
   };
   const extraGlobals = input.executionMode === 'native'
-    ? {URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone}
+    ? {
+        URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone,
+        __platformFetch: (reqInput, reqInit) => invoke('http.request', normalizeFetchRequest(reqInput, reqInit)),
+      }
     : {};
   const context=vm.createContext({...extraGlobals,...(traceCollector?traceCollector.hooks:{}),host,__args:args,__result:undefined,__kind:'return',
     __tracingCapture:capture,__tracingBranch:branch,__tracingLogical:logical,
@@ -89,6 +93,9 @@ try{
     queueMicrotask:callback=>queueMicrotask(()=>{try{callback();}catch(error){failure(error);}}),
     console:Object.fromEntries(['log','info','warn','error'].map(method=>[method,(...args)=>
       invoke('platform.console.'+method,args)]))},{codeGeneration:{strings:false,wasm:false}});
+  if (input.executionMode === 'native') {
+    new vm.Script(VM_FETCH_RUNTIME_SCRIPT).runInContext(context, {timeout: input.timeoutMs ?? 5000});
+  }
   const usesToolRandom=input.randomMode==='tool'||input.fixture.calls.some(call=>call.operation==='platform.random');
   if(usesToolRandom){
     context.__platformRandom=()=>invoke('platform.random',[]);

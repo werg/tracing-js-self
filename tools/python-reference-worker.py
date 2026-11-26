@@ -32,6 +32,7 @@ from tinker_py.codec import (  # noqa: E402
     encode_exception,
     encode_readable,
 )
+from tinker_py.http_tools import install_replay_http_hooks  # noqa: E402
 from tinker_py.tracer import TraceLimitError, create_python_tracer  # noqa: E402
 
 PY_HOST_METHODS: dict[str, str] = {
@@ -173,7 +174,11 @@ def main() -> int:
             else None
         )
 
-        def invoke(operation: str, call_args: list[Any]) -> Any:
+        def invoke(
+            operation: str,
+            call_args: list[Any],
+            exc_builder: Any = None,
+        ) -> Any:
             nonlocal call_index
             if tracer is not None:
                 tracer.next_turn()
@@ -214,12 +219,23 @@ def main() -> int:
                 "result": describe_graph([result_val], allow_exceptions=True),
             })
             if status == "rejected":
+                if callable(exc_builder):
+                    raise exc_builder(result_val)
                 raise _build_guest_exception(result_val)
             # Return a fresh copy via encode/decode so guest mutations of returned
             # containers cannot corrupt fixture expectations.
             return decode_readable(encode_readable(result_val, allow_exceptions=True))
 
         # Patch external platform interfaces before compiling/executing guest code.
+        has_http_fixture = any(c["operation"] == "http.request" for c in expected_calls)
+        enable_urllib = has_http_fixture or ("urllib" in source) or ("urlopen" in source)
+        enable_requests = has_http_fixture or ("requests" in source)
+        if enable_urllib or enable_requests:
+            install_replay_http_hooks(
+                invoke,
+                enable_urllib=enable_urllib,
+                enable_requests=enable_requests,
+            )
         def _platform_print(*print_args: Any, **_kwargs: Any) -> None:
             invoke("platform.print", list(print_args))
 

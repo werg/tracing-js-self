@@ -22,6 +22,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import tempfile
 from typing import Any
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -191,13 +192,14 @@ import time
 
 sys.path.insert(0, sys.argv[1])
 from tinker_py.codec import decode_readable, encode_exception, encode_readable
+from tinker_py.http_tools import DEFAULT_HTTP_TIMEOUT_S, MAX_HTTP_BODY_BYTES, install_live_http_hooks
 
 def _timeout(_sig, _frame):
     raise TimeoutError("probe timeout")
 
 if hasattr(signal, "SIGALRM"):
     signal.signal(signal.SIGALRM, _timeout)
-    signal.setitimer(signal.ITIMER_REAL, 2.5)
+    signal.setitimer(signal.ITIMER_REAL, 8.0)
 
 real_stdout = sys.stdout
 try:
@@ -208,8 +210,14 @@ try:
     recorded = []
     rng = random.Random(17)
     time_counter = [0]
+    io_depth = [0]
+    real_time = time.time
+    real_monotonic = time.monotonic
+    real_random = random.random
 
     def _rec_print(*p_args, **_kwargs):
+        if io_depth[0] > 0:
+            return
         enc_args = encode_readable(list(p_args))
         recorded.append({
             "operation": "platform.print",
@@ -219,6 +227,21 @@ try:
         })
 
     def _rec_time():
+        if io_depth[0] > 0:
+            return real_time()
+        val = 1700000000.0 + time_counter[0] * 0.25
+        time_counter[0] += 1
+        recorded.append({
+            "operation": "platform.time",
+            "arguments": [],
+            "status": "fulfilled",
+            "result": val,
+        })
+        return val
+
+    def _rec_monotonic():
+        if io_depth[0] > 0:
+            return real_monotonic()
         val = 1700000000.0 + time_counter[0] * 0.25
         time_counter[0] += 1
         recorded.append({
@@ -230,6 +253,8 @@ try:
         return val
 
     def _rec_random():
+        if io_depth[0] > 0:
+            return real_random()
         val = rng.random()
         recorded.append({
             "operation": "platform.random",
@@ -239,8 +264,20 @@ try:
         })
         return val
 
+    enable_urllib = ("urllib" in source) or ("urlopen" in source)
+    enable_requests = "requests" in source
+    if enable_urllib or enable_requests:
+        install_live_http_hooks(
+            recorded,
+            max_body_bytes=MAX_HTTP_BODY_BYTES,
+            default_timeout=DEFAULT_HTTP_TIMEOUT_S,
+            enable_urllib=enable_urllib,
+            enable_requests=enable_requests,
+            io_depth=io_depth,
+        )
+
     time.time = _rec_time
-    time.monotonic = _rec_time
+    time.monotonic = _rec_monotonic
     random.random = _rec_random
 
     guest_builtins = dict(vars(builtins))
@@ -337,6 +374,39 @@ def _eval_const_expr(node: ast.AST, env: dict[str, Any], depth: int = 0) -> tupl
         if ok and isinstance(val, (int, float)) and not isinstance(val, bool):
             return True, (-val if isinstance(node.op, ast.USub) else +val)
         return False, None
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
+        ok_l, left = _eval_const_expr(node.left, env, depth + 1)
+        ok_r, right = _eval_const_expr(node.right, env, depth + 1)
+        if ok_l and ok_r:
+            if isinstance(left, str) and isinstance(right, str):
+                return True, left + right
+            if isinstance(left, bytes) and isinstance(right, bytes):
+                return True, left + right
+            if isinstance(left, list) and isinstance(right, list):
+                return True, left + right
+            if isinstance(left, tuple) and isinstance(right, tuple):
+                return True, left + right
+            if (
+                isinstance(left, (int, float))
+                and not isinstance(left, bool)
+                and isinstance(right, (int, float))
+                and not isinstance(right, bool)
+            ):
+                return True, left + right
+        return False, None
+    if isinstance(node, ast.JoinedStr):
+        parts: list[str] = []
+        for piece in node.values:
+            if isinstance(piece, ast.Constant) and isinstance(piece.value, str):
+                parts.append(piece.value)
+            elif isinstance(piece, ast.FormattedValue) and piece.format_spec is None and piece.conversion == -1:
+                ok_v, val = _eval_const_expr(piece.value, env, depth + 1)
+                if not ok_v or not isinstance(val, (str, int, float, bool)):
+                    return False, None
+                parts.append(str(val))
+            else:
+                return False, None
+        return True, "".join(parts)
     if isinstance(node, ast.List):
         items = []
         for elt in node.elts:
@@ -657,7 +727,9 @@ def extract_unit_test_inputs(repo_dir: Path, test_files: list[Path]) -> dict[str
 
 
 def _is_allowed_stdlib_import(module_name: str) -> bool:
-    if module_name == "urllib.parse":
+    if module_name in ("urllib.parse", "urllib.request", "urllib.error", "urllib.response", "urllib"):
+        return True
+    if module_name == "requests" or module_name.startswith("requests."):
         return True
     root = module_name.split(".")[0]
     if root in BLOCKED_STDLIB_MODULES:
@@ -794,9 +866,12 @@ def _extract_local_symbol_closure(
         return False, [], []
     lines = text.splitlines()
     stmt_by_name: dict[str, int] = {}
+    import_indices_by_name: dict[str, list[int]] = {}
     for idx, stmt in enumerate(tree.body):
         for name in _defined_names_in_stmt(stmt):
             stmt_by_name[name] = idx
+            if isinstance(stmt, ast.Import):
+                import_indices_by_name.setdefault(name, []).append(idx)
 
     needed_indices: set[int] = set()
     queue = list(symbol_names)
@@ -814,11 +889,14 @@ def _extract_local_symbol_closure(
             return False, [], []
         stmt = tree.body[idx]
         if isinstance(stmt, ast.Import):
-            for alias in stmt.names:
-                if (alias.asname or alias.name.split(".")[0]) == name:
-                    if not _is_allowed_stdlib_import(alias.name):
-                        return False, [], []
-                    needed_indices.add(idx)
+            for imp_idx in import_indices_by_name.get(name, [idx]):
+                imp_stmt = tree.body[imp_idx]
+                assert isinstance(imp_stmt, ast.Import)
+                for alias in imp_stmt.names:
+                    if (alias.asname or alias.name.split(".")[0]) == name:
+                        if not _is_allowed_stdlib_import(alias.name):
+                            return False, [], []
+                        needed_indices.add(imp_idx)
         elif isinstance(stmt, ast.ImportFrom):
             mod = stmt.module or ""
             if stmt.level == 0 and _is_allowed_stdlib_import(mod):
@@ -872,9 +950,12 @@ def build_self_contained_snippet(
         return None
 
     stmt_by_name: dict[str, int] = {}
+    import_indices_by_name: dict[str, list[int]] = {}
     for idx, stmt in enumerate(tree.body):
         for name in _defined_names_in_stmt(stmt):
             stmt_by_name[name] = idx
+            if isinstance(stmt, ast.Import):
+                import_indices_by_name.setdefault(name, []).append(idx)
 
     needed_indices: set[int] = {target_idx}
     queue = list(_referenced_names(target_stmt))
@@ -893,12 +974,15 @@ def build_self_contained_snippet(
             return None
         stmt = tree.body[idx]
         if isinstance(stmt, ast.Import):
-            for alias in stmt.names:
-                bound = alias.asname or alias.name.split(".")[0]
-                if bound == name:
-                    if not _is_allowed_stdlib_import(alias.name):
-                        return None
-                    needed_indices.add(idx)
+            for imp_idx in import_indices_by_name.get(name, [idx]):
+                imp_stmt = tree.body[imp_idx]
+                assert isinstance(imp_stmt, ast.Import)
+                for alias in imp_stmt.names:
+                    bound = alias.asname or alias.name.split(".")[0]
+                    if bound == name:
+                        if not _is_allowed_stdlib_import(alias.name):
+                            return None
+                        needed_indices.add(imp_idx)
         elif isinstance(stmt, ast.ImportFrom):
             mod = stmt.module or ""
             if stmt.level == 0 and _is_allowed_stdlib_import(mod):
@@ -954,14 +1038,16 @@ def build_self_contained_snippet(
 def _probe_snippet(snippet: str, entry: str, encoded_args: list[Any]) -> dict[str, Any]:
     payload = _json_compact({"source": snippet, "entry": entry, "args": encoded_args})
     try:
-        proc = subprocess.run(
-            [sys.executable, "-c", _PROBE_SCRIPT, _TRAINING_DIR],
-            input=payload,
-            capture_output=True,
-            text=True,
-            timeout=4.0,
-            check=False,
-        )
+        with tempfile.TemporaryDirectory(prefix="py-probe-") as tmpdir:
+            proc = subprocess.run(
+                [sys.executable, "-c", _PROBE_SCRIPT, _TRAINING_DIR],
+                input=payload,
+                capture_output=True,
+                text=True,
+                cwd=tmpdir,
+                timeout=12.0,
+                check=False,
+            )
     except subprocess.TimeoutExpired:
         return {"ok": False, "error": "timeout"}
     out = proc.stdout.strip()
@@ -980,7 +1066,10 @@ def _detect_features(snippet: str, recorded_calls: list[dict[str, Any]], from_un
     if recorded_calls:
         feats.add("external")
         for c in recorded_calls:
-            feats.add(c["operation"])
+            op = c["operation"]
+            feats.add(op)
+            if op.startswith("http."):
+                feats.add("http")
     try:
         tree = ast.parse(snippet)
         for node in ast.walk(tree):

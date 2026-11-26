@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {encodeReadable, decodeReadable, prepareTinkerTask, exportTinkerExample,
   createTinkerSession, parseStudentAction, normalizedSourceHash,
   assistantVisibleText, assistantThinkingText} from '../src/training/tinker-execution.js';
+import {auditCausalPrefixPair} from '../src/training/tinker-supervision.js';
 import {hardEffectfulTasks, hardEffectfulTemplates} from '../src/training/tinker-hard-effectful.js';
 import {formatValue} from '../src/training/native-trace.js';
 
@@ -506,4 +507,122 @@ test('native V8 trace safely previews plain arrays/objects while never invoking 
   assert.match(thinking, /return \{"arr": \[1, 2, 3\], "obj": \{"a": 1, "b": "x"\}, "fires": 0\}/);
   const finalAction = parseStudentAction(exported.messages.at(-1));
   assert.equal(finalAction.value.fires, 0);
+});
+
+test('native V8 fetch() intercepts into http.request with Response API, causal zero future leakage, and error rejection', async () => {
+  const source = `async function run(baseUrl) {
+    const tag = baseUrl.split('/').at(-1);
+    const r1 = await fetch(baseUrl, {headers: {'Accept': 'application/json'}});
+    const body1 = await r1.json();
+    const r2 = await fetch(baseUrl + '/echo', {
+      method: 'POST',
+      headers: {'X-Tag': tag},
+      body: JSON.stringify({count: body1.count}),
+    });
+    const text2 = await r2.text();
+    const buf2 = await r2.arrayBuffer();
+    let netErr = null;
+    try {
+      await fetch(baseUrl + '/down');
+    } catch (err) {
+      netErr = (err instanceof TypeError) + ':' + err.message;
+    }
+    return {
+      ok1: r1.ok,
+      status1: r1.status,
+      statusText1: r1.statusText,
+      url1: r1.url,
+      ctype1: r1.headers.get('content-type'),
+      count: body1.count,
+      text2,
+      bytes2: buf2.byteLength,
+      netErr,
+    };
+  }`;
+
+  const makeFetchTask = (id, count, secret) => ({
+    id,
+    family: 'native-fetch',
+    executionMode: 'native',
+    source,
+    entry: 'run',
+    args: ['https://api.test/v1'],
+    fixture: {
+      calls: [
+        {
+          operation: 'http.request',
+          arguments: ['https://api.test/v1', 'GET', {accept: 'application/json'}, null],
+          status: 'fulfilled',
+          result: {
+            status: 200,
+            statusText: 'OK',
+            url: 'https://api.test/v1',
+            headers: {'content-type': 'application/json'},
+            body: JSON.stringify({count, secret}),
+          },
+        },
+        {
+          operation: 'http.request',
+          arguments: ['https://api.test/v1/echo', 'POST', {'x-tag': 'v1'}, JSON.stringify({count})],
+          status: 'fulfilled',
+          result: {
+            status: 201,
+            statusText: 'Created',
+            url: 'https://api.test/v1/echo',
+            headers: {'content-type': 'text/plain'},
+            body: 'ok:' + count,
+          },
+        },
+        {
+          operation: 'http.request',
+          arguments: ['https://api.test/v1/down', 'GET', {}, null],
+          status: 'rejected',
+          result: {name: 'TypeError', message: 'fetch failed'},
+        },
+      ],
+    },
+  });
+
+  const left = await exportTinkerExample(makeFetchTask('fetch-left', 7, 'SECRET_LEFT_99'), {traceFormat: 'compact'});
+  const right = await exportTinkerExample(makeFetchTask('fetch-right', 19, 'SECRET_RIGHT_88'), {traceFormat: 'compact'});
+  assert.equal(left.metadata.traceAudit.replayVerified, true);
+  assert.equal(right.metadata.traceAudit.replayVerified, true);
+
+  const declared = JSON.parse(left.messages.find(m => m.role === 'tool_declare').content).map(t => t.function.name);
+  assert.deepEqual(declared, ['http.request']);
+
+  const audit = auditCausalPrefixPair(left, right, {divergenceObservation: 0});
+  assert.equal(audit.passed, true);
+  assert.equal(audit.testedDivergence, true);
+  assert.doesNotMatch(JSON.stringify(left.messages.slice(0, audit.identicalPrefixMessages)), /SECRET_LEFT_99|ok:7/);
+
+  const comp = parseStudentAction(left.messages.at(-1));
+  assert.equal(comp.kind, 'return');
+  assert.deepEqual(comp.value, {
+    ok1: true,
+    status1: 200,
+    statusText1: 'OK',
+    url1: 'https://api.test/v1',
+    ctype1: 'application/json',
+    count: 7,
+    text2: 'ok:7',
+    bytes2: 4,
+    netErr: 'true:fetch failed',
+  });
+
+  const session = createTinkerSession(await prepareTinkerTask(left.task, {traceFormat: 'compact'}));
+  for (const msg of left.messages.filter(m => m.role === 'assistant')) {
+    await session.step(msg, 50);
+  }
+  assert.equal(session.grade(50).success, true);
+
+  // Member method .fetch() must NOT falsely declare http.request
+  const memberOnly = await exportTinkerExample(task('function run(svc){return svc && typeof svc === "object" ? 1 : 0;}'));
+  assert.equal(memberOnly.messages.some(m => m.role === 'tool_declare'), false);
+  const memberCall = await exportTinkerExample(task('function run(svc){return svc.fetch("x");}', {
+    args: [{x: 1}],
+    executionMode: 'native',
+    source: 'function run(){const svc={fetch:x=>x+1};return svc.fetch(2);}',
+  }));
+  assert.equal(memberCall.messages.some(m => m.role === 'tool_declare'), false);
 });
