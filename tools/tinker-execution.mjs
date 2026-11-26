@@ -12,8 +12,8 @@ const keyOf = value => createHash('sha256').update(JSON.stringify(value)).digest
 
 function cachePrepared(inputKey, prepared) {
   // Retain only the lightweight outcome/effects needed for grading sessions,
-  // never the multi-MB runtime journal bundle.
-  const {bundle: _bundle, ...lightweight} = prepared;
+  // never the multi-MB runtime journal bundle or private trace turns.
+  const {bundle: _bundle, traceTurns: _traceTurns, ...lightweight} = prepared;
   preparedSessions.set(inputKey, lightweight);
   preparedSessions.set(keyOf(prepared.task), lightweight);
   while (preparedSessions.size > MAX_PREPARED_CACHE * 2) {
@@ -47,7 +47,7 @@ async function dispatch(request) {
         return await exportAgentTinkerExample(request.task.agentTrajectory, request.task);
       }
       const key = keyOf(request.task);
-      const prepared = await prepareTinkerTask(request.task);
+      const prepared = await prepareTinkerTask(request.task, {traceFormat});
       cachePrepared(key, prepared);
       const messages = readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat, reasoningChannel});
       const traceAudit = await auditTeacherConversation(prepared, messages, {traceFormat, reasoningChannel});

@@ -207,6 +207,13 @@ test('worker is a private persistent JSONL boundary and returns generic model fa
     assert.equal(result.result.grade.success, true);
     const closed = await request({op: 'close', sessionId: started.result.sessionId});
     assert.equal(closed.result.closed, true);
+    const exportedNative = await request({
+      op: 'export',
+      traceFormat: 'compact',
+      task: task('function run(x){const y=x+1;return y*2;}', {executionMode: 'native', args: [5]}),
+    });
+    assert.equal(exportedNative.ok, true, JSON.stringify(exportedNative));
+    assert.match(assistantThinkingText(exportedNative.result.messages.find(m => m.role === 'assistant')), /y = 6/);
   } finally { child.stdin.end(); await new Promise(resolve => child.on('close', resolve)); lines.close(); }
   assert.equal(stderr, '');
 });
@@ -255,4 +262,132 @@ test('native V8 executionMode runs RegExp, JSON, URL, Date, and non-deterministi
   const s4 = await session.step(complete({ver: 3, path: 'orders', year: 2023, roll: 0.425}, ['{"url":"https://api.example.test/v3/orders"}']), 50);
   assert.equal(s4.done, true);
   assert.equal(s4.grade.success, true);
+});
+
+test('native V8 compact trace covers pure messy JS and matches uninstrumented outcome byte-for-byte', async () => {
+  const source = `function scoreItem(tag, n) {
+    const bonus = /^vip-([0-9]+)$/.exec(tag) ? 10 : 0;
+    return n * 2 + bonus;
+  }
+  function run(payload, state) {
+    const data = JSON.parse(payload);
+    let total = 0;
+    for (let i = 0; i < data.items.length; i++) {
+      const item = data.items[i];
+      if (item.active) {
+        total += scoreItem(item.tag, item.v);
+        state.hits++;
+      }
+    }
+    state.total = total;
+    return {total, hits: state.hits};
+  }`;
+  const t = {
+    id: 'native-pure-trace-1',
+    family: 'native-pure-trace',
+    executionMode: 'native',
+    source,
+    entry: 'run',
+    args: ['{"items":[{"tag":"vip-1","v":3,"active":true},{"tag":"std","v":4,"active":false},{"tag":"std","v":5,"active":true}]}', {hits: 0}],
+  };
+  const actionsOnlyPrepared = await prepareTinkerTask(t, {traceFormat: 'actions-only'});
+  const compactPrepared = await prepareTinkerTask(t, {traceFormat: 'compact'});
+  assert.deepEqual(compactPrepared.outcome, actionsOnlyPrepared.outcome);
+  assert.deepEqual(compactPrepared.effects, actionsOnlyPrepared.effects);
+  assert.equal(actionsOnlyPrepared.traceTurns, null);
+  assert.equal(Array.isArray(compactPrepared.traceTurns), true);
+  assert.equal(compactPrepared.traceTurns.length, 1);
+
+  const exported = await exportTinkerExample(t, {traceFormat: 'compact'});
+  assert.equal(exported.metadata.traceAudit.replayVerified, true);
+  assert.equal(exported.metadata.traceAudit.canonicalCausalNarration, true);
+  assert.ok(exported.metadata.traceAudit.narrationLines > 5);
+  const assistant = exported.messages.find(m => m.role === 'assistant');
+  const thinking = assistantThinkingText(assistant);
+  assert.match(thinking, /total = 0/);
+  assert.match(thinking, /branch i < data\.items\.length => true \(then\)/);
+  assert.match(thinking, /return \(scoreItem\) 16/);
+  assert.match(thinking, /state\.hits = 2/);
+  assert.match(thinking, /state\.total = 26/);
+  assert.match(thinking, /return -> object/);
+});
+
+test('native V8 compact trace splits multi-turn effectful traces causally with zero future leakage and safe Proxy handling', async () => {
+  const makeTask = (tsVal, rollVal) => ({
+    id: 'native-multi-trace-' + tsVal,
+    family: 'native-multi-trace',
+    executionMode: 'native',
+    randomMode: 'tool',
+    source: `function run(raw) {
+      let getterCalls = 0;
+      const guarded = new Proxy({ok: 1}, {
+        get(target, prop) { getterCalls++; return target[prop]; },
+      });
+      const parsed = JSON.parse(raw);
+      const prefix = parsed.tag + ':';
+      const ts = Date.now();
+      const year = new Date(ts).getUTCFullYear();
+      const roll = Math.random();
+      const msg = prefix + year + ':' + roll;
+      if (guarded) console.warn(msg);
+      return {year, roll, getterCalls};
+    }`,
+    entry: 'run',
+    args: ['{"tag":"ev"}'],
+    fixture: {
+      calls: [
+        {operation: 'platform.dateNow', arguments: [], status: 'fulfilled', result: tsVal},
+        {operation: 'platform.random', arguments: [], status: 'fulfilled', result: rollVal},
+        {operation: 'platform.console.warn', arguments: ['ev:' + new Date(tsVal).getUTCFullYear() + ':' + rollVal], status: 'fulfilled', result: {$js: 'undefined'}},
+      ],
+    },
+  });
+  const left = await exportTinkerExample(makeTask(1700000100000, 0.425), {traceFormat: 'compact'});
+  const right = await exportTinkerExample(makeTask(1800000100000, 0.875), {traceFormat: 'compact'});
+  assert.equal(left.metadata.traceAudit.replayVerified, true);
+  assert.equal(right.metadata.traceAudit.replayVerified, true);
+
+  const leftAssistants = left.messages.filter(m => m.role === 'assistant');
+  const rightAssistants = right.messages.filter(m => m.role === 'assistant');
+  assert.equal(leftAssistants.length, 4); // 3 tool calls + 1 completion
+  // Turn 0 (before Date.now): identical across counterfactuals and must not leak future timestamps/rolls.
+  const turn0Left = assistantThinkingText(leftAssistants[0]);
+  const turn0Right = assistantThinkingText(rightAssistants[0]);
+  assert.equal(turn0Left, turn0Right);
+  assert.match(turn0Left, /prefix = "ev:"/);
+  assert.doesNotMatch(turn0Left, /1700000100000|2023|0\.425/);
+  // Turn 1 (after Date.now, before Math.random): has ts and year, must not leak roll.
+  const turn1Left = assistantThinkingText(leftAssistants[1]);
+  assert.match(turn1Left, /ts = 1700000100000/);
+  assert.match(turn1Left, /year = 2023/);
+  assert.doesNotMatch(turn1Left, /0\.425/);
+  // Turn 2 (after Math.random, before console.warn): has roll and Proxy branch without triggering Proxy getter.
+  const turn2Left = assistantThinkingText(leftAssistants[2]);
+  assert.match(turn2Left, /roll = 0\.425/);
+  assert.match(turn2Left, /branch guarded \(then\)/);
+  // Proxy trap was NEVER invoked by trace formatting!
+  const finalAction = parseStudentAction(leftAssistants[3]);
+  assert.equal(finalAction.value.getterCalls, 0);
+});
+
+test('native V8 compact trace bounds massive loops with head+tail compaction', async () => {
+  const t = {
+    id: 'native-loop-cap',
+    family: 'native-loop-cap',
+    executionMode: 'native',
+    source: `function run(n) {
+      let s = 0;
+      for (let i = 0; i < n; i++) {
+        s += i;
+      }
+      return s;
+    }`,
+    entry: 'run',
+    args: [1000],
+  };
+  const prepared = await prepareTinkerTask(t, {traceFormat: 'compact'});
+  assert.equal(prepared.traceTurns.length, 1);
+  assert.equal(prepared.traceTurns[0].length, 300);
+  assert.ok(prepared.traceTurns[0].some(line => /^\.\.\. \(\d+ steps omitted\) \.\.\.$/.test(line)));
+  assert.equal(prepared.traceTurns[0].at(-1), 'return 499500');
 });

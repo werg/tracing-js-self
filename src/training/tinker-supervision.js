@@ -76,7 +76,7 @@ export async function auditTinkerSupervision(inputs, {formats = TINKER_TRACE_FOR
   }
   const rows = [], pairs = [], conversations = new Map(), formatTotals = {}, suppliedConversationAudits = [];
   for (const input of [...selected.values()].sort((a, b) => a.id.localeCompare(b.id))) {
-    const prepared = await prepareTinkerTask(input);
+    const prepared = await prepareTinkerTask(input, {traceFormat: formats.some(f => f !== 'actions-only') ? 'compact' : 'actions-only'});
     const original = supplied.get(input.id);
     if (original) {
       demand(original.sourceHash === prepared.sourceHash, 'Exported source identity differs from its frozen task');

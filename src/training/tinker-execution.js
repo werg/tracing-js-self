@@ -335,16 +335,33 @@ function initialMessages(prepared) {
  * the complete result/effects to a separate native Node reference.
  * In executionMode === 'native', execute directly in real Node/V8 without the
  * bounded owned-interpreter subset restriction. */
-export async function prepareTinkerTask(input) {
+export async function prepareTinkerTask(input, options = {}) {
   const prepared = normalizeTask(input);
   if (prepared.executionMode === 'native') {
-    const reference = await independentEffectfulReference({source: prepared.executableSource, entry: prepared.entry,
+    const format = options.traceFormat ? traceFormat(options) : 'actions-only';
+    const baseRefInput = {source: prepared.executableSource, entry: prepared.entry,
       inputGraph: encodeNativeGraph(prepared.args), fixture: prepared.fixture,
       randomSeed: prepared.randomMode === 'tool' ? null : prepared.randomSeed,
-      randomMode: prepared.randomMode, executionMode: 'native'}, {timeoutMs: prepared.timeoutMs});
+      randomMode: prepared.randomMode, executionMode: 'native'};
+    let reference, traceTurns = null;
+    if (format !== 'actions-only') {
+      try {
+        reference = await independentEffectfulReference(
+          {...baseRefInput, mode: 'trace', traceSourceLength: prepared.source.length},
+          {timeoutMs: prepared.timeoutMs},
+        );
+        traceTurns = Array.isArray(reference.traceTurns) ? reference.traceTurns : null;
+      } catch (error) {
+        if (!['reference_instrumentation_unsupported', 'reference_resource_limit'].includes(error?.category)) throw error;
+        reference = await independentEffectfulReference(baseRefInput, {timeoutMs: prepared.timeoutMs});
+        traceTurns = null;
+      }
+    } else {
+      reference = await independentEffectfulReference(baseRefInput, {timeoutMs: prepared.timeoutMs});
+    }
     demand(reference.callbackFailures.length === 0 && (reference.unhandledRejections ?? []).length === 0, 'Unsettled guest failures cannot be admitted');
-    const result = {...prepared, bundle: null, outcome: reference.outcome, effects: reference.effects};
-    readableMessagesFromJournal(null, result, {traceFormat: 'actions-only'});
+    const result = {...prepared, bundle: null, outcome: reference.outcome, effects: reference.effects, traceTurns};
+    readableMessagesFromJournal(null, result, {traceFormat: format});
     return result;
   }
   const broker = createFixtureBroker(prepared.fixture), abort = new AbortController();
@@ -508,12 +525,14 @@ export function readableMessagesFromJournal(bundle, prepared, options = {}) {
   const dispatches = prepared.effects.filter(row => row.kind === 'dispatch');
   const settlements = new Map(prepared.effects.filter(row => row.kind === 'settlement').map(row => [row.call, row]));
   if (bundle === null) {
-    // Native V8 execution mode: emit exact recorded external tool-call sequence and final completion without owned-VM trace lines.
+    // Native V8 execution mode: emit exact recorded external tool-call sequence and final completion,
+    // attaching causal per-turn native compact trace lines when available and requested.
+    const turns = format !== 'actions-only' && Array.isArray(prepared.traceTurns) ? prepared.traceTurns : null;
     for (let index = 0; index < dispatches.length; index++) {
       const receipt = dispatches[index];
       const call = publicOperation(prepared, receipt.operation, graphRoots(receipt.arguments));
       const callId = 'call_' + (index + 1);
-      messages.push(assistantToolCallMessage(call.operation, encodeReadable(call.arguments), [], channel, callId));
+      messages.push(assistantToolCallMessage(call.operation, encodeReadable(call.arguments), turns?.[index] ?? [], channel, callId));
       const settlement = settlements.get(receipt.call);
       demand(settlement, 'Missing external settlement');
       messages.push(observation(call.operation, settlement.status, graphRoots(settlement.result)[0], callId));
@@ -521,7 +540,7 @@ export function readableMessagesFromJournal(bundle, prepared, options = {}) {
     const roots = graphRoots(prepared.outcome.graph), value = roots.pop();
     const completion = encodeReadable({arguments: roots, value});
     messages.push(assistantMessage({type: 'complete', kind: prepared.outcome.kind,
-      arguments: completion.arguments, value: completion.value}, [], channel));
+      arguments: completion.arguments, value: completion.value}, turns?.[dispatches.length] ?? [], channel));
     return messages;
   }
   const nodes = format === 'actions-only' ? null : sourceNodes(prepared.source);
@@ -556,14 +575,14 @@ export function readableMessagesFromJournal(bundle, prepared, options = {}) {
 
 export async function exportTinkerExample(input, options = {}) {
   const format = traceFormat(options), channel = reasoningChannel(options);
-  const prepared = await prepareTinkerTask(input);
+  const prepared = await prepareTinkerTask(input, {traceFormat: format});
   const messages = readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: format, reasoningChannel: channel});
   const traceAudit = await auditTeacherConversation(prepared, messages, {traceFormat: format, reasoningChannel: channel});
   return {schema: TINKER_EXECUTION_SCHEMA, id: prepared.id, family: prepared.family, sourceHash: prepared.sourceHash,
     task: prepared.task, messages,
     metadata: {...clone(input.metadata ?? {}),
       ...(input.features ? {features: clone(input.features)} : {}), ...(input.tier !== undefined ? {tier: input.tier} : {}),
-      sourceVerified: true, teacher: 'owned-runtime+native-reference', traceFormat: format, reasoningChannel: channel, traceAudit,
+      sourceVerified: true, teacher: prepared.executionMode === 'native' ? 'native-v8-reference' : 'owned-runtime+native-reference', traceFormat: format, reasoningChannel: channel, traceAudit,
       traceRenderer: 'causal-event-source', referenceNarrationScope: 'event-source-aliases-without-final-heap-inference',
       externalObservationsTrainable: false, runtimeIdentifiersInTargets: false,
       externalCalls: prepared.fixture.calls.length, profile: 'sequential-data-execution',
