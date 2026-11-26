@@ -288,7 +288,7 @@ class ValidationSelectionTests(unittest.TestCase):
 
     def test_accuracy_regression_rolls_back_optimizer_and_closes_compression_gate(self):
         config = load_config(overrides={"rl_steps": 1, "group_size": 2, "validation_every": 1,
-                                       "compression_ramp_steps": 0})
+                                       "rl_objective": "compression", "compression_ramp_steps": 0})
         rows = [row("train", split="train"), row("val", split="validation")]
         sft = candidate("sft-final", 1, 10)
         state = {"phase": "sft_done", "rl_steps_completed": 0, "training_path": sft["training_path"],
@@ -309,7 +309,7 @@ class ValidationSelectionTests(unittest.TestCase):
 
     def test_separate_learning_rates_and_fixed_reference_are_forwarded(self):
         config = load_config(overrides={"sft_learning_rate": .001, "rl_learning_rate": .00001,
-            "rl_steps": 1, "group_size": 2, "reference_kl_coef": .01, "validation_every": 0})
+            "rl_steps": 1, "group_size": 2, "reference_kl_coef": .01, "validation_every": 0, "rl_objective": "compression"})
         rows = [dict(row("a", split="train"), messages=[{"role": "assistant", "content": "target"}])]
         state = {"phase": "created", "sft_batches_completed": 0, "rl_steps_completed": 0,
                  "training_path": None, "evaluations": []}
@@ -323,7 +323,7 @@ class ValidationSelectionTests(unittest.TestCase):
             self.assertEqual(adapter.reference, state["sft_sampler_path"])
 
     def test_zero_task_advantages_retain_explicit_reference_regularization(self):
-        config = load_config(overrides={"rl_steps": 1, "group_size": 2, "reference_kl_coef": .01})
+        config = load_config(overrides={"rl_steps": 1, "group_size": 2, "reference_kl_coef": .01, "rl_objective": "compression"})
         state = {"phase": "sft_done", "rl_steps_completed": 0, "training_path": "training/sft",
                  "sft_sampler_path": "sampling/sft", "evaluations": []}
         adapter = RecordingAdapter([sample("wrong"), sample("wrong")])
@@ -337,7 +337,7 @@ class ValidationSelectionTests(unittest.TestCase):
             self.assertEqual(state["rl_group_counts"]["useful"], 0)
 
     def test_interrupted_validation_still_rolls_back_on_resume_without_recounting_update(self):
-        config = load_config(overrides={"rl_steps": 1, "group_size": 2, "validation_every": 1})
+        config = load_config(overrides={"rl_steps": 1, "group_size": 2, "validation_every": 1, "rl_objective": "compression"})
         rows = [row("train", split="train"), row("val", split="validation")]
         manifest = {"dataset_hash": "corpus", "split_manifest": {"hash": "splits"}}
         sft = candidate("sft-final", 1, 10)
@@ -382,7 +382,7 @@ class ValidationSelectionTests(unittest.TestCase):
     def test_batched_rl_and_ephemeral_sampler_reduce_checkpoints(self):
         config = load_config(overrides={"rl_steps": 2, "rl_prompts_per_step": 2, "group_size": 2,
                                        "checkpoint_every": 10, "checkpoint_every_update": False,
-                                       "validation_every": 0})
+                                       "validation_every": 0, "rl_objective": "compression"})
         rows = [row("a", split="train"), row("b", split="train")]
         state = {"phase": "sft_done", "rl_steps_completed": 0, "training_path": "tinker://training/sft",
                  "sampler_path": "tinker://sampler/sft", "sft_sampler_path": "tinker://sampler/sft",

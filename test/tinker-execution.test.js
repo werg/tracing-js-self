@@ -210,3 +210,49 @@ test('worker is a private persistent JSONL boundary and returns generic model fa
   } finally { child.stdin.end(); await new Promise(resolve => child.on('close', resolve)); lines.close(); }
   assert.equal(stderr, '');
 });
+
+test('native V8 executionMode runs RegExp, JSON, URL, Date, and non-deterministic platform.random tools', async () => {
+  const source = `function run(raw) {
+    const parsed = JSON.parse(raw);
+    const u = new URL(parsed.url);
+    const hit = /^\\/v([0-9]+)\\/(.+)$/.exec(u.pathname);
+    const ts = Date.now();
+    const year = new Date(ts).getUTCFullYear();
+    const roll = Math.random();
+    console.warn('roll:' + roll);
+    return {ver: Number(hit[1]), path: hit[2], year, roll};
+  }`;
+  const t = {
+    id: 'native-messy-1',
+    family: 'native-messy',
+    executionMode: 'native',
+    randomMode: 'tool',
+    source,
+    entry: 'run',
+    args: ['{"url":"https://api.example.test/v3/orders"}'],
+    fixture: {
+      calls: [
+        {operation: 'platform.dateNow', arguments: [], status: 'fulfilled', result: 1700000100000},
+        {operation: 'platform.random', arguments: [], status: 'fulfilled', result: 0.425},
+        {operation: 'platform.console.warn', arguments: ['roll:0.425'], status: 'fulfilled', result: {$js: 'undefined'}},
+      ],
+    },
+  };
+  const prepared = await prepareTinkerTask(t);
+  assert.equal(prepared.bundle, null);
+  assert.equal(prepared.outcome.kind, 'return');
+  const session = createTinkerSession(prepared);
+  const tools = JSON.parse(session.messages.find(m => m.role === 'tool_declare').content).map(x => x.function.name);
+  assert.ok(tools.includes('platform.dateNow') && tools.includes('platform.random') && tools.includes('platform.console.warn'));
+  const tc = (name, args, id) => ({role: 'assistant', content: '', tool_calls: [{type: 'function', id, function: {name, arguments: JSON.stringify({arguments: args})}}]});
+  const s1 = await session.step(tc('platform.dateNow', [], 'c1'), 10);
+  assert.equal(s1.done, false);
+  assert.equal(JSON.parse(s1.messages[0].content).value, 1700000100000);
+  const s2 = await session.step(tc('platform.random', [], 'c2'), 20);
+  assert.equal(JSON.parse(s2.messages[0].content).value, 0.425);
+  const s3 = await session.step(tc('platform.console.warn', ['roll:0.425'], 'c3'), 30);
+  assert.equal(s3.done, false);
+  const s4 = await session.step(complete({ver: 3, path: 'orders', year: 2023, roll: 0.425}, ['{"url":"https://api.example.test/v3/orders"}']), 50);
+  assert.equal(s4.done, true);
+  assert.equal(s4.grade.success, true);
+});

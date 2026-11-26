@@ -232,7 +232,7 @@ class DatasetTests(unittest.TestCase):
 
 class RolloutTests(unittest.TestCase):
     def setUp(self):
-        self.config = load_config(overrides={"max_tokens": 50, "max_generated_tokens": 100, "max_turns": 3})
+        self.config = load_config(overrides={"max_tokens": 50, "max_generated_tokens": 100, "max_turns": 3, "rl_objective": "compression"})
 
     def test_only_arrived_observations_enter_student_history(self):
         bridge = ControlledBridge()
@@ -326,7 +326,7 @@ class RolloutTests(unittest.TestCase):
 
 class RecoveryTests(unittest.TestCase):
     def test_interrupted_rl_group_keeps_prior_samples_and_restores_seed_sequence(self):
-        config = load_config(overrides={"rl_steps": 1, "group_size": 2})
+        config = load_config(overrides={"rl_steps": 1, "group_size": 2, "rl_objective": "compression"})
         manifest = {"dataset_hash": "fixed", "split_manifest": {"hash": "fixed-split"}}
         rows = [row("a", split="train")]
         with tempfile.TemporaryDirectory() as directory:

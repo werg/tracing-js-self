@@ -13,6 +13,7 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const {values,positionals}=parseArgs({allowPositionals:true,options:{
   seed:{type:'string',default:'17'},jobs:{type:'string',default:'4'},count:{type:'string',default:'10000'},
   limit:{type:'string'},'per-family':{type:'string',default:'4'},'output-dir':{type:'string'},
+  'extra-tasks':{type:'string',multiple:true},
   input:{type:'string'},resume:{type:'boolean',default:false},'no-upstream':{type:'boolean',default:false},help:{type:'boolean',short:'h'},
 }});
 const command=positionals[0],number=(name,min,max)=>{const n=Number(values[name]);if(!Number.isSafeInteger(n)||n<min||n>max)throw Error('Invalid --'+name);return n;};
@@ -86,7 +87,9 @@ function finish(extra){const finishedIdentity=implementationIdentity();return {s
   actualModelSamples:0,...extra};}
 
 if(command==='build'){
-  const candidates=assignFrozenSplits([...generatedCandidates({seed}),...(values['no-upstream']?[]:repositoryCandidates({root,seed,perFamily}))],{seed});
+  const extraFiles=(values['extra-tasks']??[]).flatMap(s=>s.split(',').map(p=>p.trim()).filter(Boolean));
+  const extraTasks=extraFiles.flatMap(p=>readCandidateJsonl(resolve(p)).map(row=>row.executorTask??row.task??row));
+  const candidates=assignFrozenSplits([...generatedCandidates({seed}),...(values['no-upstream']?[]:repositoryCandidates({root,seed,perFamily})),...extraTasks],{seed});
   const selected=limit?candidates.slice(0,limit):candidates;
   const records=await pool(selected,qualify),accepted=records.filter(r=>r.status==='admitted').map(r=>r.task);
   const {main,familiar,duplicateDiagnosticInputs}=splitDiagnosticInputs(accepted);

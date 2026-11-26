@@ -87,6 +87,78 @@ def execution_advantages(records: list[dict], config: dict, coefficient: float |
             "correctness_signal": any(abs(value) > 1e-12 for value in correctness)}
 
 
+def likelihood_advantages(records: list[dict], config: dict, coefficient: float | None = None) -> dict:
+    """Group-relative thinking advantages from target tool-call / completion log-likelihood.
+
+    For each sampled thinking block z_i conditioned on prefix x, reward is the
+    exact log-likelihood log P(y | x, z_i) of the known target action y (clamped
+    at -200 nats), standardized within the group, plus a decoupled within-valid
+    length saving scaled by `coefficient`. Target action tokens y also receive a
+    posterior-weighted EM anchor advantage proportional to softmax(ll_i).
+    """
+    if not records:
+        raise ValueError("likelihood advantages require at least one rollout")
+    coefficient = config["length_penalty"] if coefficient is None else coefficient
+    if not math.isfinite(coefficient) or not 0 <= coefficient < 1:
+        raise ValueError("compression coefficient must be finite in [0, 1)")
+    scale = config["length_scale_tokens"]
+    if not math.isfinite(scale) or scale <= 0:
+        raise ValueError("length_scale_tokens must be finite and positive")
+    anchor_weight = float(config.get("target_anchor_weight", 0.25))
+    if not math.isfinite(anchor_weight) or anchor_weight < 0:
+        raise ValueError("target_anchor_weight must be finite and nonnegative")
+
+    ll_floor = -200.0
+    valid_indices = [
+        index for index, record in enumerate(records)
+        if record.get("terminated") and isinstance(record.get("target_logprob_sum"), (int, float))
+        and math.isfinite(record["target_logprob_sum"])
+    ]
+    valid_lls = [max(float(records[index]["target_logprob_sum"]), ll_floor) for index in valid_indices]
+    trunc_ll = (min(valid_lls) - 5.0) if valid_lls else ll_floor
+    ll_values = [
+        max(float(record["target_logprob_sum"]), ll_floor)
+        if index in valid_indices else trunc_ll
+        for index, record in enumerate(records)
+    ]
+    ll_adv = centered(ll_values, standardize=config.get("advantage_mode", "decoupled") == "decoupled")
+    length = [0.0] * len(records)
+    if valid_indices:
+        costs = [min(records[index]["generated_tokens"] / scale, 1.0) for index in valid_indices]
+        mean_cost = statistics.fmean(costs)
+        for index, cost in zip(valid_indices, costs):
+            length[index] = mean_cost - cost
+    advantages = [acc + coefficient * saving for acc, saving in zip(ll_adv, length)]
+
+    target_advantages = [0.0] * len(records)
+    if valid_indices and anchor_weight > 0:
+        max_ll = max(valid_lls)
+        exps = [math.exp(max(ll - max_ll, -50.0)) for ll in valid_lls]
+        total_exp = sum(exps) or 1.0
+        for index, exp_val in zip(valid_indices, exps):
+            target_advantages[index] = anchor_weight * (exp_val / total_exp) * len(valid_indices)
+
+    has_signal = (
+        any(abs(value) > 1e-12 for value in advantages)
+        or any(abs(value) > 1e-12 for value in target_advantages)
+    )
+    kind = "all_failure" if not valid_indices else ("all_success" if len(valid_indices) == len(records) else "mixed_success")
+    return {
+        "advantages": advantages,
+        "target_advantages": target_advantages,
+        "correctness_advantages": ll_adv,
+        "length_advantages": length,
+        "length_contributions": [coefficient * value for value in length],
+        "compression_coefficient": coefficient,
+        "group_kind": kind,
+        "zero_advantage_group": not has_signal,
+        "length_signal": any(abs(value) > 1e-12 for value in length),
+        "correctness_signal": any(abs(value) > 1e-12 for value in ll_adv),
+        "mean_target_ll": statistics.fmean(valid_lls) if valid_lls else None,
+        "best_target_ll": max(valid_lls) if valid_lls else None,
+    }
+
+
 def sft_epoch_rows(rows: list[dict], config: dict, epoch: int) -> list[dict]:
     rng = random.Random(config["seed"] + epoch)
     curriculum = config.get("curriculum", {})

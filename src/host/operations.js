@@ -14,6 +14,7 @@ const DECLARED_OPERATIONS={
   'natlang.readCell':Object.freeze({kind:'synchronous',signature:'natlang.readCell/1',arity:1,key:0,codec:'owned-graph/1'}),
   'natlang.writeCell':Object.freeze({kind:'synchronous',signature:'natlang.writeCell/1',arity:2,key:0,codec:'owned-graph/1'}),
   'platform.dateNow':Object.freeze({kind:'synchronous',signature:'platform.dateNow/1',arity:0,key:null,codec:JSON_CODEC}),
+  'platform.random':Object.freeze({kind:'synchronous',signature:'platform.random/1',arity:0,key:null,codec:JSON_CODEC}),
   'platform.console.log':Object.freeze({kind:'synchronous',signature:'platform.console.log/1',arity:1,key:null,codec:JSON_CODEC}),
   'platform.console.info':Object.freeze({kind:'synchronous',signature:'platform.console.info/1',arity:1,key:null,codec:JSON_CODEC}),
   'platform.console.warn':Object.freeze({kind:'synchronous',signature:'platform.console.warn/1',arity:1,key:null,codec:JSON_CODEC}),
@@ -71,7 +72,7 @@ const DECLARED_OPERATIONS={
 // request data. Replay always consumes observations without calling services.
 const scopes={platform:'embedding',demo:'fixture',http:'origin',fs:'filesystem-root',
   net:'endpoint',dom:'dom-root',natlang:'registered-resource'};
-const readers=new Set(['platform.dateNow','demo.readAsync','demo.readNumber',
+const readers=new Set(['platform.dateNow','platform.random','demo.readAsync','demo.readNumber',
   'http.get','http.responseStatus','http.responseHeaders','http.responseState',
   'fs.readText','fs.list','dom.query','dom.getText','dom.getAttribute','natlang.readCell']);
 const resources=new Set(['http.get','http.post','http.request','fs.openRead','fs.openWrite',

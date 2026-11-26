@@ -76,14 +76,21 @@ try{
     decisions.push({site,decision:['bool',operator==='&&'?!value:
       operator==='||'?Boolean(value):value!==null&&value!==undefined]});return value;
   };
-  const context=vm.createContext({host,__args:args,__result:undefined,__kind:'return',
+  const extraGlobals = input.executionMode === 'native'
+    ? {URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone}
+    : {};
+  const context=vm.createContext({...extraGlobals,host,__args:args,__result:undefined,__kind:'return',
     __tracingCapture:capture,__tracingBranch:branch,__tracingLogical:logical,
     [COMPLETION_HOOK]:(...args)=>{try{return completionCapture.capture(...args);}
       catch(error){return fail(error,'reference_instrumentation_unsupported');}},
     queueMicrotask:callback=>queueMicrotask(()=>{try{callback();}catch(error){failure(error);}}),
     console:Object.fromEntries(['log','info','warn','error'].map(method=>[method,(...args)=>
       invoke('platform.console.'+method,args)]))},{codeGeneration:{strings:false,wasm:false}});
-  if(input.randomSeed!==undefined&&input.randomSeed!==null){
+  const usesToolRandom=input.randomMode==='tool'||input.fixture.calls.some(call=>call.operation==='platform.random');
+  if(usesToolRandom){
+    context.__platformRandom=()=>invoke('platform.random',[]);
+    new vm.Script('Math.random = __platformRandom;').runInContext(context,{timeout:input.timeoutMs??5000});
+  }else if(input.randomSeed!==undefined&&input.randomSeed!==null){
     if(!Number.isInteger(input.randomSeed)||input.randomSeed<0||input.randomSeed>0xffffffff)
       throw new TypeError('Invalid deterministic guest RNG fixture seed');
     context.__trainingRandomSeed=input.randomSeed;
@@ -93,8 +100,10 @@ try{
       Math.random=function(){state=(Math.imul(state,1664525)+1013904223)>>>0;
         return state/4294967296;};})()`).runInContext(context,{timeout:input.timeoutMs??5000});
   }
-  if(input.fixture.calls.some(call=>call.operation==='platform.dateNow'))
-    context.Date={now:()=>invoke('platform.dateNow',[])};
+  if(input.fixture.calls.some(call=>call.operation==='platform.dateNow')){
+    context.__platformDateNow=()=>invoke('platform.dateNow',[]);
+    new vm.Script('Date.now = __platformDateNow;').runInContext(context,{timeout:input.timeoutMs??5000});
+  }
   phase='instrumentation';
   const source=mode==='operations'?instrumentOperationSource(input.source):
     mode==='branches'?instrumentBranchSource(input.source):

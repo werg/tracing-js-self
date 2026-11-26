@@ -27,7 +27,7 @@ import time
 from typing import Any
 
 from .learning import (choose_validation_checkpoint, compression_coefficient, curriculum_pick,
-                       execution_advantages, sft_epoch_rows, task_metadata, update_curriculum)
+                       execution_advantages, likelihood_advantages, sft_epoch_rows, task_metadata, update_curriculum)
 from .metrics import paired_statistics, summarize_records
 
 
@@ -66,7 +66,8 @@ DEFAULTS: dict[str, Any] = {
     "length_penalty": 0.25,
     "length_scale_tokens": 2048,
     "advantage_mode": "decoupled",
-    "rl_objective": "compression",
+    "rl_objective": "likelihood",
+    "target_anchor_weight": 0.25,
     "compression_warmup_steps": 0,
     "compression_ramp_steps": 4,
     "compression_min_accuracy": 0.5,
@@ -290,6 +291,9 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
     if (isinstance(config["reference_kl_coef"], bool) or not isinstance(config["reference_kl_coef"], (int, float))
             or not math.isfinite(config["reference_kl_coef"]) or config["reference_kl_coef"] < 0):
         raise ValueError("reference_kl_coef must be finite and nonnegative")
+    if (isinstance(config["target_anchor_weight"], bool) or not isinstance(config["target_anchor_weight"], (int, float))
+            or not math.isfinite(config["target_anchor_weight"]) or config["target_anchor_weight"] < 0):
+        raise ValueError("target_anchor_weight must be finite and nonnegative")
     for name in ("accuracy_tolerance", "min_token_saving", "compression_min_accuracy"):
         value = config[name]
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= 1:
@@ -297,7 +301,7 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
     if not isinstance(config["confidence_level"], (int, float)) or not 0 < config["confidence_level"] < 1:
         raise ValueError("confidence_level must be in (0, 1)")
     for name, choices in (("advantage_mode", {"decoupled", "centered"}),
-                          ("rl_objective", {"compression", "correctness"}),
+                          ("rl_objective", {"likelihood", "compression", "correctness"}),
                           ("sft_weighting", {"example", "token"}),
                           ("rl_loss_fn", {"importance_sampling", "ppo"}),
                           ("trace_format", {"full", "compact", "actions-only"}),
@@ -696,7 +700,7 @@ def prompt_messages(messages: list[dict], config: dict) -> list[dict]:
 def compression_reward(success: bool, generated_tokens: int, config: dict) -> float:
     if not success:
         return 0.0
-    coefficient = config["length_penalty"] if config.get("rl_objective", "compression") == "compression" else 0.0
+    coefficient = config["length_penalty"] if config.get("rl_objective", "likelihood") in ("compression", "likelihood") else 0.0
     return 1.0 - coefficient * min(generated_tokens / config["length_scale_tokens"], 1.0)
 
 
@@ -1367,7 +1371,7 @@ def record_validation(bridge: Any, adapter: Any, rows: list[dict], config: dict,
     # Roll back on compression-gate failure during compression RL, or on a real
     # accuracy regression beyond accuracy_tolerance during correctness RL (never
     # merely because accuracy is still climbing below compression_min_accuracy).
-    regressed = (not gate) if config.get("rl_objective", "compression") == "compression" else (accuracy < anchor - config["accuracy_tolerance"])
+    regressed = (not gate) if config.get("rl_objective", "likelihood") in ("compression", "likelihood") else (accuracy < anchor - config["accuracy_tolerance"])
     if stage.startswith("rl-") and regressed and best and best["training_path"] != state.get("training_path"):
         event = {"step": state.get("rl_steps_completed", 0), "validation_stage": stage,
                  "from": state.get("training_path"), "to": best["training_path"],
@@ -1499,6 +1503,8 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         adapter.set_reference_checkpoint(state["sft_sampler_path"])
     prompts_per_step = config.get("rl_prompts_per_step", 1)
     concurrency = max(1, int(config.get("rollout_concurrency", 1)))
+    likelihood_mode = config.get("rl_objective") == "likelihood"
+    turn_cache: dict[str, list[dict]] = {}
     ephemeral_sampler_active = False
     for step in range(state["rl_steps_completed"], config["rl_steps"]):
         step_started = time.monotonic()
@@ -1511,24 +1517,35 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         batch_groups = []
         for _ in range(prompts_per_step):
             row, curriculum_selection = curriculum_pick(train_rows, config, state, rng)
+            turn_target = None
+            if likelihood_mode:
+                turns = turn_cache.get(row["id"])
+                if turns is None:
+                    turns = adapter.extract_turn_targets(row["messages"])
+                    turn_cache[row["id"]] = turns
+                if not turns:
+                    raise ValueError(f"Task {row['id']} has no assistant turns for likelihood RL")
+                turn_target = turns[rng.randrange(len(turns))]
             seeds = [rng.randrange(2147483647) for _ in range(config["group_size"])]
-            batch_groups.append((row, curriculum_selection, seeds))
+            batch_groups.append((row, curriculum_selection, seeds, turn_target))
         if prompts_per_step == 1:
-            row, curriculum_selection, seeds = batch_groups[0]
+            row, curriculum_selection, seeds, turn_target = batch_groups[0]
             group_context = digest({"step": step + 1, "task": row["task"], "seeds": seeds,
+                                    **({"turn_index": turn_target["turn_index"]} if turn_target is not None else {}),
                                     "config_hash": config_fingerprint(config), "compression_coefficient": coefficient,
                                     "curriculum": curriculum_selection,
                                     "implementation_hash": state.get("implementation_hash"),
                                     "policy": policy})
         else:
             group_context = digest({"step": step + 1,
-                                    "groups": [{"task": r["task"], "seeds": s, "curriculum": c}
-                                               for r, c, s in batch_groups],
+                                    "groups": [{"task": r["task"], "seeds": s, "curriculum": c,
+                                                **({"turn_index": tt["turn_index"]} if tt is not None else {})}
+                                               for r, c, s, tt in batch_groups],
                                     "config_hash": config_fingerprint(config), "compression_coefficient": coefficient,
                                     "implementation_hash": state.get("implementation_hash"),
                                     "policy": policy})
         expected_total = prompts_per_step * config["group_size"]
-        flat_plan = [(r, c, s) for r, c, seeds in batch_groups for s in seeds]
+        flat_plan = [(r, c, s, tt) for r, c, seeds, tt in batch_groups for s in seeds]
         destination = output_dir / "rollouts" / f"rl-{step + 1:06d}.jsonl"
         partial = destination.with_suffix(".partial.jsonl")
         records = read_jsonl(destination if destination.exists() else partial) if destination.exists() or partial.exists() else []
@@ -1540,8 +1557,38 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         write_jsonl(partial, records)
         pending_plan = flat_plan[len(records):]
 
-        def _run_rl_rollout(row: dict, seed: int) -> dict:
-            record = rollout(bridge, adapter, row["task"], config, seed)
+        def _run_rl_rollout(row: dict, seed: int, turn_target: dict | None) -> dict:
+            if likelihood_mode:
+                assert turn_target is not None
+                sample = adapter.sample_thinking_and_score_target(
+                    turn_target, seed=seed, max_tokens=config["max_tokens"], temperature=config["temperature"],
+                )
+                terminated = bool(sample["terminated"] and sample["target_logprob_sum"] is not None)
+                record = {
+                    "seed": seed,
+                    "samples": [sample],
+                    "generated_tokens": sample["generated_tokens"],
+                    "turns": 1,
+                    "turn_index": turn_target["turn_index"],
+                    "operation": turn_target["operation"],
+                    "is_tool_call": turn_target["is_tool_call"],
+                    "terminated": terminated,
+                    "truncated": not terminated,
+                    "target_logprob_sum": sample["target_logprob_sum"],
+                    "target_logprob_mean": sample["target_logprob_mean"],
+                    "grade": {
+                        "success": terminated,
+                        "reward": float(sample["target_logprob_sum"]) if terminated else -200.0,
+                        "reason": "likelihood-scored" if terminated else "thinking-truncated",
+                        "failureCategory": None if terminated else "truncation",
+                        "generatedTokens": sample["generated_tokens"],
+                        "externalCalls": 1 if turn_target["is_tool_call"] else 0,
+                        "complete": terminated,
+                    },
+                    "token_categories": sample["token_categories"],
+                }
+            else:
+                record = rollout(bridge, adapter, row["task"], config, seed)
             record.update(group_context=group_context, task_id=row["id"], family=row["family"],
                           source_hash=row["sourceHash"], split="train", step=step + 1,
                           policy=copy.deepcopy(policy),
@@ -1550,9 +1597,9 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             return record
 
         if concurrency == 1 or len(pending_plan) <= 1:
-            for row, _curriculum_selection, seed in pending_plan:
+            for row, _curriculum_selection, seed, turn_target in pending_plan:
                 try:
-                    record = _run_rl_rollout(row, seed)
+                    record = _run_rl_rollout(row, seed, turn_target)
                 except RolloutError as error:
                     append_jsonl(output_dir / "infrastructure-errors.jsonl", {
                         **error.record, "phase": "rl", "step": step + 1,
@@ -1563,8 +1610,8 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         else:
             ordered_results: list[dict | None] = [None] * len(pending_plan)
             with concurrent.futures.ThreadPoolExecutor(max_workers=min(concurrency, len(pending_plan))) as pool:
-                futures = {pool.submit(_run_rl_rollout, row, seed): idx
-                           for idx, (row, _c, seed) in enumerate(pending_plan)}
+                futures = {pool.submit(_run_rl_rollout, row, seed, turn_target): idx
+                           for idx, (row, _c, seed, turn_target) in enumerate(pending_plan)}
                 try:
                     for future in concurrent.futures.as_completed(futures):
                         idx = futures[future]
@@ -1591,9 +1638,9 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         counters = state.setdefault("rl_group_counts", {"all_failure": 0, "mixed_success": 0,
                                                          "all_success": 0, "zero_advantage": 0, "useful": 0})
         curriculum_results = []
-        for group_idx, (row, curriculum_selection, _seeds) in enumerate(batch_groups):
+        for group_idx, (row, curriculum_selection, _seeds, _tt) in enumerate(batch_groups):
             group_records = records[group_idx * group_size:(group_idx + 1) * group_size]
-            sig = execution_advantages(group_records, config, coefficient)
+            sig = likelihood_advantages(group_records, config, coefficient) if likelihood_mode else execution_advantages(group_records, config, coefficient)
             all_signals.append(sig)
             for index, record in enumerate(group_records):
                 record.update(advantage=sig["advantages"][index],
@@ -1601,6 +1648,11 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                               length_advantage=sig["length_advantages"][index],
                               length_contribution=sig["length_contributions"][index],
                               compression_coefficient=coefficient)
+                if likelihood_mode:
+                    t_adv = sig["target_advantages"][index]
+                    record["target_advantage"] = t_adv
+                    if record["samples"]:
+                        record["samples"][0]["target_advantage"] = t_adv
             counters[sig["group_kind"]] += 1
             counters["zero_advantage" if sig["zero_advantage_group"] else "useful"] += 1
             curriculum_results.append(update_curriculum(train_rows, config, state, curriculum_selection, group_records))
@@ -1614,7 +1666,10 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         partial.unlink(missing_ok=True)
         if any(sample.get("provenance_error") for record in records for sample in record["samples"]):
             raise RuntimeError("sampled RL provenance is invalid; saved raw rollout and aborted the entire update")
-        nonzero = [record for record in records if abs(record["advantage"]) > 1e-12]
+        nonzero = [
+            record for record in records
+            if abs(record["advantage"]) > 1e-12 or abs(record.get("target_advantage", 0.0)) > 1e-12
+        ]
         update_records = records if config["reference_kl_coef"] else nonzero
         regularization_only = bool(update_records) and not nonzero
         lr = scheduled_learning_rate(config["rl_learning_rate"], step, config["rl_steps"], config)
@@ -1640,12 +1695,16 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         state.update(rl_steps_completed=step + 1, phase="rl")
         step_summary = summarize_records(records)
         useful_in_step = sum(not s["zero_advantage_group"] for s in all_signals)
+        ll_means = [s["mean_target_ll"] for s in all_signals if s.get("mean_target_ll") is not None]
+        ll_bests = [s["best_target_ll"] for s in all_signals if s.get("best_target_ll") is not None]
         append_jsonl(output_dir / "metrics.jsonl", {"stage": "rl", "step": step + 1,
                      "update_attempt_id": pending["attempt_id"] if pending else None,
                      "learning_rate": lr,
                      "task_id": batch_groups[0][0]["id"] if prompts_per_step == 1 else [g[0]["id"] for g in batch_groups],
                      "prompts_in_step": prompts_per_step,
                      **step_summary, "metrics": metrics,
+                     **({"mean_target_ll": statistics.fmean(ll_means), "best_target_ll": statistics.fmean(ll_bests)}
+                        if likelihood_mode and ll_means else {}),
                      "group_kind": signals["group_kind"], "zero_advantage_group": signals["zero_advantage_group"],
                      "compression_coefficient": coefficient, "length_signal": signals["length_signal"],
                      "correctness_signal": signals["correctness_signal"], "curriculum": curriculum_result,
@@ -1656,11 +1715,20 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         step_acc = step_summary["complete_execution_accuracy"] or 0.0
         step_tok = step_summary["mean_generated_tokens"] or 0.0
         status_label = "updated" if pending else "skipped"
-        print(f"rl step {step + 1}/{config['rl_steps']}: lr={lr:.2e} "
-              f"acc={step_acc:.1%} ({step_summary['successes']}/{step_summary['executions']}) "
-              f"mean_tok={step_tok:.0f} useful={useful_in_step}/{len(all_signals)} "
-              f"coef={coefficient:.3f} {status_label} ({time.monotonic() - step_started:.1f}s)",
-              file=sys.stderr, flush=True)
+        if likelihood_mode:
+            ll_str = f"{statistics.fmean(ll_means):.2f}" if ll_means else "n/a"
+            best_str = f"{statistics.fmean(ll_bests):.2f}" if ll_bests else "n/a"
+            print(f"rl step {step + 1}/{config['rl_steps']}: lr={lr:.2e} "
+                  f"mean_ll={ll_str} best_ll={best_str} term={step_acc:.1%} "
+                  f"mean_tok={step_tok:.0f} useful={useful_in_step}/{len(all_signals)} "
+                  f"coef={coefficient:.3f} {status_label} ({time.monotonic() - step_started:.1f}s)",
+                  file=sys.stderr, flush=True)
+        else:
+            print(f"rl step {step + 1}/{config['rl_steps']}: lr={lr:.2e} "
+                  f"acc={step_acc:.1%} ({step_summary['successes']}/{step_summary['executions']}) "
+                  f"mean_tok={step_tok:.0f} useful={useful_in_step}/{len(all_signals)} "
+                  f"coef={coefficient:.3f} {status_label} ({time.monotonic() - step_started:.1f}s)",
+                  file=sys.stderr, flush=True)
         validate = bool(config["validation_every"] and (step + 1) % config["validation_every"] == 0)
         published = (step + 1) % config["checkpoint_every"] == 0 or validate
         name = f"rl-{step + 1:06d}"
@@ -1850,7 +1918,7 @@ def validate_token_budgets(bridge: Any, adapter: Any, rows: list[dict], config: 
     prompt_tokens = []
     for row in rows:
         try:
-            if row["split"] == "train":
+            if row["split"] == "train" and config.get("sft_epochs", 1) > 0:
                 datums = adapter.render_sft(row["messages"])
                 train_examples += len(datums)
                 assistant_turns = sum(1 for message in row["messages"] if message.get("role") == "assistant")
@@ -2014,7 +2082,7 @@ def main(argv: list[str] | None = None) -> int:
                     state["evaluations"].append("baseline-validation")
                     save_state(output_dir, state, rng)
                 training_ready = False
-                if state["phase"] not in ("rl", "rl_done"):
+                if config["sft_epochs"] > 0 and state["phase"] not in ("rl", "rl_done"):
                     train_sft(bridge, adapter, rows, config, output_dir, state, rng)
                 if state["phase"] != "rl_done":
                     train_rl(bridge, adapter, rows, config, output_dir, state, rng, training_ready)

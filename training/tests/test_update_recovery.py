@@ -118,7 +118,7 @@ class RolloutScript:
 class UpdateRecoveryTests(unittest.TestCase):
     def config(self, **overrides):
         return runner.load_config(overrides={"checkpoint_every": 10, "validation_every": 0,
-            "sft_epochs": 1, "batch_size": 1, "rl_steps": 3, "group_size": 2, **overrides})
+            "sft_epochs": 1, "batch_size": 1, "rl_steps": 3, "group_size": 2, "rl_objective": "compression", **overrides})
 
     def crash_before_state(self, output, attempt_id):
         real_atomic = runner.atomic_json

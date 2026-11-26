@@ -240,13 +240,19 @@ function normalizeTask(input) {
   const preamble = nativeBindings.map(binding => 'function ' + binding.name + '(...args){return host.' +
     (binding.kind === 'promise' ? 'natlangCall' : 'natlangCallSync') + '(' + JSON.stringify(binding.name) + ',undefined,args);}').join('\n');
   const executableSource = source + '\n' + preamble;
+  const executionMode = input.executionMode ?? 'owned';
+  demand(['owned', 'native'].includes(executionMode), 'executionMode must be owned or native');
+  const randomMode = input.randomMode ?? 'seeded';
+  demand(['seeded', 'tool'].includes(randomMode), 'randomMode must be seeded or tool');
   const maxSteps = input.maxSteps ?? 100000, timeoutMs = input.timeoutMs ?? 10000;
   demand(Number.isSafeInteger(maxSteps) && maxSteps > 0 && maxSteps <= 1000000, 'Invalid teacher step limit');
   demand(Number.isSafeInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 60000, 'Invalid teacher timeout');
-  const task = {...clone(input), entry, language, randomSeed, nativeBindings, args: encodeReadable(args), freshRandomCalls: 0,
+  const task = {...clone(input), entry, language, ...(executionMode !== 'owned' ? {executionMode} : {}),
+    ...(randomMode !== 'seeded' ? {randomMode} : {}), randomSeed, nativeBindings, args: encodeReadable(args), freshRandomCalls: 0,
     fixture: {calls: decodedCalls.map(call => ({operation: call.operation, arguments: encodeReadable(call.arguments),
       status: call.status ?? 'fulfilled', result: encodeReadable(call.result)})), settlementOrder: fixture.settlementOrder}, maxSteps, timeoutMs};
-  return {id: input.id, family: input.family, sourceHash, source, executableSource, entry, args, fixture, nativeBindings, randomSeed, maxSteps, timeoutMs, task};
+  return {id: input.id, family: input.family, sourceHash, source, executableSource, entry, args, fixture, nativeBindings,
+    executionMode, randomMode, randomSeed, maxSteps, timeoutMs, task};
 }
 
 function publicOperation(prepared, operation, args) {
@@ -300,16 +306,21 @@ function initialMessages(prepared) {
   }
   if (/\bDate\.now\b/.test(prepared.source)) names.add('platform.dateNow');
   for (const match of prepared.source.matchAll(/\bconsole\.(log|info|warn|error)\b/g)) names.add('platform.console.' + match[1]);
-  const operations = [...names].sort();
   const usesMathRandom = /\bMath\.random\b/.test(prepared.source);
+  if (usesMathRandom && prepared.randomMode === 'tool') names.add('platform.random');
+  const operations = [...names].sort();
   const parts = [
     'Execute this JavaScript program:',
     '```javascript\n' + prepared.source + '\n```',
     'Entry: ' + prepared.entry + ' with arguments ' + JSON.stringify(encodeReadable(prepared.args)),
   ];
   if (usesMathRandom) {
-    parts.push('Math.random() uses uint32 seed ' + prepared.randomSeed +
-      ' with state=(Math.imul(state,1664525)+1013904223)>>>0; return state/4294967296.');
+    if (prepared.randomMode === 'tool') {
+      parts.push('Math.random() is non-deterministic: invoke the platform.random tool with {"arguments":[]} for each Math.random() call.');
+    } else {
+      parts.push('Math.random() uses uint32 seed ' + prepared.randomSeed +
+        ' with state=(Math.imul(state,1664525)+1013904223)>>>0; return state/4294967296.');
+    }
   }
   const messages = [{role: 'system', content: SYSTEM}];
   if (operations.length) {
@@ -321,9 +332,22 @@ function initialMessages(prepared) {
 }
 
 /** Execute trusted dataset source on the existing CPU host boundary and compare
- * the complete result/effects to a separate native Node reference. */
+ * the complete result/effects to a separate native Node reference.
+ * In executionMode === 'native', execute directly in real Node/V8 without the
+ * bounded owned-interpreter subset restriction. */
 export async function prepareTinkerTask(input) {
-  const prepared = normalizeTask(input), broker = createFixtureBroker(prepared.fixture), abort = new AbortController();
+  const prepared = normalizeTask(input);
+  if (prepared.executionMode === 'native') {
+    const reference = await independentEffectfulReference({source: prepared.executableSource, entry: prepared.entry,
+      inputGraph: encodeNativeGraph(prepared.args), fixture: prepared.fixture,
+      randomSeed: prepared.randomMode === 'tool' ? null : prepared.randomSeed,
+      randomMode: prepared.randomMode, executionMode: 'native'}, {timeoutMs: prepared.timeoutMs});
+    demand(reference.callbackFailures.length === 0 && (reference.unhandledRejections ?? []).length === 0, 'Unsettled guest failures cannot be admitted');
+    const result = {...prepared, bundle: null, outcome: reference.outcome, effects: reference.effects};
+    readableMessagesFromJournal(null, result, {traceFormat: 'actions-only'});
+    return result;
+  }
+  const broker = createFixtureBroker(prepared.fixture), abort = new AbortController();
   const timer = setTimeout(() => { const error = new Error('Teacher execution timed out'); broker.abort(error); abort.abort(error); }, prepared.timeoutMs);
   try {
     const run = await executeWithNativeServices({entry: {text: prepared.executableSource, functionName: prepared.entry, args: prepared.args},
@@ -480,10 +504,28 @@ function observation(operation, status, value, toolCallId = null) {
  * text and values rather than event IDs, heap IDs, hashes, or controller state. */
 export function readableMessagesFromJournal(bundle, prepared, options = {}) {
   const format = traceFormat(options), channel = reasoningChannel(options);
-  const nodes = format === 'actions-only' ? null : sourceNodes(prepared.source);
-  const messages = initialMessages(prepared), rows = normalizeJournal(bundle).events;
+  const messages = initialMessages(prepared);
   const dispatches = prepared.effects.filter(row => row.kind === 'dispatch');
   const settlements = new Map(prepared.effects.filter(row => row.kind === 'settlement').map(row => [row.call, row]));
+  if (bundle === null) {
+    // Native V8 execution mode: emit exact recorded external tool-call sequence and final completion without owned-VM trace lines.
+    for (let index = 0; index < dispatches.length; index++) {
+      const receipt = dispatches[index];
+      const call = publicOperation(prepared, receipt.operation, graphRoots(receipt.arguments));
+      const callId = 'call_' + (index + 1);
+      messages.push(assistantToolCallMessage(call.operation, encodeReadable(call.arguments), [], channel, callId));
+      const settlement = settlements.get(receipt.call);
+      demand(settlement, 'Missing external settlement');
+      messages.push(observation(call.operation, settlement.status, graphRoots(settlement.result)[0], callId));
+    }
+    const roots = graphRoots(prepared.outcome.graph), value = roots.pop();
+    const completion = encodeReadable({arguments: roots, value});
+    messages.push(assistantMessage({type: 'complete', kind: prepared.outcome.kind,
+      arguments: completion.arguments, value: completion.value}, [], channel));
+    return messages;
+  }
+  const nodes = format === 'actions-only' ? null : sourceNodes(prepared.source);
+  const rows = normalizeJournal(bundle).events;
   let called = 0, pending = null, trace = [];
   for (const row of rows) {
     if (row.op === 'request') {

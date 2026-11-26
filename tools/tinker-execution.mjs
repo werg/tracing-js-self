@@ -56,7 +56,7 @@ async function dispatch(request) {
         metadata: {...structuredClone(request.task.metadata ?? {}),
           ...(request.task.features ? {features: structuredClone(request.task.features)} : {}),
           ...(request.task.tier !== undefined ? {tier: request.task.tier} : {}),
-          sourceVerified: true, teacher: 'owned-runtime+native-reference', traceFormat, reasoningChannel, traceAudit,
+          sourceVerified: true, teacher: prepared.executionMode === 'native' ? 'native-v8-reference' : 'owned-runtime+native-reference', traceFormat, reasoningChannel, traceAudit,
           traceRenderer: 'causal-event-source', referenceNarrationScope: 'event-source-aliases-without-final-heap-inference',
           externalObservationsTrainable: false, runtimeIdentifiersInTargets: false,
           externalCalls: prepared.fixture.calls.length, profile: 'sequential-data-execution',

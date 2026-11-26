@@ -79,6 +79,7 @@ class WorkerIntegrationTests(unittest.TestCase):
         self.config = load_config(overrides={
             "max_tokens": 128, "max_generated_tokens": 512, "max_turns": 6,
             "batch_size": 1, "group_size": 2, "sft_epochs": 1, "rl_steps": 1,
+            "rl_objective": "compression",
         })
 
     def counter_task(self):

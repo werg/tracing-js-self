@@ -226,6 +226,23 @@ def rl_token_arrays(sample: Mapping[str, Any], advantage: float) -> dict[str, li
         raise ValueError("Every sampled token must retain its original sampling logprob")
     logprobs = [_finite(x, "sampling logprob") for x in logprobs]
     advantage = _finite(advantage, "advantage")
+    target_tokens = list(sample.get("target_tokens") or [])
+    target_logprobs = list(sample.get("target_logprobs") or [])
+    target_advantage = _finite(sample.get("target_advantage", 0.0), "target_advantage")
+    if target_tokens and abs(target_advantage) > 1e-12:
+        if any(isinstance(t, bool) or not isinstance(t, int) or t < 0 for t in target_tokens):
+            raise ValueError("RL target token IDs must be nonnegative integers")
+        if len(target_logprobs) != len(target_tokens):
+            raise ValueError("Every target action token must retain its scored logprob")
+        target_logprobs = [_finite(x, "target action logprob") for x in target_logprobs]
+        sequence = prompt + tokens + target_tokens
+        prefix_length = len(prompt) - 1
+        return {
+            "input_tokens": sequence[:-1],
+            "target_tokens": sequence[1:],
+            "logprobs": [0.0] * prefix_length + logprobs + target_logprobs,
+            "advantages": [0.0] * prefix_length + [advantage] * len(tokens) + [target_advantage] * len(target_tokens),
+        }
     sequence = prompt + tokens
     prefix_length = len(prompt) - 1
     return {
@@ -353,6 +370,20 @@ class TinkerAdapter:
                 "No alternate model was selected. An interrupted update is not automatically replayed."
             ) from None
 
+    def _retry_idempotent(self, call, operation: str, attempts: int = 3):
+        """Retry transient failures only on idempotent checkpoint/sampler calls, never optimizer updates."""
+        import time
+        last_error = None
+        for attempt in range(attempts):
+            try:
+                return self._wait(call(), operation)
+            except AdapterError as exc:
+                last_error = exc
+                if self._injected_runtime or attempt + 1 >= attempts:
+                    raise
+                time.sleep(min(2.0 * (2 ** attempt), 15.0))
+        raise last_error
+
     def _budget(self, length: int, output_tokens: int = 0):
         if length + output_tokens > self.max_context_tokens:
             raise ContextOverflow(
@@ -437,15 +468,17 @@ class TinkerAdapter:
 
     def create_sampling_client(self, checkpoint: str | None = None):
         kwargs = {"model_path": checkpoint} if checkpoint else {"base_model": self.model}
-        self.sampling_client = self._wait(self._client().create_sampling_client(**kwargs), "sampling client creation")
+        self.sampling_client = self._retry_idempotent(
+            lambda: self._client().create_sampling_client(**kwargs), "sampling client creation"
+        )
         self.sampling_revision = checkpoint or "base"
         return self.sampling_client
 
     def refresh_sampler(self):
         if self.training_client is None:
             raise AdapterError("Create a training client before refreshing the sampler")
-        self.sampling_client = self._wait(
-            self.training_client.save_weights_and_get_sampling_client(), "sampler refresh"
+        self.sampling_client = self._retry_idempotent(
+            lambda: self.training_client.save_weights_and_get_sampling_client(), "sampler refresh"
         )
         self.sampling_revision = f"training-step-{self.training_steps}"
         return self.sampling_client
@@ -477,6 +510,188 @@ class TinkerAdapter:
         if len(values) != len(prompt) + len(tokens):
             raise AdapterError("Scoring returned misaligned prompt/completion log probabilities")
         return [_finite(value, "scored completion logprob") for value in values[len(prompt):]]
+
+    def thinking_token_ids(self) -> tuple[int, int, int]:
+        """Return (message_model_id, content_thinking_id, end_message_id) for tml_v0."""
+        cached = getattr(self, "_thinking_ids", None)
+        if cached is not None:
+            return cached
+        with self._lock:
+            sdk = self._sdk()
+            tokenizer = sdk.tokenizer
+            if tokenizer is None or not hasattr(tokenizer, "decode"):
+                raise AdapterError("Likelihood reasoning RL requires a tokenizer with tml_v0 special tokens")
+            probe = [
+                {"role": "user", "content": "x"},
+                {"role": "assistant", "content": [{"type": "thinking", "thinking": "y"}, {"type": "text", "text": "z"}]},
+            ]
+            model_input, _weights = sdk.renderer.build_supervised_example(probe)
+            wanted = ("<|message_model|>", "<|content_thinking|>", "<|end_message|>")
+            found: dict[str, int] = {}
+            for tid in model_input.to_ints():
+                piece = tokenizer.decode([int(tid)])
+                if piece in wanted:
+                    found[piece] = int(tid)
+            missing = [piece for piece in wanted if piece not in found]
+            if missing:
+                raise AdapterError(f"Could not locate tml_v0 thinking special tokens: {missing}")
+            resolved = (found["<|message_model|>"], found["<|content_thinking|>"], found["<|end_message|>"])
+            self._thinking_ids = resolved
+            return resolved
+
+    def extract_turn_targets(self, messages: Sequence[Mapping[str, Any]]) -> list[dict]:
+        """Decompose a recorded conversation into per-turn (thinking_prompt, target_action_tokens)."""
+        msg_model_id, content_thinking_id, _end_message_id = self.thinking_token_ids()
+        sdk = self._sdk()
+
+        def _strip_thinking(msg: Mapping[str, Any]) -> dict:
+            if msg.get("role") != "assistant":
+                return dict(msg)
+            out = {k: v for k, v in msg.items() if k != "content"}
+            if msg.get("tool_calls"):
+                out["content"] = ""
+            else:
+                content = msg.get("content", "")
+                if isinstance(content, list):
+                    visible = "".join(
+                        part.get("text", "") for part in content
+                        if isinstance(part, Mapping) and part.get("type") == "text"
+                    )
+                    out["content"] = visible
+                else:
+                    out["content"] = content
+            return out
+
+        turns: list[dict] = []
+        with self._lock:
+            for idx, msg in enumerate(messages):
+                if msg.get("role") != "assistant":
+                    continue
+                prefix_messages = [_strip_thinking(m) for m in messages[:idx]]
+                action_msg = _strip_thinking(msg)
+                prefix_tokens = list(sdk.renderer.build_generation_prompt(prefix_messages, effort=self.effort).to_ints())
+                model_input, weights = sdk.renderer.build_supervised_example(prefix_messages + [action_msg])
+                full_ids = list(model_input.to_ints())
+                w_list = [float(w) for w in _tensor_values(weights)]
+                # Target action tokens are the positive-weight suffix for the final assistant message.
+                first_target = next((i for i, wt in enumerate(w_list) if wt > 0), None)
+                if first_target is None:
+                    continue
+                # Find the start of the last assistant turn (in case earlier turns also had positive weights).
+                last_zero = max((i for i in range(len(w_list)) if w_list[i] <= 0), default=-1)
+                target_start = last_zero + 1
+                target_action_tokens = full_ids[target_start:]
+                if not target_action_tokens:
+                    continue
+                tool_calls = msg.get("tool_calls") or []
+                op_name = (tool_calls[0].get("function", {}).get("name") if tool_calls else None) or "complete"
+                turns.append({
+                    "turn_index": len(turns),
+                    "message_index": idx,
+                    "prefix_tokens": prefix_tokens,
+                    "thinking_prompt_tokens": prefix_tokens + [msg_model_id, content_thinking_id],
+                    "target_action_tokens": target_action_tokens,
+                    "is_tool_call": bool(tool_calls),
+                    "operation": op_name,
+                })
+        return turns
+
+    def sample_thinking_and_score_target(
+        self,
+        turn_target: Mapping[str, Any],
+        *,
+        seed: int,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+        scorer=None,
+    ) -> dict:
+        """Sample one <|content_thinking|> block stopping at <|end_message|>, then score exact log P(target | prefix, z)."""
+        _msg_model_id, _content_thinking_id, end_message_id = self.thinking_token_ids()
+        thinking_prompt = list(turn_target["thinking_prompt_tokens"])
+        target_tokens = list(turn_target["target_action_tokens"])
+        budget = self.max_tokens if max_tokens is None else _positive_int(max_tokens, "max_tokens")
+        temp = self.temperature if temperature is None else _finite(temperature, "temperature")
+        if temp < 0:
+            raise ValueError("temperature must be nonnegative")
+        # Reserve room for both the sampled thought and the appended target action tokens.
+        max_thought_budget = min(budget, self.max_context_tokens - len(thinking_prompt) - len(target_tokens))
+        if max_thought_budget <= 0:
+            raise ContextOverflow(
+                f"Prompt ({len(thinking_prompt)}) + target ({len(target_tokens)}) exceeds context limit {self.max_context_tokens}"
+            )
+        sdk = self._sdk()
+        client = self.sampling_client
+        if client is None:
+            client = self.create_sampling_client()
+        revision = self.sampling_revision
+        params = sdk.types.SamplingParams(
+            max_tokens=max_thought_budget,
+            temperature=temp,
+            seed=_seed(seed),
+            stop=[end_message_id],
+        )
+        response = self._wait(
+            client.sample(sdk.types.ModelInput.from_ints(thinking_prompt), num_samples=1, sampling_params=params),
+            "thinking block sampling",
+        )
+        if not response.sequences:
+            raise AdapterError("Tinker returned no sampled sequences for thinking block")
+        seq = response.sequences[0]
+        z_tokens = [int(t) for t in seq.tokens]
+        z_logprobs_raw = list(seq.logprobs) if seq.logprobs is not None else []
+        provenance_error = None
+        z_logprobs: list[float] = []
+        if not z_tokens:
+            provenance_error = "empty thinking sample"
+        elif len(z_logprobs_raw) != len(z_tokens):
+            provenance_error = "missing thinking sampling logprobs"
+        else:
+            try:
+                z_logprobs = [_finite(x, "thinking logprob") for x in z_logprobs_raw]
+            except ValueError as err:
+                provenance_error = str(err)
+
+        terminated = (provenance_error is None) and bool(z_tokens) and (z_tokens[-1] == end_message_id)
+        target_logprobs = None
+        target_logprob_sum = None
+        target_logprob_mean = None
+        if terminated:
+            score_client = scorer or client
+            full_ids = thinking_prompt + z_tokens + target_tokens
+            self._budget(len(full_ids))
+            values = self._wait(
+                score_client.compute_logprobs(
+                    sdk.types.ModelInput.from_ints(full_ids),
+                    prompt_logprobs_last_n=len(target_tokens),
+                ),
+                "target action logprob scoring",
+            )
+            if len(values) != len(full_ids):
+                raise AdapterError("Target scoring returned misaligned log probabilities")
+            target_logprobs = [_finite(v, "target action logprob") for v in values[-len(target_tokens):]]
+            target_logprob_sum = sum(target_logprobs)
+            target_logprob_mean = target_logprob_sum / len(target_logprobs)
+
+        return {
+            "prompt_tokens": thinking_prompt,
+            "token_ids": z_tokens,
+            "logprobs": z_logprobs,
+            "target_tokens": target_tokens,
+            "target_logprobs": target_logprobs,
+            "target_logprob_sum": target_logprob_sum,
+            "target_logprob_mean": target_logprob_mean,
+            "terminated": terminated,
+            "truncated": not terminated,
+            "provenance_error": provenance_error,
+            "generated_tokens": len(z_tokens),
+            "sampler_revision": revision,
+            "operation": turn_target.get("operation"),
+            "is_tool_call": bool(turn_target.get("is_tool_call")),
+            "turn_index": turn_target.get("turn_index", 0),
+            "token_categories": {
+                "reasoning": len(z_tokens), "trace": 0, "protocol": 0, "other": 0, "unclassified": 0,
+            },
+        }
 
     def token_accounting(self, tokens: Sequence[int]) -> dict[str, int]:
         """Partition original TML tokens, conservatively retaining unknown boundaries.
@@ -804,9 +1019,13 @@ class TinkerAdapter:
                 for output, sample in zip(outputs, diagnostic_samples):
                     values = _tensor_values(output["logprobs"])
                     prefix = len(sample["prompt_tokens"]) - 1
-                    if len(values) != prefix + len(sample["token_ids"]):
+                    extra_tokens = sample.get("target_tokens") if abs(sample.get("target_advantage", 0.0)) > 1e-12 else None
+                    sample_len = len(sample["token_ids"]) + (len(extra_tokens) if extra_tokens else 0)
+                    if len(values) != prefix + sample_len:
                         raise ValueError("Learner log probabilities are misaligned")
                     sampling.extend(sample["logprobs"])
+                    if extra_tokens:
+                        sampling.extend(sample["target_logprobs"])
                     learner.extend(values[prefix:])
                 metrics.update(_log_ratio_metrics(sampling, learner, "sampler_learner"))
                 metrics["sampled_surprisal_mean"] = -statistics.fmean(sampling)
@@ -933,6 +1152,10 @@ class TinkerAdapter:
         sampler_kwargs = {}
         if ttl_seconds is not None and "ttl_seconds" in inspect.signature(self.training_client.save_weights_for_sampler).parameters:
             sampler_kwargs["ttl_seconds"] = ttl
-        training = self._wait(self.training_client.save_state(name=name, **save_kwargs), "training checkpoint save")
-        sampler = self._wait(self.training_client.save_weights_for_sampler(name=name, **sampler_kwargs), "sampler checkpoint save")
+        training = self._retry_idempotent(
+            lambda: self.training_client.save_state(name=name, **save_kwargs), "training checkpoint save"
+        )
+        sampler = self._retry_idempotent(
+            lambda: self.training_client.save_weights_for_sampler(name=name, **sampler_kwargs), "sampler checkpoint save"
+        )
         return {"training_path": training.path, "sampler_path": sampler.path, "step": self.training_steps}
