@@ -26,6 +26,13 @@ _TRAINING_DIR = str(_REPO_ROOT / "training")
 if _TRAINING_DIR not in sys.path:
     sys.path.insert(0, _TRAINING_DIR)
 
+from tinker_py.codebase import (  # noqa: E402
+    CODE_LOAD_OPERATION,
+    MultiFilePythonTracer,
+    load_virtual_entry_module,
+    normalize_codebase_files,
+    serve_code_load,
+)
 from tinker_py.codec import (  # noqa: E402
     decode_readable,
     describe_graph,
@@ -119,10 +126,27 @@ def main() -> int:
         if not isinstance(req, dict):
             raise TypeError("Worker input must be a JSON object")
 
-        source = req.get("source")
+        files_raw = req.get("files")
+        is_multifile = isinstance(files_raw, dict) and len(files_raw) > 0
+        norm_files: dict[str, str] = {}
+        norm_entry_file: str = ""
+        norm_initial_loaded: list[str] = []
+        if is_multifile:
+            entry_file_raw = req.get("entryFile")
+            if not isinstance(entry_file_raw, str) or not entry_file_raw:
+                raise TypeError("entryFile required for multi-file task")
+            norm_files, norm_entry_file, norm_initial_loaded = normalize_codebase_files(
+                files_raw,
+                entry_file_raw,
+                req.get("initialLoadedFiles"),
+            )
+            source = norm_files[norm_entry_file]
+        else:
+            source = req.get("source")
+            if not isinstance(source, str) or not source:
+                raise TypeError("Nonempty source required")
+
         entry = req.get("entry", "run")
-        if not isinstance(source, str) or not source:
-            raise TypeError("Nonempty source required")
         if not isinstance(entry, str) or not entry.isidentifier():
             raise TypeError("Valid entry identifier required")
 
@@ -162,25 +186,57 @@ def main() -> int:
 
         effects: list[dict[str, Any]] = []
         call_index = 0
+        effect_seq = 0
         infrastructure_failures: list[tuple[str, str]] = []
 
-        tracer = (
-            create_python_tracer(
+        tracer: Any = None
+
+        def _emit_code_load(load_req: dict[str, Any]) -> None:
+            nonlocal effect_seq
+            if tracer is not None and trace_enabled:
+                tracer.next_turn()
+            load_result = serve_code_load(norm_files, [load_req])
+            cid = effect_seq
+            effect_seq += 1
+            effects.append({
+                "kind": "dispatch",
+                "call": cid,
+                "operation": CODE_LOAD_OPERATION,
+                "arguments": describe_graph([load_req]),
+            })
+            effects.append({
+                "kind": "settlement",
+                "call": cid,
+                "operation": CODE_LOAD_OPERATION,
+                "status": "fulfilled",
+                "result": describe_graph([load_result], allow_exceptions=True),
+            })
+
+        max_trace_events = max(50_000, min(max_steps * 5, 1_000_000))
+        if is_multifile:
+            tracer = MultiFilePythonTracer(
+                norm_files,
+                norm_entry_file,
+                initial_loaded_files=norm_initial_loaded,
+                on_code_load=_emit_code_load,
+                entry_name=entry,
+                record_trace=trace_enabled,
+                max_events=max_trace_events,
+            )
+        elif trace_enabled:
+            tracer = create_python_tracer(
                 source,
                 entry_name=entry,
-                max_events=max(50_000, min(max_steps * 5, 1_000_000)),
+                max_events=max_trace_events,
             )
-            if trace_enabled
-            else None
-        )
 
         def invoke(
             operation: str,
             call_args: list[Any],
             exc_builder: Any = None,
         ) -> Any:
-            nonlocal call_index
-            if tracer is not None:
+            nonlocal call_index, effect_seq
+            if tracer is not None and trace_enabled:
                 tracer.next_turn()
             try:
                 actual_graph = describe_graph(call_args)
@@ -201,8 +257,9 @@ def main() -> int:
                 infrastructure_failures.append(("reference_process_failure", msg))
                 raise _BrokerError(msg)
 
-            cid = call_index
             call_index += 1
+            cid = effect_seq
+            effect_seq += 1
             result_val = expected["result"]
             status = expected["status"]
             effects.append({
@@ -228,8 +285,9 @@ def main() -> int:
 
         # Patch external platform interfaces before compiling/executing guest code.
         has_http_fixture = any(c["operation"] == "http.request" for c in expected_calls)
-        enable_urllib = has_http_fixture or ("urllib" in source) or ("urlopen" in source)
-        enable_requests = has_http_fixture or ("requests" in source)
+        all_sources_iter = tuple(norm_files.values()) if is_multifile else (source,)
+        enable_urllib = has_http_fixture or any(("urllib" in s) or ("urlopen" in s) for s in all_sources_iter)
+        enable_requests = has_http_fixture or any("requests" in s for s in all_sources_iter)
         if enable_urllib or enable_requests:
             install_replay_http_hooks(
                 invoke,
@@ -265,18 +323,20 @@ def main() -> int:
         guest_builtins = dict(vars(builtins))
         guest_builtins["print"] = _platform_print
 
-        guest_globals: dict[str, Any] = {
-            "__builtins__": guest_builtins,
-            "__name__": "__guest__",
-            "host": host_obj,
-        }
+        extra_guest_globals: dict[str, Any] = {"host": host_obj}
         for binding in native_bindings:
             bname = binding.get("name")
             if isinstance(bname, str) and bname.isidentifier():
-                guest_globals[bname] = (lambda _op: (lambda *a: invoke(_op, list(a))))(bname)
+                extra_guest_globals[bname] = (lambda _op: (lambda *a: invoke(_op, list(a))))(bname)
 
         phase = "compile"
-        code = compile(source, "<guest>", "exec")
+        if not is_multifile:
+            guest_globals: dict[str, Any] = {
+                "__builtins__": guest_builtins,
+                "__name__": "__guest__",
+                **extra_guest_globals,
+            }
+            code = compile(source, "<guest>", "exec")
 
         _apply_resource_limits(timeout_ms)
         phase = "execute"
@@ -284,8 +344,17 @@ def main() -> int:
         kind = "return"
         result_value: Any = None
         try:
-            exec(code, guest_globals)
-            entry_fn = guest_globals.get(entry)
+            if is_multifile:
+                entry_mod, _finder = load_virtual_entry_module(
+                    norm_files,
+                    norm_entry_file,
+                    guest_builtins,
+                    extra_guest_globals,
+                )
+                entry_fn = getattr(entry_mod, entry, None)
+            else:
+                exec(code, guest_globals)
+                entry_fn = guest_globals.get(entry)
             if not callable(entry_fn):
                 raise TypeError(f"Entry function {entry!r} is not defined or not callable")
             if tracer is not None:
@@ -315,7 +384,7 @@ def main() -> int:
         phase = "observe"
         outcome_graph = describe_graph([*args, result_value])
         outcome_readable = encode_readable({"arguments": args, "value": result_value})
-        trace_turns = tracer.finalize() if tracer is not None else None
+        trace_turns = tracer.finalize() if (tracer is not None and trace_enabled) else None
         if trace_turns is not None:
             dispatch_count = sum(1 for e in effects if e["kind"] == "dispatch")
             if len(trace_turns) != dispatch_count + 1:
