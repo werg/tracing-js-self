@@ -150,11 +150,14 @@ def implementation_identity(repo: Path) -> dict:
     """
     paths: set[Path] = set()
     paths.update((repo / "training/tinker_js").glob("*.py"))
+    paths.update((repo / "training/tinker_py").glob("*.py"))
     paths.update((repo / "src/training").glob("tinker-*.js"))
     paths.update((repo / "src/host").glob("*.js"))
     for relative in (
         "tools/tinker-execution.mjs",
         "tools/effectful-reference-worker.mjs",
+        "tools/tinker-execution-py.py",
+        "tools/python-reference-worker.py",
         "src/runtime.js",
         "src/frontend.js",
         "src/values.js",
@@ -391,74 +394,156 @@ class RolloutError(BridgeError):
         self.record = record
 
 
-class Bridge:
-    """One owned Node process, with bounded waits and no shell interpolation."""
+class _JsonlWorker:
+    """One owned line-delimited JSON worker subprocess with bounded waits."""
 
-    def __init__(self, repo: Path, timeout: float = 60):
-        self.repo = Path(repo).resolve()
+    def __init__(self, command: list[str], cwd: Path, timeout: float, label: str):
         self.timeout = timeout
+        self.label = label
         self._sequence = 0
         self._buffer = b""
-        self._lock = threading.Lock()
         self._stderr = tempfile.TemporaryFile()
         self.process = subprocess.Popen(
-            ["node", str(self.repo / "tools/tinker-execution.mjs")], cwd=self.repo,
+            command, cwd=cwd,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self._stderr,
         )
         self._selector = selectors.DefaultSelector()
         self._selector.register(self.process.stdout, selectors.EVENT_READ)
 
-    def request(self, op: str, **payload: Any) -> dict:
-        with self._lock:
-            self._sequence += 1
-            request = {"id": self._sequence, "op": op, **payload}
-            assert self.process.stdin is not None
-            try:
-                self.process.stdin.write((json_preserve_order(request) + "\n").encode())
-                self.process.stdin.flush()
-            except BrokenPipeError as error:
-                raise BridgeError("JS environment exited before accepting a request") from error
-            deadline = time.monotonic() + self.timeout
-            while b"\n" not in self._buffer:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0 or not self._selector.select(remaining):
-                    raise BridgeError(f"JS environment exceeded {self.timeout:g}s for {op}")
-                data = os.read(self.process.stdout.fileno(), 65536)
-                if not data:
-                    self._stderr.seek(0)
-                    detail = self._stderr.read().decode(errors="replace")[-2000:]
-                    raise BridgeError(f"JS environment exited during {op}: {detail}")
-                self._buffer += data
-                if len(self._buffer) > 128 * 1024 * 1024:
-                    raise BridgeError("JS environment response exceeded 128 MiB")
-            line, self._buffer = self._buffer.split(b"\n", 1)
-            try:
-                response = json.loads(line)
-            except ValueError as error:
-                raise BridgeError("JS environment emitted non-JSON stdout") from error
-            if response.get("id") != self._sequence:
-                raise BridgeError("JS environment response ID mismatch")
-            if not response.get("ok"):
-                raise BridgeError(f"JS environment {op} failed: {response.get('error', 'unknown error')}")
-            return response["result"]
+    def request(self, op: str, payload: dict[str, Any]) -> dict:
+        self._sequence += 1
+        request = {"id": self._sequence, "op": op, **payload}
+        assert self.process.stdin is not None
+        try:
+            self.process.stdin.write((json_preserve_order(request) + "\n").encode())
+            self.process.stdin.flush()
+        except BrokenPipeError as error:
+            raise BridgeError(f"{self.label} exited before accepting a request") from error
+        deadline = time.monotonic() + self.timeout
+        while b"\n" not in self._buffer:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0 or not self._selector.select(remaining):
+                raise BridgeError(f"{self.label} exceeded {self.timeout:g}s for {op}")
+            data = os.read(self.process.stdout.fileno(), 65536)
+            if not data:
+                self._stderr.seek(0)
+                detail = self._stderr.read().decode(errors="replace")[-2000:]
+                raise BridgeError(f"{self.label} exited during {op}: {detail}")
+            self._buffer += data
+            if len(self._buffer) > 128 * 1024 * 1024:
+                raise BridgeError(f"{self.label} response exceeded 128 MiB")
+        line, self._buffer = self._buffer.split(b"\n", 1)
+        try:
+            response = json.loads(line)
+        except ValueError as error:
+            raise BridgeError(f"{self.label} emitted non-JSON stdout") from error
+        if response.get("id") != self._sequence:
+            raise BridgeError(f"{self.label} response ID mismatch")
+        if not response.get("ok"):
+            raise BridgeError(f"{self.label} {op} failed: {response.get('error', 'unknown error')}")
+        return response["result"]
 
     def close(self) -> None:
-        with self._lock:
-            if self.process.stdin:
-                self.process.stdin.close()
+        if self.process.stdin:
+            self.process.stdin.close()
+        try:
+            self.process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            self.process.terminate()
             try:
                 self.process.wait(timeout=2)
             except subprocess.TimeoutExpired:
-                self.process.terminate()
+                self.process.kill()
+                self.process.wait()
+        self._selector.close()
+        if self.process.stdout:
+            self.process.stdout.close()
+        self._stderr.close()
+
+
+class Bridge:
+    """Owned JS/TS Node worker plus lazy Python worker for mixed-language dispatch."""
+
+    def __init__(self, repo: Path, timeout: float = 60):
+        self.repo = Path(repo).resolve()
+        self.timeout = timeout
+        self._lock = threading.Lock()
+        self._js_worker = _JsonlWorker(
+            ["node", str(self.repo / "tools/tinker-execution.mjs")],
+            self.repo, timeout, "JS environment",
+        )
+        self.process = self._js_worker.process
+        self._py_worker: _JsonlWorker | None = None
+        self._session_backends: dict[str, str] = {}
+
+    @staticmethod
+    def _is_py_task(task: Any) -> bool:
+        if not isinstance(task, dict):
+            return False
+        inner = task.get("task") if isinstance(task.get("task"), dict) else task
+        return inner.get("language") == "py"
+
+    def _worker_for(self, backend: str) -> _JsonlWorker:
+        if backend == "py":
+            if self._py_worker is None:
+                self._py_worker = _JsonlWorker(
+                    [sys.executable, str(self.repo / "tools/tinker-execution-py.py")],
+                    self.repo, self.timeout, "Python environment",
+                )
+            return self._py_worker
+        return self._js_worker
+
+    def request(self, op: str, **payload: Any) -> dict:
+        with self._lock:
+            if op in ("export", "start"):
+                backend = "py" if self._is_py_task(payload.get("task")) else "js"
+                result = self._worker_for(backend).request(op, payload)
+                if op == "start" and isinstance(result, dict) and isinstance(result.get("sessionId"), str):
+                    self._session_backends[result["sessionId"]] = backend
+                return result
+            if op in ("step", "grade", "close"):
+                session_id = payload.get("sessionId")
+                backend = self._session_backends.get(session_id, "js")
                 try:
-                    self.process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    self.process.kill()
-                    self.process.wait()
-            self._selector.close()
-            if self.process.stdout:
-                self.process.stdout.close()
-            self._stderr.close()
+                    return self._worker_for(backend).request(op, payload)
+                finally:
+                    if op == "close" and session_id is not None:
+                        self._session_backends.pop(session_id, None)
+            if op == "audit":
+                tasks = payload.get("tasks")
+                if isinstance(tasks, list) and tasks:
+                    py_tasks = [t for t in tasks if self._is_py_task(t)]
+                    js_tasks = [t for t in tasks if not self._is_py_task(t)]
+                    if py_tasks and not js_tasks:
+                        return self._worker_for("py").request(op, payload)
+                    if js_tasks and not py_tasks:
+                        return self._worker_for("js").request(op, payload)
+                    js_res = self._worker_for("js").request(op, {**payload, "tasks": js_tasks})
+                    py_res = self._worker_for("py").request(op, {**payload, "tasks": py_tasks})
+                    return {
+                        **js_res,
+                        "valid": bool(js_res.get("valid") and py_res.get("valid")),
+                        "success": bool(js_res.get("success") and py_res.get("success")),
+                        "allReplayed": bool(js_res.get("allReplayed") and py_res.get("allReplayed")),
+                        "inputTasks": len(tasks),
+                        "sampleTasks": js_res.get("sampleTasks", 0) + py_res.get("sampleTasks", 0),
+                        "rows": [*js_res.get("rows", []), *py_res.get("rows", [])],
+                        "causalPairs": [*js_res.get("causalPairs", []), *py_res.get("causalPairs", [])],
+                    }
+                return self._worker_for("js").request(op, payload)
+            if op == "health" and payload.get("language") == "py":
+                return self._worker_for("py").request(op, payload)
+            return self._worker_for("js").request(op, payload)
+
+    def close(self) -> None:
+        with self._lock:
+            try:
+                self._js_worker.close()
+            finally:
+                if self._py_worker is not None:
+                    self._py_worker.close()
+                    self._py_worker = None
+                self._session_backends.clear()
 
     def __enter__(self) -> Bridge:
         return self
