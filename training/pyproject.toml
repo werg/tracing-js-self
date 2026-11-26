@@ -20,7 +20,7 @@ tinker-study = "tinker_js.experiments:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["tinker_js*"]
+include = ["tinker_js*", "tinker_py*"]
 
 [tool.uv.sources]
 torch = { index = "pytorch-cpu" }
