@@ -13,12 +13,12 @@ import {boundedFuzzTask,verifyTaskBoundary,minimizeCounterexample,aggregateVerif
 
 test('seeded corpus preserves template lineage and actual independently grouped denominators',()=>{
   const candidates=generatedCandidates({seed:17});
-  assert.equal(candidates.length,1176);
+  assert.equal(candidates.length,1356);
   assert.deepEqual(candidates,generatedCandidates({seed:17}));
   const rows=assignFrozenSplits(candidates,{seed:17}),counts=datasetCounts(rows);
-  assert.equal(counts.total.families,110);
+  assert.equal(counts.total.families,140);
   assert(counts.total.sourcePrograms>counts.total.independentComponents);
-  assert(counts.total.independentComponents<=110);
+  assert(counts.total.independentComponents<=140);
   const seen=new Map();
   for(const row of rows){
     assert(row.metadata.features.length);
@@ -137,11 +137,11 @@ test('independent checker validates the actual displayed observation values, sta
   const messages=readableMessagesFromJournal(prepared.bundle,prepared),native=await independentNativeExecution(prepared.task);
   assert(independentConversationMatches(native,messages,prepared.task));
   for(const suffix of ['{"status":"fulfilled","value":"forged"}','{"status":"rejected","value":1}']){
-    const corrupted=structuredClone(messages),index=corrupted.findIndex((m,i)=>i>1&&m.role==='user');
-    corrupted[index].content=corrupted[index].content.slice(0,corrupted[index].content.indexOf(': ')+2)+suffix;
+    const corrupted=structuredClone(messages),index=corrupted.findIndex(m=>m.role==='tool');
+    corrupted[index].content=suffix;
     assert.equal(independentConversationMatches(native,corrupted,prepared.task),false);
   }
-  const reordered=structuredClone(messages);[reordered[3],reordered[5]]=[reordered[5],reordered[3]];
+  const reordered=structuredClone(messages);[reordered[4],reordered[6]]=[reordered[6],reordered[4]];
   assert.equal(independentConversationMatches(native,reordered,prepared.task),false);
 });
 

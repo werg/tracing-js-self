@@ -126,6 +126,11 @@ def json_text(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
+def json_preserve_order(value: Any) -> str:
+    """Serialize JSON preserving JS own-property insertion order."""
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+
+
 def digest(value: Any) -> str:
     return hashlib.sha256(json_text(value).encode()).hexdigest()
 
@@ -193,7 +198,7 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
     temporary = path.with_name(path.name + ".tmp")
     with temporary.open("w") as handle:
         for row in rows:
-            handle.write(json_text(row) + "\n")
+            handle.write(json_preserve_order(row) + "\n")
         handle.flush()
         os.fsync(handle.fileno())
     temporary.replace(path)
@@ -203,7 +208,7 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
 def append_jsonl(path: Path, row: dict, *, durable: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a") as handle:
-        handle.write(json_text(row) + "\n")
+        handle.write(json_preserve_order(row) + "\n")
         handle.flush()
         if durable:
             os.fsync(handle.fileno())
@@ -378,7 +383,7 @@ class Bridge:
             request = {"id": self._sequence, "op": op, **payload}
             assert self.process.stdin is not None
             try:
-                self.process.stdin.write((json_text(request) + "\n").encode())
+                self.process.stdin.write((json_preserve_order(request) + "\n").encode())
                 self.process.stdin.flush()
             except BrokenPipeError as error:
                 raise BridgeError("JS environment exited before accepting a request") from error
@@ -591,19 +596,62 @@ def export_dataset(repo: Path, config: dict, output_dir: Path, bridge: Any,
             raise ValueError("diagnostic_only requires every input task marked diagnosticOnly with explicit test split")
     elif any(diagnostic_flags):
         raise ValueError("diagnosticOnly tasks require a separate diagnostic_only evaluation dataset")
-    exported = []
+    exported: list[dict] = []
     channel = resolve_reasoning_channel(config)
-    for task in tasks:
+
+    def _export_one(active_bridge: Any, task: dict) -> dict:
         try:
-            row = bridge.request("export", task=task, traceFormat=config["trace_format"], reasoningChannel=channel)
+            row = active_bridge.request("export", task=task, traceFormat=config["trace_format"], reasoningChannel=channel)
             row["metadata"] = {**task.get("metadata", {}), **row.get("metadata", {})}
             if task.get("diagnosticOnly"):
                 row["metadata"]["diagnosticOnly"] = True
             row["metadata"] = task_metadata(row)
             row["messages"] = prompt_messages(row["messages"], config)
-            exported.append(row)
+            return row
         except BridgeError as error:
             raise BridgeError(f"task {task.get('id', '(missing id)')}: {error}") from error
+
+    export_workers = min(6, max(1, os.cpu_count() or 1)) if isinstance(bridge, Bridge) and len(tasks) > 32 else 1
+    if export_workers == 1:
+        for idx, task in enumerate(tasks, 1):
+            exported.append(_export_one(bridge, task))
+            if len(tasks) > 100 and idx % 100 == 0:
+                print(f"export: {idx}/{len(tasks)}", file=sys.stderr, flush=True)
+    else:
+        ordered_exported: list[dict | None] = [None] * len(tasks)
+        extra_bridges = [Bridge(repo, config["bridge_timeout_seconds"]) for _ in range(export_workers - 1)]
+        bridges = [bridge, *extra_bridges]
+        progress_lock = threading.Lock()
+        done_export = 0
+        next_index = 0
+
+        def _worker(worker_bridge: Bridge) -> None:
+            nonlocal next_index, done_export
+            while True:
+                with progress_lock:
+                    if next_index >= len(tasks):
+                        return
+                    idx = next_index
+                    next_index += 1
+                result = _export_one(worker_bridge, tasks[idx])
+                ordered_exported[idx] = result
+                with progress_lock:
+                    done_export += 1
+                    if done_export % 100 == 0 or done_export == len(tasks):
+                        print(f"export: {done_export}/{len(tasks)}", file=sys.stderr, flush=True)
+
+        try:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=export_workers) as pool:
+                futs = [pool.submit(_worker, b) for b in bridges]
+                for fut in concurrent.futures.as_completed(futs):
+                    fut.result()
+        finally:
+            for extra in extra_bridges:
+                try:
+                    extra.close()
+                except Exception:
+                    pass
+        exported = [row for row in ordered_exported if row is not None]
     rows, split_manifest = split_examples(exported, config["split_seed"], config["holdout_fraction"],
                                           config["validation_fraction"], evaluation_only=config["evaluation_only"])
     if implementation_identity(repo)["hash"] != implementation["hash"]:
@@ -653,13 +701,19 @@ def compression_reward(success: bool, generated_tokens: int, config: dict) -> fl
 
 
 def _has_thinking_without_text(message: dict, text: str) -> bool:
-    if text.strip():
+    if text.strip() or message.get("tool_calls"):
         return False
     content = message.get("content")
     return isinstance(content, list) and any(
         isinstance(part, dict) and part.get("type") == "thinking" and str(part.get("thinking", "")).strip()
         for part in content
     )
+
+
+def _step_action(message: dict, text: str | None = None) -> Any:
+    if message.get("tool_calls"):
+        return message
+    return visible_text(message) if text is None else text
 
 
 def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> dict:
@@ -706,9 +760,10 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> d
                 text = visible_text(message)
             if _has_thinking_without_text(message, text):
                 thinking_only_turn = True
-            response = bridge.request("step", sessionId=session_id, action=text, generatedTokens=total)
+            response = bridge.request("step", sessionId=session_id, action=_step_action(message, text), generatedTokens=total)
             observations = response.get("messages", [])
-            if any(not isinstance(observation, dict) or observation.get("role") != "user" for observation in observations):
+            if any(not isinstance(observation, dict) or observation.get("role") not in ("user", "tool")
+                   for observation in observations):
                 raise BridgeError("environment attempted to insert a teacher assistant correction or non-observation role")
             messages.extend(copy.deepcopy(observations))
             done = bool(response.get("done"))
@@ -1765,7 +1820,7 @@ def validate_fixtures(bridge: Any, rows: list[dict]) -> dict:
             for message in teacher_messages:
                 if message.get("role") != "assistant":
                     continue
-                response = bridge.request("step", sessionId=session, action=visible_text(message), generatedTokens=0)
+                response = bridge.request("step", sessionId=session, action=_step_action(message), generatedTokens=0)
                 if response.get("done"):
                     done = True
                     grade = response.get("grade") or bridge.request("grade", sessionId=session, totalGeneratedTokens=0)

@@ -8,6 +8,7 @@ import {SEMANTIC_TASK_TEMPLATES, BENCHMARK_ALGORITHMS, semanticRecipeFamilies, b
 import {EFFECTFUL_ENGINEERING_FIXTURES} from './engineering-fixtures.js';
 import {trustedRealSourceCases} from '../corpus/trusted-source-candidates.mjs';
 import {encodeReadable, normalizedSourceHash} from './tinker-execution.js';
+import {effectfulWorkflowTemplates} from './tinker-effectful-workflows.js';
 
 export const BENCHMARK_SCHEMA = 'tinker-generalization-corpus/1';
 export const sha256 = value => createHash('sha256').update(typeof value === 'string' || ArrayBuffer.isView(value) ? value : JSON.stringify(value)).digest('hex');
@@ -110,14 +111,21 @@ function expandTemplate(template, seed) {
   const inputs = templateInputs(template), rows = [];
   const core = template.source.replace(/\bfunction\s+run\b/, 'function __benchmarkCore');
   if (core === template.source) throw Error('Generator template must declare run');
+  const keepsPacket = (template.features ?? []).some(f => ['mutation', 'alias', 'cycle', 'sparse', 'null-prototype'].includes(f));
   for (let i=0;i<inputs.length;i++) {
     const original = template.fixture?.(i) ?? {calls:[]}, args=structuredClone(inputs[i]);
+    const gate = [-2,0,3,7][i%4], ts = 1700000000 + i * 100;
+    const secondForm = keepsPacket
+      ? ['packet',core+'\nasync function run(packet){packet.answer=await __benchmarkCore(...packet.inputs);return packet;}',[{inputs:args}],original]
+      : ['logged-clock',core+'\nasync function run(...args){const started=Date.now();console.log("start:"+started);const answer=await __benchmarkCore(...args);console.info("done");return answer;}',args,
+        {calls:[{operation:'platform.dateNow',arguments:[],result:ts},{operation:'platform.console.log',arguments:['start:'+ts]},...original.calls,
+          ...(template.throws?.(i)?[]:[{operation:'platform.console.info',arguments:['done']}])]}];
     const forms = [
       ['direct',template.source,args,original],
-      ['packet',core+'\nasync function run(packet){packet.answer=await __benchmarkCore(...packet.inputs);return packet;}',[{inputs:args}],original],
+      secondForm,
       ['observed-branch',core+'\nasync function run(...args){const gate=await host.readAsync("gate");const answer=await __benchmarkCore(...args);host.store("selected",gate>0?gate:0);return answer;}',args,
-        {calls:[{operation:'demo.readAsync',arguments:['gate'],result:[-2,0,3,7][i%4]},...original.calls,
-          ...(template.throws?.(i)?[]:[{operation:'demo.store',arguments:['selected',Math.max(0,[-2,0,3,7][i%4])]}])]}],
+        {calls:[{operation:'demo.readAsync',arguments:['gate'],result:gate},...original.calls,
+          ...(template.throws?.(i)?[]:[{operation:'demo.store',arguments:['selected',Math.max(0,gate)]}])]}],
     ];
     for (const [form,source,actualArgs,fixture] of forms) rows.push(decorate({source,entry:'run',args:actualArgs,fixture},{template,index:i,form,sourceOrigin:'authored-generator',seed}));
   }
@@ -1106,13 +1114,13 @@ async function run(streamName) {
   ];
 }
 
-function expandLongTemplate(template, seed) {
+function expandDirectTemplate(template, seed, sourceOrigin) {
   const rows = [];
   for (let i = 0; i < template.inputs.length; i++) {
     const fixture = template.fixture?.(i) ?? {calls: []};
     const args = structuredClone(template.inputs[i]);
     rows.push(decorate({source: template.source, entry: 'run', args, fixture}, {
-      template, index: i, form: 'direct', sourceOrigin: 'authored-long-program', seed,
+      template, index: i, form: 'direct', sourceOrigin, seed,
     }));
   }
   return rows;
@@ -1127,7 +1135,8 @@ export function generatedCandidates({seed = 17} = {}) {
   ];
   return [
     ...templates.flatMap(template=>expandTemplate(template,seed)),
-    ...longProgramTemplates().flatMap(template=>expandLongTemplate(template,seed)),
+    ...longProgramTemplates().flatMap(template=>expandDirectTemplate(template,seed,'authored-long-program')),
+    ...effectfulWorkflowTemplates().flatMap(template=>expandDirectTemplate(template,seed,'authored-effectful-workflow')),
   ];
 }
 

@@ -539,11 +539,16 @@ class TinkerAdapter:
                 if piece in {"<|message_model|>", "<|end_message|>", "<|content_model_end_sampling|>"}:
                     flush_text()
                     counts["protocol"] += 1
-                    mode = "unclassified"
-                elif piece in {"<|content_thinking|>", "<|content_text|>"}:
+                    mode = "header" if piece == "<|message_model|>" else "unclassified"
+                elif piece in {"<|content_thinking|>", "<|content_text|>", "<|content_invoke_tool_json|>"}:
                     flush_text()
                     counts["protocol"] += 1
-                    mode = "reasoning" if piece == "<|content_thinking|>" else "text"
+                    mode = ("reasoning" if piece == "<|content_thinking|>"
+                            else "text" if piece == "<|content_text|>"
+                            else "protocol")
+                elif mode == "header":
+                    # Tool recipient name between <|message_model|> and <|content_invoke_tool_json|>.
+                    counts["protocol"] += 1
                 elif mode == "text":
                     text_tokens.append(token)
                     text_pieces.append(piece)
@@ -652,6 +657,7 @@ class TinkerAdapter:
                     full_roles[start:turn_end] = ["model"] * (turn_end - start)
                     text_parts, text_ids = [], []
                     in_text = False
+                    has_tool_invoke = False
                     def flush():
                         if text_ids:
                             text_parts.append(tokenizer.decode(text_ids))
@@ -659,11 +665,13 @@ class TinkerAdapter:
                     for token, piece in zip(tokens[start + 1:turn_end], pieces[start + 1:turn_end]):
                         if re.fullmatch(r"<\|[^|]+\|>", piece):
                             flush()
+                            if piece == "<|content_invoke_tool_json|>":
+                                has_tool_invoke = True
                             in_text = piece == "<|content_text|>"
                         elif in_text:
                             text_ids.append(token)
                     flush()
-                    kind = _supervised_action_kind("".join(text_parts))
+                    kind = "call_request" if has_tool_invoke else _supervised_action_kind("".join(text_parts))
                     full_actions[start:turn_end] = [kind] * (turn_end - start)
                     ordinal = turn_end_ordinal + 1
                 actions, roles = full_actions[1:], full_roles[1:]

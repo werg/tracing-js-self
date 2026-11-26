@@ -535,6 +535,15 @@ class ConcurrencyAndScheduleTests(unittest.TestCase):
             saved = [json.loads(line) for line in (output / "evaluations/baseline-test.jsonl").read_text().splitlines()]
             self.assertEqual([r["task_id"] for r in saved], [f"task-{i}" for i in range(6)])
 
+    def test_write_jsonl_preserves_js_object_property_order(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "ordered.jsonl"
+            write_jsonl(path, [{"obj": {"key": "cfg", "attempts": 2, "z": 1, "a": 0}}])
+            raw = path.read_text().strip()
+            self.assertIn('{"key":"cfg","attempts":2,"z":1,"a":0}', raw)
+            reloaded = json.loads(raw)
+            self.assertEqual(list(reloaded["obj"].keys()), ["key", "attempts", "z", "a"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -104,7 +104,7 @@ class WorkerIntegrationTests(unittest.TestCase):
         self.assertNotIn("write-ack-secret", json.dumps(model.histories[1]))
         self.assertIn("41321", json.dumps(model.histories[1]))
         self.assertIn("write-ack-secret", json.dumps(model.histories[2]))
-        self.assertEqual(model.histories[1][2], result["samples"][0]["message"])
+        self.assertEqual(model.histories[1][3], result["samples"][0]["message"])
         self.assertNotIn("sessionId", json.dumps(model.histories))
         self.assertEqual(result["samples"][1]["logprobs"], [-0.25] * 13)
 

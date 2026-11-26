@@ -93,8 +93,18 @@ function visibleContent(content) {
   throw Error('Invalid assistant message content');
 }
 
-export function independentAction(text) {
-  const trimmed = visibleContent(text).trim(), match = /```(?:json)?[ \t]*\r?\n?([^]*?)```(?:\s*[.!?]*)?$/.exec(trimmed);
+export function independentAction(input) {
+  if (input && typeof input === 'object' && !Array.isArray(input) && Array.isArray(input.tool_calls) && input.tool_calls.length > 0) {
+    if (input.tool_calls.length !== 1) throw Error('Expected one independent tool call');
+    const tc = input.tool_calls[0], fn = tc?.function;
+    if (!fn || typeof fn.name !== 'string') throw Error('Invalid independent tool call');
+    const raw = typeof fn.arguments === 'string' ? JSON.parse(fn.arguments || '{}') : fn.arguments;
+    const args = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' && Array.isArray(raw.arguments)) ? raw.arguments
+      : (raw && typeof raw === 'object' && Object.keys(raw).length === 0) ? [] : null;
+    if (!Array.isArray(args)) throw Error('Invalid independent tool call arguments');
+    return {type: 'call', operation: fn.name, arguments: args};
+  }
+  const trimmed = visibleContent(typeof input === 'string' ? input : input.content).trim(), match = /```(?:json)?[ \t]*\r?\n?([^]*?)```(?:\s*[.!?]*)?$/.exec(trimmed);
   const action = JSON.parse((match ? match[1] : trimmed).trim());
   if (!action || !['call', 'complete'].includes(action.type)) throw Error('Invalid independent action');
   if (action.type === 'complete' && !Object.hasOwn(action, 'arguments')) return {...action, arguments: []};
@@ -181,20 +191,29 @@ export function independentTranscriptMatches(native, texts, task) {
 // to remain correct. Initial public instructions are audited elsewhere.
 export function independentConversationMatches(native,messages,task) {
   try {
-    if(messages[0]?.role!=='system'||messages[1]?.role!=='user')return false;
-    const texts=[];let observation=0,completed=false;
-    for(let i=2;i<messages.length;i++){
+    if(messages[0]?.role!=='system')return false;
+    let start=2;
+    if(messages[1]?.role==='tool_declare'){if(messages[2]?.role!=='user')return false;start=3;}
+    else if(messages[1]?.role!=='user')return false;
+    const inputs=[];let observation=0,completed=false;
+    for(let i=start;i<messages.length;i++){
       const message=messages[i];if(completed||message.role!=='assistant')return false;
-      const visible=visibleContent(message.content);
-      texts.push(visible);const action=independentAction(visible);
+      inputs.push(message);const action=independentAction(message);
       if(action.type==='complete'){completed=true;continue;}
       const response=messages[++i],expected=native.observations[observation++];
-      const prefix='External observation for '+action.operation+': ';
-      if(!expected||response?.role!=='user'||!response.content.startsWith(prefix))return false;
-      const payload=JSON.parse(response.content.slice(prefix.length));
+      if(!expected||!response)return false;
+      let payload;
+      if(response.role==='tool'){
+        if(response.name!==action.operation)return false;
+        payload=JSON.parse(response.content);
+      }else if(response.role==='user'){
+        const prefix='External observation for '+action.operation+': ';
+        if(!response.content.startsWith(prefix))return false;
+        payload=JSON.parse(response.content.slice(prefix.length));
+      }else return false;
       if(Object.keys(payload).sort().join(',')!=='status,value'||payload.status!==expected.status||
         !isDeepStrictEqual(independentGraph([independentDecode(payload.value)]),expected.result))return false;
     }
-    return completed&&observation===native.observations.length&&independentTranscriptMatches(native,texts,task);
+    return completed&&observation===native.observations.length&&independentTranscriptMatches(native,inputs,task);
   }catch{return false;}
 }

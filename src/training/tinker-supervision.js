@@ -6,8 +6,15 @@ import {TINKER_TRACE_FORMATS, prepareTinkerTask, readableMessagesFromJournal,
 
 const demand = (condition, message) => { if (!condition) throw new TypeError(message); };
 const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
-const observations = messages => messages.flatMap((message, index) =>
-  index >= 2 && message.role === 'user' ? [{index, message}] : []);
+const initialPrefixLength = messages => {
+  const firstUser = messages.findIndex(message => message?.role === 'user');
+  return firstUser >= 0 ? firstUser + 1 : 2;
+};
+const observations = messages => {
+  const start = initialPrefixLength(messages);
+  return messages.flatMap((message, index) =>
+    index >= start && (message.role === 'tool' || message.role === 'user') ? [{index, message}] : []);
+};
 
 /** Compare two frozen environments with the same public prompt. The complete
  * prefix, including assistant requests and earlier reasoning, must remain
@@ -15,7 +22,8 @@ const observations = messages => messages.flatMap((message, index) =>
 export function auditCausalPrefixPair(left, right, {divergenceObservation} = {}) {
   const a = left.messages ?? left, b = right.messages ?? right;
   demand(Array.isArray(a) && Array.isArray(b), 'Causal pair requires two conversations');
-  demand(isDeepStrictEqual(a.slice(0, 2), b.slice(0, 2)), 'Causal pair public prompts differ');
+  const prefixLen = initialPrefixLength(a);
+  demand(prefixLen === initialPrefixLength(b) && isDeepStrictEqual(a.slice(0, prefixLen), b.slice(0, prefixLen)), 'Causal pair public prompts differ');
   const ao = observations(a), bo = observations(b);
   if (divergenceObservation === undefined) {
     divergenceObservation = ao.findIndex((item, index) => !isDeepStrictEqual(item.message, bo[index]?.message));
@@ -83,7 +91,7 @@ export async function auditTinkerSupervision(inputs, {formats = TINKER_TRACE_FOR
         taskDigest: digest(prepared.task), features: featuresOf(input), tier: input.metadata?.tier ?? input.tier ?? null,
         traceFormat, ...audit, ...(includeMessages ? {messages} : {})};
       rows.push(row);
-      const key = digest([traceFormat, messages.slice(0, 2)]);
+      const key = digest([traceFormat, messages.slice(0, initialPrefixLength(messages))]);
       if (!conversations.has(key)) conversations.set(key, []);
       conversations.get(key).push({id: input.id, traceFormat, messages});
       const total = formatTotals[traceFormat] ??= {conversations: 0, narrationLines: 0, assistantBytes: 0, observationBytes: 0};

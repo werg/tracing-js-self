@@ -182,14 +182,12 @@ export function normalizedSourceHash(source) {
   return hash(clean(ast));
 }
 
-const SYSTEM = `Execute the supplied JavaScript program accurately. End each turn with one JSON action in a \`\`\`json code fence (or bare JSON when no prose precedes it):
-- External call: {"type":"call","operation":"name","arguments":[...]}
-- Final completion: {"type":"complete","kind":"return"|"throw","arguments":[final input args],"value":resultOrError}
-
-Rules:
-- Request every external read, write, clock, console, or native function call in order; never invent observations.
+const SYSTEM = `Execute the supplied JavaScript program accurately.
+- For every external read, write, clock, console, or host/native call, invoke the declared tool with {"arguments":[...]} in exact execution order; never invent observations.
+- When execution finishes, end with one JSON completion in a \`\`\`json code fence (or bare JSON):
+  {"type":"complete","kind":"return"|"throw","arguments":[final input args],"value":resultOrError}
 - Final "arguments" must reflect all input mutations and aliases. Standard Error throws use {"name":"TypeError","message":"..."}.
-- Special JS values: {"$js":"undefined"|"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$js":"bigint","value":"123"}, {"$js":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the array for call args), {"$js":"array","length":3,"entries":{"1":2}} for sparse arrays, {"$js":"object","nullPrototype":true,"entries":{...}} for null-prototype or $js-keyed objects.`;
+- Special JS values: {"$js":"undefined"|"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$js":"bigint","value":"123"}, {"$js":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the arguments array for tool calls), {"$js":"array","length":3,"entries":{"1":2}} for sparse arrays, {"$js":"object","nullPrototype":true,"entries":{...}} for null-prototype or $js-keyed objects.`;
 
 function normalizeTask(input) {
   demand(plain(input), 'Task must be an object');
@@ -266,8 +264,34 @@ function privateOperation(prepared, operation, args) {
     {operation, arguments: args};
 }
 
+function toolDeclaration(operation, prepared) {
+  const binding = prepared.nativeBindings.find(item => item.name === operation);
+  const spec = own(HOST_OPERATIONS, operation) ? HOST_OPERATIONS[operation] : null;
+  const arity = spec ? spec.arity : null;
+  const description = binding?.description ?? (spec
+    ? `Invoke JS external operation ${operation} (${spec.kind}, ${arity} argument${arity === 1 ? '' : 's'}).`
+    : `Invoke JS external operation ${operation}.`);
+  return {
+    type: 'function',
+    function: {
+      name: operation,
+      description,
+      parameters: {
+        type: 'object',
+        properties: {
+          arguments: {
+            type: 'array',
+            description: `Ordered JS arguments passed to ${operation}.`,
+          },
+        },
+        required: arity === 0 ? [] : ['arguments'],
+      },
+    },
+  };
+}
+
 function initialMessages(prepared) {
-  // Derive available names only from public source/bindings, never the private
+  // Derive available tools only from public source/bindings, never the private
   // expected call inventory (which could reveal which branch will execute).
   const names = new Set(prepared.nativeBindings.map(binding => binding.name));
   for (const match of prepared.source.matchAll(/\bhost\.([A-Za-z_$][\w$]*)/g)) {
@@ -287,12 +311,13 @@ function initialMessages(prepared) {
     parts.push('Math.random() uses uint32 seed ' + prepared.randomSeed +
       ' with state=(Math.imul(state,1664525)+1013904223)>>>0; return state/4294967296.');
   }
-  if (operations.length) parts.push('External operations: ' + JSON.stringify(operations));
-  if (prepared.nativeBindings.length) {
-    parts.push('Native functions: ' + JSON.stringify(prepared.nativeBindings.map(({name, kind, description}) =>
-      ({name, kind, ...(description ? {description} : {})}))));
+  const messages = [{role: 'system', content: SYSTEM}];
+  if (operations.length) {
+    const tools = operations.map(op => toolDeclaration(op, prepared));
+    messages.push({role: 'tool_declare', content: JSON.stringify(tools)});
   }
-  return [{role: 'system', content: SYSTEM}, {role: 'user', content: parts.join('\n')}];
+  messages.push({role: 'user', content: parts.join('\n')});
+  return messages;
 }
 
 /** Execute trusted dataset source on the existing CPU host boundary and compare
@@ -376,7 +401,7 @@ function traceLines(row, source, nodes, format, entryName) {
     if (write.kind === 'property') {
       const target = node?.type === 'AssignmentExpression' ? node.left :
         ['UpdateExpression', 'UnaryExpression'].includes(node?.type) ? node.argument : null;
-      if (format === 'compact' && !target && ['ArrayExpression', 'ObjectExpression', 'Literal', 'Property', 'SpreadElement'].includes(node?.type)) continue;
+      if (format === 'compact' && !target && ['ArrayExpression', 'ObjectExpression', 'Literal', 'Property', 'SpreadElement', 'Identifier'].includes(node?.type)) continue;
       const name = target ? sourceText(source, target) : JSON.stringify(write.key) + ' in ' + code;
       if (write.present === false) { lines.push('delete ' + name); coveredByWrite = true; }
       else {
@@ -403,12 +428,14 @@ function traceLines(row, source, nodes, format, entryName) {
 function appendTraceLines(trace, added, row, source) {
   if (!added.length) return;
   // When a branch immediately follows the evaluation of its own condition
-  // (`i<xs.length => true` -> `branch i<xs.length => true (then)`), drop the
-  // redundant preceding scalar evaluation line.
+  // (`i<xs.length => true` -> `branch i<xs.length => true (then)`), or follows
+  // a pathless short-circuit sub-branch on the same span, drop the redundant line.
   if (row.op === 'branch' && trace.length) {
     const code = sourceText(source, row.source);
     const cond = scalarText(row.test ?? row.operands?.[0]);
     if (cond !== null && trace.at(-1) === code + ' => ' + cond) trace.pop();
+    else if (['then', 'else'].includes(row.path) && trace.at(-1).startsWith('branch ' + code + ' => ') &&
+      !trace.at(-1).endsWith(' (then)') && !trace.at(-1).endsWith(' (else)')) trace.pop();
   }
   for (const line of added) {
     if (trace.at(-1) !== line) trace.push(line);
@@ -427,9 +454,26 @@ function assistantMessage(action, trace, channel) {
   return {role: 'assistant', content: (trace.length ? trace.join('\n') + '\n' : '') + actionBlock};
 }
 
-function observation(operation, status, value) {
-  return {role: 'user', content: 'External observation for ' + operation + ': ' +
-    JSON.stringify({status, value: encodeReadable(value)})};
+function assistantToolCallMessage(operation, args, trace, channel, callId) {
+  const tool_calls = [{
+    type: 'function',
+    id: callId,
+    function: {name: operation, arguments: JSON.stringify({arguments: args})},
+  }];
+  if (channel === 'thinking') {
+    if (!trace.length) return {role: 'assistant', content: '', tool_calls};
+    return {role: 'assistant', content: [{type: 'thinking', thinking: trace.join('\n')}], tool_calls};
+  }
+  return {role: 'assistant', content: trace.join('\n'), tool_calls};
+}
+
+function observation(operation, status, value, toolCallId = null) {
+  return {
+    role: 'tool',
+    ...(toolCallId ? {tool_call_id: toolCallId} : {}),
+    name: operation,
+    content: JSON.stringify({status, value: encodeReadable(value)}),
+  };
 }
 
 /** Converts canonical journal events into causal readable turns, using source
@@ -447,13 +491,14 @@ export function readableMessagesFromJournal(bundle, prepared, options = {}) {
       const receipt = dispatches[called++];
       demand(receipt && receipt.operation === row.operation, 'Journal request/receipt mismatch');
       const call = publicOperation(prepared, receipt.operation, graphRoots(receipt.arguments));
-      messages.push(assistantMessage({type: 'call', operation: call.operation, arguments: encodeReadable(call.arguments)}, trace, channel));
-      trace = []; pending = {effect: row.effect, call: receipt.call, operation: call.operation};
+      const callId = 'call_' + called;
+      messages.push(assistantToolCallMessage(call.operation, encodeReadable(call.arguments), trace, channel, callId));
+      trace = []; pending = {effect: row.effect, call: receipt.call, operation: call.operation, callId};
     } else if (row.op === 'observe' && row.effect) {
       demand(pending && row.effect === pending.effect, 'Observation without its pending request');
       const receipt = settlements.get(pending.call);
       demand(receipt, 'Missing external settlement');
-      messages.push(observation(pending.operation, receipt.status, graphRoots(receipt.result)[0])); pending = null;
+      messages.push(observation(pending.operation, receipt.status, graphRoots(receipt.result)[0], pending.callId)); pending = null;
     } else {
       if (row.source?.end <= prepared.source.length)
         appendTraceLines(trace, traceLines(row, prepared.source, nodes, format, prepared.entry), row, prepared.source);
@@ -490,24 +535,28 @@ export async function exportTinkerExample(input, options = {}) {
 export async function auditTeacherConversation(prepared, messages, options = {}) {
   const format = traceFormat(options), channel = reasoningChannel(options);
   demand(Array.isArray(messages), 'Teacher conversation must be an array');
-  demand(isDeepStrictEqual(messages.slice(0, 2), initialMessages(prepared)), 'Teacher initial prompt differs from live prompt');
+  const initial = initialMessages(prepared);
+  demand(isDeepStrictEqual(messages.slice(0, initial.length), initial), 'Teacher initial prompt differs from live prompt');
   demand(isDeepStrictEqual(messages, readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: format, reasoningChannel: channel})),
     'Teacher narration or observations differ from causal source events');
   const session = createTinkerSession(prepared);
-  let index = 2, calls = 0, narrationLines = 0, assistantBytes = 0, observationBytes = 0;
+  let index = initial.length, calls = 0, narrationLines = 0, assistantBytes = 0, observationBytes = 0;
   try {
     while (index < messages.length) {
       const message = messages[index++];
       demand(message.role === 'assistant' && (typeof message.content === 'string' || Array.isArray(message.content)), 'Expected a teacher action');
       const visible = assistantVisibleText(message);
       const thinking = assistantThinkingText(message);
-      const action = parseStudentAction(visible);
+      const action = parseStudentAction(message);
       const fence = visible.indexOf('```');
-      const prose = fence < 0 ? '' : visible.slice(0, fence).trim();
+      const prose = Array.isArray(message.tool_calls) && message.tool_calls.length
+        ? visible.trim()
+        : (fence < 0 ? '' : visible.slice(0, fence).trim());
       const narration = [thinking.trim(), prose].filter(Boolean).join('\n');
       if (narration) narrationLines += narration.split('\n').length;
-      assistantBytes += Buffer.byteLength(visible) + Buffer.byteLength(thinking);
-      const next = await session.step(visible, 0);
+      assistantBytes += Buffer.byteLength(visible) + Buffer.byteLength(thinking) +
+        (message.tool_calls ? Buffer.byteLength(JSON.stringify(message.tool_calls)) : 0);
+      const next = await session.step(message, 0);
       demand(!next.done || next.grade.success, 'Teacher replay failed complete execution');
       if (action.type === 'call') calls++;
       for (const obs of next.messages) {
@@ -540,6 +589,24 @@ function validateActionObject(action) {
 }
 
 export function parseStudentAction(input) {
+  if (input && typeof input === 'object' && !Array.isArray(input) && Array.isArray(input.tool_calls) && input.tool_calls.length > 0) {
+    demand(input.tool_calls.length === 1, 'Expected exactly one external tool call per turn');
+    const tc = input.tool_calls[0];
+    const fn = tc?.function;
+    demand(fn && typeof fn.name === 'string' && fn.name.length > 0, 'Invalid tool call function');
+    let rawArgs = fn.arguments;
+    if (typeof rawArgs === 'string') {
+      const trimmedArgs = rawArgs.trim();
+      rawArgs = trimmedArgs ? JSON.parse(trimmedArgs) : {};
+    }
+    let args;
+    if (Array.isArray(rawArgs)) args = rawArgs;
+    else if (plain(rawArgs) && Array.isArray(rawArgs.arguments) && Object.keys(rawArgs).length === 1) args = rawArgs.arguments;
+    else if (plain(rawArgs) && Object.keys(rawArgs).length === 0) args = [];
+    else throw new TypeError('Invalid tool call arguments');
+    const toolCallId = typeof tc.id === 'string' && tc.id.length > 0 ? tc.id : null;
+    return {type: 'call', operation: fn.name, arguments: args, ...(toolCallId ? {toolCallId} : {})};
+  }
   const text = typeof input === 'string' ? input : assistantVisibleText(input);
   demand(typeof text === 'string' && text.length <= 1048576, 'Invalid action text');
   const trimmed = text.trim();
@@ -639,7 +706,8 @@ export function createTinkerSession(prepared) {
           status = 'rejected'; value = error;
         }
         calls++;
-        return {messages: [observation(action.operation, status, value)], done: false};
+        const toolCallId = action.toolCallId ?? ('call_' + calls);
+        return {messages: [observation(action.operation, status, value, toolCallId)], done: false};
       } catch { return reject('external-request-mismatch', 'incorrect-external-request'); }
     },
     grade,

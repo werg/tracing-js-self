@@ -42,22 +42,25 @@ test('student action parser allows natural prose, code snippets, and trailing pu
   assert.throws(() => parseStudentAction('{"type":"complete","kind":"return","arguments":[],"value":2,"extra":1}'), /completion/);
 });
 
-test('readable exporter uses Inkling thinking blocks by default and masks real observations by role', async () => {
+test('readable exporter uses Inkling thinking blocks and native tool calls by default', async () => {
   const input = task('function run(x){const y=host.readNumber("x")+x;host.store("y",y);return y;}', {
     args: [1], fixture: {calls: [{operation: 'demo.readNumber', arguments: ['x'], result: 4},
       {operation: 'demo.store', arguments: ['y', 5], result: {$js: 'undefined'}}]}});
   const exported = await exportTinkerExample(input);
-  assert.deepEqual(exported.messages.map(message => message.role), ['system', 'user', 'assistant', 'user', 'assistant', 'user', 'assistant']);
+  assert.deepEqual(exported.messages.map(message => message.role), ['system', 'tool_declare', 'user', 'assistant', 'tool', 'assistant', 'tool', 'assistant']);
   assert.equal(exported.metadata.reasoningChannel, 'thinking');
-  assert.match(assistantThinkingText(exported.messages[4]), /host\.readNumber\("x"\)\+x => 5/);
-  assert.match(assistantVisibleText(exported.messages[4]), /```json\n\{"type":"call"/);
+  assert.match(assistantThinkingText(exported.messages[5]), /host\.readNumber\("x"\)\+x => 5/);
+  assert.equal(exported.messages[5].tool_calls[0].function.name, 'demo.store');
+  assert.deepEqual(JSON.parse(exported.messages[5].tool_calls[0].function.arguments), {arguments: ['y', 5]});
+  assert.equal(exported.messages[4].role, 'tool');
+  assert.equal(exported.messages[4].name, 'demo.readNumber');
   assert.equal(exported.metadata.externalObservationsTrainable, false);
   assert.equal(exported.metadata.sourceVerified, true);
   const generated = exported.messages.filter(message => message.role === 'assistant')
     .map(message => assistantThinkingText(message) + '\n' + assistantVisibleText(message)).join('\n');
   assert.doesNotMatch(generated, /invocationId|effectId|sourceAdmission|prefixDigest|a0:e/);
   const session = createTinkerSession(await prepareTinkerTask(exported.task));
-  for (const message of exported.messages.filter(message => message.role === 'assistant')) await session.step(assistantVisibleText(message), 100);
+  for (const message of exported.messages.filter(message => message.role === 'assistant')) await session.step(message, 100);
   assert.equal(session.grade(100).success, true);
 });
 
@@ -65,9 +68,9 @@ test('counterfactual private observations cannot alter the initial prompt or req
   const make = value => task('function run(){const n=host.readNumber("secret");return n+1;}', {
     fixture: {calls: [{operation: 'demo.readNumber', arguments: ['secret'], result: value}]}});
   const left = await exportTinkerExample(make(7123)), right = await exportTinkerExample(make(9234));
-  assert.deepEqual(left.messages.slice(0, 3), right.messages.slice(0, 3));
-  assert.doesNotMatch(JSON.stringify(left.messages.slice(0, 3)), /7123|9234/);
-  assert.notDeepEqual(left.messages[3], right.messages[3]);
+  assert.deepEqual(left.messages.slice(0, 4), right.messages.slice(0, 4));
+  assert.doesNotMatch(JSON.stringify(left.messages.slice(0, 4)), /7123|9234/);
+  assert.notDeepEqual(left.messages[4], right.messages[4]);
   const session = createTinkerSession(await prepareTinkerTask(make(7123)));
   const bad = await session.step(call('demo.readNumber', ['incorrect']), 12);
   assert.equal(bad.done, true); assert.equal(bad.grade.reward, 0); assert.deepEqual(bad.messages, []);
@@ -141,10 +144,11 @@ test('fresh randomness is privately materialized once and preserved for reproduc
   assert.equal(exported.task.freshRandomCalls, 0);
   const draw = exported.task.fixture.calls[0].result;
   assert(draw >= 0 && draw < 1);
-  assert.doesNotMatch(JSON.stringify(exported.messages.slice(0, 3)), new RegExp(String(draw).replace('.', '\\.')));
+  assert.doesNotMatch(JSON.stringify(exported.messages.slice(0, 4)), new RegExp(String(draw).replace('.', '\\.')));
   const session = createTinkerSession(await prepareTinkerTask(exported.task));
   const observed = await session.step(call('freshRandom', []), 10);
-  assert.match(observed.messages[0].content, /freshRandom/);
+  assert.equal(observed.messages[0].role, 'tool');
+  assert.equal(observed.messages[0].name, 'freshRandom');
   assert.equal((await session.step(complete(draw), 20)).grade.success, true);
 });
 
@@ -155,7 +159,7 @@ test('an existing strict directive is preserved when hoisted native wrappers are
   const generated = exported.messages.filter(message => message.role === 'assistant');
   assert.doesNotMatch(generated.map(message => assistantThinkingText(message) + '\n' + assistantVisibleText(message)).join('\n'), /natlangCallSync/);
   const session = createTinkerSession(await prepareTinkerTask(exported.task));
-  for (const message of generated) await session.step(assistantVisibleText(message), 50);
+  for (const message of generated) await session.step(message, 50);
   assert.equal(session.grade(50).success, true);
 });
 

@@ -8,7 +8,7 @@ export async function gradeTranscript(prepared, texts) {
   const session=createTinkerSession(prepared);
   let tokens=0;
   try {
-    for(const text of texts){tokens+=Math.max(1,Math.ceil(text.length/4));const result=await session.step(text,tokens);if(result.done)break;}
+    for(const text of texts){const len=typeof text==='string'?text.length:JSON.stringify(text).length;tokens+=Math.max(1,Math.ceil(len/4));const result=await session.step(text,tokens);if(result.done)break;}
     return session.grade(tokens);
   } finally {session.close();}
 }
@@ -58,13 +58,13 @@ export function adversarialTranscripts(texts) {
 
 export async function verifyTaskBoundary(task,{independent=true,negativeControls=true}={}) {
   const prepared=await prepareTinkerTask(task),messages=readableMessagesFromJournal(prepared.bundle,prepared);
-  const texts=messages.filter(m=>m.role==='assistant').map(m=>assistantVisibleText(m));
-  const actions=texts.map(independentAction).map(a=>JSON.stringify(a));
-  const original=await gradeTranscript(prepared,texts),short=await gradeTranscript(prepared,actions);
+  const assistantMessages=messages.filter(m=>m.role==='assistant');
+  const actions=assistantMessages.map(independentAction).map(a=>JSON.stringify(a));
+  const original=await gradeTranscript(prepared,assistantMessages),short=await gradeTranscript(prepared,actions);
   const changed=await gradeTranscript(prepared,actions.map(a=>'A different concise derivation.\n```json\n'+a+'\n```'));
   if(!original.success||!short.success||!changed.success)throw Object.assign(Error('Positive teacher/narration control rejected'),{code:'positive-control-rejected'});
   const native=independent?await independentNativeExecution(prepared.task):null;
-  if(native&&!independentTranscriptMatches(native,texts,prepared.task))throw Object.assign(Error('Independent boundary oracle disagrees with admitted teacher'),{code:'independent-boundary-disagreement'});
+  if(native&&!independentTranscriptMatches(native,assistantMessages,prepared.task))throw Object.assign(Error('Independent boundary oracle disagrees with admitted teacher'),{code:'independent-boundary-disagreement'});
   if(native&&!independentConversationMatches(native,messages,prepared.task))throw Object.assign(Error('Independent observed values disagree with exported conversation'),{code:'independent-observation-disagreement'});
   const negatives=[],equivalent=[];
   if(negativeControls)for(const control of adversarialTranscripts(actions)){
@@ -78,7 +78,8 @@ export async function verifyTaskBoundary(task,{independent=true,negativeControls
     negatives.push(control.name);
   }
   return {id:task.id,sourceHash:prepared.sourceHash,positiveControls:3,negativeControls:negatives,equivalentControls:equivalent,
-    independentChecked:!!native,externalCalls:prepared.fixture.calls.length,traceCharacters:texts.reduce((n,t)=>n+t.length,0),
+    independentChecked:!!native,externalCalls:prepared.fixture.calls.length,
+    traceCharacters:assistantMessages.reduce((n,m)=>n+assistantVisibleText(m).length+(m.tool_calls?JSON.stringify(m.tool_calls).length:0),0),
     completeKind:prepared.outcome.kind,sourceVerified:true};
 }
 
