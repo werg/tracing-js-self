@@ -7,12 +7,14 @@
 
 import {existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {join, relative, resolve} from 'node:path';
+import {basename, dirname, join, relative, resolve, sep} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
-import {parseArgs} from 'node:util';
+import {pathToFileURL} from 'node:url';
+import {parseArgs, types} from 'node:util';
 import vm from 'node:vm';
 import {parse} from 'acorn';
+import ts from 'typescript';
 import {prepareTinkerTask, readableMessagesFromJournal, encodeReadable,
   assistantVisibleText, assistantThinkingText} from '../src/training/tinker-execution.js';
 import {nearCloneHash, executionInputSignature} from '../src/training/tinker-benchmark.js';
@@ -23,39 +25,101 @@ process.on('unhandledRejection', () => {});
 
 const stripTmpComments = code => code.replace(/^\s*\/\/ (?:\.\.\/)+\S+\r?\n/gm, '');
 
-const {values} = parseArgs({options: {
-  'env-dir': {type: 'string', default: '/tmp/tinker-harvest-env'},
-  'repos-dir': {type: 'string', default: '/tmp/tinker-harvest-repos'},
-  'local-repos': {type: 'string'},
-  'output-dir': {type: 'string', default: 'runs/tinker-harvest'},
-  mode: {type: 'string', default: 'owned'},
-  jobs: {type: 'string', default: '4'},
-  'max-per-fn': {type: 'string', default: '3'},
-  'max-per-repo': {type: 'string', default: '30'},
-  'clone-tests': {type: 'boolean', default: true},
-  'skip-npm': {type: 'boolean', default: false},
-  'min-source-chars': {type: 'string', default: '0'},
-  'min-trace-lines': {type: 'string', default: '0'},
-  limit: {type: 'string'},
-}});
+const BOOLEAN_CLI_FLAGS = new Set(['clone-tests', 'skip-npm', 'prefer-unit-tests', 'unit-tests-only']);
 
-const envDir = resolve(values['env-dir']);
-const reposDir = resolve(values['repos-dir']);
-const localReposDir = values['local-repos'] ? resolve(values['local-repos']) : null;
-const outputDir = resolve(values['output-dir']);
-const harvestMode = values.mode === 'native' ? 'native' : 'owned';
-const jobs = Math.max(1, Math.min(8, Number(values.jobs) || 4));
-const maxPerFn = Math.max(1, Math.min(12, Number(values['max-per-fn']) || 3));
-const maxPerRepo = Math.max(1, Math.min(200, Number(values['max-per-repo']) || 30));
-const minSourceChars = Math.max(0, Number(values['min-source-chars']) || 0);
-const minTraceLines = Math.max(0, Number(values['min-trace-lines']) || 0);
-const limit = values.limit ? Number(values.limit) : null;
+export function parseHarvesterArgs(argv = process.argv.slice(2)) {
+  const normalized = [];
+  for (const arg of argv) {
+    const eq = arg.indexOf('=');
+    if (arg.startsWith('--') && eq > 2) {
+      const name = arg.slice(2, eq);
+      const val = arg.slice(eq + 1);
+      if (BOOLEAN_CLI_FLAGS.has(name)) {
+        if (val === 'false' || val === '0') { normalized.push('--no-' + name); continue; }
+        if (val === 'true' || val === '1') { normalized.push('--' + name); continue; }
+      }
+    }
+    normalized.push(arg);
+  }
+  const {values: v} = parseArgs({
+    args: normalized,
+    allowNegative: true,
+    options: {
+      'env-dir': {type: 'string', default: '/tmp/tinker-harvest-env'},
+      'repos-dir': {type: 'string', default: '/tmp/tinker-harvest-repos'},
+      'local-repos': {type: 'string'},
+      'output-dir': {type: 'string', default: 'runs/tinker-harvest'},
+      mode: {type: 'string', default: 'owned'},
+      jobs: {type: 'string', default: '4'},
+      'max-per-fn': {type: 'string', default: '3'},
+      'max-per-repo': {type: 'string', default: '30'},
+      'clone-tests': {type: 'boolean', default: true},
+      'skip-npm': {type: 'boolean', default: false},
+      'prefer-unit-tests': {type: 'boolean', default: true},
+      'unit-tests-only': {type: 'boolean', default: false},
+      'min-source-chars': {type: 'string', default: '0'},
+      'min-trace-lines': {type: 'string', default: '0'},
+      limit: {type: 'string'},
+    },
+  });
+  return {
+    values: v,
+    envDir: resolve(v['env-dir']),
+    reposDir: resolve(v['repos-dir']),
+    localReposDir: v['local-repos'] ? resolve(v['local-repos']) : null,
+    outputDir: resolve(v['output-dir']),
+    harvestMode: v.mode === 'native' ? 'native' : 'owned',
+    jobs: Math.max(1, Math.min(8, Number(v.jobs) || 4)),
+    maxPerFn: Math.max(1, Math.min(12, Number(v['max-per-fn']) || 3)),
+    maxPerRepo: Math.max(1, Math.min(200, Number(v['max-per-repo']) || 30)),
+    preferUnitTests: Boolean(v['prefer-unit-tests']),
+    unitTestsOnly: Boolean(v['unit-tests-only']),
+    minSourceChars: Math.max(0, Number(v['min-source-chars']) || 0),
+    minTraceLines: Math.max(0, Number(v['min-trace-lines']) || 0),
+    limit: v.limit ? Number(v.limit) : null,
+  };
+}
 
-mkdirSync(outputDir, {recursive: true});
-mkdirSync(reposDir, {recursive: true});
+let values = {
+  'clone-tests': true,
+  'skip-npm': false,
+  'prefer-unit-tests': true,
+  'unit-tests-only': false,
+};
+let envDir = resolve('/tmp/tinker-harvest-env');
+let reposDir = resolve('/tmp/tinker-harvest-repos');
+let localReposDir = null;
+let outputDir = resolve('runs/tinker-harvest');
+let harvestMode = 'owned';
+let jobs = 4;
+let maxPerFn = 3;
+let maxPerRepo = 30;
+let preferUnitTests = true;
+let unitTestsOnly = false;
+let minSourceChars = 0;
+let minTraceLines = 0;
+let limit = null;
 
-const req = createRequire(join(envDir, 'package.json'));
-const esbuild = req('esbuild');
+const esbuildCache = new Map();
+function getEsbuild(dir = envDir) {
+  const key = resolve(dir);
+  if (esbuildCache.has(key)) return esbuildCache.get(key);
+  let loaded = null;
+  const envPkg = join(key, 'package.json');
+  if (existsSync(envPkg)) {
+    try { loaded = createRequire(envPkg)('esbuild'); } catch {}
+  }
+  if (!loaded) {
+    try { loaded = createRequire(import.meta.url)('esbuild'); } catch {}
+  }
+  esbuildCache.set(key, loaded);
+  return loaded;
+}
+
+function getReq(dir = envDir) {
+  return createRequire(join(dir, 'package.json'));
+}
+
 const sha256 = v => createHash('sha256').update(typeof v === 'string' ? v : JSON.stringify(v)).digest('hex');
 
 function packageDir(pkgName) {
@@ -88,12 +152,14 @@ function resolvePackageEntry(pkgDir, pkgJson) {
   if (existsSync(candidate)) return candidate;
   if (existsSync(candidate + '.js')) return candidate + '.js';
   if (existsSync(join(candidate, 'index.js'))) return join(candidate, 'index.js');
-  return req.resolve(pkgJson.name);
+  return getReq().resolve(pkgJson.name);
 }
 
 // --- 1. Tree-shaken per-export bundling via esbuild (zero CJS boilerplate!) ---
 const bundleCache = new Map();
 function bundleExport(pkgName, exportName = null, subpath = null) {
+  const esbuild = getEsbuild();
+  if (!esbuild) return {error: 'esbuild unavailable'};
   const key = `${pkgName}|${exportName ?? '*'}|${subpath ?? ''}`;
   if (bundleCache.has(key)) return bundleCache.get(key);
   try {
@@ -153,6 +219,8 @@ function bundleExport(pkgName, exportName = null, subpath = null) {
 }
 
 function bundleWholeEntry(pkgName, subpath = null) {
+  const esbuild = getEsbuild();
+  if (!esbuild) return {error: 'esbuild unavailable'};
   const key = `WHOLE|${pkgName}|${subpath ?? ''}`;
   if (bundleCache.has(key)) return bundleCache.get(key);
   try {
@@ -187,10 +255,34 @@ function bundleWholeEntry(pkgName, subpath = null) {
   }
 }
 
-function probeExportSafely(bundle, fnName, sampleArgs) {
+function safeErrorDescriptor(err) {
+  if (err === null || typeof err !== 'object') {
+    return {errorName: typeof err, errorMessage: String(err)};
+  }
+  if (types.isProxy(err)) {
+    return {errorName: 'ProxyError', errorMessage: ''};
+  }
+  let errorName = 'Error';
+  let errorMessage = '';
+  try {
+    const proto = Object.getPrototypeOf(err);
+    const nameDesc = Object.getOwnPropertyDescriptor(err, 'name') ??
+      (proto && !types.isProxy(proto) ? Object.getOwnPropertyDescriptor(proto, 'name') : null);
+    if (nameDesc && Object.hasOwn(nameDesc, 'value') && typeof nameDesc.value === 'string') {
+      errorName = nameDesc.value;
+    }
+    const msgDesc = Object.getOwnPropertyDescriptor(err, 'message');
+    if (msgDesc && Object.hasOwn(msgDesc, 'value') && typeof msgDesc.value === 'string') {
+      errorMessage = msgDesc.value;
+    }
+  } catch {}
+  return {errorName, errorMessage};
+}
+
+function probeExportSafely(bundle, fnName, sampleArgs, {mode = harvestMode} = {}) {
   const recordedCalls = [];
   const baseEnv = {__args: structuredClone(sampleArgs)};
-  if (harvestMode === 'native') {
+  if (mode === 'native') {
     Object.assign(baseEnv, {URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone});
     baseEnv.console = Object.fromEntries(['log', 'info', 'warn', 'error'].map(lvl => [lvl, (...xs) => {
       if (recordedCalls.length <= 24) {
@@ -212,7 +304,7 @@ function probeExportSafely(bundle, fnName, sampleArgs) {
     };
   }
   const ctx = vm.createContext(baseEnv);
-  const patchPreamble = harvestMode === 'native'
+  const patchPreamble = mode === 'native'
     ? 'Date.now = __recDateNow; Math.random = __recRandom;\n'
     : '';
   const load = bundle.directTarget
@@ -222,18 +314,33 @@ function probeExportSafely(bundle, fnName, sampleArgs) {
       : (fnName === 'default'
         ? '(typeof __harvestBox === "function" ? __harvestBox : (__harvestBox.default ?? __harvestBox))'
         : `(__harvestBox[${JSON.stringify(fnName)}] ?? __harvestBox.default?.[${JSON.stringify(fnName)}])`)};`;
-  const script = new vm.Script(`(() => {\n${patchPreamble}${load}\nif (typeof __fn !== "function") throw new TypeError("not-fn");\nconst __out = __fn(...__args);\nif (__out && typeof __out.catch === "function") { __out.catch(() => {}); return undefined; }\nreturn __out;\n})()`);
-  const value = script.runInContext(ctx, {timeout: 100});
-  if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
-  return {value, recordedCalls};
+  const script = new vm.Script(`(() => {\n${patchPreamble}${load}\nif (typeof __fn !== "function") throw new TypeError("__HARVEST_NOT_FN__");\nconst __out = __fn(...__args);\nif (__out && typeof __out.catch === "function") { __out.catch(() => {}); return Promise.resolve(__out); }\nreturn __out;\n})()`);
+  try {
+    const value = script.runInContext(ctx, {timeout: 100});
+    if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
+    if (value && typeof value === 'object' && typeof value.then === 'function') {
+      return {kind: 'promise', value, recordedCalls};
+    }
+    return {kind: 'return', value, recordedCalls};
+  } catch (err) {
+    if (err && (err.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' || err.message === '__HARVEST_NOT_FN__' || err.message === 'Too many external calls')) {
+      throw err;
+    }
+    if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
+    const {errorName, errorMessage} = safeErrorDescriptor(err);
+    return {kind: 'throw', error: err, errorName, errorMessage, recordedCalls};
+  }
 }
 
-const SKIP_PROBE_NAMES = harvestMode === 'native'
+const isSkippedProbeName = (name, mode = harvestMode) => (mode === 'native'
   ? /^(?:sleep|delay|defer|debounce|throttle|retry|parallel|noop|identity|memo|memoize|proxied|tryit|guard|chain|compose|pipe|curry|partial|partob|promisify|all|any|race)$/i
-  : /^(?:sleep|delay|defer|debounce|throttle|retry|parallel|random|uid|draw|shuffle|sample|noop|identity|memo|memoize|proxied|tryit|guard|chain|compose|pipe|curry|partial|partob|promisify|all|any|race)$/i;
+  : /^(?:sleep|delay|defer|debounce|throttle|retry|parallel|random|uid|draw|shuffle|sample|noop|identity|memo|memoize|proxied|tryit|guard|chain|compose|pipe|curry|partial|partob|promisify|all|any|race)$/i
+).test(name);
 
 // --- 1b. Bundle an arbitrary local JS/TS file (from cloned/DGX GitHub repos) ---
 function bundleLocalFile(repoMeta, absFile, exportName = null) {
+  const esbuild = getEsbuild();
+  if (!esbuild) return {error: 'esbuild unavailable'};
   const rel = relative(repoMeta.pkgDir, absFile);
   const key = `LOCAL|${repoMeta.pkgName}|${rel}|${exportName ?? '*'}`;
   if (bundleCache.has(key)) return bundleCache.get(key);
@@ -306,81 +413,541 @@ function collectSourceAndTestFiles(dir, out = {code: [], tests: []}, rootDir = d
   }
   if (dir === rootDir) {
     out.code.sort();
-    out.tests.sort();
+    out.tests.sort((a, b) => {
+      const ta = /\.(?:test|spec)\.[cm]?[jt]s$/i.test(a) ? 0 : 1;
+      const tb = /\.(?:test|spec)\.[cm]?[jt]s$/i.test(b) ? 0 : 1;
+      return ta - tb || a.localeCompare(b);
+    });
   }
   return out;
 }
 
-function extractTestCallsFromFiles(repoDir, testFiles, exportNames, aliases = []) {
-  const byFn = new Map();
-  const exportSet = new Set(exportNames);
-  const aliasSet = new Set(aliases);
-  for (const file of testFiles.slice(0, 120)) {
-    let text = readFileSync(file, 'utf8');
-    if (/\.[cm]?ts$/i.test(file)) {
-      try {
-        text = esbuild.transformSync(text, {loader: 'ts', target: 'es2022', logLevel: 'silent'}).code;
-      } catch {
-        continue;
+const IGNORED_MEMBER_RECEIVERS = new Set([
+  'assert', 'expect', 'should', 't', 'test', 'it', 'describe', 'suite',
+  'chai', 'jest', 'vi', 'vitest', 'sinon', 'mock', 'console', 'Math', 'JSON',
+  'Object', 'Array', 'Number', 'String', 'Boolean', 'Promise', 'Reflect',
+  'Buffer', 'process', 'Date', 'RegExp', 'Error', 'Map', 'Set', 'Symbol',
+]);
+const ASSERTION_HELPER_CALLS = new Set([
+  'assert', 'expect', 'should', 'describe', 'it', 'test', 'before', 'after',
+  'beforeEach', 'afterEach', 'beforeAll', 'afterAll', 'suite', 'mock',
+]);
+const EACH_ROOTS = new Set(['test', 'it', 'describe', 'suite']);
+const EACH_MODIFIERS = new Set(['skip', 'only', 'concurrent', 'todo', 'sequential']);
+
+const parsedTestAstCache = new Map();
+const jsonFixtureCache = new Map();
+
+function transpileTsForTests(text, file, targetEnvDir = envDir) {
+  const esbuild = getEsbuild(targetEnvDir);
+  if (esbuild) {
+    try {
+      return esbuild.transformSync(text, {loader: file.endsWith('x') ? 'tsx' : 'ts', target: 'es2022', logLevel: 'silent'}).code;
+    } catch {}
+  }
+  try {
+    return ts.transpileModule(text, {
+      compilerOptions: {target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.Preserve},
+    }).outputText;
+  } catch {
+    return null;
+  }
+}
+
+function getParsedTestAst(file, targetEnvDir = envDir) {
+  let st;
+  try { st = statSync(file); } catch { return null; }
+  const cached = parsedTestAstCache.get(file);
+  if (cached && cached.mtimeMs === st.mtimeMs && cached.size === st.size) {
+    return cached.ast;
+  }
+  let text;
+  try { text = readFileSync(file, 'utf8'); } catch { return null; }
+  if (/\.[cm]?tsx?$/i.test(file)) {
+    text = transpileTsForTests(text, file, targetEnvDir);
+    if (text === null) return null;
+  }
+  let ast = null;
+  try { ast = parse(text, {ecmaVersion: 'latest', sourceType: 'module'}); }
+  catch { try { ast = parse(text, {ecmaVersion: 'latest', sourceType: 'script'}); } catch { return null; } }
+  parsedTestAstCache.set(file, {mtimeMs: st.mtimeMs, size: st.size, ast});
+  return ast;
+}
+
+function loadLocalJsonFixture(repoDir, fileDir, spec) {
+  if (typeof spec !== 'string' || (!spec.startsWith('./') && !spec.startsWith('../'))) return {ok: false};
+  const absRepo = resolve(repoDir);
+  const repoPrefix = absRepo.endsWith(sep) ? absRepo : absRepo + sep;
+  const base = resolve(fileDir, spec);
+  const candidates = base.endsWith('.json') ? [base] : [base + '.json', join(base, 'index.json')];
+  for (const cand of candidates) {
+    if (cand !== absRepo && !cand.startsWith(repoPrefix)) continue;
+    if (!existsSync(cand)) continue;
+    try {
+      const st = statSync(cand);
+      if (!st.isFile() || st.size > 512 * 1024) continue;
+      const cacheKey = `${cand}|${st.mtimeMs}|${st.size}`;
+      if (jsonFixtureCache.has(cacheKey)) {
+        return {ok: true, value: structuredClone(jsonFixtureCache.get(cacheKey))};
+      }
+      const parsed = JSON.parse(readFileSync(cand, 'utf8'));
+      jsonFixtureCache.set(cacheKey, parsed);
+      return {ok: true, value: structuredClone(parsed)};
+    } catch {}
+  }
+  return {ok: false};
+}
+
+function bindPattern(pattern, value, env, ctx) {
+  if (!pattern || typeof pattern !== 'object') return;
+  if (pattern.type === 'Identifier') {
+    if (pattern.name !== '__proto__') env.set(pattern.name, value === undefined ? undefined : structuredClone(value));
+    return;
+  }
+  if (pattern.type === 'AssignmentPattern') {
+    let resolved = value;
+    if (resolved === undefined) {
+      const def = evalStaticAst(pattern.right, env, ctx);
+      if (!def.ok) return;
+      resolved = def.value;
+    }
+    bindPattern(pattern.left, resolved, env, ctx);
+    return;
+  }
+  if (pattern.type === 'ArrayPattern' && Array.isArray(value)) {
+    for (let i = 0; i < pattern.elements.length; i++) {
+      const el = pattern.elements[i];
+      if (!el) continue;
+      if (el.type === 'RestElement') {
+        bindPattern(el.argument, value.slice(i), env, ctx);
+        break;
+      }
+      bindPattern(el, value[i], env, ctx);
+    }
+    return;
+  }
+  if (pattern.type === 'ObjectPattern' && value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    const used = new Set();
+    for (const prop of pattern.properties) {
+      if (prop.type === 'RestElement') {
+        const rest = {};
+        for (const [k, v] of Object.entries(value)) {
+          if (!used.has(k) && k !== '__proto__') rest[k] = v;
+        }
+        bindPattern(prop.argument, rest, env, ctx);
+      } else if (prop.type === 'Property') {
+        let k = null;
+        if (!prop.computed) {
+          k = prop.key.type === 'Identifier' ? prop.key.name : (prop.key.type === 'Literal' ? String(prop.key.value) : null);
+        } else {
+          const kr = evalStaticAst(prop.key, env, ctx);
+          if (kr.ok && (typeof kr.value === 'string' || typeof kr.value === 'number')) k = String(kr.value);
+        }
+        if (k === null || k === '__proto__') continue;
+        used.add(k);
+        bindPattern(prop.value, Object.hasOwn(value, k) ? value[k] : undefined, env, ctx);
       }
     }
-    let ast;
-    try { ast = parse(text, {ecmaVersion: 'latest', sourceType: 'module'}); }
-    catch { try { ast = parse(text, {ecmaVersion: 'latest', sourceType: 'script'}); } catch { continue; } }
-    // Collect simple static const/let bindings and local import/require aliases so calls resolve cleanly.
-    const env = new Map();
+  }
+}
+
+function isEachHelperCallee(callee) {
+  if (!callee || callee.type !== 'CallExpression' || !callee.arguments.length) return false;
+  const mem = callee.callee;
+  if (!mem || mem.type !== 'MemberExpression' || mem.computed || mem.property?.name !== 'each') return false;
+  let cur = mem.object;
+  while (cur && cur.type === 'MemberExpression' && !cur.computed && cur.property?.type === 'Identifier') {
+    if (!EACH_MODIFIERS.has(cur.property.name)) return false;
+    cur = cur.object;
+  }
+  return cur?.type === 'Identifier' && EACH_ROOTS.has(cur.name);
+}
+
+function memberChainRoot(node) {
+  let cur = node;
+  while (cur && cur.type === 'MemberExpression') cur = cur.object;
+  return cur;
+}
+
+function resolveTargetFnName(callee, exportSet, localAliases, aliasSet, namespaceAliases) {
+  if (!callee) return null;
+  if (callee.type === 'Identifier') {
+    if (exportSet.has(callee.name)) return callee.name;
+    if (localAliases.has(callee.name)) return localAliases.get(callee.name);
+    if (aliasSet.has(callee.name) && exportSet.has('default')) return 'default';
+    return null;
+  }
+  if (callee.type === 'MemberExpression' && !callee.computed && callee.property?.type === 'Identifier') {
+    const propName = callee.property.name;
+    if (!exportSet.has(propName)) return null;
+    const root = memberChainRoot(callee.object);
+    if (!root || root.type !== 'Identifier') return null;
+    if (IGNORED_MEMBER_RECEIVERS.has(root.name)) return null;
+    if (callee.object.type === 'Identifier' && namespaceAliases.has(callee.object.name)) return propName;
+    return propName;
+  }
+  return null;
+}
+
+function isCompatibleDefaultImport(spec, repoDir, fileDir, options = {}) {
+  if (typeof spec !== 'string' || !spec.length) return false;
+  const {targetFile = null, pkgName = null, aliasSet = null} = options;
+  const isRel = spec.startsWith('./') || spec.startsWith('../');
+  if (!isRel) {
+    if (pkgName && (spec === pkgName || spec.startsWith(pkgName + '/'))) return true;
+    if (aliasSet && aliasSet.has(spec)) return true;
+    return false;
+  }
+  if (!targetFile) return true;
+  const stripExt = p => p.replace(/\.(?:[cm]?[jt]sx?)$/i, '').replace(/\/index$/i, '');
+  const resolvedSpec = stripExt(resolve(fileDir, spec));
+  const resolvedTarget = stripExt(resolve(repoDir, targetFile));
+  if (resolvedSpec === resolvedTarget || basename(resolvedSpec) === basename(resolvedTarget)) return true;
+  // Allow barrel / package entry imports (e.g. '../src/index.js', '../../lib/marked.esm.js', '..')
+  if (/^(?:\.\.?\/)+$/.test(spec) || /(?:^|\/)(?:index|main)(?:\.[cm]?[jt]s)?$/i.test(spec) ||
+      (aliasSet && aliasSet.has(basename(resolvedSpec).replace(/\.(?:esm|cjs|umd|min)$/i, '')))) {
+    return true;
+  }
+  return false;
+}
+
+export function extractTestCallsFromFiles(repoDir, testFiles, exportNames, aliases = [], options = {}) {
+  const byFn = new Map();
+  const exportSet = new Set(exportNames);
+  const aliasSet = new Set(aliases.filter(Boolean));
+  const maxFiles = options.maxFiles ?? 300;
+  const maxCallsPerFn = options.maxCallsPerFn ?? 30;
+  const targetEnvDir = options.envDir ?? envDir;
+  const importFilterOpts = {targetFile: options.targetFile ?? null, pkgName: options.pkgName ?? null, aliasSet};
+
+  for (const file of testFiles.slice(0, maxFiles)) {
+    const ast = getParsedTestAst(file, targetEnvDir);
+    if (!ast) continue;
+    const fileDir = dirname(file);
+    const relFile = relative(repoDir, file);
     const localAliases = new Map();
-    walkAst(ast, node => {
-      if (node.type === 'ImportDeclaration' && Array.isArray(node.specifiers)) {
-        for (const spec of node.specifiers) {
-          if (spec.type === 'ImportDefaultSpecifier' && exportSet.has('default')) {
-            localAliases.set(spec.local.name, 'default');
-          } else if (spec.type === 'ImportSpecifier' && spec.imported?.type === 'Identifier' && exportSet.has(spec.imported.name)) {
-            localAliases.set(spec.local.name, spec.imported.name);
-          }
-        }
-      } else if (node.type === 'VariableDeclarator' && node.id?.type === 'Identifier' && node.init) {
-        if (exportSet.has('default') && node.init.type === 'CallExpression' &&
-            node.init.callee?.type === 'Identifier' && node.init.callee.name === 'require') {
-          localAliases.set(node.id.name, 'default');
-          return;
-        }
-        const r = evalStaticAst(node.init, env);
-        if (r.ok && !env.has(node.id.name)) env.set(node.id.name, r.value);
+    const namespaceAliases = new Set();
+    const ctx = {repoDir, fileDir, helperDepth: 0, activeHelpers: new Set()};
+
+    function recordCall(fnName, args) {
+      if (!fnName || !args.length || args.length > 8) return;
+      let sig;
+      try {
+        sig = JSON.stringify(encodeReadable(args));
+      } catch {
+        return;
       }
-    });
-    walkAst(ast, node => {
-      if (node.type !== 'CallExpression' || !node.arguments.length || node.arguments.length > 6) return;
-      let fnName = null;
-      if (node.callee.type === 'Identifier') {
-        if (exportSet.has(node.callee.name)) fnName = node.callee.name;
-        else if (localAliases.has(node.callee.name)) fnName = localAliases.get(node.callee.name);
-        else if (aliasSet.has(node.callee.name) && exportSet.has('default')) fnName = 'default';
-      } else if (node.callee.type === 'MemberExpression' && !node.callee.computed &&
-          node.callee.property.type === 'Identifier' && exportSet.has(node.callee.property.name)) {
-        fnName = node.callee.property.name;
-      }
-      if (!fnName) return;
-      const args = [];
-      for (const arg of node.arguments) {
-        const r = evalStaticAst(arg, env);
-        if (!r.ok) return;
-        args.push(r.value);
-      }
+      if (!sig || sig.length > 3000) return;
       if (!byFn.has(fnName)) byFn.set(fnName, []);
       const list = byFn.get(fnName);
-      const sig = JSON.stringify(args);
-      if (sig.length <= 2000 && list.length < 30 && !list.some(x => x.sig === sig)) {
-        list.push({args, sig, file: relative(repoDir, file)});
+      if (list.length < maxCallsPerFn && !list.some(x => x.sig === sig)) {
+        list.push({args, sig, file: relFile});
       }
-    });
+    }
+
+    function evalCallArguments(argNodes, env) {
+      const out = [];
+      for (const arg of argNodes) {
+        if (arg.type === 'SpreadElement') {
+          const r = evalStaticAst(arg.argument, env, ctx);
+          if (!r.ok || !Array.isArray(r.value) || out.length + r.value.length > 8) return null;
+          out.push(...r.value);
+        } else {
+          const r = evalStaticAst(arg, env, ctx);
+          if (!r.ok) return null;
+          out.push(r.value);
+        }
+      }
+      return out.length >= 1 && out.length <= 8 ? out : null;
+    }
+
+    function hoistDeclarations(stmts, helpers) {
+      for (const st of stmts) {
+        if (st?.type === 'FunctionDeclaration' && st.id?.name) {
+          helpers.set(st.id.name, st);
+        }
+      }
+    }
+
+    function scanStatements(stmts, env, helpers) {
+      const blockEnv = new Map(env);
+      const blockHelpers = new Map(helpers);
+      hoistDeclarations(stmts, blockHelpers);
+      for (const st of stmts) {
+        scanNode(st, blockEnv, blockHelpers);
+      }
+    }
+
+    function scanNode(node, env, helpers) {
+      if (!node || typeof node !== 'object') return;
+      if (Array.isArray(node)) {
+        for (const item of node) scanNode(item, env, helpers);
+        return;
+      }
+      if (typeof node.type !== 'string') return;
+
+      switch (node.type) {
+        case 'Program':
+        case 'BlockStatement':
+          scanStatements(node.body, env, helpers);
+          return;
+
+        case 'ImportDeclaration': {
+          const src = node.source?.value;
+          const jsonFix = loadLocalJsonFixture(repoDir, fileDir, src);
+          if (jsonFix.ok) {
+            for (const spec of node.specifiers ?? []) {
+              if (spec.type === 'ImportDefaultSpecifier' || spec.type === 'ImportNamespaceSpecifier') {
+                env.set(spec.local.name, structuredClone(jsonFix.value));
+              } else if (spec.type === 'ImportSpecifier' && spec.imported?.type === 'Identifier' &&
+                  jsonFix.value && typeof jsonFix.value === 'object' && Object.hasOwn(jsonFix.value, spec.imported.name)) {
+                env.set(spec.local.name, structuredClone(jsonFix.value[spec.imported.name]));
+              }
+            }
+            return;
+          }
+          const isLocalModule = isCompatibleDefaultImport(src, repoDir, fileDir, importFilterOpts);
+          for (const spec of node.specifiers ?? []) {
+            if (spec.type === 'ImportDefaultSpecifier' && exportSet.has('default') && isLocalModule) {
+              localAliases.set(spec.local.name, 'default');
+            } else if (spec.type === 'ImportNamespaceSpecifier' && (!src || src.startsWith('.') || src === options.pkgName)) {
+              namespaceAliases.add(spec.local.name);
+            } else if (spec.type === 'ImportSpecifier' && spec.imported?.type === 'Identifier' && exportSet.has(spec.imported.name) &&
+                (!src || src.startsWith('.') || src === options.pkgName || (aliasSet && aliasSet.has(src)))) {
+              localAliases.set(spec.local.name, spec.imported.name);
+            }
+          }
+          return;
+        }
+
+        case 'VariableDeclaration': {
+          for (const decl of node.declarations) {
+            if (!decl.init) continue;
+            if (decl.init.type === 'CallExpression' && decl.init.callee?.type === 'Identifier' &&
+                decl.init.callee.name === 'require' && decl.init.arguments.length === 1 &&
+                decl.init.arguments[0].type === 'Literal' && typeof decl.init.arguments[0].value === 'string') {
+              const reqSpec = decl.init.arguments[0].value;
+              const jsonFix = loadLocalJsonFixture(repoDir, fileDir, reqSpec);
+              if (jsonFix.ok) {
+                bindPattern(decl.id, jsonFix.value, env, ctx);
+                continue;
+              }
+              const isLocalDefault = isCompatibleDefaultImport(reqSpec, repoDir, fileDir, importFilterOpts);
+              const isLocalPkg = reqSpec.startsWith('.') || reqSpec === options.pkgName || aliasSet.has(reqSpec);
+              if (!isLocalPkg) continue;
+              if (decl.id?.type === 'Identifier') {
+                namespaceAliases.add(decl.id.name);
+                if (exportSet.has('default') && isLocalDefault) localAliases.set(decl.id.name, 'default');
+                continue;
+              }
+              if (decl.id?.type === 'ObjectPattern') {
+                for (const prop of decl.id.properties) {
+                  if (prop.type === 'Property' && prop.key?.type === 'Identifier' && prop.value?.type === 'Identifier' &&
+                      exportSet.has(prop.key.name)) {
+                    localAliases.set(prop.value.name, prop.key.name);
+                  }
+                }
+                continue;
+              }
+            }
+            if (decl.id?.type === 'Identifier' &&
+                (decl.init.type === 'ArrowFunctionExpression' || decl.init.type === 'FunctionExpression')) {
+              helpers.set(decl.id.name, decl.init);
+              continue;
+            }
+            if (decl.id?.type === 'ObjectPattern' && decl.init.type === 'Identifier' && namespaceAliases.has(decl.init.name)) {
+              for (const prop of decl.id.properties) {
+                if (prop.type === 'Property' && prop.key?.type === 'Identifier' && prop.value?.type === 'Identifier' &&
+                    exportSet.has(prop.key.name)) {
+                  localAliases.set(prop.value.name, prop.key.name);
+                }
+              }
+              continue;
+            }
+            const r = evalStaticAst(decl.init, env, ctx);
+            if (r.ok) {
+              bindPattern(decl.id, r.value, env, ctx);
+            } else {
+              scanNode(decl.init, env, helpers);
+            }
+          }
+          return;
+        }
+
+        case 'AssignmentExpression': {
+          if (node.operator === '=' && node.left?.type === 'Identifier') {
+            const r = evalStaticAst(node.right, env, ctx);
+            if (r.ok) {
+              env.set(node.left.name, r.value);
+              return;
+            }
+          }
+          scanNode(node.right, env, helpers);
+          return;
+        }
+
+        case 'FunctionDeclaration':
+          if (node.id?.name) helpers.set(node.id.name, node);
+          // Do not eagerly walk uncalled helper definitions unless they aren't helpers (no params) or look like tests.
+          if (!node.params?.length) {
+            scanNode(node.body, new Map(env), new Map(helpers));
+          }
+          return;
+
+        case 'ArrowFunctionExpression':
+        case 'FunctionExpression':
+          scanNode(node.body, new Map(env), new Map(helpers));
+          return;
+
+        case 'ForOfStatement': {
+          const iterRes = evalStaticAst(node.right, env, ctx);
+          if (iterRes.ok && Array.isArray(iterRes.value)) {
+            const lhs = node.left?.type === 'VariableDeclaration' ? node.left.declarations[0]?.id : node.left;
+            for (const item of iterRes.value.slice(0, 64)) {
+              const loopEnv = new Map(env);
+              if (lhs) bindPattern(lhs, item, loopEnv, ctx);
+              scanNode(node.body, loopEnv, new Map(helpers));
+            }
+            return;
+          }
+          scanNode(node.right, env, helpers);
+          scanNode(node.body, new Map(env), new Map(helpers));
+          return;
+        }
+
+        case 'CallExpression': {
+          // 1) test.each / it.each / describe.each
+          if (isEachHelperCallee(node.callee)) {
+            const tableRes = evalStaticAst(node.callee.arguments[0], env, ctx);
+            const cb = node.arguments.find(a => a.type === 'ArrowFunctionExpression' || a.type === 'FunctionExpression');
+            if (tableRes.ok && Array.isArray(tableRes.value) && cb) {
+              for (const row of tableRes.value.slice(0, 64)) {
+                const cbEnv = new Map(env);
+                if (Array.isArray(row)) {
+                  if (cb.params.length === 1) {
+                    const p0 = cb.params[0];
+                    if (p0?.type === 'ArrayPattern') {
+                      bindPattern(p0, (row.length === 1 && Array.isArray(row[0])) ? row[0] : row, cbEnv, ctx);
+                    } else if (p0?.type === 'ObjectPattern') {
+                      bindPattern(p0, row.length === 1 ? row[0] : row, cbEnv, ctx);
+                    } else if (p0) {
+                      bindPattern(p0, row[0], cbEnv, ctx);
+                    }
+                  } else {
+                    for (let i = 0; i < cb.params.length; i++) bindPattern(cb.params[i], row[i], cbEnv, ctx);
+                  }
+                } else if (cb.params.length > 0) {
+                  bindPattern(cb.params[0], row, cbEnv, ctx);
+                }
+                scanNode(cb.body, cbEnv, new Map(helpers));
+              }
+              return;
+            }
+          }
+
+          // 2) [...].forEach((...) => ...)
+          if (node.callee.type === 'MemberExpression' && !node.callee.computed &&
+              node.callee.property?.type === 'Identifier' && node.callee.property.name === 'forEach') {
+            const arrRes = evalStaticAst(node.callee.object, env, ctx);
+            const cb = node.arguments[0];
+            if (arrRes.ok && Array.isArray(arrRes.value) && cb &&
+                (cb.type === 'ArrowFunctionExpression' || cb.type === 'FunctionExpression')) {
+              const limitCount = Math.min(arrRes.value.length, 64);
+              for (let i = 0; i < limitCount; i++) {
+                const cbEnv = new Map(env);
+                if (cb.params[0]) bindPattern(cb.params[0], arrRes.value[i], cbEnv, ctx);
+                if (cb.params[1]) bindPattern(cb.params[1], i, cbEnv, ctx);
+                if (cb.params[2]) bindPattern(cb.params[2], arrRes.value, cbEnv, ctx);
+                scanNode(cb.body, cbEnv, new Map(helpers));
+              }
+              return;
+            }
+          }
+
+          // 3) fn.apply(thisArg, argsArray) / fn.call(thisArg, ...args)
+          if (node.callee.type === 'MemberExpression' && !node.callee.computed &&
+              node.callee.property?.type === 'Identifier') {
+            const method = node.callee.property.name;
+            if (method === 'apply' && node.arguments.length >= 2) {
+              const target = resolveTargetFnName(node.callee.object, exportSet, localAliases, aliasSet, namespaceAliases);
+              if (target) {
+                const arrRes = evalStaticAst(node.arguments[1], env, ctx);
+                if (arrRes.ok && Array.isArray(arrRes.value)) recordCall(target, arrRes.value);
+              }
+            } else if (method === 'call' && node.arguments.length >= 2) {
+              const target = resolveTargetFnName(node.callee.object, exportSet, localAliases, aliasSet, namespaceAliases);
+              if (target) {
+                const args = evalCallArguments(node.arguments.slice(1), env);
+                if (args) recordCall(target, args);
+              }
+            }
+          }
+
+          // 4) Direct or module-member target call
+          const fnName = resolveTargetFnName(node.callee, exportSet, localAliases, aliasSet, namespaceAliases);
+          if (fnName) {
+            const args = evalCallArguments(node.arguments, env);
+            if (args) recordCall(fnName, args);
+          } else if (node.callee.type === 'Identifier' && helpers.has(node.callee.name) &&
+              !ASSERTION_HELPER_CALLS.has(node.callee.name) && ctx.helperDepth < 2 &&
+              !ctx.activeHelpers.has(node.callee.name)) {
+            // 5) Local test helper call inline expansion (depth-bounded)
+            const helperNode = helpers.get(node.callee.name);
+            const helperArgs = evalCallArguments(node.arguments, env);
+            if (helperNode && helperArgs) {
+              const helperEnv = new Map(env);
+              for (let i = 0; i < (helperNode.params?.length ?? 0); i++) {
+                bindPattern(helperNode.params[i], helperArgs[i], helperEnv, ctx);
+              }
+              ctx.helperDepth++;
+              ctx.activeHelpers.add(node.callee.name);
+              try {
+                scanNode(helperNode.body, helperEnv, helpers);
+              } finally {
+                ctx.activeHelpers.delete(node.callee.name);
+                ctx.helperDepth--;
+              }
+            }
+          }
+
+          // Always descend into callee (for chained expect(fn(...)).toEqual(...)) and arguments (for assert.*(fn(...), ...))
+          scanNode(node.callee, env, helpers);
+          for (const arg of node.arguments) scanNode(arg, env, helpers);
+          return;
+        }
+
+        default: {
+          for (const [k, val] of Object.entries(node)) {
+            if (k === 'start' || k === 'end' || k === 'loc' || k === 'raw') continue;
+            if (Array.isArray(val)) val.forEach(c => scanNode(c, env, helpers));
+            else if (val && typeof val === 'object' && typeof val.type === 'string') scanNode(val, env, helpers);
+          }
+        }
+      }
+    }
+
+    scanNode(ast, new Map(), new Map());
   }
   return byFn;
 }
 
-function collectLocalRepoCandidates(rootDir) {
+export function collectLocalRepoCandidates(rootDir, options = {}) {
+  const effMaxPerFn = options.maxPerFn ?? maxPerFn;
+  const effMaxPerRepo = options.maxPerRepo ?? maxPerRepo;
+  const effMode = options.mode ?? harvestMode;
+  const effPreferUnitTests = options.preferUnitTests ?? preferUnitTests;
+  const effUnitTestsOnly = options.unitTestsOnly ?? unitTestsOnly;
+  const effEnvDir = options.envDir ?? envDir;
+
   const candidates = [];
-  const repoEntries = readdirSync(rootDir, {withFileTypes: true}).filter(d => d.isDirectory()).sort((a, b) => a.name.localeCompare(b.name));
+  const repoEntries = readdirSync(rootDir, {withFileTypes: true}).filter(d => {
+    try {
+      return d.isDirectory() || (d.isSymbolicLink() && statSync(join(rootDir, d.name)).isDirectory());
+    } catch {
+      return false;
+    }
+  }).sort((a, b) => a.name.localeCompare(b.name));
+
   for (const ent of repoEntries) {
     const repoDir = join(rootDir, ent.name);
     const pkgPath = join(repoDir, 'package.json');
@@ -397,21 +964,22 @@ function collectLocalRepoCandidates(rootDir) {
       pkgJson,
     };
     const {code: codeFiles, tests: testFiles} = collectSourceAndTestFiles(repoDir);
-    // Prioritize src/lib/index files and keep file count bounded per repo
+    // Prioritize src/lib/index files and inspect up to 60 files so unit-tested modules aren't truncated early
     const rankedCode = [...codeFiles].sort((a, b) => {
       const score = f => {
         const r = relative(repoDir, f);
-        if (/^(?:src\/)?index\.[cm]?[jt]s$/.test(r)) return 0;
+        if (/^(?:src\/|lib\/)?index\.[cm]?[jt]s$/.test(r)) return 0;
         if (/^(?:src|lib)\//.test(r)) return 1;
         return 2;
       };
       return score(a) - score(b) || a.localeCompare(b);
-    }).slice(0, 20);
+    }).slice(0, 60);
 
-    let repoAdded = 0;
     const repoFnSeen = new Set();
+    const shortName = (pkgJson.name || repoSlug.split('/').pop() || '').replace(/^@[^/]+\//, '').replace(/[^a-zA-Z0-9_$]/g, '');
+    const targets = [];
+
     for (const file of rankedCode) {
-      if (repoAdded >= maxPerRepo) break;
       const whole = bundleLocalFile(repoMeta, file, null);
       if (whole.error || whole.code.length > 90000) continue;
       let mod;
@@ -419,72 +987,145 @@ function collectLocalRepoCandidates(rootDir) {
         const ctx = vm.createContext({});
         mod = new vm.Script(`(() => {\n${whole.code}\nreturn __harvestBox;\n})()`).runInContext(ctx, {timeout: 100});
       } catch { continue; }
+      const isNonClassFn = fn => {
+        if (typeof fn !== 'function') return false;
+        try {
+          return !/^class[\s{]/.test(Function.prototype.toString.call(fn));
+        } catch {
+          return true;
+        }
+      };
       const fnNames = [];
       try {
-        if (typeof mod === 'function') fnNames.push('default');
+        if (isNonClassFn(mod)) fnNames.push('default');
         if (mod && typeof mod === 'object') {
-          if (typeof mod.default === 'function') fnNames.push('default');
+          if (isNonClassFn(mod.default)) fnNames.push('default');
           for (const k of Object.keys(mod).sort()) {
             try {
-              if (k !== 'default' && !k.startsWith('_') && typeof mod[k] === 'function') fnNames.push(k);
+              if (k !== 'default' && !k.startsWith('_') && isNonClassFn(mod[k])) fnNames.push(k);
             } catch {}
           }
         }
       } catch { continue; }
-      const usableFns = fnNames.filter(n => !SKIP_PROBE_NAMES.test(n) && !repoFnSeen.has(`${relative(repoDir, file)}#${n}`)).slice(0, 40);
+      const usableFns = fnNames.filter(n => !isSkippedProbeName(n, effMode) && !repoFnSeen.has(`${relative(repoDir, file)}#${n}`)).slice(0, 40);
       if (!usableFns.length) continue;
 
-      const shortName = (pkgJson.name || repoSlug.split('/').pop() || '').replace(/^@[^/]+\//, '').replace(/[^a-zA-Z0-9_$]/g, '');
-      const testCalls = testFiles.length ? extractTestCallsFromFiles(repoDir, testFiles, usableFns, [shortName]) : new Map();
-
+      const relFile = relative(repoDir, file);
+      const testCalls = testFiles.length
+        ? extractTestCallsFromFiles(repoDir, testFiles, usableFns, [shortName], {envDir: effEnvDir, targetFile: relFile, pkgName: repoMeta.pkgName})
+        : new Map();
       for (const fnName of usableFns) {
-        if (repoAdded >= maxPerRepo) break;
-        const b = bundleLocalFile(repoMeta, file, fnName);
-        if (b.error || b.code.length > 70000) continue;
         repoFnSeen.add(`${relative(repoDir, file)}#${fnName}`);
+        const entries = [...(testCalls.get(fnName) ?? [])].sort((a, b2) => b2.sig.length - a.sig.length);
+        if (effUnitTestsOnly && !entries.length) continue;
+        targets.push({file, fnName, entries, kept: 0, seenOut: new Set(), bundle: null, bundleFailed: false});
+      }
+    }
 
-        let kept = 0;
-        const seenOut = new Set();
-        // 1) Prefer real unit-test inputs from the repo's own test suite
-        const entries = testCalls.get(fnName) ?? [];
-        const sorted = [...entries].sort((a, b2) => b2.sig.length - a.sig.length);
-        for (const entry of sorted) {
-          if (kept >= maxPerFn || repoAdded >= maxPerRepo) break;
-          try {
-            const {value: res, recordedCalls} = probeExportSafely(b, fnName, entry.args);
-            if (res === undefined || typeof res === 'function' || typeof res === 'symbol') continue;
-            if (res && typeof res === 'object' && typeof res.then === 'function') continue;
-            const outKey = JSON.stringify(encodeReadable(res));
-            if (seenOut.has(outKey) && kept >= 1) continue;
-            seenOut.add(outKey);
-            candidates.push(buildDirectTask({
-              bundle: b, fnName, args: entry.args, index: kept++,
-              origin: 'dgx-oss-unit-test', testFile: entry.file, recordedCalls,
-              extraFeatures: ['dgx-repo', 'unit-test-input', ...(recordedCalls.length ? ['external', 'platform'] : [])],
-            }));
-            repoAdded++;
-          } catch {}
+    function getTargetBundle(target) {
+      if (target.bundleFailed) return null;
+      if (target.bundle) return target.bundle;
+      const b = bundleLocalFile(repoMeta, target.file, target.fnName);
+      if (b.error || b.code.length > 70000) {
+        target.bundleFailed = true;
+        return null;
+      }
+      target.bundle = b;
+      return b;
+    }
+
+    let repoAdded = 0;
+
+    function tryAddTargetCandidate(target, args, origin, testFile = null) {
+      if (repoAdded >= effMaxPerRepo) return false;
+      const b = getTargetBundle(target);
+      if (!b) return false;
+      let res;
+      try {
+        res = probeExportSafely(b, target.fnName, args, {mode: effMode});
+      } catch {
+        return false;
+      }
+      if (res.kind === 'promise') return false;
+      let outKey;
+      if (res.kind === 'throw') {
+        if (origin !== 'dgx-oss-unit-test') return false;
+        if (res.errorName === 'ReferenceError' && /\bis not defined\b/.test(res.errorMessage)) return false;
+        if (res.errorName === 'TypeError' &&
+            /cannot be invoked without 'new'|is not a constructor|Cannot read propert|Cannot set propert|Cannot destructure|is not a function/i.test(res.errorMessage)) {
+          return false;
         }
-        // 2) Fallback: typed probing if test suite didn't yield enough calls
+        outKey = `throw:${res.errorName}:${res.errorMessage}`;
+      } else {
+        const v = res.value;
+        if (v === undefined || typeof v === 'function' || typeof v === 'symbol') return false;
+        try {
+          outKey = JSON.stringify(encodeReadable(v));
+        } catch {
+          return false;
+        }
+      }
+      if (target.seenOut.has(outKey) && target.kept >= 1) return false;
+      target.seenOut.add(outKey);
+      candidates.push(buildDirectTask({
+        bundle: b, fnName: target.fnName, args, index: target.kept++,
+        origin, testFile, recordedCalls: res.recordedCalls, mode: effMode,
+        extraFeatures: [
+          'dgx-repo',
+          ...(origin === 'dgx-oss-unit-test' ? ['unit-test-input'] : []),
+          ...(res.recordedCalls.length ? ['external', 'platform'] : []),
+        ],
+      }));
+      repoAdded++;
+      return true;
+    }
+
+    if (effPreferUnitTests || effUnitTestsOnly) {
+      // Pass 1: schedule all real unit-test inputs ahead of synthetic probes across the whole repo
+      const unitTargets = targets.filter(t => t.entries.length > 0).map(t => ({target: t, cursor: 0}));
+      let madeProgress = true;
+      while (madeProgress && repoAdded < effMaxPerRepo) {
+        madeProgress = false;
+        for (const state of unitTargets) {
+          if (repoAdded >= effMaxPerRepo) break;
+          if (state.target.kept >= effMaxPerFn) continue;
+          while (state.cursor < state.target.entries.length) {
+            const entry = state.target.entries[state.cursor++];
+            if (tryAddTargetCandidate(state.target, entry.args, 'dgx-oss-unit-test', entry.file)) {
+              madeProgress = true;
+              break;
+            }
+          }
+        }
+      }
+      // Pass 2: fallback synthetic probes only if unit tests didn't saturate maxPerRepo
+      if (!effUnitTestsOnly && repoAdded < effMaxPerRepo) {
+        const synthCap = Math.min(2, effMaxPerFn);
+        for (const target of targets) {
+          if (repoAdded >= effMaxPerRepo) break;
+          if (target.kept >= synthCap) continue;
+          for (const sampleArgs of TYPED_INPUT_BANK) {
+            if (target.kept >= synthCap || repoAdded >= effMaxPerRepo) break;
+            tryAddTargetCandidate(target, sampleArgs, 'dgx-oss-repo', null);
+          }
+        }
+      }
+    } else {
+      // Non-prioritized interleaved mode (--no-prefer-unit-tests): synthetic probes then unit tests per function
+      const synthCap = Math.min(2, effMaxPerFn);
+      for (const target of targets) {
+        if (repoAdded >= effMaxPerRepo) break;
         for (const sampleArgs of TYPED_INPUT_BANK) {
-          if (kept >= Math.min(2, maxPerFn) || repoAdded >= maxPerRepo) break;
-          try {
-            const {value: res, recordedCalls} = probeExportSafely(b, fnName, sampleArgs);
-            if (res === undefined || typeof res === 'function' || typeof res === 'symbol') continue;
-            if (res && typeof res === 'object' && typeof res.then === 'function') continue;
-            const outKey = JSON.stringify(encodeReadable(res));
-            if (seenOut.has(outKey) && kept >= 1) continue;
-            seenOut.add(outKey);
-            candidates.push(buildDirectTask({
-              bundle: b, fnName, args: sampleArgs, index: kept++,
-              origin: 'dgx-oss-repo', recordedCalls,
-              extraFeatures: ['dgx-repo', ...(recordedCalls.length ? ['external', 'platform'] : [])],
-            }));
-            repoAdded++;
-          } catch {}
+          if (target.kept >= synthCap || repoAdded >= effMaxPerRepo) break;
+          tryAddTargetCandidate(target, sampleArgs, 'dgx-oss-repo', null);
+        }
+        for (const entry of target.entries) {
+          if (target.kept >= effMaxPerFn || repoAdded >= effMaxPerRepo) break;
+          tryAddTargetCandidate(target, entry.args, 'dgx-oss-unit-test', entry.file);
         }
       }
     }
+
     if (repoAdded > 0) {
       process.stderr.write(`harvest-local: ${repoSlug}: ${repoAdded} calls (tests=${testFiles.length}, code=${codeFiles.length})\n`);
     }
@@ -493,8 +1134,8 @@ function collectLocalRepoCandidates(rootDir) {
 }
 
 // --- 2. Extract static JS literal calls from real OSS GitHub test suites ---
-function evalStaticAst(node, env = null) {
-  if (!node) return {ok: false};
+export function evalStaticAst(node, env = null, ctx = null, depth = 0) {
+  if (!node || depth > 20) return {ok: false};
   if (node.type === 'Literal') {
     if (node.regex || node.bigint) return {ok: false};
     return {ok: true, value: node.value};
@@ -503,54 +1144,192 @@ function evalStaticAst(node, env = null) {
     if (node.name === 'undefined') return {ok: true, value: undefined};
     if (node.name === 'NaN') return {ok: true, value: NaN};
     if (node.name === 'Infinity') return {ok: true, value: Infinity};
-    if (env && env.has(node.name)) return {ok: true, value: structuredClone(env.get(node.name))};
+    if (env && env.has(node.name)) {
+      const val = env.get(node.name);
+      return {ok: true, value: val === undefined ? undefined : structuredClone(val)};
+    }
     return {ok: false};
   }
-  if (node.type === 'UnaryExpression' && ['-', '+', '!'].includes(node.operator)) {
-    const inner = evalStaticAst(node.argument, env);
-    if (!inner.ok) return {ok: false};
-    const v = node.operator === '-' ? -inner.value : node.operator === '+' ? +inner.value : !inner.value;
-    return {ok: true, value: v};
+  if (node.type === 'UnaryExpression') {
+    if (node.operator === 'void') {
+      evalStaticAst(node.argument, env, ctx, depth + 1);
+      return {ok: true, value: undefined};
+    }
+    if (node.operator === 'typeof') {
+      const inner = evalStaticAst(node.argument, env, ctx, depth + 1);
+      if (!inner.ok) return {ok: false};
+      return {ok: true, value: typeof inner.value};
+    }
+    if (['-', '+', '!'].includes(node.operator)) {
+      const inner = evalStaticAst(node.argument, env, ctx, depth + 1);
+      if (!inner.ok) return {ok: false};
+      const v = node.operator === '-' ? -inner.value : node.operator === '+' ? +inner.value : !inner.value;
+      return {ok: true, value: v};
+    }
+    return {ok: false};
   }
-  if (node.type === 'TemplateLiteral' && node.expressions.length === 0) {
-    return {ok: true, value: node.quasis.map(q => q.value.cooked).join('')};
+  if (node.type === 'TemplateLiteral') {
+    let str = node.quasis[0]?.value?.cooked ?? '';
+    for (let i = 0; i < node.expressions.length; i++) {
+      const r = evalStaticAst(node.expressions[i], env, ctx, depth + 1);
+      if (!r.ok) return {ok: false};
+      if (r.value !== null && typeof r.value === 'object') return {ok: false};
+      str += String(r.value) + (node.quasis[i + 1]?.value?.cooked ?? '');
+    }
+    return {ok: true, value: str};
   }
   if (node.type === 'ArrayExpression') {
     const out = [];
     for (const el of node.elements) {
       if (!el) return {ok: false};
-      const r = evalStaticAst(el, env);
-      if (!r.ok) return {ok: false};
-      out.push(r.value);
+      if (el.type === 'SpreadElement') {
+        const r = evalStaticAst(el.argument, env, ctx, depth + 1);
+        if (!r.ok || !Array.isArray(r.value) || out.length + r.value.length > 256) return {ok: false};
+        out.push(...r.value);
+      } else {
+        const r = evalStaticAst(el, env, ctx, depth + 1);
+        if (!r.ok) return {ok: false};
+        out.push(r.value);
+      }
+      if (out.length > 256) return {ok: false};
     }
     return {ok: true, value: out};
   }
   if (node.type === 'ObjectExpression') {
     const out = {};
     for (const prop of node.properties) {
-      if (prop.type !== 'Property' || prop.computed || prop.kind !== 'init') return {ok: false};
-      const k = prop.key.type === 'Identifier' ? prop.key.name : (prop.key.type === 'Literal' ? String(prop.key.value) : null);
+      if (prop.type === 'SpreadElement') {
+        const r = evalStaticAst(prop.argument, env, ctx, depth + 1);
+        if (!r.ok || r.value === null || typeof r.value !== 'object' || Array.isArray(r.value)) return {ok: false};
+        for (const [k, v] of Object.entries(r.value)) {
+          if (k !== '__proto__') out[k] = v;
+        }
+        continue;
+      }
+      if (prop.type !== 'Property' || prop.kind !== 'init') return {ok: false};
+      let k = null;
+      if (!prop.computed) {
+        k = prop.key.type === 'Identifier' ? prop.key.name : (prop.key.type === 'Literal' ? String(prop.key.value) : null);
+      } else {
+        const kr = evalStaticAst(prop.key, env, ctx, depth + 1);
+        if (kr.ok && (typeof kr.value === 'string' || typeof kr.value === 'number')) k = String(kr.value);
+      }
       if (k === null || k === '__proto__') return {ok: false};
-      const r = evalStaticAst(prop.value, env);
+      const r = evalStaticAst(prop.value, env, ctx, depth + 1);
       if (!r.ok) return {ok: false};
       out[k] = r.value;
     }
     return {ok: true, value: out};
   }
-  if (node.type === 'BinaryExpression' && node.operator === '+') {
-    const l = evalStaticAst(node.left, env), r = evalStaticAst(node.right, env);
-    if (l.ok && r.ok && (typeof l.value === 'string' || typeof l.value === 'number')) return {ok: true, value: l.value + r.value};
+  if (node.type === 'MemberExpression' && !node.optional) {
+    const obj = evalStaticAst(node.object, env, ctx, depth + 1);
+    if (!obj.ok) return {ok: false};
+    let key = null;
+    if (!node.computed && node.property.type === 'Identifier') {
+      key = node.property.name;
+    } else {
+      const kr = evalStaticAst(node.property, env, ctx, depth + 1);
+      if (!kr.ok || (typeof kr.value !== 'string' && typeof kr.value !== 'number')) return {ok: false};
+      key = String(kr.value);
+    }
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype') return {ok: false};
+    if (typeof obj.value === 'string' && key === 'length') return {ok: true, value: obj.value.length};
+    if (obj.value !== null && typeof obj.value === 'object') {
+      if (Array.isArray(obj.value) && key === 'length') return {ok: true, value: obj.value.length};
+      if (Object.hasOwn(obj.value, key)) {
+        const v = obj.value[key];
+        return {ok: true, value: v === undefined ? undefined : structuredClone(v)};
+      }
+    }
+    return {ok: false};
+  }
+  if (node.type === 'BinaryExpression') {
+    const l = evalStaticAst(node.left, env, ctx, depth + 1);
+    const r = evalStaticAst(node.right, env, ctx, depth + 1);
+    if (!l.ok || !r.ok) return {ok: false};
+    const a = l.value, b = r.value;
+    const isPrim = v => v === null || ['undefined', 'boolean', 'number', 'string'].includes(typeof v);
+    if (!isPrim(a) || !isPrim(b)) return {ok: false};
+    switch (node.operator) {
+      case '+': return (typeof a === 'string' || typeof a === 'number') && (typeof b === 'string' || typeof b === 'number') ? {ok: true, value: a + b} : {ok: false};
+      case '-': return typeof a === 'number' && typeof b === 'number' ? {ok: true, value: a - b} : {ok: false};
+      case '*': return typeof a === 'number' && typeof b === 'number' ? {ok: true, value: a * b} : {ok: false};
+      case '/': return typeof a === 'number' && typeof b === 'number' ? {ok: true, value: a / b} : {ok: false};
+      case '%': return typeof a === 'number' && typeof b === 'number' ? {ok: true, value: a % b} : {ok: false};
+      case '===': return {ok: true, value: a === b};
+      case '!==': return {ok: true, value: a !== b};
+      case '==': return {ok: true, value: a == b};
+      case '!=': return {ok: true, value: a != b};
+      case '<': return {ok: true, value: a < b};
+      case '<=': return {ok: true, value: a <= b};
+      case '>': return {ok: true, value: a > b};
+      case '>=': return {ok: true, value: a >= b};
+      default: return {ok: false};
+    }
+  }
+  if (node.type === 'LogicalExpression') {
+    const l = evalStaticAst(node.left, env, ctx, depth + 1);
+    if (!l.ok) return {ok: false};
+    if (node.operator === '&&') return l.value ? evalStaticAst(node.right, env, ctx, depth + 1) : l;
+    if (node.operator === '||') return l.value ? l : evalStaticAst(node.right, env, ctx, depth + 1);
+    if (node.operator === '??') return (l.value !== null && l.value !== undefined) ? l : evalStaticAst(node.right, env, ctx, depth + 1);
+    return {ok: false};
+  }
+  if (node.type === 'ConditionalExpression') {
+    const t = evalStaticAst(node.test, env, ctx, depth + 1);
+    if (!t.ok) return {ok: false};
+    return evalStaticAst(t.value ? node.consequent : node.alternate, env, ctx, depth + 1);
+  }
+  if (node.type === 'CallExpression') {
+    if (ctx?.repoDir && ctx?.fileDir && node.callee?.type === 'Identifier' && node.callee.name === 'require' && node.arguments.length === 1) {
+      const arg = evalStaticAst(node.arguments[0], env, ctx, depth + 1);
+      if (arg.ok && typeof arg.value === 'string') return loadLocalJsonFixture(ctx.repoDir, ctx.fileDir, arg.value);
+    }
+    if (node.callee?.type === 'MemberExpression' && !node.callee.computed && node.callee.property?.type === 'Identifier') {
+      const prop = node.callee.property.name;
+      if (node.callee.object?.type === 'Identifier') {
+        const objName = node.callee.object.name;
+        if (objName === 'JSON' && prop === 'parse' && node.arguments.length === 1) {
+          const arg = evalStaticAst(node.arguments[0], env, ctx, depth + 1);
+          if (arg.ok && typeof arg.value === 'string') {
+            try { return {ok: true, value: JSON.parse(arg.value)}; } catch { return {ok: false}; }
+          }
+        }
+        if (objName === 'Object' && ['keys', 'values', 'entries'].includes(prop) && node.arguments.length === 1) {
+          const arg = evalStaticAst(node.arguments[0], env, ctx, depth + 1);
+          if (arg.ok && arg.value !== null && typeof arg.value === 'object') {
+            return {ok: true, value: Object[prop](arg.value)};
+          }
+        }
+      }
+      const recv = evalStaticAst(node.callee.object, env, ctx, depth + 1);
+      if (recv.ok && typeof recv.value === 'string' && prop === 'repeat' && node.arguments.length === 1) {
+        const cnt = evalStaticAst(node.arguments[0], env, ctx, depth + 1);
+        if (cnt.ok && Number.isInteger(cnt.value) && cnt.value >= 0 && cnt.value <= 128 && recv.value.length * cnt.value <= 1024) {
+          return {ok: true, value: recv.value.repeat(cnt.value)};
+        }
+      }
+      if (recv.ok && Array.isArray(recv.value) && prop === 'concat') {
+        const rest = [];
+        for (const a of node.arguments) {
+          const ar = evalStaticAst(a, env, ctx, depth + 1);
+          if (!ar.ok) return {ok: false};
+          rest.push(ar.value);
+        }
+        return {ok: true, value: recv.value.concat(...rest)};
+      }
+      if (recv.ok && Array.isArray(recv.value) && prop === 'slice') {
+        const sArgs = [];
+        for (const a of node.arguments) {
+          const ar = evalStaticAst(a, env, ctx, depth + 1);
+          if (!ar.ok || typeof ar.value !== 'number') return {ok: false};
+          sArgs.push(ar.value);
+        }
+        return {ok: true, value: recv.value.slice(...sArgs)};
+      }
+    }
   }
   return {ok: false};
-}
-
-function walkAst(node, visit) {
-  if (!node || typeof node !== 'object') return;
-  visit(node);
-  for (const val of Object.values(node)) {
-    if (Array.isArray(val)) val.forEach(c => walkAst(c, visit));
-    else if (val && typeof val === 'object' && typeof val.type === 'string') walkAst(val, visit);
-  }
 }
 
 function collectJsFiles(dir, out = []) {
@@ -559,7 +1338,7 @@ function collectJsFiles(dir, out = []) {
     if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
     const p = join(dir, entry.name);
     if (entry.isDirectory()) collectJsFiles(p, out);
-    else if (/\.(?:c|m)?js$/.test(entry.name) && statSync(p).size < 512 * 1024) out.push(p);
+    else if (/\.(?:c|m)?[jt]s$/i.test(entry.name) && !entry.name.endsWith('.d.ts') && statSync(p).size < 512 * 1024) out.push(p);
   }
   return out;
 }
@@ -575,42 +1354,11 @@ function harvestTestCallsFromRepo(repoUrl, slug, exportNames, aliases = []) {
   }
   const testDirs = ['test', 'tests', '__tests__', 'spec'].map(d => join(dir, d)).filter(existsSync);
   const files = testDirs.length ? testDirs.flatMap(d => collectJsFiles(d)) : collectJsFiles(dir).filter(f => /test|spec/i.test(f));
-  const byFn = new Map();
-  const exportSet = new Set(exportNames);
-  const aliasSet = new Set([slug, ...aliases]);
-  for (const file of files) {
-    let ast;
-    const text = readFileSync(file, 'utf8');
-    try { ast = parse(text, {ecmaVersion: 'latest', sourceType: 'module'}); }
-    catch { try { ast = parse(text, {ecmaVersion: 'latest', sourceType: 'script'}); } catch { continue; } }
-    walkAst(ast, node => {
-      if (node.type !== 'CallExpression' || !node.arguments.length || node.arguments.length > 6) return;
-      let fnName = null;
-      if (node.callee.type === 'Identifier') {
-        if (exportSet.has(node.callee.name)) fnName = node.callee.name;
-        else if (aliasSet.has(node.callee.name) && exportSet.has('default')) fnName = 'default';
-      } else if (node.callee.type === 'MemberExpression' && !node.callee.computed &&
-          node.callee.property.type === 'Identifier' && exportSet.has(node.callee.property.name)) {
-        fnName = node.callee.property.name;
-      }
-      if (!fnName) return;
-      const args = [];
-      for (const arg of node.arguments) {
-        const r = evalStaticAst(arg);
-        if (!r.ok) return;
-        args.push(r.value);
-      }
-      if (!byFn.has(fnName)) byFn.set(fnName, []);
-      const list = byFn.get(fnName);
-      const sig = JSON.stringify(args);
-      if (list.length < 40 && !list.some(x => x.sig === sig)) list.push({args, sig, file: relative(dir, file)});
-    });
-  }
-  return byFn;
+  return extractTestCallsFromFiles(dir, files, exportNames, [slug, ...aliases], {maxCallsPerFn: 40});
 }
 
 // --- 3. Build runnable task around a tree-shaken real OSS bundle ---
-function buildDirectTask({bundle, fnName, args, index, origin, testFile = null, recordedCalls = [], extraFeatures = []}) {
+function buildDirectTask({bundle, fnName, args, index, origin, testFile = null, recordedCalls = [], extraFeatures = [], mode = harvestMode}) {
   const params = args.map((_, i) => 'a' + i).join(', ');
   let source;
   if (bundle.directTarget) {
@@ -625,15 +1373,15 @@ function buildDirectTask({bundle, fnName, args, index, origin, testFile = null, 
   }
   const family = `oss:${bundle.pkgName}/${bundle.subpath}#${fnName}`;
   const id = `oss-${bundle.pkgName.replace(/[^a-zA-Z0-9_-]/g, '_')}-${fnName.replace(/[^a-zA-Z0-9_-]/g, '_')}-${index}-${sha256([family, args, recordedCalls]).slice(0, 8)}`;
-  const usesToolRandom = harvestMode === 'native' && (recordedCalls.some(c => c.operation === 'platform.random') || /\bMath\.random\b/.test(source));
+  const usesToolRandom = mode === 'native' && (recordedCalls.some(c => c.operation === 'platform.random') || /\bMath\.random\b/.test(source));
   return {
     id, family, source, entry: 'run', args: encodeReadable(args),
-    ...(harvestMode === 'native' ? {executionMode: 'native'} : {}),
+    ...(mode === 'native' ? {executionMode: 'native'} : {}),
     ...(usesToolRandom ? {randomMode: 'tool'} : {}),
     fixture: {calls: recordedCalls}, randomSeed: 17, maxSteps: 100000, timeoutMs: 10000,
     metadata: {
       sourceOrigin: origin,
-      executionMode: harvestMode,
+      executionMode: mode,
       package: bundle.pkgName,
       version: bundle.version,
       license: bundle.license,
@@ -643,7 +1391,7 @@ function buildDirectTask({bundle, fnName, args, index, origin, testFile = null, 
       tier: recordedCalls.length ? 5 : 4,
       template: family,
       lineage: [family, `oss-pkg:${bundle.pkgName}:${bundle.subpath}#${fnName}`],
-      features: [...new Set(['real-oss', ...(harvestMode === 'native' ? ['native-v8'] : []), ...extraFeatures])],
+      features: [...new Set(['real-oss', ...(mode === 'native' ? ['native-v8'] : []), ...extraFeatures])],
       inputVariant: index,
       evaluationRole: 'generalization',
       agentTaskSuccessVerified: false,
@@ -762,39 +1510,45 @@ async function buildRecordedEffectfulTask({pkgName, exportName = null, subpath =
 }
 
 // --- 5. Domain-typed input bank for automatic export probing ---
-const TYPED_INPUT_BANK = [
-  // Arrays of numbers
+export const TYPED_INPUT_BANK = [
+  // Mixed negative/float/zero/duplicate numeric arrays
+  [[0, -3.5, 12, 0, -3.5, 42.25, -0.5, 7]],
+  [[-10, 0, 10, -10, 3.14, 0, 99, -1]],
   [[3, 1, 4, 1, 5, 9, 2, 6]],
-  [[-5, 0, 12, -3, 7, 2]],
-  [[1, 2, 3, 4, 5, 6], 2],
-  [[1, 2, 3, 4, 5], 3],
-  [[1, 2, 3, 4], [3, 4, 5, 6]],
+  [[0, -1, 2.5, 2.5, -0.25, 8], 3],
+  [[10, -2, 0, 10, 4, 7], 2],
+  [[1, 2, 3, 4], [3, 4, 5, 6, 0, -1]],
   [[10, 20, 30], [1, 2, 3]],
-  // Nested arrays
-  [[[1, [2, [3, 4]], 5]]],
+  // Nested & heterogeneous arrays
+  [[[1, [2, [3, -4.5]], 0, [5, [6]]]]],
+  [[['alpha', 0], ['beta-1', -2.5], ['gamma_ü', 3], ['alpha', 0]]],
   [[[1, 2], [3, 4], [5, 6]]],
-  [[['a', 1], ['b', 2], ['c', 3]]],
-  // Arrays of objects
-  [[{id: 1, tag: 'x', val: 10}, {id: 2, tag: 'y', val: 25}, {id: 3, tag: 'x', val: 5}]],
-  [[{name: 'b', n: 2}, {name: 'a', n: 1}, {name: 'c', n: 3}], 'n'],
-  // Objects
-  [{a: 1, b: {c: 2, d: [3, 4]}, e: 'hi', f: null}],
+  // Multi-key record arrays (with null/empty/unicode fields)
+  [[{id: 1, tag: 'x-1', val: 10.5, active: true}, {id: 2, tag: 'y_2', val: -3, active: false}, {id: 3, tag: 'x-1', val: 0, active: true}, {id: 4, tag: '', val: null, active: true}]],
+  [[{name: 'café', score: 2.5, role: 'admin'}, {name: 'alpha', score: -1, role: 'user'}, {name: 'delta', score: 2.5, role: 'admin'}], 'score'],
+  // Nested objects with null, empty, unicode, boolean, numeric, and array fields
+  [{id: 'usr_01', title: 'Café & Crème — v2', empty: '', nil: null, zero: 0, flag: false, tags: ['core', 'edge-case', ''], meta: {retries: 2, ratio: 0.75, nested: {ok: true, note: 'line1\nline2'}}}],
+  [{a: 1, b: {c: 0, d: ['', 'x', null], e: {deep: -4.5}}, f: 'héllo', g: null, h: false}],
+  [{user: {name: 'Alice', roles: ['admin', 'ops'], prefs: {theme: 'dark', pageSize: 25}}, count: 0, active: false}, ['user', 'active']],
   [{a: 1, b: 2, c: 3, d: 4}, ['a', 'c']],
-  [{a: 1, b: {x: 1, y: 2}}, {b: {y: 9, z: 3}, c: 4}],
+  [{a: 1, b: {x: 1, y: 2, z: null}, items: ['p', 'q']}, {b: {y: 9, w: '', extra: false}, c: 4, items: ['r']}],
   [{a: 1, b: 2, c: {d: 3}}, {a: 1, b: 9, c: {d: 3, e: 4}}],
-  [{a: {b: {c: 42}}}, 'a.b.c'],
-  [{a: {b: 1}}, 'a.b.c', 99],
+  [{cfg: {host: 'api.example.com', port: 8443, tls: {enabled: true, alpn: ['h2', 'http/1.1']}}}, 'cfg.tls.alpn'],
+  [{a: {b: 1, c: ''}}, 'a.b.c', 99],
   [{a: {b: 1}}, 'a.c', 7],
-  // Strings
-  ['helloWorldFooBar'],
-  ['  the-quick_brown fox  '],
-  ['kitten', 'sitting'],
-  ['abcdef', 'azced'],
-  ['1.2.3', '1.10.0'],
-  ['2.0.0-alpha.1', '2.0.0'],
-  ['hello world from javascript', 14],
-  ['foo/bar/baz', '/'],
-  // Numbers & ranges
+  // Gnarly punctuation/whitespace/multiline/unicode strings
+  ['  --hello_world.v2 (draft)!\n\tsecond line: café / naïve  '],
+  ['foo--bar__baz.qux/123?a=1&b=two%20three#frag'],
+  ['# Heading\n\n- item *one* & `two`\n- [x] done — café\n'],
+  ['<div class="box" data-id="42">Hello, <b>world</b>!</div>'],
+  ['M 10,20 L 30.5 -40.25 C 1,2 3,4 5,6 Z'],
+  ['helloWorldFooBar_v2'],
+  ['kitten-v1', 'sitting-v2'],
+  ['1.2.3-beta.1+build.9', '1.10.0'],
+  ['  line one,\nline two; line three!  ', 16],
+  ['/api/v2/users//42?sort=-created_at&limit=10', '/'],
+  // Numbers & ranges (negative, float, zero)
+  [-12.5, 7],
   [42, 7],
   [0, 10, 2],
   [5, 0, 3],
@@ -1292,55 +2046,59 @@ async function collectAllCandidates() {
   const candidates = [];
 
   if (!values['skip-npm']) {
-    // A. Automated per-export harvesting across all modern ESM/utility libraries
-    for (const pkgName of ESM_LIBRARY_PACKAGES) {
-      const whole = bundleWholeEntry(pkgName);
-      if (whole.error) {
-        process.stderr.write(`harvest: skip ${pkgName}: ${whole.error.slice(0, 100)}\n`);
-        continue;
-      }
-      let mod;
-      try { mod = new Function(`${whole.code}\nreturn __harvestBox;`)(); } catch { continue; }
-      const fnNames = [];
-      try {
-        if (typeof mod === 'function') fnNames.push('default');
-        if (mod && typeof mod === 'object') {
-          if (typeof mod.default === 'function') fnNames.push('default');
-          for (const k of Object.keys(mod).sort()) {
+    // A. Automated per-export harvesting across all modern ESM/utility libraries (skipped in --unit-tests-only)
+    if (!unitTestsOnly) {
+      for (const pkgName of ESM_LIBRARY_PACKAGES) {
+        const whole = bundleWholeEntry(pkgName);
+        if (whole.error) {
+          process.stderr.write(`harvest: skip ${pkgName}: ${whole.error.slice(0, 100)}\n`);
+          continue;
+        }
+        let mod;
+        try { mod = new Function(`${whole.code}\nreturn __harvestBox;`)(); } catch { continue; }
+        const fnNames = [];
+        try {
+          if (typeof mod === 'function') fnNames.push('default');
+          if (mod && typeof mod === 'object') {
+            if (typeof mod.default === 'function') fnNames.push('default');
+            for (const k of Object.keys(mod).sort()) {
+              try {
+                if (k !== 'default' && !k.startsWith('_') && typeof mod[k] === 'function') fnNames.push(k);
+              } catch {}
+            }
+          }
+        } catch { continue; }
+        let pkgAdded = 0;
+        const capped = fnNames.filter(name => !isSkippedProbeName(name, harvestMode)).slice(0, 150);
+        for (const fnName of capped) {
+          const b = bundleExport(pkgName, fnName);
+          if (b.error) continue;
+          let kept = 0;
+          const seenOut = new Set();
+          for (const sampleArgs of TYPED_INPUT_BANK) {
+            if (kept >= Math.min(2, maxPerFn)) break;
             try {
-              if (k !== 'default' && !k.startsWith('_') && typeof mod[k] === 'function') fnNames.push(k);
+              const res = probeExportSafely(b, fnName, sampleArgs, {mode: harvestMode});
+              if (res.kind !== 'return') continue;
+              const v = res.value;
+              if (v === undefined || typeof v === 'function' || typeof v === 'symbol') continue;
+              const enc = encodeReadable(v);
+              const outKey = JSON.stringify(enc);
+              if (seenOut.has(outKey) && kept >= 1) continue;
+              seenOut.add(outKey);
+              candidates.push(buildDirectTask({bundle: b, fnName, args: sampleArgs, index: kept++, origin: 'oss-esm-library', recordedCalls: res.recordedCalls,
+                extraFeatures: res.recordedCalls.length ? ['external', 'platform'] : []}));
+              pkgAdded++;
             } catch {}
           }
         }
-      } catch { continue; }
-      let pkgAdded = 0;
-      const capped = fnNames.filter(name => !SKIP_PROBE_NAMES.test(name)).slice(0, 150);
-      for (const fnName of capped) {
-        const b = bundleExport(pkgName, fnName);
-        if (b.error) continue;
-        let kept = 0;
-        const seenOut = new Set();
-        for (const sampleArgs of TYPED_INPUT_BANK) {
-          if (kept >= Math.min(2, maxPerFn)) break;
-          try {
-            const {value: res, recordedCalls} = probeExportSafely(b, fnName, sampleArgs);
-            if (res === undefined || typeof res === 'function' || typeof res === 'symbol') continue;
-            if (res && typeof res === 'object' && typeof res.then === 'function') continue;
-            const enc = encodeReadable(res);
-            const outKey = JSON.stringify(enc);
-            if (seenOut.has(outKey) && kept >= 1) continue;
-            seenOut.add(outKey);
-            candidates.push(buildDirectTask({bundle: b, fnName, args: sampleArgs, index: kept++, origin: 'oss-esm-library', recordedCalls,
-              extraFeatures: recordedCalls.length ? ['external', 'platform'] : []}));
-            pkgAdded++;
-          } catch {}
-        }
+        process.stderr.write(`harvest: ${pkgName}: ${pkgAdded} calls across ${capped.length} exported functions\n`);
       }
-      process.stderr.write(`harvest: ${pkgName}: ${pkgAdded} calls across ${capped.length} exported functions\n`);
     }
 
     // B. Real GitHub unit-test AST harvesting (with per-export tree shaking!)
     if (values['clone-tests']) {
+      const unitCandidates = [];
       for (const spec of REPO_TEST_HARVEST_SPECS) {
         const callsByFn = harvestTestCallsFromRepo(spec.repo, spec.pkg, spec.exports, spec.aliases ?? []);
         let added = 0;
@@ -1351,7 +2109,7 @@ async function collectAllCandidates() {
           const picks = sorted.length <= maxPerFn ? sorted
             : Array.from({length: maxPerFn}, (_, k) => sorted[Math.floor(k * (sorted.length - 1) / (maxPerFn - 1))]);
           picks.forEach((entry, idx) => {
-            candidates.push(buildDirectTask({
+            unitCandidates.push(buildDirectTask({
               bundle: b, fnName, args: entry.args, index: idx,
               origin: 'oss-unit-test', testFile: entry.file, extraFeatures: ['unit-test-input'],
             }));
@@ -1360,42 +2118,76 @@ async function collectAllCandidates() {
         }
         process.stderr.write(`harvest-tests: ${spec.pkg}: ${added} unit-test calls from ${callsByFn.size} fns\n`);
       }
+      if (preferUnitTests) candidates.unshift(...unitCandidates);
+      else candidates.push(...unitCandidates);
     }
 
-    // C. Real messy side-effectful OSS workflows
-    const eff = await collectEffectfulOssCandidates();
-    process.stderr.write(`harvest: oss-effectful: ${eff.length} recorded multi-turn OSS workflows\n`);
-    candidates.push(...eff);
+    // C. Real messy side-effectful OSS workflows (skipped in --unit-tests-only)
+    if (!unitTestsOnly) {
+      const eff = await collectEffectfulOssCandidates();
+      process.stderr.write(`harvest: oss-effectful: ${eff.length} recorded multi-turn OSS workflows\n`);
+      candidates.push(...eff);
+    }
   }
 
   // D. Local / DGX GitHub repositories (raw JS & TS source + unit tests!)
   if (localReposDir && existsSync(localReposDir)) {
-    const localCands = collectLocalRepoCandidates(localReposDir);
+    const localCands = collectLocalRepoCandidates(localReposDir, {
+      maxPerFn, maxPerRepo, mode: harvestMode, preferUnitTests, unitTestsOnly, envDir,
+    });
     process.stderr.write(`harvest: local-repos: ${localCands.length} calls from ${localReposDir}\n`);
-    candidates.push(...localCands);
+    if (preferUnitTests) {
+      const isUt = t => (t.metadata?.features ?? []).includes('unit-test-input');
+      const localUnit = localCands.filter(isUt);
+      const localOther = localCands.filter(t => !isUt(t));
+      candidates.unshift(...localUnit);
+      candidates.push(...localOther);
+    } else {
+      candidates.push(...localCands);
+    }
   }
 
   return limit ? candidates.slice(0, limit) : candidates;
 }
 
+function isTypeErrorOutcome(outcome) {
+  if (!outcome || outcome.kind !== 'throw') return false;
+  const root = outcome.graph?.roots?.at(-1);
+  if (!Array.isArray(root) || root[0] !== 'ref') return false;
+  const obj = outcome.graph?.objects?.find(o => o.id === root[1]);
+  return Boolean(obj?.properties?.some(([k, v]) => k === 'name' && Array.isArray(v) && v[0] === 'str' && v[1] === 'TypeError'));
+}
+
 // --- 9. Parallel qualification through prepareTinkerTask() (owned === native) ---
-async function qualify(task) {
+export async function qualify(task, options = {}) {
+  const effMinSourceChars = options.minSourceChars ?? minSourceChars;
+  const effMinTraceLines = options.minTraceLines ?? minTraceLines;
   const t0 = performance.now();
   try {
-    if (minSourceChars > 0 && task.source.length < minSourceChars) {
-      return {status: 'refused', category: 'source-too-short', reason: `source ${task.source.length} chars < ${minSourceChars}`, id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin};
+    if (effMinSourceChars > 0 && task.source.length < effMinSourceChars) {
+      return {status: 'refused', category: 'source-too-short', reason: `source ${task.source.length} chars < ${effMinSourceChars}`, id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin};
     }
     const prepared = await prepareTinkerTask(task, {traceFormat: 'compact'});
     const messages = readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: 'compact', reasoningChannel: 'thinking'});
     const traceChars = messages.filter(m => m.role === 'assistant')
       .reduce((n, m) => n + assistantVisibleText(m).length + assistantThinkingText(m).length + (m.tool_calls ? JSON.stringify(m.tool_calls).length : 0), 0);
-    const traceLines = messages.filter(m => m.role === 'assistant')
-      .reduce((n, m) => {
+    const allTraceLines = messages.filter(m => m.role === 'assistant')
+      .flatMap(m => {
         const thinking = assistantThinkingText(m).trim();
-        return n + (thinking ? thinking.split('\n').length : 0);
-      }, 0);
-    if (minTraceLines > 0 && traceLines < minTraceLines) {
-      return {status: 'refused', category: 'trace-too-short', reason: `compact trace ${traceLines} lines < ${minTraceLines}`, id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin};
+        return thinking ? thinking.split('\n') : [];
+      });
+    const traceLines = allTraceLines.length;
+    const firstTraceLine = allTraceLines[0] ?? '';
+    const isUnitTest = (task.metadata?.features ?? []).includes('unit-test-input') ||
+      task.metadata?.sourceOrigin === 'oss-unit-test' ||
+      task.metadata?.sourceOrigin === 'dgx-oss-unit-test';
+    const isUnitTestException = isUnitTest && prepared.outcome.kind === 'throw';
+
+    if (!isUnitTest && (/\bTypeError\b/.test(firstTraceLine) || (traceLines <= 1 && isTypeErrorOutcome(prepared.outcome)))) {
+      return {status: 'refused', category: 'immediate-type-error', reason: `synthetic probe immediate TypeError (${firstTraceLine || 'throw'})`, id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin};
+    }
+    if (effMinTraceLines > 0 && traceLines < effMinTraceLines && !isUnitTestException) {
+      return {status: 'refused', category: 'trace-too-short', reason: `compact trace ${traceLines} lines < ${effMinTraceLines}`, id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin};
     }
     if (traceChars > 80000) {
       return {status: 'refused', category: 'trace-too-long', reason: `compact trace ${traceChars} chars > 80000`, id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin};
@@ -1437,50 +2229,78 @@ async function runPool(items, worker) {
   return results;
 }
 
-const started = new Date().toISOString();
-const candidates = await collectAllCandidates();
-process.stderr.write(`harvest: qualifying ${candidates.length} real OSS candidates with ${jobs} workers...\n`);
-const records = await runPool(candidates, qualify);
+export async function runHarvester(argv = process.argv.slice(2)) {
+  const parsed = parseHarvesterArgs(argv);
+  values = parsed.values;
+  envDir = parsed.envDir;
+  reposDir = parsed.reposDir;
+  localReposDir = parsed.localReposDir;
+  outputDir = parsed.outputDir;
+  harvestMode = parsed.harvestMode;
+  jobs = parsed.jobs;
+  maxPerFn = parsed.maxPerFn;
+  maxPerRepo = parsed.maxPerRepo;
+  preferUnitTests = parsed.preferUnitTests;
+  unitTestsOnly = parsed.unitTestsOnly;
+  minSourceChars = parsed.minSourceChars;
+  minTraceLines = parsed.minTraceLines;
+  limit = parsed.limit;
 
-const seenSig = new Set();
-const admitted = [];
-for (const r of records) {
-  if (r.status !== 'admitted') continue;
-  const sig = executionInputSignature(r.task);
-  if (seenSig.has(sig)) continue;
-  seenSig.add(sig);
-  admitted.push(r.task);
-}
+  mkdirSync(outputDir, {recursive: true});
+  mkdirSync(reposDir, {recursive: true});
 
-const byPkg = {}, byOrigin = {}, refusals = {}, refusalSamples = {};
-for (const r of records) {
-  byPkg[r.pkg] ??= {candidates: 0, admitted: 0};
-  byPkg[r.pkg].candidates++;
-  if (r.status === 'admitted') byPkg[r.pkg].admitted++;
-  byOrigin[r.origin] ??= {candidates: 0, admitted: 0};
-  byOrigin[r.origin].candidates++;
-  if (r.status === 'admitted') byOrigin[r.origin].admitted++;
-  if (r.status !== 'admitted') {
-    const key = r.category + ': ' + r.reason.replace(/\d+/g, 'N').slice(0, 80);
-    refusals[key] = (refusals[key] ?? 0) + 1;
-    refusalSamples[key] ??= r.id;
+  const started = new Date().toISOString();
+  const candidates = await collectAllCandidates();
+  process.stderr.write(`harvest: qualifying ${candidates.length} real OSS candidates with ${jobs} workers...\n`);
+  const records = await runPool(candidates, qualify);
+
+  const seenSig = new Set();
+  const admitted = [];
+  for (const r of records) {
+    if (r.status !== 'admitted') continue;
+    const sig = executionInputSignature(r.task);
+    if (seenSig.has(sig)) continue;
+    seenSig.add(sig);
+    admitted.push(r.task);
   }
-}
-const traceLens = admitted.map(t => t.metadata.traceChars).sort((a, b) => a - b);
-const effectful = admitted.filter(t => (t.fixture?.calls?.length ?? 0) > 0).length;
-const census = {
-  started, finished: new Date().toISOString(),
-  totalCandidates: candidates.length,
-  admittedUnique: admitted.length,
-  families: new Set(admitted.map(t => t.family)).size,
-  packagesAdmitted: Object.values(byPkg).filter(v => v.admitted > 0).length,
-  effectfulAdmitted: effectful,
-  traceChars: traceLens.length ? {min: traceLens[0], median: traceLens[Math.floor(traceLens.length / 2)], p90: traceLens[Math.floor(traceLens.length * 0.9)], max: traceLens.at(-1)} : null,
-  byOrigin,
-  byPackage: byPkg,
-  topRefusals: Object.entries(refusals).sort((a, b) => b[1] - a[1]).slice(0, 20).map(([reason, count]) => ({reason, count, example: refusalSamples[reason]})),
-};
 
-writeFileSync(join(outputDir, 'harvested.jsonl'), admitted.map(r => JSON.stringify(r)).join('\n') + (admitted.length ? '\n' : ''));
-writeFileSync(join(outputDir, 'census.json'), JSON.stringify(census, null, 2) + '\n');
-console.log(JSON.stringify(census, null, 2));
+  const byPkg = {}, byOrigin = {}, refusals = {}, refusalSamples = {};
+  for (const r of records) {
+    byPkg[r.pkg] ??= {candidates: 0, admitted: 0};
+    byPkg[r.pkg].candidates++;
+    if (r.status === 'admitted') byPkg[r.pkg].admitted++;
+    byOrigin[r.origin] ??= {candidates: 0, admitted: 0};
+    byOrigin[r.origin].candidates++;
+    if (r.status === 'admitted') byOrigin[r.origin].admitted++;
+    if (r.status !== 'admitted') {
+      const key = r.category + ': ' + r.reason.replace(/\d+/g, 'N').slice(0, 80);
+      refusals[key] = (refusals[key] ?? 0) + 1;
+      refusalSamples[key] ??= r.id;
+    }
+  }
+  const traceLens = admitted.map(t => t.metadata.traceChars).sort((a, b) => a - b);
+  const traceLineArr = admitted.map(t => t.metadata.traceLines).sort((a, b) => a - b);
+  const effectful = admitted.filter(t => (t.fixture?.calls?.length ?? 0) > 0).length;
+  const census = {
+    started, finished: new Date().toISOString(),
+    totalCandidates: candidates.length,
+    admittedUnique: admitted.length,
+    families: new Set(admitted.map(t => t.family)).size,
+    packagesAdmitted: Object.values(byPkg).filter(v => v.admitted > 0).length,
+    effectfulAdmitted: effectful,
+    traceChars: traceLens.length ? {min: traceLens[0], median: traceLens[Math.floor(traceLens.length / 2)], p90: traceLens[Math.floor(traceLens.length * 0.9)], max: traceLens.at(-1)} : null,
+    traceLines: traceLineArr.length ? {min: traceLineArr[0], median: traceLineArr[Math.floor(traceLineArr.length / 2)], p90: traceLineArr[Math.floor(traceLineArr.length * 0.9)], max: traceLineArr.at(-1), mean: +(traceLineArr.reduce((a, b) => a + b, 0) / traceLineArr.length).toFixed(2)} : null,
+    byOrigin,
+    byPackage: byPkg,
+    topRefusals: Object.entries(refusals).sort((a, b) => b[1] - a[1]).slice(0, 20).map(([reason, count]) => ({reason, count, example: refusalSamples[reason]})),
+  };
+
+  writeFileSync(join(outputDir, 'harvested.jsonl'), admitted.map(r => JSON.stringify(r)).join('\n') + (admitted.length ? '\n' : ''));
+  writeFileSync(join(outputDir, 'census.json'), JSON.stringify(census, null, 2) + '\n');
+  console.log(JSON.stringify(census, null, 2));
+  return census;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  await runHarvester();
+}
