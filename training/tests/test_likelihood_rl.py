@@ -181,12 +181,16 @@ class LikelihoodRLTests(unittest.TestCase):
             # Student prompt must NEVER contain trace lines.
             self.assertNotIn("branch x > 0", student_text)
             self.assertNotIn("roll = 0.425", student_text)
-            # Teacher prompt MUST contain this turn's trace, NEVER target action or future turns.
+            # Teacher prompt MUST contain full-episode computational trace front-loaded before user task,
+            # NEVER target completion JSON or tool observations not yet received.
+            self.assertIn("<mechanistic_trace>", teacher_text)
             self.assertIn(t["trace_text"], teacher_text)
+            self.assertIn("branch x > 0", teacher_text)
+            self.assertIn("roll = 0.425", teacher_text)
+            self.assertLess(teacher_text.index("<mechanistic_trace>"), teacher_text.index("Run run()"))
             self.assertNotIn('"type":"complete"', teacher_text)
             if idx == 0:
-                self.assertNotIn("0.425", teacher_text)
-                self.assertNotIn("roll = 0.425", teacher_text)
+                self.assertNotIn('"status":"fulfilled"', teacher_text)
 
         # Empty thinking leaves teacher prompt as None.
         no_trace_msgs = [
@@ -260,6 +264,16 @@ class LikelihoodRLTests(unittest.TestCase):
         self.assertIsNone(trunc_sample["target_logprobs"])
         self.assertEqual(trunc_sample["teacher_logprobs"], [-0.15, -0.15, -0.15])
         self.assertEqual(len(trunc_client.scored_calls), 1)
+
+        # score_teacher=True with teacher_ll_threshold skips teacher scoring when confident (sum=-0.45 >= -0.5).
+        skip_client = _FakeClient([50, 51, 99], [-0.8, -0.7, -0.2])
+        adapter.sampling_client = skip_client
+        skip_sample = adapter.sample_thinking_and_score_target(
+            turn_target, seed=10, score_teacher=True, teacher_ll_threshold=-0.5,
+        )
+        self.assertTrue(skip_sample["terminated"])
+        self.assertIsNone(skip_sample["teacher_logprobs"])
+        self.assertEqual(len(skip_client.scored_calls), 1)
 
         # score_teacher=False leaves teacher_logprobs as None.
         no_teacher_client = _FakeClient([50, 51, 99], [-0.8, -0.7, -0.2])
@@ -349,7 +363,7 @@ class LikelihoodRLTests(unittest.TestCase):
         self.assertEqual(loaded["opsd_clip"], 5.0)
         self.assertEqual(loaded["opsd_ll_threshold"], -0.5)
         self.assertEqual(loaded["sft_epochs"], 0)
-        self.assertEqual(loaded["rl_learning_rate"], 2.5e-5)
+        self.assertEqual(loaded["rl_learning_rate"], 1.5e-5)
 
         class FakeOPSDAdapter:
             backend_name = "fixture"
@@ -367,7 +381,7 @@ class LikelihoodRLTests(unittest.TestCase):
                          "teacher_thinking_prompt_tokens": [1, 2, 3, 10, 11], "trace_text": "x = 1",
                          "target_action_tokens": [10, 20, 30], "is_tool_call": False, "operation": "complete"}]
             def sample_thinking_and_score_target(self, turn_target, *, seed, max_tokens=None, temperature=None,
-                                                 score_teacher=False, teacher_scorer=None):
+                                                 score_teacher=False, teacher_scorer=None, teacher_ll_threshold=None):
                 self.score_teacher_flags.append(score_teacher)
                 # All-truncated group: scalar advantages are 0, only OPSD token_advantages drive the update!
                 return {

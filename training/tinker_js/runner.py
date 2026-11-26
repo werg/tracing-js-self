@@ -1631,6 +1631,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                 }
                 if score_teacher:
                     sample_kwargs["score_teacher"] = True
+                    sample_kwargs["teacher_ll_threshold"] = config.get("opsd_ll_threshold")
                     if config.get("opsd_teacher") == "reference":
                         sample_kwargs["teacher_scorer"] = adapter.reference_client
                 sample = adapter.sample_thinking_and_score_target(turn_target, **sample_kwargs)

@@ -578,7 +578,7 @@ class TinkerAdapter:
                     out["content"] = content
             return out
 
-        def _extract_trace(msg: Mapping[str, Any]) -> str:
+        def _extract_trace_raw(msg: Mapping[str, Any]) -> str:
             content = msg.get("content", "")
             if not isinstance(content, list):
                 return ""
@@ -587,14 +587,25 @@ class TinkerAdapter:
                 for part in content
                 if isinstance(part, Mapping) and part.get("type") == "thinking" and part.get("thinking")
             ]
-            trace = "\n".join(parts).strip()
+            return "\n".join(parts).strip()
+
+        def _clip_trace(trace: str) -> str:
             if len(trace) > trace_limit:
                 marker = "\n... (trace truncated) ...\n"
                 keep = max(0, trace_limit - len(marker))
                 head_len = keep // 2
                 tail_len = keep - head_len
-                trace = (trace[:head_len] + marker + trace[-tail_len:]) if tail_len > 0 else trace[:trace_limit]
+                return (trace[:head_len] + marker + trace[-tail_len:]) if tail_len > 0 else trace[:trace_limit]
             return trace
+
+        # Front-loaded full-episode computational trace (no tool calls/results/completion JSON)
+        # maximizes multi-turn + group KV prefix sharing and eliminates last-line shortcutting.
+        all_turn_traces = [_extract_trace_raw(m) for m in messages if m.get("role") == "assistant"]
+        full_episode_trace = _clip_trace("\n---\n".join(t for t in all_turn_traces if t))
+        trace_header = (
+            "<mechanistic_trace>\n" + full_episode_trace + "\n</mechanistic_trace>\n\n"
+            "Reference execution trace above (do not cite it; derive your execution naturally from the code below).\n\n"
+        ) if full_episode_trace else ""
 
         turns: list[dict] = []
         with self._lock:
@@ -603,7 +614,7 @@ class TinkerAdapter:
                     continue
                 prefix_messages = [_strip_thinking(m) for m in messages[:idx]]
                 action_msg = _strip_thinking(msg)
-                trace_text = _extract_trace(msg)
+                trace_text = _clip_trace(_extract_trace_raw(msg))
                 prefix_tokens = list(sdk.renderer.build_generation_prompt(prefix_messages, effort=self.effort).to_ints())
                 model_input, weights = sdk.renderer.build_supervised_example(prefix_messages + [action_msg])
                 full_ids = list(model_input.to_ints())
@@ -619,21 +630,19 @@ class TinkerAdapter:
                 if not target_action_tokens:
                     continue
                 teacher_thinking_prompt_tokens: list[int] | None = None
-                if trace_text:
-                    addendum = (
-                        "\n\n[Internal execution trace for this turn — verify intermediate values and branches "
-                        "against this trace; reason naturally in your own words without mentioning or quoting this trace:]\n"
-                        + trace_text
-                    )
+                if trace_header:
                     teacher_prefix_messages = copy.deepcopy(prefix_messages)
-                    if (
-                        teacher_prefix_messages
-                        and teacher_prefix_messages[-1].get("role") in ("user", "tool")
-                        and isinstance(teacher_prefix_messages[-1].get("content"), str)
-                    ):
-                        teacher_prefix_messages[-1]["content"] = teacher_prefix_messages[-1]["content"] + addendum
+                    user_idx = next(
+                        (i for i, m in enumerate(teacher_prefix_messages)
+                         if m.get("role") == "user" and isinstance(m.get("content"), str)),
+                        None,
+                    )
+                    if user_idx is not None:
+                        teacher_prefix_messages[user_idx]["content"] = (
+                            trace_header + teacher_prefix_messages[user_idx]["content"]
+                        )
                     else:
-                        teacher_prefix_messages.append({"role": "user", "content": addendum.lstrip()})
+                        teacher_prefix_messages.insert(0, {"role": "user", "content": trace_header.strip()})
                     teacher_prefix_tokens = list(
                         sdk.renderer.build_generation_prompt(teacher_prefix_messages, effort=self.effort).to_ints()
                     )
@@ -649,6 +658,7 @@ class TinkerAdapter:
                     "thinking_prompt_tokens": prefix_tokens + [msg_model_id, content_thinking_id],
                     "teacher_thinking_prompt_tokens": teacher_thinking_prompt_tokens,
                     "trace_text": trace_text,
+                    "full_trace_text": full_episode_trace,
                     "target_action_tokens": target_action_tokens,
                     "is_tool_call": bool(tool_calls),
                     "operation": op_name,
@@ -665,6 +675,7 @@ class TinkerAdapter:
         scorer=None,
         score_teacher: bool = False,
         teacher_scorer=None,
+        teacher_ll_threshold: float | None = None,
     ) -> dict:
         """Sample one <|content_thinking|> block stopping at <|end_message|>, then score exact log P(target | prefix, z)."""
         _msg_model_id, _content_thinking_id, end_message_id = self.thinking_token_ids()
@@ -736,7 +747,19 @@ class TinkerAdapter:
             target_logprob_mean = target_logprob_sum / len(target_logprobs)
 
         teacher_logprobs = None
-        if score_teacher and turn_target.get("teacher_thinking_prompt_tokens") and provenance_error is None and z_tokens:
+        needs_teacher = (
+            score_teacher
+            and turn_target.get("teacher_thinking_prompt_tokens")
+            and provenance_error is None
+            and z_tokens
+            and (
+                teacher_ll_threshold is None
+                or not terminated
+                or target_logprob_sum is None
+                or target_logprob_sum < teacher_ll_threshold
+            )
+        )
+        if needs_teacher:
             t_prompt = list(turn_target["teacher_thinking_prompt_tokens"])
             if len(t_prompt) + len(z_tokens) <= self.max_context_tokens:
                 t_client = teacher_scorer or client
