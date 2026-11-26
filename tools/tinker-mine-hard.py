@@ -243,6 +243,7 @@ def mine_dataset(
     sample_max_tokens: int = 4096,
     long_thought_tokens: int = 1800,
     bridge_timeout_seconds: float = 60.0,
+    resume_scores_path: Path | None = None,
 ) -> tuple[list[dict], list[dict], dict[str, Any]]:
     """Filter mastered easy train tasks while preserving all held-out splits and hard/priority tasks."""
     if mode not in {"logprob", "sample"}:
@@ -272,9 +273,48 @@ def mine_dataset(
     if max_tasks is not None:
         train_indices = train_indices[:max_tasks]
 
+    cached_by_id: dict[str, dict[str, Any]] = {}
+    if resume_scores_path is not None and resume_scores_path.is_file():
+        for rec in read_jsonl(resume_scores_path):
+            rid = rec.get("id")
+            if isinstance(rid, str) and rec.get("mode") == mode:
+                cached_by_id[rid] = rec
+        if cached_by_id:
+            print(f"mine-hard ({mode}): loaded {len(cached_by_id)} cached scores from {resume_scores_path}", file=sys.stderr, flush=True)
+
+    pending_positions: list[tuple[int, int]] = []
+    ordered: list[dict[str, Any] | None] = [None] * len(train_indices)
+    for pos, orig_idx in enumerate(train_indices):
+        tid = _row_id(rows[orig_idx], orig_idx)
+        if tid in cached_by_id:
+            cached = dict(cached_by_id[tid])
+            # Re-evaluate is_hard / is_always_keep under current threshold & always_keep_set
+            cached_features = set(cached.get("features") or [])
+            cached_ext = int(cached.get("externalCalls") or 0)
+            cached["is_always_keep"] = bool(cached_features & always_keep_set) or cached_ext > 0
+            min_ll = cached.get("min_ll")
+            if mode == "logprob":
+                cached["is_hard"] = (
+                    (cached.get("error") in ("no_turns", "context_overflow"))
+                    or (min_ll is None)
+                    or (not math.isfinite(float(min_ll)))
+                    or (float(min_ll) < float(hard_ll_threshold))
+                )
+            else:
+                cached["is_hard"] = (
+                    (cached.get("error") in ("no_turns", "context_overflow"))
+                    or (not bool(cached.get("terminated")))
+                    or (min_ll is None)
+                    or (float(min_ll) < float(hard_ll_threshold))
+                    or (int(cached.get("generated_tokens") or 0) >= long_thought_tokens)
+                )
+            ordered[pos] = cached
+        else:
+            pending_positions.append((pos, orig_idx))
+
     needs_bridge = bridge is None and any(
-        not isinstance(rows[idx].get("messages"), list) or not rows[idx].get("messages")
-        for idx in train_indices
+        not isinstance(rows[orig_idx].get("messages"), list) or not rows[orig_idx].get("messages")
+        for _, orig_idx in pending_positions
     )
     owned_bridge: Bridge | None = None
     active_bridge = bridge
@@ -282,17 +322,23 @@ def mine_dataset(
         owned_bridge = Bridge(repo or _REPO_ROOT, timeout=bridge_timeout_seconds)
         active_bridge = owned_bridge
 
+    scores_fh = None
+    if resume_scores_path is not None and pending_positions:
+        resume_scores_path.parent.mkdir(parents=True, exist_ok=True)
+        scores_fh = resume_scores_path.open("a", encoding="utf-8")
+
     try:
-        if (callable(getattr(adapter, "create_sampling_client", None))
+        if (pending_positions
+                and callable(getattr(adapter, "create_sampling_client", None))
                 and hasattr(adapter, "sampling_client")
                 and adapter.sampling_client is None):
             adapter.create_sampling_client()
 
-        diagnostics: list[dict[str, Any]] = []
-        if train_indices:
-            workers = min(concurrency, len(train_indices))
+        if pending_positions:
+            workers = min(concurrency, len(pending_positions))
+            done_count = len(train_indices) - len(pending_positions)
             if workers <= 1:
-                for pos, orig_idx in enumerate(train_indices):
+                for pos, orig_idx in pending_positions:
                     diag = _score_train_task(
                         rows[orig_idx],
                         orig_idx,
@@ -305,12 +351,14 @@ def mine_dataset(
                         sample_max_tokens=sample_max_tokens,
                         long_thought_tokens=long_thought_tokens,
                     )
-                    diagnostics.append(diag)
-                    if len(train_indices) >= 100 and (pos + 1) % 100 == 0:
-                        print(f"mine-hard ({mode}): {pos + 1}/{len(train_indices)}", file=sys.stderr, flush=True)
+                    ordered[pos] = diag
+                    if scores_fh is not None:
+                        scores_fh.write(json.dumps(diag, ensure_ascii=False) + "\n")
+                        scores_fh.flush()
+                    done_count += 1
+                    if len(train_indices) >= 100 and (done_count % 100 == 0 or done_count == len(train_indices)):
+                        print(f"mine-hard ({mode}): {done_count}/{len(train_indices)}", file=sys.stderr, flush=True)
             else:
-                ordered: list[dict[str, Any] | None] = [None] * len(train_indices)
-                done_count = 0
                 with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
                     futures = {
                         pool.submit(
@@ -326,12 +374,16 @@ def mine_dataset(
                             sample_max_tokens=sample_max_tokens,
                             long_thought_tokens=long_thought_tokens,
                         ): pos
-                        for pos, orig_idx in enumerate(train_indices)
+                        for pos, orig_idx in pending_positions
                     }
                     try:
                         for fut in concurrent.futures.as_completed(futures):
                             pos = futures[fut]
-                            ordered[pos] = fut.result()
+                            diag = fut.result()
+                            ordered[pos] = diag
+                            if scores_fh is not None:
+                                scores_fh.write(json.dumps(diag, ensure_ascii=False) + "\n")
+                                scores_fh.flush()
                             done_count += 1
                             if len(train_indices) >= 100 and (done_count % 100 == 0 or done_count == len(train_indices)):
                                 print(f"mine-hard ({mode}): {done_count}/{len(train_indices)}", file=sys.stderr, flush=True)
@@ -339,8 +391,10 @@ def mine_dataset(
                         for fut in futures:
                             fut.cancel()
                         raise
-                diagnostics = [item for item in ordered if item is not None]
+        diagnostics: list[dict[str, Any]] = [item for item in ordered if item is not None]
     finally:
+        if scores_fh is not None:
+            scores_fh.close()
         if owned_bridge is not None:
             owned_bridge.close()
 
@@ -428,7 +482,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--always-keep-features", default=",".join(DEFAULT_ALWAYS_KEEP_FEATURES),
                         help="Comma-separated features to always keep on train split")
     parser.add_argument("--seed", type=int, default=42, help="Deterministic random seed (default: 42)")
-    parser.add_argument("--scores-out", type=Path, default=None, help="Optional JSONL path for per-task difficulty diagnostics")
+    parser.add_argument("--scores-out", type=Path, default=None, help="Optional JSONL path for per-task difficulty diagnostics (also enables incremental resume)")
     parser.add_argument("--effort", type=float, default=0.5, help="Reasoning effort matching training config (default: 0.5)")
     parser.add_argument("--max-tokens", type=int, default=4096, help="Max thinking tokens in --mode sample (default: 4096)")
     parser.add_argument("--bridge-timeout", type=float, default=60.0, help="Bridge export timeout in seconds (default: 60)")
@@ -457,6 +511,7 @@ def main(argv: list[str] | None = None) -> int:
         seed=args.seed,
         sample_max_tokens=args.max_tokens,
         bridge_timeout_seconds=args.bridge_timeout,
+        resume_scores_path=args.scores_out,
     )
     write_jsonl(args.output, output_rows)
     if args.scores_out is not None:
