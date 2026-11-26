@@ -298,7 +298,7 @@ class TinkerAdapter:
             raise ValueError("reference_kl_coef must be nonnegative and reference_kl_clip positive")
         self.lora_rank = _positive_int(self.config.get("lora_rank", 32), "lora_rank")
         self.seed = _seed(self.config.get("seed", 0))
-        self.timeout = _finite(self.config.get("request_timeout_seconds", 300), "request_timeout_seconds")
+        self.timeout = _finite(self.config.get("request_timeout_seconds", 450), "request_timeout_seconds")
         if self.timeout <= 0:
             raise ValueError("request_timeout_seconds must be positive")
         self._runtime = runtime
@@ -630,9 +630,10 @@ class TinkerAdapter:
             seed=_seed(seed),
             stop=[end_message_id],
         )
-        response = self._wait(
-            client.sample(sdk.types.ModelInput.from_ints(thinking_prompt), num_samples=1, sampling_params=params),
+        response = self._retry_idempotent(
+            lambda: client.sample(sdk.types.ModelInput.from_ints(thinking_prompt), num_samples=1, sampling_params=params),
             "thinking block sampling",
+            attempts=2,
         )
         if not response.sequences:
             raise AdapterError("Tinker returned no sampled sequences for thinking block")
@@ -659,12 +660,13 @@ class TinkerAdapter:
             score_client = scorer or client
             full_ids = thinking_prompt + z_tokens + target_tokens
             self._budget(len(full_ids))
-            values = self._wait(
-                score_client.compute_logprobs(
+            values = self._retry_idempotent(
+                lambda: score_client.compute_logprobs(
                     sdk.types.ModelInput.from_ints(full_ids),
                     prompt_logprobs_last_n=len(target_tokens),
                 ),
                 "target action logprob scoring",
+                attempts=2,
             )
             if len(values) != len(full_ids):
                 raise AdapterError("Target scoring returned misaligned log probabilities")
@@ -932,9 +934,10 @@ class TinkerAdapter:
                 params["seed"] = _seed(seed)
             sampling_params = sdk.types.SamplingParams(**params)
         # Network sampling runs unlocked so concurrent rollout threads pipeline I/O.
-        response = self._wait(
-            client.sample(prompt=prompt, num_samples=1, sampling_params=sampling_params),
+        response = self._retry_idempotent(
+            lambda: client.sample(prompt=prompt, num_samples=1, sampling_params=sampling_params),
             "sampling",
+            attempts=2,
         )
         # Once a response arrives, even a broken response must retain its full
         # generation cost. Never raise and lose its tokens during validation.
