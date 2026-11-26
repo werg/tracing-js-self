@@ -5,8 +5,9 @@
 // inputs and real multi-turn side-effect tool calls, and verifies 100% of
 // admitted tasks through prepareTinkerTask() (owned VM === native Node oracle).
 
-import {existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync} from 'node:fs';
+import {existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
+import {tmpdir} from 'node:os';
 import {basename, dirname, join, relative, resolve, sep} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {createRequire} from 'node:module';
@@ -18,6 +19,15 @@ import ts from 'typescript';
 import {prepareTinkerTask, readableMessagesFromJournal, encodeReadable,
   assistantVisibleText, assistantThinkingText} from '../src/training/tinker-execution.js';
 import {createLiveFetchRecorder, sourceUsesGlobalFetch, VM_FETCH_RUNTIME_SCRIPT} from '../src/training/tinker-http-fetch.js';
+import {
+  NODE_BUILTIN_EXTERNALS,
+  WORKSPACE_CWD,
+  VM_NODE_IO_RUNTIME_SCRIPT,
+  createLiveNodeIoRecorder,
+  makeDeterministicPathModule,
+  makePureCryptoBindings,
+  makePureUrlModule,
+} from '../src/training/tinker-node-io.js';
 import {nearCloneHash, executionInputSignature} from '../src/training/tinker-benchmark.js';
 import {failureCategory} from '../src/training/tinker-verification.js';
 
@@ -156,12 +166,26 @@ function resolvePackageEntry(pkgDir, pkgJson) {
   return getReq().resolve(pkgJson.name);
 }
 
+const OWNED_PROCESS_DEFINES = {
+  'process.env.NODE_ENV': '"production"',
+  'process.env.NODE_DEBUG': 'undefined',
+  'process.env.DEBUG': 'undefined',
+  'process': 'undefined',
+};
+
+function esbuildNodeOptions(mode = harvestMode) {
+  if (mode === 'native') {
+    return {external: NODE_BUILTIN_EXTERNALS};
+  }
+  return {define: OWNED_PROCESS_DEFINES};
+}
+
 // --- 1. Tree-shaken per-export bundling via esbuild (zero CJS boilerplate!) ---
 const bundleCache = new Map();
-function bundleExport(pkgName, exportName = null, subpath = null) {
+function bundleExport(pkgName, exportName = null, subpath = null, {mode = harvestMode} = {}) {
   const esbuild = getEsbuild();
   if (!esbuild) return {error: 'esbuild unavailable'};
-  const key = `${pkgName}|${exportName ?? '*'}|${subpath ?? ''}`;
+  const key = `${mode}|${pkgName}|${exportName ?? '*'}|${subpath ?? ''}`;
   if (bundleCache.has(key)) return bundleCache.get(key);
   try {
     const meta = readPkgMeta(pkgName);
@@ -185,12 +209,7 @@ function bundleExport(pkgName, exportName = null, subpath = null) {
       target: 'es2022',
       mainFields: ['module', 'main'],
       conditions: ['import', 'default', 'require'],
-      define: {
-        'process.env.NODE_ENV': '"production"',
-        'process.env.NODE_DEBUG': 'undefined',
-        'process.env.DEBUG': 'undefined',
-        'process': 'undefined',
-      },
+      ...esbuildNodeOptions(mode),
       logLevel: 'silent',
     });
     const code = built.outputFiles[0].text;
@@ -206,7 +225,7 @@ function bundleExport(pkgName, exportName = null, subpath = null) {
   } catch (err) {
     // Fallback: bundle entry directly (handles CJS modules without named ESM exports)
     if (exportName && exportName !== 'default') {
-      const whole = bundleWholeEntry(pkgName, subpath);
+      const whole = bundleWholeEntry(pkgName, subpath, {mode});
       if (!whole.error) {
         const info = {...whole, exportName, wholeModule: true};
         bundleCache.set(key, info);
@@ -219,10 +238,10 @@ function bundleExport(pkgName, exportName = null, subpath = null) {
   }
 }
 
-function bundleWholeEntry(pkgName, subpath = null) {
+function bundleWholeEntry(pkgName, subpath = null, {mode = harvestMode} = {}) {
   const esbuild = getEsbuild();
   if (!esbuild) return {error: 'esbuild unavailable'};
-  const key = `WHOLE|${pkgName}|${subpath ?? ''}`;
+  const key = `WHOLE|${mode}|${pkgName}|${subpath ?? ''}`;
   if (bundleCache.has(key)) return bundleCache.get(key);
   try {
     const meta = readPkgMeta(pkgName);
@@ -238,12 +257,7 @@ function bundleWholeEntry(pkgName, subpath = null) {
       target: 'es2022',
       mainFields: ['module', 'main'],
       conditions: ['import', 'default', 'require'],
-      define: {
-        'process.env.NODE_ENV': '"production"',
-        'process.env.NODE_DEBUG': 'undefined',
-        'process.env.DEBUG': 'undefined',
-        'process': 'undefined',
-      },
+      ...esbuildNodeOptions(mode),
       logLevel: 'silent',
     });
     const info = {...meta, subpath: subpath ?? relative(meta.pkgDir, entryPath), code: built.outputFiles[0].text, wholeModule: true};
@@ -266,12 +280,22 @@ function safeErrorDescriptor(err) {
   let errorName = 'Error';
   let errorMessage = '';
   try {
-    const proto = Object.getPrototypeOf(err);
-    const nameDesc = Object.getOwnPropertyDescriptor(err, 'name') ??
-      (proto && !types.isProxy(proto) ? Object.getOwnPropertyDescriptor(proto, 'name') : null);
-    if (nameDesc && Object.hasOwn(nameDesc, 'value') && typeof nameDesc.value === 'string') {
-      errorName = nameDesc.value;
+    let nameVal = '';
+    for (let cur = err; cur && cur !== Object.prototype; cur = Object.getPrototypeOf(cur)) {
+      if (types.isProxy(cur)) break;
+      const d = Object.getOwnPropertyDescriptor(cur, 'name');
+      if (d && Object.hasOwn(d, 'value') && typeof d.value === 'string') {
+        nameVal = d.value;
+        break;
+      }
     }
+    if (!nameVal) {
+      const proto = Object.getPrototypeOf(err);
+      const ctor = proto && !types.isProxy(proto) ? Object.getOwnPropertyDescriptor(proto, 'constructor')?.value : null;
+      const ctorName = ctor && typeof ctor === 'function' ? Object.getOwnPropertyDescriptor(ctor, 'name')?.value : null;
+      if (typeof ctorName === 'string' && ctorName) nameVal = ctorName;
+    }
+    if (nameVal) errorName = nameVal;
     const msgDesc = Object.getOwnPropertyDescriptor(err, 'message');
     if (msgDesc && Object.hasOwn(msgDesc, 'value') && typeof msgDesc.value === 'string') {
       errorMessage = msgDesc.value;
@@ -280,10 +304,65 @@ function safeErrorDescriptor(err) {
   return {errorName, errorMessage};
 }
 
-function buildProbeContext(sampleArgs, recordedCalls, mode, {fetchTimeoutMs = 4000, maxBodyBytes = 48 * 1024, enableFetch = false} = {}) {
+function buildDiscoveryContext() {
+  const pathMod = makeDeterministicPathModule(WORKSPACE_CWD);
+  const urlMod = makePureUrlModule();
+  const cryptoMod = {
+    ...makePureCryptoBindings(),
+    randomUUID: () => '00000000-0000-4000-8000-000000000000',
+    randomBytes: n => Buffer.alloc(Number(n) || 0),
+  };
+  const noopFn = () => { throw new Error('Discovery-time I/O disabled'); };
+  const fsPromisesStub = {readFile: noopFn, writeFile: noopFn, readdir: noopFn, stat: noopFn, lstat: noopFn};
+  const fsStub = {
+    readFileSync: noopFn,
+    writeFileSync: noopFn,
+    existsSync: () => false,
+    readdirSync: noopFn,
+    statSync: noopFn,
+    lstatSync: noopFn,
+    promises: fsPromisesStub,
+  };
+  const cpStub = {execFileSync: noopFn, execSync: noopFn};
+  const procStub = {
+    env: {NODE_ENV: 'production'},
+    cwd: () => WORKSPACE_CWD,
+    platform: process.platform,
+    version: process.version,
+    versions: {node: process.version.replace(/^v/, '')},
+    argv: ['node', 'script.js'],
+  };
+  const mods = {
+    fs: fsStub, 'node:fs': fsStub,
+    'fs/promises': fsPromisesStub, 'node:fs/promises': fsPromisesStub,
+    path: pathMod, 'node:path': pathMod,
+    url: urlMod, 'node:url': urlMod,
+    crypto: cryptoMod, 'node:crypto': cryptoMod,
+    child_process: cpStub, 'node:child_process': cpStub,
+    buffer: {Buffer}, 'node:buffer': {Buffer},
+    process: procStub, 'node:process': procStub,
+  };
+  return vm.createContext({
+    URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone, Buffer,
+    process: procStub,
+    crypto: {randomUUID: cryptoMod.randomUUID, getRandomValues: ta => ta},
+    require: id => {
+      const k = String(id);
+      if (Object.hasOwn(mods, k)) return mods[k];
+      throw new Error('Cannot find module ' + JSON.stringify(k));
+    },
+  });
+}
+
+function buildProbeContext(
+  sampleArgs,
+  recordedCalls,
+  mode,
+  {fetchTimeoutMs = 4000, maxBodyBytes = 48 * 1024, enableFetch = false, workDir = null, readRoots = [], env = null} = {},
+) {
   const baseEnv = {__args: structuredClone(sampleArgs)};
   if (mode === 'native') {
-    Object.assign(baseEnv, {URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone});
+    Object.assign(baseEnv, {URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone, Buffer});
     baseEnv.console = Object.fromEntries(['log', 'info', 'warn', 'error'].map(lvl => [lvl, (...xs) => {
       if (recordedCalls.length <= 24) {
         const msg = xs.length ? xs[0] : undefined;
@@ -302,6 +381,16 @@ function buildProbeContext(sampleArgs, recordedCalls, mode, {fetchTimeoutMs = 40
       if (recordedCalls.length <= 24) recordedCalls.push({operation: 'platform.random', arguments: [], status: 'fulfilled', result: v});
       return v;
     };
+    if (workDir) {
+      baseEnv.__platformNodeIo = createLiveNodeIoRecorder(recordedCalls, {
+        workDir,
+        readRoots,
+        env,
+        timeoutMs: fetchTimeoutMs,
+        maxCalls: 24,
+        encodeReadable,
+      });
+    }
     if (enableFetch) {
       const {liveFetch} = createLiveFetchRecorder(recordedCalls, {
         timeoutMs: fetchTimeoutMs,
@@ -312,8 +401,13 @@ function buildProbeContext(sampleArgs, recordedCalls, mode, {fetchTimeoutMs = 40
     }
   }
   const ctx = vm.createContext(baseEnv);
-  if (mode === 'native' && enableFetch) {
-    new vm.Script(VM_FETCH_RUNTIME_SCRIPT).runInContext(ctx, {timeout: 200});
+  if (mode === 'native') {
+    if (workDir) {
+      new vm.Script(VM_NODE_IO_RUNTIME_SCRIPT).runInContext(ctx, {timeout: 500});
+    }
+    if (enableFetch) {
+      new vm.Script(VM_FETCH_RUNTIME_SCRIPT).runInContext(ctx, {timeout: 500});
+    }
   }
   return ctx;
 }
@@ -332,12 +426,13 @@ function buildProbeScript(bundle, fnName, mode) {
   return new vm.Script(`(() => {\n${patchPreamble}${load}\nif (typeof __fn !== "function") throw new TypeError("__HARVEST_NOT_FN__");\nconst __out = __fn(...__args);\nif (__out && typeof __out.catch === "function") { __out.catch(() => {}); return Promise.resolve(__out); }\nreturn __out;\n})()`);
 }
 
-function probeExportSafely(bundle, fnName, sampleArgs, {mode = harvestMode} = {}) {
+function probeExportSafely(bundle, fnName, sampleArgs, {mode = harvestMode, readRoots = [], env = null} = {}) {
   const recordedCalls = [];
-  const ctx = buildProbeContext(sampleArgs, recordedCalls, mode);
+  const workDir = mode === 'native' ? mkdtempSync(join(tmpdir(), 'tinker-harvest-live-')) : null;
+  const ctx = buildProbeContext(sampleArgs, recordedCalls, mode, {workDir, readRoots, env});
   const script = buildProbeScript(bundle, fnName, mode);
   try {
-    const value = script.runInContext(ctx, {timeout: 100});
+    const value = script.runInContext(ctx, {timeout: 500});
     if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
     if (value && typeof value === 'object' && typeof value.then === 'function') {
       return {kind: 'promise', value, recordedCalls};
@@ -350,6 +445,10 @@ function probeExportSafely(bundle, fnName, sampleArgs, {mode = harvestMode} = {}
     if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
     const {errorName, errorMessage} = safeErrorDescriptor(err);
     return {kind: 'throw', error: err, errorName, errorMessage, recordedCalls};
+  } finally {
+    if (workDir) {
+      try { rmSync(workDir, {recursive: true, force: true}); } catch {}
+    }
   }
 }
 
@@ -357,18 +456,23 @@ export async function probeExportSafelyAsync(
   bundle,
   fnName,
   sampleArgs,
-  {mode = harvestMode, timeoutMs = 4000, maxBodyBytes = 48 * 1024} = {},
+  {mode = harvestMode, timeoutMs = 4000, maxBodyBytes = 48 * 1024, readRoots = [], env = null} = {},
 ) {
   const recordedCalls = [];
+  const workDir = mode === 'native' ? mkdtempSync(join(tmpdir(), 'tinker-harvest-live-')) : null;
   const ctx = buildProbeContext(sampleArgs, recordedCalls, mode, {
     fetchTimeoutMs: timeoutMs,
     maxBodyBytes,
     enableFetch: mode === 'native',
+    workDir,
+    readRoots,
+    env,
   });
   const script = buildProbeScript(bundle, fnName, mode);
   try {
-    let value = script.runInContext(ctx, {timeout: 200});
-    if (value && typeof value === 'object' && typeof value.then === 'function') {
+    let value = script.runInContext(ctx, {timeout: Math.max(1000, Math.min(timeoutMs, 2000))});
+    const returnedPromise = Boolean(value && typeof value === 'object' && typeof value.then === 'function');
+    if (returnedPromise) {
       let timer = null;
       value = await Promise.race([
         value,
@@ -380,14 +484,18 @@ export async function probeExportSafelyAsync(
       });
     }
     if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
-    return {kind: 'return', value, recordedCalls};
+    return {kind: 'return', value, recordedCalls, returnedPromise};
   } catch (err) {
     if (err && (err.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' || err.message === '__HARVEST_NOT_FN__' || err.message === '__HARVEST_ASYNC_TIMEOUT__' || err.message === 'Too many external calls')) {
       throw err;
     }
     if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
     const {errorName, errorMessage} = safeErrorDescriptor(err);
-    return {kind: 'throw', error: err, errorName, errorMessage, recordedCalls};
+    return {kind: 'throw', error: err, errorName, errorMessage, recordedCalls, returnedPromise: true};
+  } finally {
+    if (workDir) {
+      try { rmSync(workDir, {recursive: true, force: true}); } catch {}
+    }
   }
 }
 
@@ -397,11 +505,11 @@ const isSkippedProbeName = (name, mode = harvestMode) => (mode === 'native'
 ).test(name);
 
 // --- 1b. Bundle an arbitrary local JS/TS file (from cloned/DGX GitHub repos) ---
-function bundleLocalFile(repoMeta, absFile, exportName = null) {
+function bundleLocalFile(repoMeta, absFile, exportName = null, {mode = harvestMode} = {}) {
   const esbuild = getEsbuild();
   if (!esbuild) return {error: 'esbuild unavailable'};
   const rel = relative(repoMeta.pkgDir, absFile);
-  const key = `LOCAL|${repoMeta.pkgName}|${rel}|${exportName ?? '*'}`;
+  const key = `LOCAL|${mode}|${repoMeta.pkgName}|${rel}|${exportName ?? '*'}`;
   if (bundleCache.has(key)) return bundleCache.get(key);
   const commonOpts = {
     bundle: true,
@@ -412,12 +520,7 @@ function bundleLocalFile(repoMeta, absFile, exportName = null) {
     target: 'es2022',
     mainFields: ['module', 'main'],
     conditions: ['import', 'default', 'require'],
-    define: {
-      'process.env.NODE_ENV': '"production"',
-      'process.env.NODE_DEBUG': 'undefined',
-      'process.env.DEBUG': 'undefined',
-      'process': 'undefined',
-    },
+    ...esbuildNodeOptions(mode),
     logLevel: 'silent',
   };
   try {
@@ -441,7 +544,7 @@ function bundleLocalFile(repoMeta, absFile, exportName = null) {
     return info;
   } catch (err) {
     if (exportName && exportName !== 'default') {
-      const whole = bundleLocalFile(repoMeta, absFile, null);
+      const whole = bundleLocalFile(repoMeta, absFile, null, {mode});
       if (!whole.error) {
         const info = {...whole, exportName, wholeModule: true};
         bundleCache.set(key, info);
@@ -990,6 +1093,21 @@ export function extractTestCallsFromFiles(repoDir, testFiles, exportNames, alias
   return byFn;
 }
 
+function callFeatureTags(recordedCalls, extra = []) {
+  const tags = [...extra];
+  if (recordedCalls.length) tags.push('external');
+  for (const c of recordedCalls) {
+    const op = c.operation ?? '';
+    if (op.startsWith('platform.')) tags.push('platform');
+    if (op === 'http.request') tags.push('http', 'http.request');
+    if (op.startsWith('fs.')) tags.push('fs', op);
+    if (op.startsWith('env.')) tags.push('env', op);
+    if (op.startsWith('shell.')) tags.push('shell', op);
+    if (op === 'platform.uuid' || op === 'platform.randomBytes') tags.push('crypto', op);
+  }
+  return [...new Set(tags)];
+}
+
 export function collectLocalRepoCandidates(rootDir, options = {}) {
   const effMaxPerFn = options.maxPerFn ?? maxPerFn;
   const effMaxPerRepo = options.maxPerRepo ?? maxPerRepo;
@@ -1039,15 +1157,16 @@ export function collectLocalRepoCandidates(rootDir, options = {}) {
     const targets = [];
 
     for (const file of rankedCode) {
-      const whole = bundleLocalFile(repoMeta, file, null);
+      const whole = bundleLocalFile(repoMeta, file, null, {mode: effMode});
       if (whole.error || whole.code.length > 90000) continue;
       let mod;
       try {
-        const ctx = vm.createContext({});
-        mod = new vm.Script(`(() => {\n${whole.code}\nreturn __harvestBox;\n})()`).runInContext(ctx, {timeout: 100});
+        const ctx = buildDiscoveryContext();
+        mod = new vm.Script(`(() => {\n${whole.code}\nreturn __harvestBox;\n})()`).runInContext(ctx, {timeout: 200});
       } catch { continue; }
-      const isNonClassFn = fn => {
+      const isSyncNonClassFn = fn => {
         if (typeof fn !== 'function') return false;
+        if (effMode === 'native' && types.isAsyncFunction(fn)) return false;
         try {
           return !/^class[\s{]/.test(Function.prototype.toString.call(fn));
         } catch {
@@ -1056,12 +1175,12 @@ export function collectLocalRepoCandidates(rootDir, options = {}) {
       };
       const fnNames = [];
       try {
-        if (isNonClassFn(mod)) fnNames.push('default');
+        if (isSyncNonClassFn(mod)) fnNames.push('default');
         if (mod && typeof mod === 'object') {
-          if (isNonClassFn(mod.default)) fnNames.push('default');
+          if (isSyncNonClassFn(mod.default)) fnNames.push('default');
           for (const k of Object.keys(mod).sort()) {
             try {
-              if (k !== 'default' && !k.startsWith('_') && isNonClassFn(mod[k])) fnNames.push(k);
+              if (k !== 'default' && !k.startsWith('_') && isSyncNonClassFn(mod[k])) fnNames.push(k);
             } catch {}
           }
         }
@@ -1084,7 +1203,7 @@ export function collectLocalRepoCandidates(rootDir, options = {}) {
     function getTargetBundle(target) {
       if (target.bundleFailed) return null;
       if (target.bundle) return target.bundle;
-      const b = bundleLocalFile(repoMeta, target.file, target.fnName);
+      const b = bundleLocalFile(repoMeta, target.file, target.fnName, {mode: effMode});
       if (b.error || b.code.length > 70000) {
         target.bundleFailed = true;
         return null;
@@ -1101,7 +1220,7 @@ export function collectLocalRepoCandidates(rootDir, options = {}) {
       if (!b) return false;
       let res;
       try {
-        res = probeExportSafely(b, target.fnName, args, {mode: effMode});
+        res = probeExportSafely(b, target.fnName, args, {mode: effMode, readRoots: [repoDir], env: options.env ?? null});
       } catch {
         return false;
       }
@@ -1129,11 +1248,10 @@ export function collectLocalRepoCandidates(rootDir, options = {}) {
       candidates.push(buildDirectTask({
         bundle: b, fnName: target.fnName, args, index: target.kept++,
         origin, testFile, recordedCalls: res.recordedCalls, mode: effMode,
-        extraFeatures: [
+        extraFeatures: callFeatureTags(res.recordedCalls, [
           'dgx-repo',
           ...(origin === 'dgx-oss-unit-test' ? ['unit-test-input'] : []),
-          ...(res.recordedCalls.length ? ['external', 'platform'] : []),
-        ],
+        ]),
       }));
       repoAdded++;
       return true;
@@ -1197,6 +1315,7 @@ export async function collectLocalAsyncFetchCandidates(rootDir, options = {}) {
   const effMaxPerRepo = options.maxPerRepo ?? maxPerRepo;
   const effMode = options.mode ?? harvestMode;
   const effEnvDir = options.envDir ?? envDir;
+  const effUnitTestsOnly = options.unitTestsOnly ?? unitTestsOnly;
   const effTimeoutMs = options.timeoutMs ?? 4000;
   if (effMode !== 'native') return [];
 
@@ -1225,49 +1344,81 @@ export async function collectLocalAsyncFetchCandidates(rootDir, options = {}) {
       pkgJson,
     };
     const {code: codeFiles, tests: testFiles} = collectSourceAndTestFiles(repoDir);
-    if (!testFiles.length) continue;
     const shortName = (pkgJson.name || repoSlug.split('/').pop() || '').replace(/^@[^/]+\//, '').replace(/[^a-zA-Z0-9_$]/g, '');
     let repoAdded = 0;
 
     for (const file of codeFiles) {
       if (repoAdded >= effMaxPerRepo) break;
-      const whole = bundleLocalFile(repoMeta, file, null);
-      if (whole.error || whole.code.length > 90000 || !/\bfetch\b/.test(whole.code)) continue;
+      const whole = bundleLocalFile(repoMeta, file, null, {mode: 'native'});
+      if (whole.error || whole.code.length > 90000) continue;
       let mod;
       try {
-        const ctx = vm.createContext({});
-        mod = new vm.Script(`(() => {\n${whole.code}\nreturn __harvestBox;\n})()`).runInContext(ctx, {timeout: 100});
+        const ctx = buildDiscoveryContext();
+        mod = new vm.Script(`(() => {\n${whole.code}\nreturn __harvestBox;\n})()`).runInContext(ctx, {timeout: 200});
       } catch { continue; }
-      const fnNames = [];
+      const isNonClassFn = fn => {
+        if (typeof fn !== 'function') return false;
+        try {
+          return !/^class[\s{]/.test(Function.prototype.toString.call(fn));
+        } catch {
+          return true;
+        }
+      };
+      const fnCandidates = [];
       try {
-        if (typeof mod === 'function') fnNames.push('default');
+        if (isNonClassFn(mod)) fnCandidates.push({fnName: 'default', fn: mod});
         if (mod && typeof mod === 'object') {
-          if (typeof mod.default === 'function') fnNames.push('default');
+          if (isNonClassFn(mod.default)) fnCandidates.push({fnName: 'default', fn: mod.default});
           for (const k of Object.keys(mod).sort()) {
-            try { if (k !== 'default' && !k.startsWith('_') && typeof mod[k] === 'function') fnNames.push(k); } catch {}
+            try { if (k !== 'default' && !k.startsWith('_') && isNonClassFn(mod[k])) fnCandidates.push({fnName: k, fn: mod[k]}); } catch {}
           }
         }
       } catch { continue; }
-      if (!fnNames.length) continue;
+      const usable = fnCandidates.filter(({fnName}) => !isSkippedProbeName(fnName, 'native'));
+      if (!usable.length) continue;
+
       const relFile = relative(repoDir, file);
-      const testCalls = extractTestCallsFromFiles(repoDir, testFiles, fnNames, [shortName], {envDir: effEnvDir, targetFile: relFile, pkgName: repoMeta.pkgName});
-      for (const fnName of fnNames) {
+      const testCalls = testFiles.length
+        ? extractTestCallsFromFiles(repoDir, testFiles, usable.map(x => x.fnName), [shortName], {envDir: effEnvDir, targetFile: relFile, pkgName: repoMeta.pkgName})
+        : new Map();
+
+      for (const {fnName, fn} of usable) {
         if (repoAdded >= effMaxPerRepo) break;
-        const entries = testCalls.get(fnName) ?? [];
-        if (!entries.length) continue;
-        const b = bundleLocalFile(repoMeta, file, fnName);
-        if (b.error || b.code.length > 70000 || !sourceUsesGlobalFetch(b.code)) continue;
+        const isAsyncExport = types.isAsyncFunction(fn);
+        const utEntries = testCalls.get(fnName) ?? [];
+        if (effUnitTestsOnly && !utEntries.length) continue;
+        // Skip purely synchronous exports that have no async/Promise indicators unless they return a Promise when probed.
+        const b = bundleLocalFile(repoMeta, file, fnName, {mode: 'native'});
+        if (b.error || b.code.length > 70000) continue;
+        const mayReturnPromise = isAsyncExport || /\b(?:async\s+|await\s+|Promise\b|fetch\b|fs\/promises|promises\.readFile|promises\.writeFile|promises\.readdir|promises\.stat)/.test(b.code);
+        if (!mayReturnPromise) continue;
+
+        const probes = utEntries.map(e => ({args: e.args, origin: 'dgx-oss-unit-test', file: e.file}));
+        const hasUnitTests = probes.length > 0;
+        if (!effUnitTestsOnly && !hasUnitTests) {
+          for (const sampleArgs of TYPED_INPUT_BANK) {
+            probes.push({args: sampleArgs, origin: 'dgx-oss-repo', file: null});
+          }
+        }
+
         let kept = 0;
+        const cap = hasUnitTests ? effMaxPerFn : Math.min(2, effMaxPerFn);
         const seenOut = new Set();
-        for (const entry of entries) {
-          if (kept >= effMaxPerFn || repoAdded >= effMaxPerRepo) break;
+        for (const probe of probes) {
+          if (kept >= cap || repoAdded >= effMaxPerRepo) break;
           let res;
           try {
-            res = await probeExportSafelyAsync(b, fnName, entry.args, {mode: 'native', timeoutMs: effTimeoutMs});
+            res = await probeExportSafelyAsync(b, fnName, probe.args, {
+              mode: 'native',
+              timeoutMs: effTimeoutMs,
+              readRoots: [repoDir],
+              env: options.env ?? null,
+            });
           } catch { continue; }
-          if (!res.recordedCalls.some(c => c.operation === 'http.request')) continue;
+          if (!isAsyncExport && !res.returnedPromise) continue;
           let outKey;
           if (res.kind === 'throw') {
+            if (probe.origin !== 'dgx-oss-unit-test') continue;
             if (res.errorName === 'ReferenceError' && /\bis not defined\b/.test(res.errorMessage)) continue;
             outKey = `throw:${res.errorName}:${res.errorMessage}`;
           } else {
@@ -1277,10 +1428,14 @@ export async function collectLocalAsyncFetchCandidates(rootDir, options = {}) {
           if (seenOut.has(outKey) && kept >= 1) continue;
           seenOut.add(outKey);
           candidates.push(buildDirectTask({
-            bundle: b, fnName, args: entry.args, index: kept++,
-            origin: 'dgx-oss-unit-test', testFile: entry.file, recordedCalls: res.recordedCalls, mode: 'native',
+            bundle: b, fnName, args: probe.args, index: kept++,
+            origin: probe.origin, testFile: probe.file, recordedCalls: res.recordedCalls, mode: 'native',
             isAsync: true,
-            extraFeatures: ['dgx-repo', 'unit-test-input', 'external', 'http', 'http.request'],
+            extraFeatures: callFeatureTags(res.recordedCalls, [
+              'dgx-repo',
+              'async',
+              ...(probe.origin === 'dgx-oss-unit-test' ? ['unit-test-input'] : []),
+            ]),
           }));
           repoAdded++;
         }
@@ -1290,11 +1445,14 @@ export async function collectLocalAsyncFetchCandidates(rootDir, options = {}) {
   return candidates;
 }
 
+export const collectLocalAsyncCandidates = collectLocalAsyncFetchCandidates;
+
 // --- 2. Extract static JS literal calls from real OSS GitHub test suites ---
 export function evalStaticAst(node, env = null, ctx = null, depth = 0) {
   if (!node || depth > 20) return {ok: false};
   if (node.type === 'Literal') {
-    if (node.regex || node.bigint) return {ok: false};
+    if (node.regex) return {ok: true, value: new RegExp(node.regex.pattern, node.regex.flags)};
+    if (node.bigint) return {ok: true, value: BigInt(node.bigint)};
     return {ok: true, value: node.value};
   }
   if (node.type === 'Identifier') {
@@ -1437,7 +1595,42 @@ export function evalStaticAst(node, env = null, ctx = null, depth = 0) {
     if (!t.ok) return {ok: false};
     return evalStaticAst(t.value ? node.consequent : node.alternate, env, ctx, depth + 1);
   }
+  if (node.type === 'NewExpression' && node.callee?.type === 'Identifier') {
+    const cname = node.callee.name;
+    const cArgs = [];
+    for (const a of node.arguments ?? []) {
+      const ar = evalStaticAst(a, env, ctx, depth + 1);
+      if (!ar.ok) return {ok: false};
+      cArgs.push(ar.value);
+    }
+    try {
+      if (cname === 'Date' && cArgs.length <= 7) return {ok: true, value: new Date(...cArgs)};
+      if (cname === 'RegExp' && cArgs.length <= 2) return {ok: true, value: new RegExp(...cArgs)};
+      if (cname === 'Map' && cArgs.length <= 1) return {ok: true, value: new Map(...cArgs)};
+      if (cname === 'Set' && cArgs.length <= 1) return {ok: true, value: new Set(...cArgs)};
+      const taCtors = {Uint8Array, Int8Array, Uint8ClampedArray, Int16Array, Uint16Array, Int32Array, Uint32Array, Float32Array, Float64Array, BigInt64Array, BigUint64Array};
+      if (Object.hasOwn(taCtors, cname) && cArgs.length === 1) return {ok: true, value: new taCtors[cname](cArgs[0])};
+    } catch {
+      return {ok: false};
+    }
+  }
   if (node.type === 'CallExpression') {
+    if (node.callee?.type === 'MemberExpression' && !node.callee.computed &&
+        node.callee.object?.type === 'Identifier' && node.callee.object.name === 'Buffer' &&
+        node.callee.property?.type === 'Identifier' && node.callee.property.name === 'from') {
+      const bArgs = [];
+      for (const a of node.arguments ?? []) {
+        const ar = evalStaticAst(a, env, ctx, depth + 1);
+        if (!ar.ok) return {ok: false};
+        bArgs.push(ar.value);
+      }
+      try {
+        const b = Buffer.from(...bArgs);
+        return {ok: true, value: new Uint8Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength))};
+      } catch {
+        return {ok: false};
+      }
+    }
     if (ctx?.repoDir && ctx?.fileDir && node.callee?.type === 'Identifier' && node.callee.name === 'require' && node.arguments.length === 1) {
       const arg = evalStaticAst(node.arguments[0], env, ctx, depth + 1);
       if (arg.ok && typeof arg.value === 'string') return loadLocalJsonFixture(ctx.repoDir, ctx.fileDir, arg.value);
@@ -2201,7 +2394,7 @@ async function collectEffectfulOssCandidates() {
 }
 
 // --- 8. Discover exports and assemble all candidates ---
-async function collectAllCandidates() {
+async function collectAllCandidates(options = {}) {
   const candidates = [];
 
   if (!values['skip-npm']) {
@@ -2291,12 +2484,13 @@ async function collectAllCandidates() {
 
   // D. Local / DGX GitHub repositories (raw JS & TS source + unit tests!)
   if (localReposDir && existsSync(localReposDir)) {
+    const env = options.env ?? null;
     const localCands = collectLocalRepoCandidates(localReposDir, {
-      maxPerFn, maxPerRepo, mode: harvestMode, preferUnitTests, unitTestsOnly, envDir,
+      maxPerFn, maxPerRepo, mode: harvestMode, preferUnitTests, unitTestsOnly, envDir, env,
     });
     const asyncFetchCands = harvestMode === 'native'
       ? await collectLocalAsyncFetchCandidates(localReposDir, {
-          maxPerFn, maxPerRepo, mode: harvestMode, envDir,
+          maxPerFn, maxPerRepo, mode: harvestMode, envDir, env, unitTestsOnly,
         })
       : [];
     const combinedLocal = [...localCands, ...asyncFetchCands];

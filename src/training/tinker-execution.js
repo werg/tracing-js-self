@@ -7,12 +7,24 @@ import {hostOperation, HOST_METHODS, HOST_OPERATIONS} from '../host/operations.j
 import {encodeNativeGraph, decodeOwnedGraph} from '../host/graph-codec.js';
 import {createFixtureBroker, canonicalFixturePlan} from './fixture-broker.js';
 import {describeGraph, realizeGraph} from './graph.js';
-import {inspectDataObject} from './data-graph-contract.js';
+import {
+  inspectDataObject,
+  inspectObservableValue,
+  createDecodedInstance,
+  decodeTypedArray,
+} from './data-graph-contract.js';
 import {normalizeJournal} from '../semantic/normalize.js';
 import {independentEffectfulReference} from '../semantic/source-reference.js';
 import {compileBoundedTypeScript} from '../typescript.js';
 import {decode} from '../values.js';
 import {sourceUsesGlobalFetch} from './tinker-http-fetch.js';
+import {
+  NODE_IO_OPERATIONS,
+  resolveOperationSpec,
+  canonicalNativeFixturePlan,
+  createNativeFixtureBroker,
+  scanPublicSourceNodeIoTools,
+} from './tinker-node-io.js';
 
 export const TINKER_EXECUTION_SCHEMA = 'readable-js-execution/1';
 export const TINKER_TRACE_FORMATS = Object.freeze(['full', 'compact', 'actions-only']);
@@ -65,7 +77,7 @@ export function assistantThinkingText(message) {
   return content.filter(part => part?.type === 'thinking').map(part => part.thinking ?? '').join('\n');
 }
 
-/** JSON with readable JavaScript scalar tags and semantic paths for aliases.
+/** JSON with readable JavaScript scalar/built-in tags and semantic paths for aliases.
  * Paths name argument/property locations, never owned-runtime object handles. */
 export function encodeReadable(value) {
   const seen = new WeakMap();
@@ -84,7 +96,40 @@ export function encodeReadable(value) {
     demand(typeof item === 'object', 'Only data values cross the training boundary');
     if (seen.has(item)) return {$js: 'ref', path: seen.get(item)};
     seen.set(item, path);
-    const {kind, prototype, descriptors} = inspectDataObject(item);
+    const info = inspectObservableValue(item, {allowErrors: true});
+    if (info.kind === 'error') {
+      return {name: info.name, message: info.message};
+    }
+    if (info.kind === 'date') {
+      return {$js: 'date', ms: Number.isNaN(info.ms) ? {$js: 'NaN'} : info.ms};
+    }
+    if (info.kind === 'regexp') {
+      return {$js: 'regexp', source: info.source, flags: info.flags};
+    }
+    if (info.kind === 'typedarray') {
+      return {$js: 'typedarray', type: info.type, b64: info.b64};
+    }
+    if (info.kind === 'map') {
+      const entries = info.entries.map(([k, v], idx) => [
+        visit(k, pointer(pointer(pointer(path, 'entries'), idx), 0), depth + 1),
+        visit(v, pointer(pointer(pointer(path, 'entries'), idx), 1), depth + 1),
+      ]);
+      return {$js: 'map', entries};
+    }
+    if (info.kind === 'set') {
+      const items = info.items.map((el, idx) =>
+        visit(el, pointer(pointer(path, 'items'), idx), depth + 1),
+      );
+      return {$js: 'set', items};
+    }
+    if (info.kind === 'instance') {
+      const props = {};
+      for (const [key, desc] of info.descriptors) {
+        setOwn(props, key, visit(desc.value, pointer(pointer(path, 'props'), key), depth + 1));
+      }
+      return {$js: 'instance', class: info.className, props};
+    }
+    const {kind, prototype, descriptors} = info;
     if (kind === 'array') {
       const length = descriptors.get('length').value;
       const dense = descriptors.size === length + 1 && Array.from({length}, (_, i) => descriptors.has(String(i))).every(Boolean);
@@ -102,7 +147,8 @@ export function encodeReadable(value) {
 }
 
 export function decodeReadable(value) {
-  const locations = new Map(), references = [];
+  const locations = new Map(), references = [], pendingMaps = [], pendingSets = [];
+  const atomicObjects = new WeakSet();
   let nodes = 0;
   function visit(item, path, depth) {
     demand(depth <= 64 && ++nodes <= 16384, 'Readable value budget exceeded');
@@ -118,6 +164,73 @@ export function decodeReadable(value) {
       if (tag === 'bigint') {
         demand(Object.keys(item).length === 2 && typeof item.value === 'string' && /^(0|-?[1-9][0-9]*)$/.test(item.value), 'Invalid bigint');
         return BigInt(item.value);
+      }
+      if (tag === 'date') {
+        demand(Object.keys(item).length === 2, 'Invalid date');
+        let ms;
+        if (plain(item.ms) && own(item.ms, '$js') && item.ms.$js === 'NaN' && Object.keys(item.ms).length === 1) {
+          ms = NaN;
+        } else {
+          demand(typeof item.ms === 'number' && Number.isFinite(item.ms) && Math.abs(item.ms) <= 8.64e15, 'Invalid date timestamp');
+          ms = item.ms;
+        }
+        const output = new Date(ms);
+        locations.set(path, output);
+        atomicObjects.add(output);
+        return output;
+      }
+      if (tag === 'regexp') {
+        demand(Object.keys(item).length === 3 && typeof item.source === 'string' && typeof item.flags === 'string', 'Invalid regexp');
+        const output = new RegExp(item.source, item.flags);
+        locations.set(path, output);
+        atomicObjects.add(output);
+        return output;
+      }
+      if (tag === 'typedarray') {
+        demand(Object.keys(item).length === 3 && typeof item.type === 'string' && typeof item.b64 === 'string', 'Invalid typedarray');
+        const output = decodeTypedArray(item.type, item.b64);
+        locations.set(path, output);
+        atomicObjects.add(output);
+        return output;
+      }
+      if (tag === 'map') {
+        demand(Object.keys(item).length === 2 && Array.isArray(item.entries), 'Invalid map');
+        const output = new Map();
+        locations.set(path, output);
+        atomicObjects.add(output);
+        const pairs = [];
+        pendingMaps.push({map: output, pairs});
+        for (let idx = 0; idx < item.entries.length; idx++) {
+          const entry = item.entries[idx];
+          demand(Array.isArray(entry) && entry.length === 2, 'Invalid map entry');
+          pairs.push([
+            visit(entry[0], pointer(pointer(pointer(path, 'entries'), idx), 0), depth + 1),
+            visit(entry[1], pointer(pointer(pointer(path, 'entries'), idx), 1), depth + 1),
+          ]);
+        }
+        return output;
+      }
+      if (tag === 'set') {
+        demand(Object.keys(item).length === 2 && Array.isArray(item.items), 'Invalid set');
+        const output = new Set();
+        locations.set(path, output);
+        atomicObjects.add(output);
+        const items = [];
+        pendingSets.push({set: output, items});
+        for (let idx = 0; idx < item.items.length; idx++) {
+          items.push(visit(item.items[idx], pointer(pointer(path, 'items'), idx), depth + 1));
+        }
+        return output;
+      }
+      if (tag === 'instance') {
+        demand(Object.keys(item).length === 3 && typeof item.class === 'string' && item.class.length > 0 && plain(item.props), 'Invalid class instance');
+        const output = createDecodedInstance(item.class);
+        locations.set(path, output);
+        for (const [key, child] of Object.entries(item.props)) {
+          demand(key !== '__proto__', 'Invalid class instance property');
+          setOwn(output, key, visit(child, pointer(pointer(path, 'props'), key), depth + 1));
+        }
+        return output;
       }
       if (tag === 'ref') {
         demand(Object.keys(item).length === 2 && typeof item.path === 'string', 'Invalid reference path');
@@ -151,28 +264,24 @@ export function decodeReadable(value) {
   }
   const visited = new WeakSet();
   function fix(item) {
-    if (replacements.has(item)) return replacements.get(item);
-    if (!item || typeof item !== 'object' || visited.has(item)) return item;
+    if (replacements.has(item)) return fix(replacements.get(item));
+    if (!item || typeof item !== 'object' || atomicObjects.has(item) || visited.has(item)) return item;
     visited.add(item);
     for (const key of Object.keys(item)) setOwn(item, key, fix(item[key]));
     return item;
   }
-  return fix(root);
+  const resolvedRoot = fix(root);
+  for (const {map, pairs} of pendingMaps) {
+    for (const [k, v] of pairs) map.set(fix(k), fix(v));
+  }
+  for (const {set, items} of pendingSets) {
+    for (const el of items) set.add(fix(el));
+  }
+  return resolvedRoot;
 }
 
 function graphRoots(graph) {
-  const objects = new Map(graph.objects.map(node => [node.id,
-    node.kind === 'array' ? [] : node.prototype === null ? Object.create(null) : {}]));
-  const visit = token => token[0] === 'ref' ? objects.get(token[1]) : decode(token);
-  for (const node of graph.objects) {
-    const output = objects.get(node.id);
-    for (const property of node.properties) {
-      const [key, value] = Array.isArray(property) ? property : [property.key, property.value];
-      if (key === 'length' && node.kind === 'array') output.length = visit(value);
-      else setOwn(output, key, visit(value));
-    }
-  }
-  return graph.roots.map(visit);
+  return realizeGraph(graph);
 }
 
 export function normalizedSourceHash(source) {
@@ -186,10 +295,11 @@ export function normalizedSourceHash(source) {
 const SYSTEM = `Execute the supplied JavaScript program accurately.
 - For every external read, write, clock, console, or host/native call, invoke the declared tool with {"arguments":[...]} in exact execution order; never invent observations.
 - For fetch(url, init), invoke http.request with {"arguments":[url, method, headersObject, bodyOrNull]}.
+- Node I/O calls: fs read/write/exists/readdir/stat invoke fs.readText/fs.readBytes/fs.writeText/fs.exists/fs.readdir/fs.stat; process.env[k] invokes env.get([k]); execFileSync/execSync invoke shell.exec([{"command":...,"args":[...]}]); crypto.randomUUID()/randomBytes(n) invoke platform.uuid([])/platform.randomBytes([n]).
 - When execution finishes, end with one JSON completion in a \`\`\`json code fence (or bare JSON):
   {"type":"complete","kind":"return"|"throw","arguments":[final input args],"value":resultOrError}
-- Final "arguments" must reflect all input mutations and aliases. Standard Error throws use {"name":"TypeError","message":"..."}.
-- Special JS values: {"$js":"undefined"|"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$js":"bigint","value":"123"}, {"$js":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the arguments array for tool calls), {"$js":"array","length":3,"entries":{"1":2}} for sparse arrays, {"$js":"object","nullPrototype":true,"entries":{...}} for null-prototype or $js-keyed objects.`;
+- Final "arguments" must reflect all input mutations and aliases. Error throws/values use {"name":"ErrorName","message":"..."}.
+- Special JS values: {"$js":"undefined"|"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$js":"bigint","value":"123"}, {"$js":"date","ms":1700000000000}, {"$js":"regexp","source":"abc","flags":"gi"}, {"$js":"map","entries":[[k,v],...]}, {"$js":"set","items":[...]}, {"$js":"typedarray","type":"Uint8Array","b64":"..."}, {"$js":"instance","class":"Name","props":{...}}, {"$js":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the arguments array for tool calls), {"$js":"array","length":3,"entries":{"1":2}} for sparse arrays, {"$js":"object","nullPrototype":true,"entries":{...}} for null-prototype or $js-keyed objects.`;
 
 function normalizeTask(input) {
   demand(plain(input), 'Task must be an object');
@@ -198,7 +308,11 @@ function normalizeTask(input) {
   demand(typeof input.source === 'string' && input.source.length > 0 && input.source.length <= 262144, 'Bounded source required');
   const entry = input.entry ?? 'run';
   demand(/^[A-Za-z_$][\w$]*$/.test(entry), 'Entry must be an identifier');
-  const args = input.inputGraph ? decodeOwnedGraph(JSON.stringify(input.inputGraph)) : decodeReadable(input.args ?? []);
+  const executionMode = input.executionMode ?? 'owned';
+  demand(['owned', 'native'].includes(executionMode), 'executionMode must be owned or native');
+  const args = input.inputGraph
+    ? (executionMode === 'native' ? realizeGraph(input.inputGraph) : decodeOwnedGraph(JSON.stringify(input.inputGraph)))
+    : decodeReadable(input.args ?? []);
   demand(Array.isArray(args) && args.length <= 32, 'At most 32 input arguments are supported');
   const language = input.language ?? 'js';
   demand(['js', 'ts'].includes(language), 'Language must be js or ts');
@@ -221,18 +335,27 @@ function normalizeTask(input) {
     for (let i = 0; i < freshCount; i++) calls.push({operation: 'natlang.callSync', arguments: ['freshRandom', {$js: 'undefined'}, []],
       result: randomBytes(6).readUIntBE(0, 6) / 281474976710656});
   }
+  const isNative = executionMode === 'native';
   const decodedCalls = calls.map(call => {
     demand(plain(call) && !call.callbacks && call.resultFromCallback === undefined, 'Callback fixtures require a separate execution profile');
-    const spec = hostOperation(call.operation);
+    const spec = resolveOperationSpec(call.operation, {nativeMode: isNative});
     demand(spec.callbackLifetime !== 'subscription', 'Subscription fixtures require a separate execution profile');
-    const args = call.argumentGraph ? graphRoots(call.argumentGraph) : decodeReadable(call.arguments ?? []);
-    demand(Array.isArray(args), 'External arguments must be an array');
-    return {...call, arguments: args, result: call.resultGraph ? graphRoots(call.resultGraph)[0] : decodeReadable(call.result)};
+    const callArgs = call.argumentGraph ? graphRoots(call.argumentGraph) : decodeReadable(call.arguments ?? []);
+    demand(Array.isArray(callArgs), 'External arguments must be an array');
+    return {...call, arguments: callArgs, result: call.resultGraph ? graphRoots(call.resultGraph)[0] : decodeReadable(call.result)};
   });
-  const fixture = canonicalFixturePlan({calls: decodedCalls, settlementOrder: input.fixture?.settlementOrder ?? null});
+  const fixture = isNative
+    ? canonicalNativeFixturePlan({calls: decodedCalls, settlementOrder: input.fixture?.settlementOrder ?? null})
+    : canonicalFixturePlan({calls: decodedCalls, settlementOrder: input.fixture?.settlementOrder ?? null});
   if (fixture.settlementOrder !== null) {
-    const sequential = fixture.calls.flatMap((call, index) => hostOperation(call.operation).kind === 'promise' ? [index] : []);
-    demand(isDeepStrictEqual(fixture.settlementOrder, sequential), 'Out-of-order concurrent observations require a separate execution profile');
+    if (isNative) {
+      const ok = Array.isArray(fixture.settlementOrder) &&
+        fixture.settlementOrder.every((idx, pos) => Number.isSafeInteger(idx) && idx >= 0 && idx < fixture.calls.length && (pos === 0 || idx > fixture.settlementOrder[pos - 1]));
+      demand(ok, 'Out-of-order concurrent observations require a separate execution profile');
+    } else {
+      const sequential = fixture.calls.flatMap((call, index) => hostOperation(call.operation).kind === 'promise' ? [index] : []);
+      demand(isDeepStrictEqual(fixture.settlementOrder, sequential), 'Out-of-order concurrent observations require a separate execution profile');
+    }
   }
   const parsedSource = parse(source, {ecmaVersion: 'latest', sourceType: 'script'});
   for (const declaration of parsedSource.body) if (declaration.type === 'FunctionDeclaration')
@@ -242,8 +365,6 @@ function normalizeTask(input) {
   const preamble = nativeBindings.map(binding => 'function ' + binding.name + '(...args){return host.' +
     (binding.kind === 'promise' ? 'natlangCall' : 'natlangCallSync') + '(' + JSON.stringify(binding.name) + ',undefined,args);}').join('\n');
   const executableSource = source + '\n' + preamble;
-  const executionMode = input.executionMode ?? 'owned';
-  demand(['owned', 'native'].includes(executionMode), 'executionMode must be owned or native');
   const randomMode = input.randomMode ?? 'seeded';
   demand(['seeded', 'tool'].includes(randomMode), 'randomMode must be seeded or tool');
   const maxSteps = input.maxSteps ?? 100000, timeoutMs = input.timeoutMs ?? 10000;
@@ -274,12 +395,13 @@ function privateOperation(prepared, operation, args) {
 
 function toolDeclaration(operation, prepared) {
   const binding = prepared.nativeBindings.find(item => item.name === operation);
+  const nodeIoSpec = own(NODE_IO_OPERATIONS, operation) ? NODE_IO_OPERATIONS[operation] : null;
   const spec = own(HOST_OPERATIONS, operation) ? HOST_OPERATIONS[operation] : null;
   const arity = spec ? spec.arity : null;
   const fetchHint = operation === 'http.request' && sourceUsesGlobalFetch(prepared.source)
     ? 'Invoke JS external operation http.request (promise, 4 arguments: [url, method, headersObject, bodyOrNull]).'
     : null;
-  const description = binding?.description ?? fetchHint ?? (spec
+  const description = binding?.description ?? fetchHint ?? nodeIoSpec?.description ?? (spec
     ? `Invoke JS external operation ${operation} (${spec.kind}, ${arity} argument${arity === 1 ? '' : 's'}).`
     : `Invoke JS external operation ${operation}.`);
   return {
@@ -314,6 +436,7 @@ function initialMessages(prepared) {
   const usesMathRandom = /\bMath\.random\b/.test(prepared.source);
   if (usesMathRandom && prepared.randomMode === 'tool') names.add('platform.random');
   if (sourceUsesGlobalFetch(prepared.source)) names.add('http.request');
+  for (const op of scanPublicSourceNodeIoTools(prepared.source)) names.add(op);
   const operations = [...names].sort();
   const parts = [
     'Execute this JavaScript program:',
@@ -346,7 +469,7 @@ export async function prepareTinkerTask(input, options = {}) {
   if (prepared.executionMode === 'native') {
     const format = options.traceFormat ? traceFormat(options) : 'actions-only';
     const baseRefInput = {source: prepared.executableSource, entry: prepared.entry,
-      inputGraph: encodeNativeGraph(prepared.args), fixture: prepared.fixture,
+      inputGraph: describeGraph(prepared.args), fixture: prepared.fixture,
       randomSeed: prepared.randomMode === 'tool' ? null : prepared.randomSeed,
       randomMode: prepared.randomMode, executionMode: 'native'};
     let reference, traceTurns = null;
@@ -713,7 +836,8 @@ export function parseStudentAction(input) {
 /** Live student state has no teacher trace continuation. A rejected request
  * ends the rollout without disclosing the expected next operation or result. */
 export function createTinkerSession(prepared) {
-  const broker = createFixtureBroker(prepared.fixture);
+  const isNative = prepared.executionMode === 'native';
+  const broker = isNative ? createNativeFixtureBroker(prepared.fixture) : createFixtureBroker(prepared.fixture);
   let done = false, completed = false, success = false, reason = 'incomplete', failureCategory = 'incomplete', generatedTokens = 0, calls = 0, turns = 0;
   const maxTurns = prepared.task.maxTurns ?? 256;
   demand(Number.isSafeInteger(maxTurns) && maxTurns > 0 && maxTurns <= 4096, 'Invalid rollout turn limit');
@@ -770,8 +894,9 @@ export function createTinkerSession(prepared) {
           const request = privateOperation(prepared, item.operation, args);
           const expected = prepared.fixture.calls[calls];
           // No counterfactual fixture result may be exposed to a different request.
+          const encodedArgs = isNative ? describeGraph(request.arguments) : encodeNativeGraph(request.arguments);
           demand(expected && expected.operation === request.operation &&
-            isDeepStrictEqual(encodeNativeGraph(request.arguments), expected.argumentGraph), 'External request mismatch');
+            isDeepStrictEqual(encodedArgs, expected.argumentGraph), 'External request mismatch');
           let status = 'fulfilled', value;
           try { value = await broker.invoke(request.operation, request.arguments); }
           catch (error) {

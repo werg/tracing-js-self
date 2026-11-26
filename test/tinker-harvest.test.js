@@ -8,13 +8,14 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {
   TYPED_INPUT_BANK,
+  collectLocalAsyncCandidates,
   collectLocalRepoCandidates,
   evalStaticAst,
   extractTestCallsFromFiles,
   parseHarvesterArgs,
   qualify,
 } from '../tools/tinker-harvest.mjs';
-import {exportTinkerExample, prepareTinkerTask, createTinkerSession, parseStudentAction} from '../src/training/tinker-execution.js';
+import {exportTinkerExample, prepareTinkerTask, createTinkerSession, parseStudentAction, decodeReadable} from '../src/training/tinker-execution.js';
 
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const HARVEST_ENV_DIR = '/tmp/tinker-harvest-env';
@@ -362,6 +363,207 @@ test('live fetch() harvesting against local HTTP server replays deterministicall
     assert.equal(session.grade(25).success, true);
   } finally {
     try { server.close(); } catch {}
+    rmSync(root, {recursive: true, force: true});
+  }
+});
+
+test('live-capture harvest of fs, process.env, crypto, async/await, and custom Error replays deterministically offline', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'harvest-nodeio-e2e-'));
+  try {
+    const repoDir = join(root, 'repos', 'demo__nodeio');
+    const outDir = join(root, 'out');
+    mkdirSync(join(repoDir, 'src'), {recursive: true});
+    mkdirSync(join(repoDir, 'test'), {recursive: true});
+    mkdirSync(join(repoDir, 'fixtures'), {recursive: true});
+    writeFileSync(join(repoDir, 'package.json'), JSON.stringify({name: 'demo-nodeio', version: '1.0.0', license: 'MIT', type: 'module'}));
+    writeFileSync(join(repoDir, 'fixtures', 'cfg.json'), JSON.stringify({name: 'alpha', count: 3}));
+    writeFileSync(join(repoDir, 'src', 'index.js'), `
+      import fs from 'node:fs';
+      import fsp from 'node:fs/promises';
+      import path from 'node:path';
+      import crypto from 'node:crypto';
+
+      class ConfigError extends Error {
+        constructor(msg) { super(msg); this.name = 'ConfigError'; }
+      }
+
+      export async function loadManifest(dir) {
+        const target = path.join(dir, 'cfg.json');
+        if (!fs.existsSync(target)) {
+          throw new ConfigError('missing:' + target);
+        }
+        const text = await fsp.readFile(target, 'utf8');
+        const data = JSON.parse(text);
+        const token = process.env.HARVEST_DEMO_TOKEN ?? 'none';
+        const hash = crypto.createHash('sha256').update(text).digest('hex').slice(0, 8);
+        const rid = crypto.randomUUID();
+        fs.writeFileSync('cached.txt', data.name + ':' + token);
+        const cached = fs.readFileSync('cached.txt', 'utf8');
+        return {
+          name: data.name,
+          count: data.count,
+          token,
+          hash,
+          rid,
+          cached,
+          tags: new Set(['io', data.name]),
+          ts: new Date(1700000000000),
+        };
+      }
+
+      export async function pureAsyncDouble(xs) {
+        const doubled = await Promise.resolve(xs.map(n => n * 2));
+        return new Map([['items', doubled], ['sum', doubled.reduce((a, b) => a + b, 0)]]);
+      }
+    `);
+    writeFileSync(join(repoDir, 'test', 'index.test.js'), `
+      import assert from 'node:assert/strict';
+      import {loadManifest, pureAsyncDouble} from '../src/index.js';
+      it('loads manifest and handles missing', async () => {
+        const ok = await loadManifest('fixtures');
+        assert.equal(ok.name, 'alpha');
+        await assert.rejects(() => loadManifest('no_such_dir'));
+        const res = await pureAsyncDouble([2, 5]);
+        assert.equal(res.get('sum'), 14);
+      });
+    `);
+
+    const res = await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [
+        join(REPO_ROOT, 'tools', 'tinker-harvest.mjs'),
+        '--skip-npm',
+        '--mode', 'native',
+        '--env-dir', HARVEST_ENV_DIR,
+        '--local-repos', join(root, 'repos'),
+        '--output-dir', outDir,
+        '--unit-tests-only',
+        '--min-trace-lines', '1',
+        '--max-per-fn', '4',
+      ], {
+        cwd: REPO_ROOT,
+        env: {...process.env, HARVEST_DEMO_TOKEN: 'tok_live_987'},
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+      let stdout = '';
+      let stderr = '';
+      child.stdout.on('data', chunk => { stdout += chunk; });
+      child.stderr.on('data', chunk => { stderr += chunk; });
+      child.on('error', reject);
+      child.on('close', status => resolve({status, stdout, stderr}));
+    });
+    assert.equal(res.status, 0, res.stderr);
+
+    // Delete the source repo completely BEFORE deterministic offline replay!
+    rmSync(join(root, 'repos'), {recursive: true, force: true});
+
+    const rows = readFileSync(join(outDir, 'harvested.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
+    assert.equal(rows.length, 3, `expected 3 harvested async tasks, got ${rows.length}`);
+
+    const manifestOk = rows.find(r => r.metadata.upstreamSymbol === 'loadManifest' && r.metadata.completeKind === 'return');
+    const manifestErr = rows.find(r => r.metadata.upstreamSymbol === 'loadManifest' && r.metadata.completeKind === 'throw');
+    const pureAsync = rows.find(r => r.metadata.upstreamSymbol === 'pureAsyncDouble');
+    assert.ok(manifestOk && manifestErr && pureAsync);
+
+    assert.ok(manifestOk.fixture.calls.some(c => c.operation === 'fs.exists'));
+    assert.ok(manifestOk.fixture.calls.some(c => c.operation === 'fs.readText'));
+    assert.ok(manifestOk.fixture.calls.some(c => c.operation === 'env.get' && c.result === 'tok_live_987'));
+    assert.ok(manifestOk.fixture.calls.some(c => c.operation === 'platform.uuid'));
+    assert.ok(manifestOk.fixture.calls.some(c => c.operation === 'fs.writeText'));
+    assert.equal(pureAsync.fixture.calls.length, 0);
+
+    for (const row of [manifestOk, manifestErr, pureAsync]) {
+      const exported = await exportTinkerExample(row, {traceFormat: 'compact', reasoningChannel: 'thinking'});
+      assert.equal(exported.metadata.traceAudit.replayVerified, true);
+      const session = createTinkerSession(await prepareTinkerTask(row, {traceFormat: 'compact'}));
+      for (const msg of exported.messages.filter(m => m.role === 'assistant')) {
+        await session.step(msg, 30);
+      }
+      assert.equal(session.grade(30).success, true);
+    }
+
+    const expOk = await exportTinkerExample(manifestOk, {traceFormat: 'compact'});
+    const okComp = parseStudentAction(expOk.messages.at(-1));
+    const okVal = decodeReadable(okComp.value);
+    assert.equal(okVal.token, 'tok_live_987');
+    assert.equal(okVal.cached, 'alpha:tok_live_987');
+    assert.ok(okVal.tags instanceof Set && okVal.tags.has('alpha'));
+    assert.ok(okVal.ts instanceof Date && okVal.ts.getTime() === 1700000000000);
+
+    const expErr = await exportTinkerExample(manifestErr, {traceFormat: 'compact'});
+    const errComp = parseStudentAction(expErr.messages.at(-1));
+    assert.equal(errComp.kind, 'throw');
+    assert.deepEqual(errComp.value, {name: 'ConfigError', message: 'missing:no_such_dir/cfg.json'});
+
+    const expPure = await exportTinkerExample(pureAsync, {traceFormat: 'compact'});
+    const pureVal = decodeReadable(parseStudentAction(expPure.messages.at(-1)).value);
+    assert.ok(pureVal instanceof Map);
+    assert.deepEqual(pureVal.get('items'), [4, 10]);
+    assert.equal(pureVal.get('sum'), 14);
+  } finally {
+    rmSync(root, {recursive: true, force: true});
+  }
+});
+
+test('live-capture harvest of sync child_process, fs.readdir/stat, crypto.randomBytes, and TS module replays offline', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'harvest-sync-nodeio-'));
+  try {
+    const repoDir = join(root, 'repos', 'demo__syncio');
+    const outDir = join(root, 'out');
+    mkdirSync(join(repoDir, 'src'), {recursive: true});
+    mkdirSync(join(repoDir, 'test'), {recursive: true});
+    mkdirSync(join(repoDir, 'data'), {recursive: true});
+    writeFileSync(join(repoDir, 'package.json'), JSON.stringify({name: 'demo-syncio', version: '1.0.0', license: 'MIT', type: 'module'}));
+    writeFileSync(join(repoDir, 'data', 'a.txt'), 'hello');
+    writeFileSync(join(repoDir, 'src', 'index.ts'), `
+      import fs from 'node:fs';
+      import path from 'node:path';
+      import crypto from 'node:crypto';
+      import {execFileSync} from 'node:child_process';
+
+      export function inspectWorkspace(dir: string) {
+        const names = fs.readdirSync(dir);
+        const st = fs.statSync(path.join(dir, names[0]));
+        const rand = crypto.randomBytes(2);
+        const echoOut = execFileSync('node', ['-e', 'process.stdout.write("sync-ok")'], {encoding: 'utf8'});
+        return {names, isFile: st.isFile(), size: st.size, randLen: rand.length, echoOut};
+      }
+    `);
+    writeFileSync(join(repoDir, 'test', 'index.test.ts'), `
+      import {inspectWorkspace} from '../src/index';
+      it('inspects', () => {
+        inspectWorkspace('data');
+      });
+    `);
+
+    const res = spawnSync(process.execPath, [
+      join(REPO_ROOT, 'tools', 'tinker-harvest.mjs'),
+      '--skip-npm',
+      '--mode', 'native',
+      '--env-dir', HARVEST_ENV_DIR,
+      '--local-repos', join(root, 'repos'),
+      '--output-dir', outDir,
+      '--unit-tests-only',
+      '--min-trace-lines', '1',
+    ], {cwd: REPO_ROOT, encoding: 'utf8'});
+    assert.equal(res.status, 0, res.stderr);
+
+    rmSync(join(root, 'repos'), {recursive: true, force: true});
+
+    const rows = readFileSync(join(outDir, 'harvested.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
+    assert.equal(rows.length, 1);
+    const taskRow = rows[0];
+    assert.deepEqual(taskRow.fixture.calls.map(c => c.operation), [
+      'fs.readdir',
+      'fs.stat',
+      'platform.randomBytes',
+      'shell.exec',
+    ]);
+
+    const exported = await exportTinkerExample(taskRow, {traceFormat: 'compact'});
+    assert.equal(exported.metadata.traceAudit.replayVerified, true);
+    const val = parseStudentAction(exported.messages.at(-1)).value;
+    assert.deepEqual(val, {names: ['a.txt'], isFile: true, size: 5, randLen: 2, echoOut: 'sync-ok'});
+  } finally {
     rmSync(root, {recursive: true, force: true});
   }
 });
