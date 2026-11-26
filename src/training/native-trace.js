@@ -3,6 +3,7 @@
 // without altering JS evaluation order, this/arguments/super, async/await,
 // generators, classes, Proxy traps, getters, or Function.name inference.
 import {parse} from 'acorn';
+import {types} from 'node:util';
 
 const PRIORITY = Object.freeze({
   branch: 1,
@@ -238,6 +239,172 @@ function formatScalar(value, maxStringLength = 160) {
   return null;
 }
 
+function isPlainArrayProto(proto) {
+  if (proto === Array.prototype) return true;
+  if (!proto || typeof proto !== 'object' || types.isProxy(proto) || !Array.isArray(proto)) return false;
+  const ctorDesc = Object.getOwnPropertyDescriptor(proto, 'constructor');
+  if (!ctorDesc || !Object.hasOwn(ctorDesc, 'value') || typeof ctorDesc.value !== 'function') return false;
+  if (ctorDesc.value.name !== 'Array') return false;
+  const protoDesc = Object.getOwnPropertyDescriptor(ctorDesc.value, 'prototype');
+  return Boolean(protoDesc && Object.hasOwn(protoDesc, 'value') && protoDesc.value === proto);
+}
+
+function isPlainObjectProto(proto) {
+  if (proto === Object.prototype || proto === null) return true;
+  if (typeof proto !== 'object' || types.isProxy(proto)) return false;
+  if (Object.getPrototypeOf(proto) !== null) return false;
+  const ctorDesc = Object.getOwnPropertyDescriptor(proto, 'constructor');
+  if (!ctorDesc || !Object.hasOwn(ctorDesc, 'value') || typeof ctorDesc.value !== 'function') return false;
+  if (ctorDesc.value.name !== 'Object') return false;
+  const protoDesc = Object.getOwnPropertyDescriptor(ctorDesc.value, 'prototype');
+  return Boolean(protoDesc && Object.hasOwn(protoDesc, 'value') && protoDesc.value === proto);
+}
+
+function boundedJoin(open, parts, close, truncated, maxChars) {
+  const render = (items, trunc) => open + (trunc ? [...items, '...'] : items).join(', ') + close;
+  let out = render(parts, truncated);
+  if (out.length <= maxChars) return out;
+  const trimmed = parts.slice();
+  let trunc = truncated;
+  while (trimmed.length > 1) {
+    trimmed.pop();
+    trunc = true;
+    out = render(trimmed, trunc);
+    if (out.length <= maxChars) return out;
+  }
+  if (trimmed.length === 1 && trunc) {
+    const single = render(trimmed, false);
+    if (single.length <= maxChars) return single;
+  }
+  if (maxChars <= 3) return '.'.repeat(Math.max(0, maxChars));
+  return out.slice(0, maxChars - 3) + '...';
+}
+
+/** Strictly side-effect-free formatter for scalars, plain Arrays, and plain Objects.
+ * Never triggers Proxy traps, getters, toString(), valueOf(), or Symbol.toPrimitive.
+ * Returns null at top level for Proxies, functions, symbols, and non-plain objects. */
+export function formatValue(value, {
+  maxDepth = 2,
+  maxItems = 6,
+  maxChars = 120,
+  maxStringLength = 160,
+} = {}) {
+  const nestedStrMax = Math.min(maxStringLength, Math.max(24, Math.floor(maxChars / 2)));
+  const seen = new Set();
+
+  function inner(v, depth) {
+    const scalar = formatScalar(v, depth === 0 ? maxStringLength : nestedStrMax);
+    if (scalar !== null) return scalar;
+    if (typeof v !== 'object' || v === null) return depth === 0 ? null : '<' + typeof v + '>';
+    if (types.isProxy(v)) return depth === 0 ? null : '<proxy>';
+
+    let proto;
+    try {
+      proto = Object.getPrototypeOf(v);
+    } catch {
+      return depth === 0 ? null : '<object>';
+    }
+    const isArr = Array.isArray(v) && isPlainArrayProto(proto);
+    const isObj = !isArr && !Array.isArray(v) && isPlainObjectProto(proto);
+    if (!isArr && !isObj) return depth === 0 ? null : '<object>';
+
+    if (seen.has(v)) return '<cycle>';
+
+    if (isArr) {
+      let len = 0;
+      try {
+        const lenDesc = Object.getOwnPropertyDescriptor(v, 'length');
+        len = lenDesc && Object.hasOwn(lenDesc, 'value') && typeof lenDesc.value === 'number' ? lenDesc.value : 0;
+      } catch {
+        return depth === 0 ? null : '<object>';
+      }
+      if (len === 0) return '[]';
+      if (depth >= maxDepth) return '[...]';
+
+      seen.add(v);
+      try {
+        const count = Math.min(len, maxItems);
+        const parts = [];
+        let approxLen = 2;
+        let truncated = len > maxItems;
+        for (let i = 0; i < count; i++) {
+          let itemStr;
+          try {
+            const desc = Object.getOwnPropertyDescriptor(v, String(i));
+            if (!desc) itemStr = '<empty>';
+            else if (desc.get || desc.set || !Object.hasOwn(desc, 'value')) itemStr = '<getter>';
+            else itemStr = inner(desc.value, depth + 1);
+          } catch {
+            itemStr = '<error>';
+          }
+          if (parts.length > 0 && approxLen + itemStr.length + 2 > maxChars) {
+            truncated = true;
+            break;
+          }
+          parts.push(itemStr);
+          approxLen += itemStr.length + (parts.length > 1 ? 2 : 0);
+          if (approxLen >= maxChars && i + 1 < len) {
+            truncated = true;
+            break;
+          }
+        }
+        return boundedJoin('[', parts, ']', truncated, maxChars);
+      } finally {
+        seen.delete(v);
+      }
+    }
+
+    let keys;
+    try {
+      keys = Object.getOwnPropertyNames(v);
+    } catch {
+      return depth === 0 ? null : '<object>';
+    }
+    if (keys.length === 0) return '{}';
+    if (depth >= maxDepth) return '{...}';
+
+    seen.add(v);
+    try {
+      const count = Math.min(keys.length, maxItems);
+      const parts = [];
+      let approxLen = 2;
+      let truncated = keys.length > maxItems;
+      for (let i = 0; i < count; i++) {
+        const key = keys[i];
+        let valStr;
+        try {
+          const desc = Object.getOwnPropertyDescriptor(v, key);
+          if (!desc) continue;
+          if (desc.get || desc.set || !Object.hasOwn(desc, 'value')) valStr = '<getter>';
+          else valStr = inner(desc.value, depth + 1);
+        } catch {
+          valStr = '<error>';
+        }
+        const piece = JSON.stringify(key) + ': ' + valStr;
+        if (parts.length > 0 && approxLen + piece.length + 2 > maxChars) {
+          truncated = true;
+          break;
+        }
+        parts.push(piece);
+        approxLen += piece.length + (parts.length > 1 ? 2 : 0);
+        if (approxLen >= maxChars && i + 1 < keys.length) {
+          truncated = true;
+          break;
+        }
+      }
+      return boundedJoin('{', parts, '}', truncated, maxChars);
+    } finally {
+      seen.delete(v);
+    }
+  }
+
+  try {
+    return inner(value, 0);
+  } catch {
+    return null;
+  }
+}
+
 function compactArrayHeadTail(lines, maxLines) {
   if (lines.length <= maxLines) return lines;
   if (maxLines <= 1) return lines.slice(0, maxLines);
@@ -307,8 +474,8 @@ export function createNativeTraceCollector({
     },
     __traceWrite(name, value, rhsLabel) {
       try {
-        const scalar = formatScalar(value, maxStringLength);
-        if (scalar !== null) emit(name + ' = ' + scalar);
+        const preview = formatValue(value, {maxStringLength});
+        if (preview !== null) emit(name + ' = ' + preview);
         else if (value !== null && typeof value === 'object') emit(name + ' -> ' + (rhsLabel || 'object'));
       } catch {}
       return value;
@@ -329,8 +496,8 @@ export function createNativeTraceCollector({
     __traceReturn(owner, value, argLabel) {
       try {
         const scope = owner ? ' (' + owner + ')' : '';
-        const scalar = formatScalar(value, maxStringLength);
-        if (scalar !== null) emit('return' + scope + ' ' + scalar);
+        const preview = formatValue(value, {maxStringLength});
+        if (preview !== null) emit('return' + scope + ' ' + preview);
         else if (value !== null && typeof value === 'object') emit('return' + scope + ' -> ' + (argLabel || 'object'));
       } catch {}
       return value;

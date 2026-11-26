@@ -7,6 +7,7 @@ import {encodeReadable, decodeReadable, prepareTinkerTask, exportTinkerExample,
   createTinkerSession, parseStudentAction, normalizedSourceHash,
   assistantVisibleText, assistantThinkingText} from '../src/training/tinker-execution.js';
 import {hardEffectfulTasks, hardEffectfulTemplates} from '../src/training/tinker-hard-effectful.js';
+import {formatValue} from '../src/training/native-trace.js';
 
 const task = (source, options = {}) => ({id: 'case', family: 'family', source, args: [], ...options});
 const complete = (value, args = [], kind = 'return') => {
@@ -310,7 +311,8 @@ test('native V8 compact trace covers pure messy JS and matches uninstrumented ou
   assert.match(thinking, /return \(scoreItem\) 16/);
   assert.match(thinking, /state\.hits = 2/);
   assert.match(thinking, /state\.total = 26/);
-  assert.match(thinking, /return -> object/);
+  assert.match(thinking, /data = \{"items": \[/);
+  assert.match(thinking, /return \{"total": 26, "hits": 2\}/);
 });
 
 test('native V8 compact trace splits multi-turn effectful traces causally with zero future leakage and safe Proxy handling', async () => {
@@ -425,4 +427,83 @@ test('hard multi-turn native effectful suite defines 16x5 tier-5 tasks and expor
     assert.equal(exported.metadata.externalCalls, task.fixture.calls.length, id);
     assert.ok(exported.metadata.traceAudit.narrationLines > 0, id);
   }
+});
+
+test('native V8 trace safely previews plain arrays/objects while never invoking Proxy traps, getters, or coercions', async () => {
+  // Direct unit checks of formatValue bounds, cycles, getters, Proxies, and non-plain objects.
+  assert.equal(formatValue([1, 2, 3]), '[1, 2, 3]');
+  assert.equal(formatValue({a: 1, b: 'x'}), '{"a": 1, "b": "x"}');
+  assert.equal(formatValue({a: {b: {c: 1}}}), '{"a": {"b": {...}}}');
+  assert.equal(formatValue([1, 2, 3, 4, 5, 6, 7, 8]), '[1, 2, 3, 4, 5, 6, ...]');
+  const cyc = {k: 1};
+  cyc.self = cyc;
+  assert.equal(formatValue(cyc), '{"k": 1, "self": <cycle>}');
+  const arrCyc = [];
+  arrCyc.push(arrCyc);
+  assert.equal(formatValue(arrCyc), '[<cycle>]');
+  const longArr = Array.from({length: 6}, (_, i) => `item_${i}_${'x'.repeat(25)}`);
+  const clipped = formatValue(longArr);
+  assert.ok(clipped.length <= 120 && (clipped.endsWith('...]') || clipped.endsWith('...')));
+  assert.equal(formatValue(new Map([['a', 1]])), null);
+
+  let directTraps = 0;
+  const throwingProxy = new Proxy({a: 1}, {
+    get() { directTraps++; throw new Error('get trap fired'); },
+    ownKeys() { directTraps++; throw new Error('ownKeys trap fired'); },
+    getOwnPropertyDescriptor() { directTraps++; throw new Error('gopd trap fired'); },
+    getPrototypeOf() { directTraps++; throw new Error('getPrototypeOf trap fired'); },
+  });
+  assert.equal(formatValue(throwingProxy), null);
+  assert.equal(formatValue({nested: throwingProxy}), '{"nested": <proxy>}');
+  const getterObj = Object.defineProperty({ok: 1}, 'boom', {
+    enumerable: true,
+    get() { directTraps++; throw new Error('getter fired'); },
+  });
+  assert.equal(formatValue(getterObj), '{"ok": 1, "boom": <getter>}');
+  assert.equal(directTraps, 0);
+
+  // Full native V8 execution trace test with throwing Proxy traps, throwing getter, class instance, and plain containers.
+  const t = {
+    id: 'native-rich-preview-proxy-safety',
+    family: 'native-rich-preview-proxy-safety',
+    executionMode: 'native',
+    source: `class CustomBox {
+      constructor(v) { this.v = v; }
+      toString() { throw new Error('toString fired'); }
+      valueOf() { throw new Error('valueOf fired'); }
+      [Symbol.toPrimitive]() { throw new Error('toPrimitive fired'); }
+    }
+    function run() {
+      let fires = 0;
+      const proxy = new Proxy({ok: 1}, {
+        get() { fires++; throw new Error('get trap fired'); },
+        ownKeys() { fires++; throw new Error('ownKeys trap fired'); },
+        getOwnPropertyDescriptor() { fires++; throw new Error('gopd trap fired'); },
+        getPrototypeOf() { fires++; throw new Error('getPrototypeOf trap fired'); },
+      });
+      const withGetter = {a: 1, get bad() { fires++; throw new Error('getter fired'); }};
+      const box = new CustomBox(7);
+      const arr = [1, 2, 3];
+      const obj = {a: 1, b: 'x'};
+      const nested = {p: proxy, g: withGetter, c: box};
+      if (proxy && withGetter && box && nested) {
+        return {arr, obj, fires};
+      }
+      return {fires: -1};
+    }`,
+    entry: 'run',
+    args: [],
+  };
+  const exported = await exportTinkerExample(t, {traceFormat: 'compact'});
+  assert.equal(exported.metadata.traceAudit.replayVerified, true);
+  const thinking = assistantThinkingText(exported.messages.find(m => m.role === 'assistant'));
+  assert.match(thinking, /proxy -> object/);
+  assert.match(thinking, /withGetter = \{"a": 1, "bad": <getter>\}/);
+  assert.match(thinking, /box -> object/);
+  assert.match(thinking, /arr = \[1, 2, 3\]/);
+  assert.match(thinking, /obj = \{"a": 1, "b": "x"\}/);
+  assert.match(thinking, /nested = \{"p": <proxy>, "g": \{"a": 1, "bad": <getter>\}, "c": <object>\}/);
+  assert.match(thinking, /return \{"arr": \[1, 2, 3\], "obj": \{"a": 1, "b": "x"\}, "fires": 0\}/);
+  const finalAction = parseStudentAction(exported.messages.at(-1));
+  assert.equal(finalAction.value.fires, 0);
 });
