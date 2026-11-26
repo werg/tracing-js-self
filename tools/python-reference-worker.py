@@ -106,7 +106,7 @@ def _cancel_alarm() -> None:
 
 
 def _json_dump(obj: Any) -> str:
-    return json.dumps(obj, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    return json.dumps(obj, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
 
 
 def main() -> int:

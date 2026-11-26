@@ -14,6 +14,7 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import tempfile
 from typing import Any
 
 from .codec import decode_readable, describe_graph, encode_readable, realize_graph
@@ -378,20 +379,22 @@ def _invoke_reference_worker(prepared: dict[str, Any], *, trace: bool) -> dict[s
         "timeoutMs": prepared["timeoutMs"],
     }
     timeout_s = max(2.0, prepared["timeoutMs"] / 1000.0 + 3.0)
-    proc = subprocess.run(
-        [sys.executable, str(_worker_path())],
-        input=_json_compact(payload),
-        capture_output=True,
-        text=True,
-        timeout=timeout_s,
-        check=False,
-    )
+    with tempfile.TemporaryDirectory(prefix="py-ref-") as tmpdir:
+        proc = subprocess.run(
+            [sys.executable, str(_worker_path())],
+            input=_json_compact(payload),
+            capture_output=True,
+            text=True,
+            cwd=tmpdir,
+            timeout=timeout_s,
+            check=False,
+        )
     stdout = proc.stdout.strip()
     if not stdout:
         detail = proc.stderr.strip()[-1000:]
         raise RuntimeError(f"Python reference worker exited with code {proc.returncode}: {detail}")
     try:
-        result = json.loads(stdout.splitlines()[-1])
+        result = json.loads(stdout.split("\n")[-1])
     except ValueError as exc:
         raise RuntimeError(f"Python reference worker emitted non-JSON output: {stdout[:500]}") from exc
     if proc.returncode != 0 or "error" in result:

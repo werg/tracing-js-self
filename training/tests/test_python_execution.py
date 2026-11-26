@@ -433,6 +433,33 @@ def run():
         self.assertIn("...", inner_str)
         self.assertLess(len(inner_str), 100)
 
+    def test_unicode_line_separators_and_isolated_cwd(self):
+        source = """\
+def run(text):
+    sep = "\\u2028\\u2029"
+    with open("should_stay_in_tmpdir.txt", "w", encoding="utf-8") as fh:
+        fh.write("ok")
+    return text + sep
+"""
+        task = {
+            "id": "py-u2028-1",
+            "family": "py-u2028",
+            "language": "py",
+            "source": source,
+            "entry": "run",
+            "args": ["lineA\u2028lineB"],
+            "fixture": {"calls": []},
+        }
+        leaked = Path.cwd() / "should_stay_in_tmpdir.txt"
+        self.assertFalse(leaked.exists())
+        exported = export_python_example(task, trace_format="compact", reasoning_channel="thinking")
+        self.assertFalse(leaked.exists())
+        self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+        vis = assistant_visible_text(exported["messages"][-1])
+        comp = json.loads(vis.split("```json\n", 1)[1].split("\n```", 1)[0])
+        self.assertEqual(comp["kind"], "return")
+        self.assertEqual(comp["value"], "lineA\u2028lineB\u2028\u2029")
+
 
 class EffectfulPythonAndGradingTests(unittest.TestCase):
     def _workflow_task(self, task_id: str, kv_val: int, rand_val: float, ts: float) -> dict:
