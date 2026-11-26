@@ -9,6 +9,8 @@ import {EFFECTFUL_ENGINEERING_FIXTURES} from './engineering-fixtures.js';
 import {trustedRealSourceCases} from '../corpus/trusted-source-candidates.mjs';
 import {encodeReadable, normalizedSourceHash} from './tinker-execution.js';
 import {effectfulWorkflowTemplates} from './tinker-effectful-workflows.js';
+import {hardTaskTemplates} from './tinker-hard-tasks.js';
+export {hardTaskTemplates};
 
 export const BENCHMARK_SCHEMA = 'tinker-generalization-corpus/1';
 export const sha256 = value => createHash('sha256').update(typeof value === 'string' || ArrayBuffer.isView(value) ? value : JSON.stringify(value)).digest('hex');
@@ -107,23 +109,40 @@ function decorate(raw, {template, index, form, sourceOrigin, seed}) {
       agentTaskSuccessVerified: false, ...raw.metadata}};
 }
 
+function extractRunParams(source) {
+  try {
+    const ast = parse(source, {ecmaVersion: 'latest', sourceType: 'script'});
+    const fn = ast.body.find(node => node.type === 'FunctionDeclaration' && node.id?.name === 'run');
+    if (fn && fn.params.every(param => param.type === 'Identifier')) {
+      return fn.params.map(param => param.name).join(',');
+    }
+  } catch {}
+  const match = source.match(/\bfunction\s+run\s*\(([^)]*)\)/);
+  if (match) {
+    const names = match[1].split(',').map(s => s.trim()).filter(Boolean);
+    if (names.every(name => /^[A-Za-z_$][\w$]*$/.test(name))) return names.join(',');
+  }
+  return 'a,b';
+}
+
 function expandTemplate(template, seed) {
   const inputs = templateInputs(template), rows = [];
   const core = template.source.replace(/\bfunction\s+run\b/, 'function __benchmarkCore');
   if (core === template.source) throw Error('Generator template must declare run');
+  const params = extractRunParams(template.source);
   const keepsPacket = (template.features ?? []).some(f => ['mutation', 'alias', 'cycle', 'sparse', 'null-prototype'].includes(f));
   for (let i=0;i<inputs.length;i++) {
     const original = template.fixture?.(i) ?? {calls:[]}, args=structuredClone(inputs[i]);
     const gate = [-2,0,3,7][i%4], ts = 1700000000 + i * 100;
     const secondForm = keepsPacket
       ? ['packet',core+'\nasync function run(packet){packet.answer=await __benchmarkCore(...packet.inputs);return packet;}',[{inputs:args}],original]
-      : ['logged-clock',core+'\nasync function run(...args){const started=Date.now();console.log("start:"+started);const answer=await __benchmarkCore(...args);console.info("done");return answer;}',args,
+      : ['logged-clock',core+'\nasync function run('+params+'){const started=Date.now();console.log("start:"+started);const answer=await __benchmarkCore('+params+');console.info("done");return answer;}',args,
         {calls:[{operation:'platform.dateNow',arguments:[],result:ts},{operation:'platform.console.log',arguments:['start:'+ts]},...original.calls,
           ...(template.throws?.(i)?[]:[{operation:'platform.console.info',arguments:['done']}])]}];
     const forms = [
       ['direct',template.source,args,original],
       secondForm,
-      ['observed-branch',core+'\nasync function run(...args){const gate=await host.readAsync("gate");const answer=await __benchmarkCore(...args);host.store("selected",gate>0?gate:0);return answer;}',args,
+      ['observed-branch',core+'\nasync function run('+params+'){const gate=await host.readAsync("gate");const answer=await __benchmarkCore('+params+');host.store("selected",gate>0?gate:0);return answer;}',args,
         {calls:[{operation:'demo.readAsync',arguments:['gate'],result:gate},...original.calls,
           ...(template.throws?.(i)?[]:[{operation:'demo.store',arguments:['selected',Math.max(0,gate)]}])]}],
     ];
@@ -1118,8 +1137,15 @@ function expandDirectTemplate(template, seed, sourceOrigin) {
   const rows = [];
   for (let i = 0; i < template.inputs.length; i++) {
     const fixture = template.fixture?.(i) ?? {calls: []};
-    const args = structuredClone(template.inputs[i]);
-    rows.push(decorate({source: template.source, entry: 'run', args, fixture}, {
+    const rawInput = template.inputs[i];
+    const args = typeof rawInput === 'function' ? rawInput() : structuredClone(rawInput);
+    rows.push(decorate({
+      source: template.source,
+      entry: 'run',
+      args,
+      fixture,
+      ...(template.nativeBindings ? {nativeBindings: structuredClone(template.nativeBindings)} : {}),
+    }, {
       template, index: i, form: 'direct', sourceOrigin, seed,
     }));
   }
@@ -1137,6 +1163,7 @@ export function generatedCandidates({seed = 17} = {}) {
     ...templates.flatMap(template=>expandTemplate(template,seed)),
     ...longProgramTemplates().flatMap(template=>expandDirectTemplate(template,seed,'authored-long-program')),
     ...effectfulWorkflowTemplates().flatMap(template=>expandDirectTemplate(template,seed,'authored-effectful-workflow')),
+    ...hardTaskTemplates().flatMap(template=>expandDirectTemplate(template,seed,'authored-hard-task')),
   ];
 }
 

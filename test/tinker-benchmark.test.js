@@ -13,12 +13,22 @@ import {boundedFuzzTask,verifyTaskBoundary,minimizeCounterexample,aggregateVerif
 
 test('seeded corpus preserves template lineage and actual independently grouped denominators',()=>{
   const candidates=generatedCandidates({seed:17});
-  assert.equal(candidates.length,1356);
+  assert.equal(candidates.length,1481);
   assert.deepEqual(candidates,generatedCandidates({seed:17}));
   const rows=assignFrozenSplits(candidates,{seed:17}),counts=datasetCounts(rows);
-  assert.equal(counts.total.families,140);
+  assert.equal(counts.total.families,165);
   assert(counts.total.sourcePrograms>counts.total.independentComponents);
-  assert(counts.total.independentComponents<=140);
+  assert(counts.total.independentComponents<=165);
+  for(const row of candidates){
+    if(row.metadata.sourceForm==='logged-clock'||row.metadata.sourceForm==='observed-branch'){
+      assert.doesNotMatch(row.source,/async function run\(\.\.\.args\)/,row.id);
+    }
+  }
+  const hardRows=rows.filter(r=>r.metadata.sourceOrigin==='authored-hard-task');
+  assert(new Set(hardRows.map(r=>r.family)).size>=24);
+  for(const split of ['train','validation','test']){
+    assert(hardRows.some(r=>r.split===split),`expected authored-hard-task in ${split}`);
+  }
   const seen=new Map();
   for(const row of rows){
     assert(row.metadata.features.length);
@@ -167,4 +177,23 @@ test('file digests hash actual bytes and census keeps unsupported candidates in 
   assert(candidates.some(row=>row.metadata.sourceOrigin==='production'));
   assert(candidates.every(row=>row.metadata.agentTaskSuccessVerified===false));
   assert.equal(new Set(candidates.map(row=>row.id)).size,candidates.length);
+});
+
+test('expanded logged-clock/observed-branch templates use explicit params and hard-suite groups verify',async()=>{
+  const candidates=generatedCandidates({seed:17});
+  const sampleIds=[
+    'generated-bounded-range-logged-clock-0',
+    'generated-rejected-read-caught-logged-clock-0',
+    'generated-sequential-observation-dependent-call-observed-branch-0',
+    'generated-union-find-component-tracker-direct-0',
+    'generated-cyclic-graph-clone-and-diff-direct-0',
+    'generated-saga-2pc-orchestrator-direct-0',
+  ];
+  for(const id of sampleIds){
+    const row=candidates.find(r=>r.id===id);
+    assert(row,`missing ${id}`);
+    const report=await verifyTaskBoundary(row);
+    assert.equal(report.independentChecked,true,id);
+    assert.equal(report.sourceVerified,true,id);
+  }
 });
