@@ -69,6 +69,11 @@ DEFAULTS: dict[str, Any] = {
     "rl_objective": "likelihood",
     "target_anchor_weight": 0.25,
     "likelihood_std_floor": 0.5,
+    "opsd_coef": 0.0,
+    "opsd_clip": 5.0,
+    "opsd_ll_threshold": -0.5,
+    "opsd_max_trace_chars": 12000,
+    "opsd_teacher": "self",
     "compression_warmup_steps": 0,
     "compression_ramp_steps": 4,
     "compression_min_accuracy": 0.5,
@@ -149,12 +154,14 @@ def implementation_identity(repo: Path) -> dict:
     paths.update((repo / "src/host").glob("*.js"))
     for relative in (
         "tools/tinker-execution.mjs",
+        "tools/effectful-reference-worker.mjs",
         "src/runtime.js",
         "src/frontend.js",
         "src/values.js",
         "src/typescript.js",
         "src/semantic/normalize.js",
         "src/semantic/source-reference.js",
+        "src/training/native-trace.js",
         "src/training/fixture-broker.js",
         "src/training/graph.js",
         "src/training/data-graph-contract.js",
@@ -298,6 +305,22 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
     if (isinstance(config["likelihood_std_floor"], bool) or not isinstance(config["likelihood_std_floor"], (int, float))
             or not math.isfinite(config["likelihood_std_floor"]) or config["likelihood_std_floor"] < 0):
         raise ValueError("likelihood_std_floor must be finite and nonnegative")
+    if (isinstance(config["opsd_coef"], bool) or not isinstance(config["opsd_coef"], (int, float))
+            or not math.isfinite(config["opsd_coef"]) or config["opsd_coef"] < 0):
+        raise ValueError("opsd_coef must be finite and nonnegative")
+    if (isinstance(config["opsd_clip"], bool) or not isinstance(config["opsd_clip"], (int, float))
+            or not math.isfinite(config["opsd_clip"]) or config["opsd_clip"] <= 0):
+        raise ValueError("opsd_clip must be finite and positive")
+    if config["opsd_ll_threshold"] is not None:
+        if (isinstance(config["opsd_ll_threshold"], bool)
+                or not isinstance(config["opsd_ll_threshold"], (int, float))
+                or not math.isfinite(config["opsd_ll_threshold"])):
+            raise ValueError("opsd_ll_threshold must be null or finite")
+    if (isinstance(config["opsd_max_trace_chars"], bool) or not isinstance(config["opsd_max_trace_chars"], int)
+            or config["opsd_max_trace_chars"] <= 0):
+        raise ValueError("opsd_max_trace_chars must be a positive integer")
+    if config["opsd_teacher"] not in {"self", "reference"}:
+        raise ValueError("opsd_teacher must be self or reference")
     for name in ("accuracy_tolerance", "min_token_saving", "compression_min_accuracy"):
         value = config[name]
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= 1:
@@ -1534,9 +1557,12 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             for candidate in state.get("validation_candidates", []))):
         record_validation(bridge, adapter, rows, config, output_dir, state, rng, "sft-initial",
                           state.get("sft_training_path", state.get("training_path")), state["sft_sampler_path"])
-    if config["reference_kl_coef"]:
+    needs_reference = bool(config["reference_kl_coef"]) or (
+        config.get("opsd_coef", 0.0) > 0 and config.get("opsd_teacher") == "reference"
+    )
+    if needs_reference:
         if not state.get("sft_sampler_path"):
-            raise ValueError("reference KL requires the recorded SFT sampler checkpoint")
+            raise ValueError("reference KL or reference OPSD teacher requires the recorded SFT sampler checkpoint")
         adapter.set_reference_checkpoint(state["sft_sampler_path"])
     prompts_per_step = config.get("rl_prompts_per_step", 1)
     concurrency = max(1, int(config.get("rollout_concurrency", 1)))
@@ -1597,9 +1623,17 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         def _run_rl_rollout(row: dict, seed: int, turn_target: dict | None) -> dict:
             if likelihood_mode:
                 assert turn_target is not None
-                sample = adapter.sample_thinking_and_score_target(
-                    turn_target, seed=seed, max_tokens=config["max_tokens"], temperature=config["temperature"],
-                )
+                score_teacher = bool(config.get("opsd_coef", 0.0) > 0)
+                sample_kwargs: dict[str, Any] = {
+                    "seed": seed,
+                    "max_tokens": config["max_tokens"],
+                    "temperature": config["temperature"],
+                }
+                if score_teacher:
+                    sample_kwargs["score_teacher"] = True
+                    if config.get("opsd_teacher") == "reference":
+                        sample_kwargs["teacher_scorer"] = adapter.reference_client
+                sample = adapter.sample_thinking_and_score_target(turn_target, **sample_kwargs)
                 terminated = bool(sample["terminated"] and sample["target_logprob_sum"] is not None)
                 record = {
                     "seed": seed,
@@ -1690,6 +1724,10 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                     record["target_advantage"] = t_adv
                     if record["samples"]:
                         record["samples"][0]["target_advantage"] = t_adv
+                    tok_adv = (sig.get("token_advantages") or [None] * len(group_records))[index]
+                    if tok_adv is not None and record["samples"]:
+                        record["samples"][0]["token_advantages"] = tok_adv
+                        record["has_token_advantages"] = any(abs(v) > 1e-12 for v in tok_adv)
             counters[sig["group_kind"]] += 1
             counters["zero_advantage" if sig["zero_advantage_group"] else "useful"] += 1
             curriculum_results.append(update_curriculum(train_rows, config, state, curriculum_selection, group_records))
@@ -1705,7 +1743,9 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             raise RuntimeError("sampled RL provenance is invalid; saved raw rollout and aborted the entire update")
         nonzero = [
             record for record in records
-            if abs(record["advantage"]) > 1e-12 or abs(record.get("target_advantage", 0.0)) > 1e-12
+            if abs(record["advantage"]) > 1e-12
+            or abs(record.get("target_advantage", 0.0)) > 1e-12
+            or bool(record.get("has_token_advantages"))
         ]
         update_records = records if config["reference_kl_coef"] else nonzero
         regularization_only = bool(update_records) and not nonzero
@@ -1734,6 +1774,11 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         useful_in_step = sum(not s["zero_advantage_group"] for s in all_signals)
         ll_means = [s["mean_target_ll"] for s in all_signals if s.get("mean_target_ll") is not None]
         ll_bests = [s["best_target_ll"] for s in all_signals if s.get("best_target_ll") is not None]
+        opsd_enabled = likelihood_mode and config.get("opsd_coef", 0.0) > 0
+        opsd_active = sum(s.get("opsd_active_rollouts", 0) for s in all_signals)
+        opsd_scored = sum(s.get("opsd_scored_rollouts", 0) for s in all_signals)
+        opsd_ratios = [s["opsd_mean_log_ratio"] for s in all_signals if s.get("opsd_mean_log_ratio") is not None]
+        opsd_mean_ratio = statistics.fmean(opsd_ratios) if opsd_ratios else None
         append_jsonl(output_dir / "metrics.jsonl", {"stage": "rl", "step": step + 1,
                      "update_attempt_id": pending["attempt_id"] if pending else None,
                      "learning_rate": lr,
@@ -1742,6 +1787,9 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                      **step_summary, "metrics": metrics,
                      **({"mean_target_ll": statistics.fmean(ll_means), "best_target_ll": statistics.fmean(ll_bests)}
                         if likelihood_mode and ll_means else {}),
+                     **({"opsd_active_rollouts": opsd_active, "opsd_scored_rollouts": opsd_scored,
+                         "opsd_mean_log_ratio": opsd_mean_ratio}
+                        if opsd_enabled else {}),
                      "group_kind": signals["group_kind"], "zero_advantage_group": signals["zero_advantage_group"],
                      "compression_coefficient": coefficient, "length_signal": signals["length_signal"],
                      "correctness_signal": signals["correctness_signal"], "curriculum": curriculum_result,
@@ -1755,10 +1803,14 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         if likelihood_mode:
             ll_str = f"{statistics.fmean(ll_means):.2f}" if ll_means else "n/a"
             best_str = f"{statistics.fmean(ll_bests):.2f}" if ll_bests else "n/a"
+            opsd_str = ""
+            if opsd_enabled:
+                ratio_str = f"{opsd_mean_ratio:+.3f}" if opsd_mean_ratio is not None else "n/a"
+                opsd_str = f" opsd={opsd_active}/{opsd_scored}({ratio_str})"
             print(f"rl step {step + 1}/{config['rl_steps']}: lr={lr:.2e} "
                   f"mean_ll={ll_str} best_ll={best_str} term={step_acc:.1%} "
                   f"mean_tok={step_tok:.0f} useful={useful_in_step}/{len(all_signals)} "
-                  f"coef={coefficient:.3f} {status_label} ({time.monotonic() - step_started:.1f}s)",
+                  f"coef={coefficient:.3f}{opsd_str} {status_label} ({time.monotonic() - step_started:.1f}s)",
                   file=sys.stderr, flush=True)
         else:
             print(f"rl step {step + 1}/{config['rl_steps']}: lr={lr:.2e} "

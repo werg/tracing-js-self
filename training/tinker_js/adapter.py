@@ -226,6 +226,13 @@ def rl_token_arrays(sample: Mapping[str, Any], advantage: float) -> dict[str, li
         raise ValueError("Every sampled token must retain its original sampling logprob")
     logprobs = [_finite(x, "sampling logprob") for x in logprobs]
     advantage = _finite(advantage, "advantage")
+    raw_token_advantages = sample.get("token_advantages")
+    if raw_token_advantages is not None:
+        token_advantages = [_finite(x, "token advantage") for x in raw_token_advantages]
+        if len(token_advantages) != len(tokens):
+            raise ValueError("token_advantages must align with sampled token_ids")
+    else:
+        token_advantages = [advantage] * len(tokens)
     target_tokens = list(sample.get("target_tokens") or [])
     target_logprobs = list(sample.get("target_logprobs") or [])
     target_advantage = _finite(sample.get("target_advantage", 0.0), "target_advantage")
@@ -241,7 +248,7 @@ def rl_token_arrays(sample: Mapping[str, Any], advantage: float) -> dict[str, li
             "input_tokens": sequence[:-1],
             "target_tokens": sequence[1:],
             "logprobs": [0.0] * prefix_length + logprobs + target_logprobs,
-            "advantages": [0.0] * prefix_length + [advantage] * len(tokens) + [target_advantage] * len(target_tokens),
+            "advantages": [0.0] * prefix_length + token_advantages + [target_advantage] * len(target_tokens),
         }
     sequence = prompt + tokens
     prefix_length = len(prompt) - 1
@@ -249,7 +256,7 @@ def rl_token_arrays(sample: Mapping[str, Any], advantage: float) -> dict[str, li
         "input_tokens": sequence[:-1],
         "target_tokens": sequence[1:],
         "logprobs": [0.0] * prefix_length + logprobs,
-        "advantages": [0.0] * prefix_length + [advantage] * len(tokens),
+        "advantages": [0.0] * prefix_length + token_advantages,
     }
 
 
@@ -296,6 +303,9 @@ class TinkerAdapter:
         self.reference_kl_clip = _finite(self.config.get("reference_kl_clip", 20.0), "reference_kl_clip")
         if self.reference_kl_coef < 0 or self.reference_kl_clip <= 0:
             raise ValueError("reference_kl_coef must be nonnegative and reference_kl_clip positive")
+        self.opsd_max_trace_chars = _positive_int(
+            self.config.get("opsd_max_trace_chars", 12000), "opsd_max_trace_chars"
+        )
         self.lora_rank = _positive_int(self.config.get("lora_rank", 32), "lora_rank")
         self.seed = _seed(self.config.get("seed", 0))
         self.timeout = _finite(self.config.get("request_timeout_seconds", 450), "request_timeout_seconds")
@@ -539,10 +549,16 @@ class TinkerAdapter:
             self._thinking_ids = resolved
             return resolved
 
-    def extract_turn_targets(self, messages: Sequence[Mapping[str, Any]]) -> list[dict]:
-        """Decompose a recorded conversation into per-turn (thinking_prompt, target_action_tokens)."""
+    def extract_turn_targets(
+        self,
+        messages: Sequence[Mapping[str, Any]],
+        *,
+        max_trace_chars: int | None = None,
+    ) -> list[dict]:
+        """Decompose a recorded conversation into per-turn (thinking_prompt, target_action_tokens, optional OPSD teacher prompt)."""
         msg_model_id, content_thinking_id, _end_message_id = self.thinking_token_ids()
         sdk = self._sdk()
+        trace_limit = self.opsd_max_trace_chars if max_trace_chars is None else _positive_int(max_trace_chars, "max_trace_chars")
 
         def _strip_thinking(msg: Mapping[str, Any]) -> dict:
             if msg.get("role") != "assistant":
@@ -562,6 +578,24 @@ class TinkerAdapter:
                     out["content"] = content
             return out
 
+        def _extract_trace(msg: Mapping[str, Any]) -> str:
+            content = msg.get("content", "")
+            if not isinstance(content, list):
+                return ""
+            parts = [
+                str(part.get("thinking", ""))
+                for part in content
+                if isinstance(part, Mapping) and part.get("type") == "thinking" and part.get("thinking")
+            ]
+            trace = "\n".join(parts).strip()
+            if len(trace) > trace_limit:
+                marker = "\n... (trace truncated) ...\n"
+                keep = max(0, trace_limit - len(marker))
+                head_len = keep // 2
+                tail_len = keep - head_len
+                trace = (trace[:head_len] + marker + trace[-tail_len:]) if tail_len > 0 else trace[:trace_limit]
+            return trace
+
         turns: list[dict] = []
         with self._lock:
             for idx, msg in enumerate(messages):
@@ -569,6 +603,7 @@ class TinkerAdapter:
                     continue
                 prefix_messages = [_strip_thinking(m) for m in messages[:idx]]
                 action_msg = _strip_thinking(msg)
+                trace_text = _extract_trace(msg)
                 prefix_tokens = list(sdk.renderer.build_generation_prompt(prefix_messages, effort=self.effort).to_ints())
                 model_input, weights = sdk.renderer.build_supervised_example(prefix_messages + [action_msg])
                 full_ids = list(model_input.to_ints())
@@ -583,6 +618,28 @@ class TinkerAdapter:
                 target_action_tokens = full_ids[target_start:]
                 if not target_action_tokens:
                     continue
+                teacher_thinking_prompt_tokens: list[int] | None = None
+                if trace_text:
+                    addendum = (
+                        "\n\n[Internal execution trace for this turn — verify intermediate values and branches "
+                        "against this trace; reason naturally in your own words without mentioning or quoting this trace:]\n"
+                        + trace_text
+                    )
+                    teacher_prefix_messages = copy.deepcopy(prefix_messages)
+                    if (
+                        teacher_prefix_messages
+                        and teacher_prefix_messages[-1].get("role") in ("user", "tool")
+                        and isinstance(teacher_prefix_messages[-1].get("content"), str)
+                    ):
+                        teacher_prefix_messages[-1]["content"] = teacher_prefix_messages[-1]["content"] + addendum
+                    else:
+                        teacher_prefix_messages.append({"role": "user", "content": addendum.lstrip()})
+                    teacher_prefix_tokens = list(
+                        sdk.renderer.build_generation_prompt(teacher_prefix_messages, effort=self.effort).to_ints()
+                    )
+                    candidate_teacher = teacher_prefix_tokens + [msg_model_id, content_thinking_id]
+                    if len(candidate_teacher) + 256 < self.max_context_tokens:
+                        teacher_thinking_prompt_tokens = candidate_teacher
                 tool_calls = msg.get("tool_calls") or []
                 op_name = (tool_calls[0].get("function", {}).get("name") if tool_calls else None) or "complete"
                 turns.append({
@@ -590,6 +647,8 @@ class TinkerAdapter:
                     "message_index": idx,
                     "prefix_tokens": prefix_tokens,
                     "thinking_prompt_tokens": prefix_tokens + [msg_model_id, content_thinking_id],
+                    "teacher_thinking_prompt_tokens": teacher_thinking_prompt_tokens,
+                    "trace_text": trace_text,
                     "target_action_tokens": target_action_tokens,
                     "is_tool_call": bool(tool_calls),
                     "operation": op_name,
@@ -604,6 +663,8 @@ class TinkerAdapter:
         max_tokens: int | None = None,
         temperature: float | None = None,
         scorer=None,
+        score_teacher: bool = False,
+        teacher_scorer=None,
     ) -> dict:
         """Sample one <|content_thinking|> block stopping at <|end_message|>, then score exact log P(target | prefix, z)."""
         _msg_model_id, _content_thinking_id, end_message_id = self.thinking_token_ids()
@@ -674,10 +735,29 @@ class TinkerAdapter:
             target_logprob_sum = sum(target_logprobs)
             target_logprob_mean = target_logprob_sum / len(target_logprobs)
 
+        teacher_logprobs = None
+        if score_teacher and turn_target.get("teacher_thinking_prompt_tokens") and provenance_error is None and z_tokens:
+            t_prompt = list(turn_target["teacher_thinking_prompt_tokens"])
+            if len(t_prompt) + len(z_tokens) <= self.max_context_tokens:
+                t_client = teacher_scorer or client
+                t_full = t_prompt + z_tokens
+                t_values = self._retry_idempotent(
+                    lambda: t_client.compute_logprobs(
+                        sdk.types.ModelInput.from_ints(t_full),
+                        prompt_logprobs_last_n=len(z_tokens),
+                    ),
+                    "teacher trace logprob scoring",
+                    attempts=2,
+                )
+                if len(t_values) != len(t_full):
+                    raise AdapterError("Teacher scoring returned misaligned log probabilities")
+                teacher_logprobs = [_finite(v, "teacher thinking logprob") for v in t_values[-len(z_tokens):]]
+
         return {
             "prompt_tokens": thinking_prompt,
             "token_ids": z_tokens,
             "logprobs": z_logprobs,
+            "teacher_logprobs": teacher_logprobs,
             "target_tokens": target_tokens,
             "target_logprobs": target_logprobs,
             "target_logprob_sum": target_logprob_sum,
@@ -1112,10 +1192,17 @@ class TinkerAdapter:
         mean_traj_len = statistics.fmean(traj_lengths) if traj_lengths else 1.0
         for trajectory, traj_len in zip(trajectories, traj_lengths):
             advantage = _finite(trajectory["advantage"], "advantage")
-            if self.rl_token_normalization == "trajectory" and traj_len > 0:
-                advantage = advantage * (mean_traj_len / traj_len)
+            scale = (mean_traj_len / traj_len) if (self.rl_token_normalization == "trajectory" and traj_len > 0) else 1.0
+            advantage = advantage * scale
             for sample in trajectory["samples"]:
-                arrays = rl_token_arrays(sample, advantage)
+                if scale != 1.0 and sample.get("token_advantages") is not None:
+                    scaled_sample = dict(sample)
+                    scaled_sample["token_advantages"] = [
+                        _finite(x, "token advantage") * scale for x in sample["token_advantages"]
+                    ]
+                    arrays = rl_token_arrays(scaled_sample, advantage)
+                else:
+                    arrays = rl_token_arrays(sample, advantage)
                 self._budget(len(arrays["input_tokens"]) + 1)
                 if self.reference_kl_coef:
                     reference = self.score_sample(sample, sampler=self.reference_client)

@@ -114,6 +114,19 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
     std_floor = float(config.get("likelihood_std_floor", 0.5))
     if not math.isfinite(std_floor) or std_floor < 0:
         raise ValueError("likelihood_std_floor must be finite and nonnegative")
+    opsd_coef = float(config.get("opsd_coef", 0.0))
+    if not math.isfinite(opsd_coef) or opsd_coef < 0:
+        raise ValueError("opsd_coef must be finite and nonnegative")
+    opsd_clip = float(config.get("opsd_clip", 5.0))
+    if not math.isfinite(opsd_clip) or opsd_clip <= 0:
+        raise ValueError("opsd_clip must be finite and positive")
+    opsd_ll_threshold = config.get("opsd_ll_threshold", -0.5)
+    if opsd_ll_threshold is not None:
+        if isinstance(opsd_ll_threshold, bool) or not isinstance(opsd_ll_threshold, (int, float)):
+            raise ValueError("opsd_ll_threshold must be null or finite")
+        opsd_ll_threshold = float(opsd_ll_threshold)
+        if not math.isfinite(opsd_ll_threshold):
+            raise ValueError("opsd_ll_threshold must be null or finite")
 
     ll_floor = -200.0
     valid_indices = [
@@ -160,14 +173,53 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
         for index, exp_val in zip(valid_indices, exps):
             target_advantages[index] = anchor_weight * (exp_val / total_exp) * len(valid_indices)
 
+    token_advantages: list[list[float] | None] = [None] * len(records)
+    opsd_scored_rollouts = 0
+    opsd_active_rollouts = 0
+    opsd_log_ratio_sum = 0.0
+    opsd_log_ratio_tokens = 0
+    valid_set = set(valid_indices)
+    if opsd_coef > 0:
+        for index, record in enumerate(records):
+            sample0 = (record.get("samples") or [None])[0]
+            s_lps = sample0.get("logprobs") if isinstance(sample0, dict) else None
+            if s_lps is None:
+                s_lps = record.get("logprobs")
+            t_lps = sample0.get("teacher_logprobs") if isinstance(sample0, dict) else None
+            if t_lps is None:
+                t_lps = record.get("teacher_logprobs")
+            if not (isinstance(s_lps, list) and isinstance(t_lps, list) and s_lps and len(t_lps) == len(s_lps)):
+                continue
+            opsd_scored_rollouts += 1
+            is_terminated = index in valid_set
+            gate_pass = (opsd_ll_threshold is None) or (not is_terminated) or (ll_values[index] < opsd_ll_threshold)
+            if not gate_pass:
+                continue
+            base_adv = advantages[index]
+            tok_adv: list[float] = []
+            for s_lp, t_lp in zip(s_lps, t_lps):
+                diff = float(t_lp) - float(s_lp)
+                clipped = max(-opsd_clip, min(opsd_clip, diff))
+                tok_adv.append(base_adv + opsd_coef * clipped)
+                opsd_log_ratio_sum += diff
+                opsd_log_ratio_tokens += 1
+            token_advantages[index] = tok_adv
+            opsd_active_rollouts += 1
+
+    has_token_signal = any(
+        ta is not None and any(abs(v) > 1e-12 for v in ta)
+        for ta in token_advantages
+    )
     has_signal = (
         any(abs(value) > 1e-12 for value in advantages)
         or any(abs(value) > 1e-12 for value in target_advantages)
+        or has_token_signal
     )
     kind = "all_failure" if not valid_indices else ("all_success" if len(valid_indices) == len(records) else "mixed_success")
     return {
         "advantages": advantages,
         "target_advantages": target_advantages,
+        "token_advantages": token_advantages,
         "correctness_advantages": ll_adv,
         "length_advantages": length,
         "length_contributions": [coefficient * value for value in length],
@@ -178,6 +230,9 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
         "correctness_signal": any(abs(value) > 1e-12 for value in ll_adv),
         "mean_target_ll": statistics.fmean(valid_lls) if valid_lls else None,
         "best_target_ll": max(valid_lls) if valid_lls else None,
+        "opsd_active_rollouts": opsd_active_rollouts,
+        "opsd_scored_rollouts": opsd_scored_rollouts,
+        "opsd_mean_log_ratio": (opsd_log_ratio_sum / opsd_log_ratio_tokens) if opsd_log_ratio_tokens > 0 else None,
     }
 
 
