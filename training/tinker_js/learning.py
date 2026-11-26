@@ -92,9 +92,13 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
 
     For each sampled thinking block z_i conditioned on prefix x, reward is the
     exact log-likelihood log P(y | x, z_i) of the known target action y (clamped
-    at -200 nats), standardized within the group, plus a decoupled within-valid
-    length saving scaled by `coefficient`. Target action tokens y also receive a
-    posterior-weighted EM anchor advantage proportional to softmax(ll_i).
+    at -200 nats), standardized with a minimum std floor (`likelihood_std_floor`,
+    default 0.5 nats) so already-confident groups do not amplify 0.005-nat noise.
+    Within the high-confidence subset (terminated thoughts within 0.5 nats of the
+    best thought and >= -1.0 nats), shorter thoughts receive a standardized length
+    saving bonus scaled by `coefficient`, preventing compression from ever
+    rewarding wrong shortcuts. Target action tokens y receive a posterior-weighted
+    EM anchor advantage proportional to softmax(ll_i).
     """
     if not records:
         raise ValueError("likelihood advantages require at least one rollout")
@@ -107,6 +111,9 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
     anchor_weight = float(config.get("target_anchor_weight", 0.25))
     if not math.isfinite(anchor_weight) or anchor_weight < 0:
         raise ValueError("target_anchor_weight must be finite and nonnegative")
+    std_floor = float(config.get("likelihood_std_floor", 0.5))
+    if not math.isfinite(std_floor) or std_floor < 0:
+        raise ValueError("likelihood_std_floor must be finite and nonnegative")
 
     ll_floor = -200.0
     valid_indices = [
@@ -121,13 +128,28 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
         if index in valid_indices else trunc_ll
         for index, record in enumerate(records)
     ]
-    ll_adv = centered(ll_values, standardize=config.get("advantage_mode", "decoupled") == "decoupled")
+    raw_centered = centered(ll_values, standardize=False)
+    if config.get("advantage_mode", "decoupled") == "decoupled":
+        dev = math.sqrt(statistics.fmean(v * v for v in raw_centered))
+        denom = max(dev, std_floor)
+        ll_adv = [max(-2.5, min(2.5, v / denom)) for v in raw_centered] if denom > 1e-12 else [0.0] * len(records)
+    else:
+        ll_adv = raw_centered
+
     length = [0.0] * len(records)
     if valid_indices:
-        costs = [min(records[index]["generated_tokens"] / scale, 1.0) for index in valid_indices]
-        mean_cost = statistics.fmean(costs)
-        for index, cost in zip(valid_indices, costs):
-            length[index] = mean_cost - cost
+        best_ll = max(valid_lls)
+        confident = [
+            idx for idx, ll in zip(valid_indices, valid_lls)
+            if ll >= best_ll - 0.5 and ll >= -1.0
+        ]
+        if len(confident) >= 2:
+            toks = [float(records[idx]["generated_tokens"]) for idx in confident]
+            mean_tok = statistics.fmean(toks)
+            tok_dev = math.sqrt(statistics.fmean((t - mean_tok) ** 2 for t in toks))
+            tok_denom = max(tok_dev, 64.0)
+            for idx, tok in zip(confident, toks):
+                length[idx] = max(-2.0, min(2.0, (mean_tok - tok) / tok_denom))
     advantages = [acc + coefficient * saving for acc, saving in zip(ll_adv, length)]
 
     target_advantages = [0.0] * len(records)

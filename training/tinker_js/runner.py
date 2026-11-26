@@ -68,6 +68,7 @@ DEFAULTS: dict[str, Any] = {
     "advantage_mode": "decoupled",
     "rl_objective": "likelihood",
     "target_anchor_weight": 0.25,
+    "likelihood_std_floor": 0.5,
     "compression_warmup_steps": 0,
     "compression_ramp_steps": 4,
     "compression_min_accuracy": 0.5,
@@ -294,6 +295,9 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
     if (isinstance(config["target_anchor_weight"], bool) or not isinstance(config["target_anchor_weight"], (int, float))
             or not math.isfinite(config["target_anchor_weight"]) or config["target_anchor_weight"] < 0):
         raise ValueError("target_anchor_weight must be finite and nonnegative")
+    if (isinstance(config["likelihood_std_floor"], bool) or not isinstance(config["likelihood_std_floor"], (int, float))
+            or not math.isfinite(config["likelihood_std_floor"]) or config["likelihood_std_floor"] < 0):
+        raise ValueError("likelihood_std_floor must be finite and nonnegative")
     for name in ("accuracy_tolerance", "min_token_saving", "compression_min_accuracy"):
         value = config[name]
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= 1:

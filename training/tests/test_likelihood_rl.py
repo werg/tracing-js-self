@@ -38,6 +38,22 @@ class LikelihoodRLTests(unittest.TestCase):
         self.assertAlmostEqual(sum(sig["target_advantages"]), 0.25 * 3, places=6)
         self.assertGreater(sig["target_advantages"][0], sig["target_advantages"][1])
 
+    def test_likelihood_std_floor_prevents_noise_from_drowning_compression(self):
+        cfg = {"length_penalty": 0.65, "length_scale_tokens": 2048, "advantage_mode": "decoupled",
+               "target_anchor_weight": 0.25, "likelihood_std_floor": 0.5}
+        # All 4 thoughts are already >99% confident, but lengths vary 3x (300 vs 900).
+        records = [
+            {"terminated": True, "target_logprob_sum": -0.009, "generated_tokens": 300},
+            {"terminated": True, "target_logprob_sum": -0.001, "generated_tokens": 900},
+            {"terminated": True, "target_logprob_sum": -0.002, "generated_tokens": 700},
+            {"terminated": True, "target_logprob_sum": -0.003, "generated_tokens": 500},
+        ]
+        sig = likelihood_advantages(records, cfg, coefficient=0.65)
+        # Shorter confident thought (300 tok, -0.009) MUST beat verbose thought (900 tok, -0.001).
+        self.assertGreater(sig["advantages"][0], sig["advantages"][1])
+        self.assertGreater(sig["advantages"][0], 0.5)
+        self.assertLess(sig["advantages"][1], -0.5)
+
     def test_rl_token_arrays_appends_target_action_anchor(self):
         sample = {
             "prompt_tokens": [10, 11],
