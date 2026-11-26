@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
 from pathlib import Path
@@ -13,6 +14,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import unittest
 
 from tinker_js.runner import Bridge, implementation_identity
@@ -1177,6 +1179,629 @@ class StrictTests(unittest.TestCase):
                 if line.strip()
             ]
             self.assertIn("caught_first_line_type_error", {r["entry"] for r in keep_rows})
+
+
+class HttpInterceptionTests(unittest.TestCase):
+    def test_urllib_urlopen_get_post_headers_bytes_and_errors(self):
+        source = """\
+import json
+import urllib.error
+import urllib.request
+
+def run(base_url):
+    with urllib.request.urlopen(base_url + "/meta") as r1:
+        status1 = r1.getcode()
+        url1 = r1.geturl()
+        ctype = r1.info().get("Content-Type")
+        first_line = r1.readline().decode("utf-8").strip()
+        rest_lines = [ln.decode("utf-8").strip() for ln in r1.readlines()]
+
+    req = urllib.request.Request(
+        base_url + "/submit",
+        data=json.dumps({"n": 3}).encode("utf-8"),
+        headers={"X-Token": "tok-1"},
+        method="POST",
+    )
+    r2 = urllib.request.urlopen(req)
+    body2 = r2.read().decode("utf-8")
+    r2.close()
+
+    try:
+        urllib.request.urlopen(base_url + "/down")
+        err_kind = "none"
+    except urllib.error.URLError as exc:
+        err_kind = f"{type(exc).__name__}:{isinstance(exc, urllib.error.URLError)}"
+
+    try:
+        urllib.request.urlopen(base_url + "/missing")
+        http_err = "none"
+    except urllib.error.HTTPError as exc:
+        http_err = f"{exc.code}:{exc.read().decode('utf-8')}"
+
+    return {
+        "status1": status1,
+        "url1": url1,
+        "ctype": ctype,
+        "lines": [first_line, *rest_lines],
+        "body2": json.loads(body2),
+        "err_kind": err_kind,
+        "http_err": http_err,
+    }
+"""
+        task = {
+            "id": "py-http-urllib-1",
+            "family": "py-http-urllib",
+            "language": "py",
+            "source": source,
+            "entry": "run",
+            "args": ["https://api.example.test"],
+            "fixture": {
+                "calls": [
+                    {
+                        "operation": "http.request",
+                        "arguments": [{"method": "GET", "url": "https://api.example.test/meta"}],
+                        "status": "fulfilled",
+                        "result": {
+                            "status": 200,
+                            "url": "https://api.example.test/meta",
+                            "headers": {"Content-Type": "text/plain; charset=utf-8"},
+                            "body": "alpha\nbeta\ngamma\n",
+                        },
+                    },
+                    {
+                        "operation": "http.request",
+                        "arguments": [{
+                            "method": "POST",
+                            "url": "https://api.example.test/submit",
+                            "headers": {"X-token": "tok-1"},
+                            "body": '{"n": 3}',
+                        }],
+                        "status": "fulfilled",
+                        "result": {
+                            "status": 201,
+                            "url": "https://api.example.test/submit",
+                            "headers": {"Content-Type": "application/json"},
+                            "body": '{"saved": true, "n": 3}',
+                        },
+                    },
+                    {
+                        "operation": "http.request",
+                        "arguments": [{"method": "GET", "url": "https://api.example.test/down"}],
+                        "status": "rejected",
+                        "result": {"name": "URLError", "message": "<urlopen error connection refused>"},
+                    },
+                    {
+                        "operation": "http.request",
+                        "arguments": [{"method": "GET", "url": "https://api.example.test/missing"}],
+                        "status": "fulfilled",
+                        "result": {
+                            "status": 404,
+                            "url": "https://api.example.test/missing",
+                            "headers": {"Content-Type": "text/plain"},
+                            "body": "not found",
+                        },
+                    },
+                ]
+            },
+        }
+        exported = export_python_example(task, trace_format="compact", reasoning_channel="thinking")
+        self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+
+        tool_decl = json.loads(exported["messages"][1]["content"])
+        self.assertEqual([t["function"]["name"] for t in tool_decl], ["http.request"])
+
+        comp_vis = assistant_visible_text(exported["messages"][-1])
+        comp = json.loads(comp_vis.split("```json\n", 1)[1].split("\n```", 1)[0])
+        self.assertEqual(comp["kind"], "return")
+        self.assertEqual(
+            comp["value"],
+            {
+                "status1": 200,
+                "url1": "https://api.example.test/meta",
+                "ctype": "text/plain; charset=utf-8",
+                "lines": ["alpha", "beta", "gamma"],
+                "body2": {"saved": True, "n": 3},
+                "err_kind": "URLError:True",
+                "http_err": "404:not found",
+            },
+        )
+
+        # Replay via PythonExecutionSession
+        prep = prepare_python_task(task, trace_format="compact")
+        sess = create_python_session(prep)
+        for msg in exported["messages"][2:]:
+            if msg["role"] == "assistant":
+                step_res = sess.step(msg, 10)
+        self.assertTrue(sess.grade()["success"])
+
+        # Pure urllib.parse must NOT declare http.request!
+        pure_msgs = initial_messages({
+            "source": "import urllib.parse\ndef run(s):\n    return urllib.parse.quote(s)\n",
+            "entry": "run",
+            "args": ["a b"],
+            "randomMode": "seeded",
+            "randomSeed": 17,
+            "nativeBindings": [],
+        })
+        self.assertFalse(any(m["role"] == "tool_declare" for m in pure_msgs))
+
+    def test_urllib_rejected_httperror_and_binary_body(self):
+        source = """\
+import urllib.error
+import urllib.request
+
+def run(url_bin, url_err):
+    with urllib.request.urlopen(url_bin) as r:
+        raw = r.read()
+    try:
+        urllib.request.urlopen(url_err)
+        code = 0
+    except urllib.error.HTTPError as e:
+        code = e.code
+    return (raw, code)
+"""
+        task = {
+            "id": "py-http-urllib-bin-err",
+            "family": "py-http-urllib",
+            "language": "py",
+            "source": source,
+            "entry": "run",
+            "args": ["https://cdn.test/blob", "https://cdn.test/404"],
+            "fixture": {
+                "calls": [
+                    {
+                        "operation": "http.request",
+                        "arguments": [{"method": "GET", "url": "https://cdn.test/blob"}],
+                        "status": "fulfilled",
+                        "result": {
+                            "status": 200,
+                            "url": "https://cdn.test/blob",
+                            "headers": {"Content-Type": "application/octet-stream"},
+                            "body": encode_readable(b"\x00\xff\x10ok"),
+                        },
+                    },
+                    {
+                        "operation": "http.request",
+                        "arguments": [{"method": "GET", "url": "https://cdn.test/404"}],
+                        "status": "rejected",
+                        "result": {"name": "HTTPError", "message": "HTTP Error 404: Not Found"},
+                    },
+                ]
+            },
+        }
+        exported = export_python_example(task, trace_format="compact")
+        self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+        comp = json.loads(assistant_visible_text(exported["messages"][-1]).split("```json\n", 1)[1].split("\n```", 1)[0])
+        self.assertEqual(decode_readable(comp["value"]), (b"\x00\xff\x10ok", 404))
+
+    def test_requests_get_post_session_and_exceptions(self):
+        source = """\
+import requests
+
+def run(base):
+    r1 = requests.get(base + "/items", params={"q": "py", "limit": 2})
+    items = r1.json()["items"]
+
+    with requests.post(base + "/items", json={"name": "widget"}, headers={"X-Mode": "fast"}) as r2:
+        r2.raise_for_status()
+        created = r2.text
+
+    with requests.Session() as sess:
+        sess.headers.update({"Authorization": "Bearer secret"})
+        r3 = sess.get(base + "/forbidden")
+        ok3 = r3.ok
+        status3 = r3.status_code
+        reason3 = r3.reason
+        try:
+            r3.raise_for_status()
+            raised_http = False
+        except requests.HTTPError:
+            raised_http = True
+
+        try:
+            sess.get(base + "/timeout")
+            caught = "none"
+        except requests.RequestException as exc:
+            caught = f"{type(exc).__name__}:{isinstance(exc, requests.RequestException)}"
+
+    return {
+        "items": items,
+        "created": created,
+        "r1_ctype": r1.headers.get("content-type"),
+        "r1_bytes_len": len(r1.content),
+        "ok3": ok3,
+        "status3": status3,
+        "reason3": reason3,
+        "raised_http": raised_http,
+        "caught": caught,
+    }
+"""
+        task = {
+            "id": "py-http-requests-1",
+            "family": "py-http-requests",
+            "language": "py",
+            "source": source,
+            "entry": "run",
+            "args": ["https://svc.test"],
+            "fixture": {
+                "calls": [
+                    {
+                        "operation": "http.request",
+                        "arguments": [{"method": "GET", "url": "https://svc.test/items?q=py&limit=2"}],
+                        "status": "fulfilled",
+                        "result": {
+                            "status": 200,
+                            "url": "https://svc.test/items?q=py&limit=2",
+                            "headers": {"Content-Type": "application/json"},
+                            "body": '{"items":[1,2]}',
+                        },
+                    },
+                    {
+                        "operation": "http.request",
+                        "arguments": [{
+                            "method": "POST",
+                            "url": "https://svc.test/items",
+                            "headers": {"X-Mode": "fast", "Content-Type": "application/json"},
+                            "body": '{"name": "widget"}',
+                        }],
+                        "status": "fulfilled",
+                        "result": {
+                            "status": 201,
+                            "url": "https://svc.test/items",
+                            "headers": {},
+                            "body": "created:widget",
+                        },
+                    },
+                    {
+                        "operation": "http.request",
+                        "arguments": [{
+                            "method": "GET",
+                            "url": "https://svc.test/forbidden",
+                            "headers": {"Authorization": "Bearer secret"},
+                        }],
+                        "status": "fulfilled",
+                        "result": {
+                            "status": 403,
+                            "url": "https://svc.test/forbidden",
+                            "headers": {},
+                            "body": "denied",
+                        },
+                    },
+                    {
+                        "operation": "http.request",
+                        "arguments": [{
+                            "method": "GET",
+                            "url": "https://svc.test/timeout",
+                            "headers": {"Authorization": "Bearer secret"},
+                        }],
+                        "status": "rejected",
+                        "result": {"name": "TimeoutError", "message": "read timed out"},
+                    },
+                ]
+            },
+        }
+        exported = export_python_example(task, trace_format="compact")
+        self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+        tool_decl = json.loads(exported["messages"][1]["content"])
+        self.assertEqual([t["function"]["name"] for t in tool_decl], ["http.request"])
+
+        comp = json.loads(assistant_visible_text(exported["messages"][-1]).split("```json\n", 1)[1].split("\n```", 1)[0])
+        self.assertEqual(
+            comp["value"],
+            {
+                "items": [1, 2],
+                "created": "created:widget",
+                "r1_ctype": "application/json",
+                "r1_bytes_len": 15,
+                "ok3": False,
+                "status3": 403,
+                "reason3": "Forbidden",
+                "raised_http": True,
+                "caught": "TimeoutError:True",
+            },
+        )
+
+    def test_fallback_requests_module_when_requests_unavailable(self):
+        script = """
+import json, sys
+for k in list(sys.modules):
+    if k == "requests" or k.startswith("requests."):
+        del sys.modules[k]
+from tinker_py.http_tools import install_replay_http_hooks
+
+expected = [
+    {"status": 200, "url": "https://fb.test/v1?a=1", "headers": {"Content-Type": "application/json"}, "body": '{"ok":true}'},
+    {"name": "ConnectionError", "message": "lost link"},
+]
+recorded = []
+def invoke(op, args, exc_builder=None):
+    recorded.append((op, args))
+    item = expected.pop(0)
+    if "name" in item:
+        raise exc_builder(item)
+    return item
+
+install_replay_http_hooks(invoke, enable_urllib=False, enable_requests=True, force_fallback_requests=True)
+import requests
+from requests import Session, RequestException
+r = requests.get("https://fb.test/v1", params={"a": 1})
+assert r.status_code == 200 and r.ok and r.json() == {"ok": True}
+assert r.headers.get("content-type") == "application/json"
+with Session() as s:
+    try:
+        s.post("https://fb.test/fail", json={"k": 1})
+        raise AssertionError("should have raised")
+    except RequestException as exc:
+        assert type(exc).__name__ == "ConnectionError"
+print(json.dumps(recorded))
+"""
+        proc = subprocess.run(
+            [sys.executable, "-c", script],
+            env={"PYTHONPATH": str(REPO / "training"), "PATH": ""},
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0, msg=f"stderr={proc.stderr}\nstdout={proc.stdout}")
+        recorded = json.loads(proc.stdout.strip())
+        self.assertEqual(
+            recorded,
+            [
+                ["http.request", [{"method": "GET", "url": "https://fb.test/v1?a=1"}]],
+                ["http.request", [{"method": "POST", "url": "https://fb.test/fail", "headers": {"Content-Type": "application/json"}, "body": '{"k": 1}'}]],
+            ],
+        )
+
+    def test_http_causal_zero_future_leakage(self):
+        source = """\
+import json
+import urllib.request
+import requests
+
+def run(url):
+    prefix = "req:" + url.rsplit("/", 1)[-1]
+    with urllib.request.urlopen(url) as resp:
+        cfg = json.loads(resp.read().decode("utf-8"))
+    if cfg["route"] == "fast":
+        res = requests.post(url + "/fast", json={"mode": prefix})
+    else:
+        res = requests.post(url + "/slow", json={"mode": prefix})
+    return {"route": cfg["route"], "reply": res.json()}
+"""
+        def make_task(tid: str, route: str, secret_val: str) -> dict:
+            return {
+                "id": tid,
+                "family": "py-http-causal",
+                "language": "py",
+                "source": source,
+                "entry": "run",
+                "args": ["https://cfg.test/service"],
+                "features": ["external", "http", "branch"],
+                "fixture": {
+                    "calls": [
+                        {
+                            "operation": "http.request",
+                            "arguments": [{"method": "GET", "url": "https://cfg.test/service"}],
+                            "status": "fulfilled",
+                            "result": {
+                                "status": 200,
+                                "url": "https://cfg.test/service",
+                                "headers": {"Content-Type": "application/json"},
+                                "body": json.dumps({"route": route, "secret": secret_val}),
+                            },
+                        },
+                        {
+                            "operation": "http.request",
+                            "arguments": [{
+                                "method": "POST",
+                                "url": f"https://cfg.test/service/{route}",
+                                "headers": {"Content-Type": "application/json"},
+                                "body": '{"mode": "req:service"}',
+                            }],
+                            "status": "fulfilled",
+                            "result": {
+                                "status": 200,
+                                "url": f"https://cfg.test/service/{route}",
+                                "headers": {"Content-Type": "application/json"},
+                                "body": json.dumps({"accepted": route}),
+                            },
+                        },
+                    ]
+                },
+            }
+
+        exp_a = export_python_example(make_task("http-causal-a", "fast", "SECRET_ALPHA_111"), trace_format="compact")
+        exp_b = export_python_example(make_task("http-causal-b", "slow", "SECRET_BETA_222"), trace_format="compact")
+        audit = audit_python_supervision([exp_a, exp_b], {"formats": ["compact", "full", "actions-only"], "samplePerFeature": 4})
+        self.assertTrue(audit["valid"])
+        self.assertTrue(audit["allReplayed"])
+        self.assertGreaterEqual(audit["causalDivergencesChecked"], 1)
+
+        # Turn 0 assistant message before first http.request must be identical and leak no secrets
+        self.assertEqual(exp_a["messages"][3], exp_b["messages"][3])
+        turn0_think = assistant_thinking_text(exp_a["messages"][3])
+        self.assertIn("prefix = 'req:service'", turn0_think)
+        self.assertNotIn("SECRET_ALPHA_111", turn0_think)
+        self.assertNotIn("fast", turn0_think)
+
+    def test_live_capture_harvest_http_end_to_end_and_offline_replay(self):
+        class _Handler(BaseHTTPRequestHandler):
+            def log_message(self, format: str, *args: object) -> None:  # noqa: A002
+                return None
+
+            def do_GET(self) -> None:
+                if self.path.startswith("/items"):
+                    payload = json.dumps({"items": [10, 20, 30], "path": self.path}).encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("X-Server", "local-test")
+                    self.end_headers()
+                    self.wfile.write(payload)
+                elif self.path == "/missing":
+                    payload = b'{"error":"not-here"}'
+                    self.send_response(404)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(payload)
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+
+            def do_POST(self) -> None:
+                length = int(self.headers.get("Content-Length", "0") or 0)
+                raw = self.rfile.read(length)
+                req_json = json.loads(raw.decode("utf-8"))
+                resp = json.dumps({"ok": True, "received": req_json, "hdr": self.headers.get("X-App")}).encode("utf-8")
+                self.send_response(201)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(resp)
+
+        server = ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
+        port = server.server_address[1]
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        base_url = f"http://127.0.0.1:{port}"
+        leaked_cwd_file = Path.cwd() / "harvest_probe_artifact.txt"
+        if leaked_cwd_file.exists():
+            leaked_cwd_file.unlink()
+
+        try:
+            with tempfile.TemporaryDirectory() as tmpdir:
+                root = Path(tmpdir)
+                repos_dir = root / "repos"
+                repo = repos_dir / "live_http_lib"
+                (repo / "pkg").mkdir(parents=True)
+                (repo / "tests").mkdir(parents=True)
+                out_dir = root / "out"
+
+                (repo / "pkg" / "__init__.py").write_text("", encoding="utf-8")
+                (repo / "pkg" / "client.py").write_text(
+                    """\
+import json
+import subprocess
+import urllib.error
+import urllib.request
+import requests
+
+def fetch_with_urllib(url, missing_url):
+    \"\"\"Fetch JSON via urllib and capture 404 HTTPError cleanly.\"\"\"
+    with open("harvest_probe_artifact.txt", "w", encoding="utf-8") as fh:
+        fh.write("isolated")
+    with urllib.request.urlopen(url) as resp:
+        data = json.loads(resp.read().decode("utf-8"))
+    err_code = None
+    try:
+        urllib.request.urlopen(missing_url)
+    except urllib.error.HTTPError as exc:
+        err_code = exc.code
+    return {"total": sum(data["items"]), "err_code": err_code, "srv": resp.headers.get("X-Server")}
+
+def sync_via_requests(base_url, payload):
+    \"\"\"Query items and POST score via requests.\"\"\"
+    r1 = requests.get(base_url + "/items", params={"tag": "alpha"})
+    r1.raise_for_status()
+    items = r1.json()["items"]
+    with requests.Session() as sess:
+        sess.headers.update({"X-App": "harvester"})
+        r2 = sess.post(base_url + "/score", json={"sum": sum(items), "tag": payload["tag"]})
+        r2.raise_for_status()
+    return r2.json()
+
+def blocked_subprocess(cmd):
+    return subprocess.run(cmd, check=False).returncode
+""",
+                    encoding="utf-8",
+                )
+                (repo / "tests" / "test_client.py").write_text(
+                    f"""\
+from pkg.client import fetch_with_urllib, sync_via_requests
+
+BASE = {base_url!r}
+
+def test_http_clients():
+    fetch_with_urllib(BASE + "/items?tag=u", f"{{BASE}}/missing")
+    sync_via_requests(BASE, {{"tag": "prod"}})
+""",
+                    encoding="utf-8",
+                )
+
+                proc = subprocess.run(
+                    [
+                        sys.executable,
+                        str(REPO / "tools/tinker-harvest-py.py"),
+                        "--local-repos",
+                        str(repos_dir),
+                        "--output-dir",
+                        str(out_dir),
+                        "--jobs",
+                        "2",
+                        "--max-per-repo",
+                        "10",
+                        "--max-per-fn",
+                        "3",
+                        "--min-source-chars",
+                        "80",
+                        "--max-source-chars",
+                        "35000",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                    check=False,
+                )
+                self.assertEqual(proc.returncode, 0, msg=f"stderr={proc.stderr}\nstdout={proc.stdout}")
+
+                # Shut down server completely BEFORE verifying offline replay!
+                server.shutdown()
+                server.server_close()
+
+                self.assertFalse(leaked_cwd_file.exists(), "probe leaked file into repo cwd")
+                rows = [
+                    json.loads(line)
+                    for line in (out_dir / "harvested.jsonl").read_text(encoding="utf-8").splitlines()
+                    if line.strip()
+                ]
+                entries = {r["entry"] for r in rows}
+                self.assertIn("fetch_with_urllib", entries)
+                self.assertIn("sync_via_requests", entries)
+                self.assertNotIn("blocked_subprocess", entries)
+
+                for entry_name in ("fetch_with_urllib", "sync_via_requests"):
+                    task_row = next(r for r in rows if r["entry"] == entry_name and "unit-test-input" in r["features"])
+                    self.assertIn("http", task_row["features"])
+                    self.assertIn("http.request", task_row["features"])
+                    self.assertEqual(len(task_row["fixture"]["calls"]), 2)
+                    self.assertTrue(all(c["operation"] == "http.request" for c in task_row["fixture"]["calls"]))
+
+                    # Replay completely offline with server dead!
+                    exported = export_python_example(task_row, trace_format="compact", reasoning_channel="thinking")
+                    self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+                    tool_decl = json.loads(exported["messages"][1]["content"])
+                    self.assertEqual([t["function"]["name"] for t in tool_decl], ["http.request"])
+
+                    prepared = prepare_python_task(task_row, trace_format="compact")
+                    session = create_python_session(prepared)
+                    for msg in exported["messages"][2:]:
+                        if msg["role"] == "assistant":
+                            session.step(msg, 25)
+                    self.assertTrue(session.grade()["success"])
+
+                    comp = json.loads(assistant_visible_text(exported["messages"][-1]).split("```json\n", 1)[1].split("\n```", 1)[0])
+                    self.assertEqual(comp["kind"], "return")
+                    if entry_name == "fetch_with_urllib":
+                        self.assertEqual(comp["value"], {"total": 60, "err_code": 404, "srv": "local-test"})
+                    else:
+                        self.assertEqual(comp["value"], {"ok": True, "received": {"sum": 60, "tag": "prod"}, "hdr": "harvester"})
+        finally:
+            try:
+                server.shutdown()
+                server.server_close()
+            except Exception:
+                pass
+            if leaked_cwd_file.exists():
+                leaked_cwd_file.unlink()
 
 
 if __name__ == "__main__":

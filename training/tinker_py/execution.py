@@ -39,13 +39,21 @@ PY_HOST_OPERATIONS: dict[str, dict[str, Any]] = {
     "fs.readText": {"arity": 1, "description": "Invoke Python external operation fs.readText (1 argument)."},
     "fs.writeText": {"arity": 2, "description": "Invoke Python external operation fs.writeText (2 arguments)."},
     "http.get": {"arity": 1, "description": "Invoke Python external operation http.get (1 argument)."},
-    "http.request": {"arity": 1, "description": "Invoke Python external operation http.request (1 argument)."},
+    "http.request": {
+        "arity": 1,
+        "description": (
+            'Invoke Python external HTTP request (1 argument: canonical dict {"method":"GET"|"POST"|...,"url":str,'
+            '"headers"?:dict[str,str],"body"?:str|bytes}; omit "headers" if empty and "body" if None). '
+            'Returns {"status":int,"url":str,"headers":dict[str,str],"body":str|bytes}.'
+        ),
+    },
     "kv_get": {"arity": 1, "description": "Invoke Python external operation kv_get (1 argument)."},
     "kv_set": {"arity": 2, "description": "Invoke Python external operation kv_set (2 arguments)."},
 }
 
 SYSTEM_PROMPT = """Execute the supplied Python program accurately.
-- For every external read, write, clock, print, random, or host call, invoke the declared tool with {"arguments":[...]} in exact execution order; never invent observations.
+- For every external read, write, clock, print, random, HTTP, or host call, invoke the declared tool with {"arguments":[...]} in exact execution order; never invent observations.
+- HTTP calls (urllib.request.urlopen, requests.get/post/request/Session) invoke http.request with {"arguments":[{"method":"GET"|...,"url":str,"headers"?:{...},"body"?:str|bytes}]} (omit empty "headers" and None "body").
 - When execution finishes, end with one JSON completion in a ```json code fence (or bare JSON):
   {"type":"complete","kind":"return"|"throw","arguments":[final input args],"value":resultOrError}
 - Final "arguments" must reflect all input mutations and aliases. Standard exceptions use {"name":"ValueError","message":"..."}.
@@ -114,6 +122,21 @@ def assistant_thinking_text(message: Any) -> str:
     )
 
 
+_HTTP_REQUESTS_MEMBERS = frozenset({
+    "get",
+    "post",
+    "put",
+    "delete",
+    "patch",
+    "head",
+    "options",
+    "request",
+    "Session",
+    "session",
+    "api",
+})
+
+
 def _scan_public_source_tools(source: str, random_mode: str, native_bindings: list[dict[str, Any]]) -> tuple[list[str], bool]:
     """Derive available tool names STRICTLY from public source and bindings (NEVER fixture)."""
     names: set[str] = {b["name"] for b in native_bindings}
@@ -124,6 +147,11 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
     time_direct: set[str] = set()
     random_aliases: set[str] = set()
     random_direct: set[str] = set()
+    urllib_root_aliases: set[str] = set()
+    urllib_req_aliases: set[str] = set()
+    urlopen_direct: set[str] = set()
+    requests_aliases: set[str] = set()
+    requests_direct: set[str] = set()
 
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -132,6 +160,17 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
                     time_aliases.add(alias.asname or "time")
                 elif alias.name == "random":
                     random_aliases.add(alias.asname or "random")
+                elif alias.name == "urllib":
+                    urllib_root_aliases.add(alias.asname or "urllib")
+                elif alias.name == "urllib.request":
+                    if alias.asname:
+                        urllib_req_aliases.add(alias.asname)
+                    else:
+                        urllib_root_aliases.add("urllib")
+                elif alias.name.startswith("urllib.") and not alias.asname:
+                    urllib_root_aliases.add("urllib")
+                elif alias.name == "requests" or alias.name.startswith("requests."):
+                    requests_aliases.add(alias.asname or "requests")
         elif isinstance(node, ast.ImportFrom):
             if node.module == "time":
                 for alias in node.names:
@@ -143,6 +182,49 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
                         uses_random = True
                         if alias.name == "random":
                             random_direct.add(alias.asname or "random")
+            elif node.module == "urllib":
+                for alias in node.names:
+                    if alias.name == "request":
+                        urllib_req_aliases.add(alias.asname or "request")
+            elif node.module == "urllib.request":
+                for alias in node.names:
+                    if alias.name == "urlopen":
+                        urlopen_direct.add(alias.asname or "urlopen")
+                    elif alias.name == "*":
+                        urlopen_direct.add("urlopen")
+            elif node.module in ("requests", "requests.api", "requests.sessions"):
+                for alias in node.names:
+                    if alias.name in _HTTP_REQUESTS_MEMBERS:
+                        requests_direct.add(alias.asname or alias.name)
+                    elif alias.name == "*":
+                        requests_direct.update(_HTTP_REQUESTS_MEMBERS)
+
+    def _record_attr(attr_node: ast.Attribute) -> None:
+        nonlocal uses_random
+        attr = attr_node.attr
+        if isinstance(attr_node.value, ast.Name):
+            owner = attr_node.value.id
+            if owner == "host":
+                op = PY_HOST_METHODS.get(attr, "demo." + attr)
+                if op in PY_HOST_OPERATIONS or op.startswith("demo."):
+                    names.add(op)
+            elif owner in time_aliases and attr in ("time", "monotonic"):
+                names.add("platform.time")
+            elif owner in random_aliases:
+                uses_random = True
+                if attr == "random" and random_mode == "tool":
+                    names.add("platform.random")
+            elif owner in urllib_req_aliases and attr == "urlopen":
+                names.add("http.request")
+            elif owner in requests_aliases and attr in _HTTP_REQUESTS_MEMBERS:
+                names.add("http.request")
+        elif isinstance(attr_node.value, ast.Attribute) and isinstance(attr_node.value.value, ast.Name):
+            root_name = attr_node.value.value.id
+            inner_attr = attr_node.value.attr
+            if root_name in urllib_root_aliases and inner_attr == "request" and attr == "urlopen":
+                names.add("http.request")
+            elif root_name in requests_aliases and inner_attr == "api" and attr in _HTTP_REQUESTS_MEMBERS:
+                names.add("http.request")
 
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
@@ -156,32 +238,15 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
                     uses_random = True
                     if random_mode == "tool":
                         names.add("platform.random")
-            elif isinstance(fn, ast.Attribute) and isinstance(fn.value, ast.Name):
-                owner = fn.value.id
-                attr = fn.attr
-                if owner == "host":
-                    op = PY_HOST_METHODS.get(attr, "demo." + attr)
-                    if op in PY_HOST_OPERATIONS or op.startswith("demo."):
-                        names.add(op)
-                elif owner in time_aliases and attr in ("time", "monotonic"):
-                    names.add("platform.time")
-                elif owner in random_aliases:
-                    uses_random = True
-                    if attr == "random" and random_mode == "tool":
-                        names.add("platform.random")
-        elif isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
-            owner = node.value.id
-            attr = node.attr
-            if owner == "host":
-                op = PY_HOST_METHODS.get(attr, "demo." + attr)
-                if op in PY_HOST_OPERATIONS or op.startswith("demo."):
-                    names.add(op)
-            elif owner in time_aliases and attr in ("time", "monotonic"):
-                names.add("platform.time")
-            elif owner in random_aliases and attr == "random":
-                uses_random = True
-                if random_mode == "tool":
-                    names.add("platform.random")
+                elif fn.id in urlopen_direct or fn.id in requests_direct:
+                    names.add("http.request")
+            elif isinstance(fn, ast.Attribute):
+                _record_attr(fn)
+        elif isinstance(node, ast.Attribute):
+            _record_attr(node)
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+            if node.id in urlopen_direct or node.id in requests_direct:
+                names.add("http.request")
 
     if uses_random and random_mode == "tool":
         names.add("platform.random")

@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {spawnSync} from 'node:child_process';
+import {spawn, spawnSync} from 'node:child_process';
 import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
+import http from 'node:http';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -13,6 +14,7 @@ import {
   parseHarvesterArgs,
   qualify,
 } from '../tools/tinker-harvest.mjs';
+import {exportTinkerExample, prepareTinkerTask, createTinkerSession, parseStudentAction} from '../src/training/tinker-execution.js';
 
 const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 const HARVEST_ENV_DIR = '/tmp/tinker-harvest-env';
@@ -258,6 +260,108 @@ test('harvester prefers unit-test inputs, supports --unit-tests-only, and keeps 
     assert.ok(rows.some(r => r.metadata.completeKind === 'throw'), 'keeps real unit-test-input exception test');
     assert.ok(rows.every(r => r.metadata.features.includes('unit-test-input')));
   } finally {
+    rmSync(root, {recursive: true, force: true});
+  }
+});
+
+test('live fetch() harvesting against local HTTP server replays deterministically after server shutdown', async () => {
+  const server = http.createServer((req, res) => {
+    if (req.url === '/catalog') {
+      res.writeHead(200, {'Content-Type': 'application/json', 'X-Src': 'local-js'});
+      res.end(JSON.stringify({items: [{price: 10}, {price: 25}]}));
+    } else if (req.url === '/checkout' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        const parsed = JSON.parse(body);
+        res.writeHead(201, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({accepted: true, total: parsed.total}));
+      });
+    } else {
+      res.writeHead(404);
+      res.end('missing');
+    }
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const {port} = server.address();
+  const baseUrl = `http://127.0.0.1:${port}`;
+  const root = mkdtempSync(join(tmpdir(), 'harvest-fetch-e2e-'));
+
+  try {
+    const repoDir = join(root, 'repos', 'demo__fetchpkg');
+    const outDir = join(root, 'out');
+    mkdirSync(join(repoDir, 'src'), {recursive: true});
+    mkdirSync(join(repoDir, 'test'), {recursive: true});
+    writeFileSync(join(repoDir, 'package.json'), JSON.stringify({name: 'demo-fetchpkg', version: '1.0.0', license: 'MIT', type: 'module'}));
+    writeFileSync(join(repoDir, 'src', 'index.js'), `
+      export async function syncOrderTotal(base) {
+        const res = await fetch(base + '/catalog', {headers: {'Accept': 'application/json'}});
+        if (!res.ok) return {ok: false, status: res.status};
+        const data = await res.json();
+        const total = data.items.reduce((s, x) => s + x.price, 0);
+        const postRes = await fetch(base + '/checkout', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({total}),
+        });
+        const receipt = await postRes.json();
+        return {ok: postRes.ok, src: res.headers.get('x-src'), receipt};
+      }
+    `);
+    writeFileSync(join(repoDir, 'test', 'index.test.js'), `
+      import assert from 'node:assert/strict';
+      import {syncOrderTotal} from '../src/index.js';
+      const BASE = ${JSON.stringify(baseUrl)};
+      it('syncs catalog and checkout', async () => {
+        const out = await syncOrderTotal(BASE);
+        assert.equal(out.receipt.total, 35);
+      });
+    `);
+
+    const res = await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [
+        join(REPO_ROOT, 'tools', 'tinker-harvest.mjs'),
+        '--skip-npm',
+        '--mode', 'native',
+        '--env-dir', HARVEST_ENV_DIR,
+        '--local-repos', join(root, 'repos'),
+        '--output-dir', outDir,
+        '--unit-tests-only',
+        '--min-trace-lines', '1',
+        '--max-per-fn', '3',
+      ], {cwd: REPO_ROOT, stdio: ['ignore', 'pipe', 'pipe']});
+      let stdout = '';
+      let stderr = '';
+      child.stdout.on('data', chunk => { stdout += chunk; });
+      child.stderr.on('data', chunk => { stderr += chunk; });
+      child.on('error', reject);
+      child.on('close', status => resolve({status, stdout, stderr}));
+    });
+    assert.equal(res.status, 0, res.stderr);
+
+    // Completely shut down local HTTP server BEFORE replay verification!
+    await new Promise(resolve => server.close(resolve));
+
+    const rows = readFileSync(join(outDir, 'harvested.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
+    assert.equal(rows.length, 1);
+    const taskRow = rows[0];
+    assert.equal(taskRow.executionMode, 'native');
+    assert.ok(taskRow.metadata.features.includes('http.request'));
+    assert.equal(taskRow.fixture.calls.length, 2);
+    assert.ok(taskRow.fixture.calls.every(c => c.operation === 'http.request'));
+
+    const exported = await exportTinkerExample(taskRow, {traceFormat: 'compact', reasoningChannel: 'thinking'});
+    assert.equal(exported.metadata.traceAudit.replayVerified, true);
+    const comp = parseStudentAction(exported.messages.at(-1));
+    assert.deepEqual(comp.value, {ok: true, src: 'local-js', receipt: {accepted: true, total: 35}});
+
+    const session = createTinkerSession(await prepareTinkerTask(taskRow, {traceFormat: 'compact'}));
+    for (const msg of exported.messages.filter(m => m.role === 'assistant')) {
+      await session.step(msg, 25);
+    }
+    assert.equal(session.grade(25).success, true);
+  } finally {
+    try { server.close(); } catch {}
     rmSync(root, {recursive: true, force: true});
   }
 });

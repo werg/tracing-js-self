@@ -12,6 +12,7 @@ import {normalizeJournal} from '../semantic/normalize.js';
 import {independentEffectfulReference} from '../semantic/source-reference.js';
 import {compileBoundedTypeScript} from '../typescript.js';
 import {decode} from '../values.js';
+import {sourceUsesGlobalFetch} from './tinker-http-fetch.js';
 
 export const TINKER_EXECUTION_SCHEMA = 'readable-js-execution/1';
 export const TINKER_TRACE_FORMATS = Object.freeze(['full', 'compact', 'actions-only']);
@@ -184,6 +185,7 @@ export function normalizedSourceHash(source) {
 
 const SYSTEM = `Execute the supplied JavaScript program accurately.
 - For every external read, write, clock, console, or host/native call, invoke the declared tool with {"arguments":[...]} in exact execution order; never invent observations.
+- For fetch(url, init), invoke http.request with {"arguments":[url, method, headersObject, bodyOrNull]}.
 - When execution finishes, end with one JSON completion in a \`\`\`json code fence (or bare JSON):
   {"type":"complete","kind":"return"|"throw","arguments":[final input args],"value":resultOrError}
 - Final "arguments" must reflect all input mutations and aliases. Standard Error throws use {"name":"TypeError","message":"..."}.
@@ -274,7 +276,10 @@ function toolDeclaration(operation, prepared) {
   const binding = prepared.nativeBindings.find(item => item.name === operation);
   const spec = own(HOST_OPERATIONS, operation) ? HOST_OPERATIONS[operation] : null;
   const arity = spec ? spec.arity : null;
-  const description = binding?.description ?? (spec
+  const fetchHint = operation === 'http.request' && sourceUsesGlobalFetch(prepared.source)
+    ? 'Invoke JS external operation http.request (promise, 4 arguments: [url, method, headersObject, bodyOrNull]).'
+    : null;
+  const description = binding?.description ?? fetchHint ?? (spec
     ? `Invoke JS external operation ${operation} (${spec.kind}, ${arity} argument${arity === 1 ? '' : 's'}).`
     : `Invoke JS external operation ${operation}.`);
   return {
@@ -308,6 +313,7 @@ function initialMessages(prepared) {
   for (const match of prepared.source.matchAll(/\bconsole\.(log|info|warn|error)\b/g)) names.add('platform.console.' + match[1]);
   const usesMathRandom = /\bMath\.random\b/.test(prepared.source);
   if (usesMathRandom && prepared.randomMode === 'tool') names.add('platform.random');
+  if (sourceUsesGlobalFetch(prepared.source)) names.add('http.request');
   const operations = [...names].sort();
   const parts = [
     'Execute this JavaScript program:',

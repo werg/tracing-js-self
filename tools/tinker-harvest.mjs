@@ -17,6 +17,7 @@ import {parse} from 'acorn';
 import ts from 'typescript';
 import {prepareTinkerTask, readableMessagesFromJournal, encodeReadable,
   assistantVisibleText, assistantThinkingText} from '../src/training/tinker-execution.js';
+import {createLiveFetchRecorder, sourceUsesGlobalFetch, VM_FETCH_RUNTIME_SCRIPT} from '../src/training/tinker-http-fetch.js';
 import {nearCloneHash, executionInputSignature} from '../src/training/tinker-benchmark.js';
 import {failureCategory} from '../src/training/tinker-verification.js';
 
@@ -279,8 +280,7 @@ function safeErrorDescriptor(err) {
   return {errorName, errorMessage};
 }
 
-function probeExportSafely(bundle, fnName, sampleArgs, {mode = harvestMode} = {}) {
-  const recordedCalls = [];
+function buildProbeContext(sampleArgs, recordedCalls, mode, {fetchTimeoutMs = 4000, maxBodyBytes = 48 * 1024, enableFetch = false} = {}) {
   const baseEnv = {__args: structuredClone(sampleArgs)};
   if (mode === 'native') {
     Object.assign(baseEnv, {URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone});
@@ -302,8 +302,23 @@ function probeExportSafely(bundle, fnName, sampleArgs, {mode = harvestMode} = {}
       if (recordedCalls.length <= 24) recordedCalls.push({operation: 'platform.random', arguments: [], status: 'fulfilled', result: v});
       return v;
     };
+    if (enableFetch) {
+      const {liveFetch} = createLiveFetchRecorder(recordedCalls, {
+        timeoutMs: fetchTimeoutMs,
+        maxBodyBytes,
+        encodeReadable,
+      });
+      baseEnv.__platformFetch = liveFetch;
+    }
   }
   const ctx = vm.createContext(baseEnv);
+  if (mode === 'native' && enableFetch) {
+    new vm.Script(VM_FETCH_RUNTIME_SCRIPT).runInContext(ctx, {timeout: 200});
+  }
+  return ctx;
+}
+
+function buildProbeScript(bundle, fnName, mode) {
   const patchPreamble = mode === 'native'
     ? 'Date.now = __recDateNow; Math.random = __recRandom;\n'
     : '';
@@ -314,7 +329,13 @@ function probeExportSafely(bundle, fnName, sampleArgs, {mode = harvestMode} = {}
       : (fnName === 'default'
         ? '(typeof __harvestBox === "function" ? __harvestBox : (__harvestBox.default ?? __harvestBox))'
         : `(__harvestBox[${JSON.stringify(fnName)}] ?? __harvestBox.default?.[${JSON.stringify(fnName)}])`)};`;
-  const script = new vm.Script(`(() => {\n${patchPreamble}${load}\nif (typeof __fn !== "function") throw new TypeError("__HARVEST_NOT_FN__");\nconst __out = __fn(...__args);\nif (__out && typeof __out.catch === "function") { __out.catch(() => {}); return Promise.resolve(__out); }\nreturn __out;\n})()`);
+  return new vm.Script(`(() => {\n${patchPreamble}${load}\nif (typeof __fn !== "function") throw new TypeError("__HARVEST_NOT_FN__");\nconst __out = __fn(...__args);\nif (__out && typeof __out.catch === "function") { __out.catch(() => {}); return Promise.resolve(__out); }\nreturn __out;\n})()`);
+}
+
+function probeExportSafely(bundle, fnName, sampleArgs, {mode = harvestMode} = {}) {
+  const recordedCalls = [];
+  const ctx = buildProbeContext(sampleArgs, recordedCalls, mode);
+  const script = buildProbeScript(bundle, fnName, mode);
   try {
     const value = script.runInContext(ctx, {timeout: 100});
     if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
@@ -324,6 +345,44 @@ function probeExportSafely(bundle, fnName, sampleArgs, {mode = harvestMode} = {}
     return {kind: 'return', value, recordedCalls};
   } catch (err) {
     if (err && (err.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' || err.message === '__HARVEST_NOT_FN__' || err.message === 'Too many external calls')) {
+      throw err;
+    }
+    if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
+    const {errorName, errorMessage} = safeErrorDescriptor(err);
+    return {kind: 'throw', error: err, errorName, errorMessage, recordedCalls};
+  }
+}
+
+export async function probeExportSafelyAsync(
+  bundle,
+  fnName,
+  sampleArgs,
+  {mode = harvestMode, timeoutMs = 4000, maxBodyBytes = 48 * 1024} = {},
+) {
+  const recordedCalls = [];
+  const ctx = buildProbeContext(sampleArgs, recordedCalls, mode, {
+    fetchTimeoutMs: timeoutMs,
+    maxBodyBytes,
+    enableFetch: mode === 'native',
+  });
+  const script = buildProbeScript(bundle, fnName, mode);
+  try {
+    let value = script.runInContext(ctx, {timeout: 200});
+    if (value && typeof value === 'object' && typeof value.then === 'function') {
+      let timer = null;
+      value = await Promise.race([
+        value,
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error('__HARVEST_ASYNC_TIMEOUT__')), timeoutMs + 2000);
+        }),
+      ]).finally(() => {
+        if (timer) clearTimeout(timer);
+      });
+    }
+    if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
+    return {kind: 'return', value, recordedCalls};
+  } catch (err) {
+    if (err && (err.code === 'ERR_SCRIPT_EXECUTION_TIMEOUT' || err.message === '__HARVEST_NOT_FN__' || err.message === '__HARVEST_ASYNC_TIMEOUT__' || err.message === 'Too many external calls')) {
       throw err;
     }
     if (recordedCalls.length > 24) throw new RangeError('Too many external calls');
@@ -1133,6 +1192,104 @@ export function collectLocalRepoCandidates(rootDir, options = {}) {
   return candidates;
 }
 
+export async function collectLocalAsyncFetchCandidates(rootDir, options = {}) {
+  const effMaxPerFn = options.maxPerFn ?? maxPerFn;
+  const effMaxPerRepo = options.maxPerRepo ?? maxPerRepo;
+  const effMode = options.mode ?? harvestMode;
+  const effEnvDir = options.envDir ?? envDir;
+  const effTimeoutMs = options.timeoutMs ?? 4000;
+  if (effMode !== 'native') return [];
+
+  const candidates = [];
+  const repoEntries = readdirSync(rootDir, {withFileTypes: true}).filter(d => {
+    try {
+      return d.isDirectory() || (d.isSymbolicLink() && statSync(join(rootDir, d.name)).isDirectory());
+    } catch {
+      return false;
+    }
+  }).sort((a, b) => a.name.localeCompare(b.name));
+
+  for (const ent of repoEntries) {
+    const repoDir = join(rootDir, ent.name);
+    const pkgPath = join(repoDir, 'package.json');
+    if (!existsSync(pkgPath)) continue;
+    let pkgJson;
+    try { pkgJson = JSON.parse(readFileSync(pkgPath, 'utf8')); } catch { continue; }
+    const repoSlug = ent.name.replace(/__/g, '/');
+    const repoMeta = {
+      pkgDir: repoDir,
+      pkgName: pkgJson.name || repoSlug,
+      version: pkgJson.version ?? 'HEAD',
+      license: typeof pkgJson.license === 'string' ? pkgJson.license : (pkgJson.license?.type ?? 'unknown'),
+      repository: repoSlug,
+      pkgJson,
+    };
+    const {code: codeFiles, tests: testFiles} = collectSourceAndTestFiles(repoDir);
+    if (!testFiles.length) continue;
+    const shortName = (pkgJson.name || repoSlug.split('/').pop() || '').replace(/^@[^/]+\//, '').replace(/[^a-zA-Z0-9_$]/g, '');
+    let repoAdded = 0;
+
+    for (const file of codeFiles) {
+      if (repoAdded >= effMaxPerRepo) break;
+      const whole = bundleLocalFile(repoMeta, file, null);
+      if (whole.error || whole.code.length > 90000 || !/\bfetch\b/.test(whole.code)) continue;
+      let mod;
+      try {
+        const ctx = vm.createContext({});
+        mod = new vm.Script(`(() => {\n${whole.code}\nreturn __harvestBox;\n})()`).runInContext(ctx, {timeout: 100});
+      } catch { continue; }
+      const fnNames = [];
+      try {
+        if (typeof mod === 'function') fnNames.push('default');
+        if (mod && typeof mod === 'object') {
+          if (typeof mod.default === 'function') fnNames.push('default');
+          for (const k of Object.keys(mod).sort()) {
+            try { if (k !== 'default' && !k.startsWith('_') && typeof mod[k] === 'function') fnNames.push(k); } catch {}
+          }
+        }
+      } catch { continue; }
+      if (!fnNames.length) continue;
+      const relFile = relative(repoDir, file);
+      const testCalls = extractTestCallsFromFiles(repoDir, testFiles, fnNames, [shortName], {envDir: effEnvDir, targetFile: relFile, pkgName: repoMeta.pkgName});
+      for (const fnName of fnNames) {
+        if (repoAdded >= effMaxPerRepo) break;
+        const entries = testCalls.get(fnName) ?? [];
+        if (!entries.length) continue;
+        const b = bundleLocalFile(repoMeta, file, fnName);
+        if (b.error || b.code.length > 70000 || !sourceUsesGlobalFetch(b.code)) continue;
+        let kept = 0;
+        const seenOut = new Set();
+        for (const entry of entries) {
+          if (kept >= effMaxPerFn || repoAdded >= effMaxPerRepo) break;
+          let res;
+          try {
+            res = await probeExportSafelyAsync(b, fnName, entry.args, {mode: 'native', timeoutMs: effTimeoutMs});
+          } catch { continue; }
+          if (!res.recordedCalls.some(c => c.operation === 'http.request')) continue;
+          let outKey;
+          if (res.kind === 'throw') {
+            if (res.errorName === 'ReferenceError' && /\bis not defined\b/.test(res.errorMessage)) continue;
+            outKey = `throw:${res.errorName}:${res.errorMessage}`;
+          } else {
+            if (res.value === undefined || typeof res.value === 'function' || typeof res.value === 'symbol') continue;
+            try { outKey = JSON.stringify(encodeReadable(res.value)); } catch { continue; }
+          }
+          if (seenOut.has(outKey) && kept >= 1) continue;
+          seenOut.add(outKey);
+          candidates.push(buildDirectTask({
+            bundle: b, fnName, args: entry.args, index: kept++,
+            origin: 'dgx-oss-unit-test', testFile: entry.file, recordedCalls: res.recordedCalls, mode: 'native',
+            isAsync: true,
+            extraFeatures: ['dgx-repo', 'unit-test-input', 'external', 'http', 'http.request'],
+          }));
+          repoAdded++;
+        }
+      }
+    }
+  }
+  return candidates;
+}
+
 // --- 2. Extract static JS literal calls from real OSS GitHub test suites ---
 export function evalStaticAst(node, env = null, ctx = null, depth = 0) {
   if (!node || depth > 20) return {ok: false};
@@ -1358,18 +1515,20 @@ function harvestTestCallsFromRepo(repoUrl, slug, exportNames, aliases = []) {
 }
 
 // --- 3. Build runnable task around a tree-shaken real OSS bundle ---
-function buildDirectTask({bundle, fnName, args, index, origin, testFile = null, recordedCalls = [], extraFeatures = [], mode = harvestMode}) {
+function buildDirectTask({bundle, fnName, args, index, origin, testFile = null, recordedCalls = [], extraFeatures = [], mode = harvestMode, isAsync = false}) {
   const params = args.map((_, i) => 'a' + i).join(', ');
+  const runPrefix = isAsync ? 'async function run' : 'function run';
+  const callPrefix = isAsync ? 'await ' : '';
   let source;
   if (bundle.directTarget) {
-    source = `"use strict";\nfunction __loadMod() {\nlet __harvestTarget;\n${bundle.code}\nreturn __harvestTarget;\n}\nfunction run(${params}) {\n  const __fn = __loadMod();\n  return __fn(${params});\n}\n`;
+    source = `"use strict";\nfunction __loadMod() {\nlet __harvestTarget;\n${bundle.code}\nreturn __harvestTarget;\n}\n${runPrefix}(${params}) {\n  const __fn = __loadMod();\n  return ${callPrefix}__fn(${params});\n}\n`;
   } else {
     const access = !bundle.wholeModule
       ? '(__box.default ?? __box)'
       : (fnName === 'default'
         ? '(typeof __box === "function" ? __box : (__box.default ?? __box))'
         : `(__box[${JSON.stringify(fnName)}] ?? __box.default?.[${JSON.stringify(fnName)}])`);
-    source = `"use strict";\nfunction __loadMod() {\n${bundle.code}\nreturn __harvestBox;\n}\nfunction run(${params}) {\n  const __box = __loadMod();\n  return ${access}(${params});\n}\n`;
+    source = `"use strict";\nfunction __loadMod() {\n${bundle.code}\nreturn __harvestBox;\n}\n${runPrefix}(${params}) {\n  const __box = __loadMod();\n  return ${callPrefix}${access}(${params});\n}\n`;
   }
   const family = `oss:${bundle.pkgName}/${bundle.subpath}#${fnName}`;
   const id = `oss-${bundle.pkgName.replace(/[^a-zA-Z0-9_-]/g, '_')}-${fnName.replace(/[^a-zA-Z0-9_-]/g, '_')}-${index}-${sha256([family, args, recordedCalls]).slice(0, 8)}`;
@@ -2135,15 +2294,21 @@ async function collectAllCandidates() {
     const localCands = collectLocalRepoCandidates(localReposDir, {
       maxPerFn, maxPerRepo, mode: harvestMode, preferUnitTests, unitTestsOnly, envDir,
     });
-    process.stderr.write(`harvest: local-repos: ${localCands.length} calls from ${localReposDir}\n`);
+    const asyncFetchCands = harvestMode === 'native'
+      ? await collectLocalAsyncFetchCandidates(localReposDir, {
+          maxPerFn, maxPerRepo, mode: harvestMode, envDir,
+        })
+      : [];
+    const combinedLocal = [...localCands, ...asyncFetchCands];
+    process.stderr.write(`harvest: local-repos: ${combinedLocal.length} calls from ${localReposDir}\n`);
     if (preferUnitTests) {
       const isUt = t => (t.metadata?.features ?? []).includes('unit-test-input');
-      const localUnit = localCands.filter(isUt);
-      const localOther = localCands.filter(t => !isUt(t));
+      const localUnit = combinedLocal.filter(isUt);
+      const localOther = combinedLocal.filter(t => !isUt(t));
       candidates.unshift(...localUnit);
       candidates.push(...localOther);
     } else {
-      candidates.push(...localCands);
+      candidates.push(...combinedLocal);
     }
   }
 
