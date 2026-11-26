@@ -66,6 +66,7 @@ DEFAULTS: dict[str, Any] = {
     "checkpoint_every": 1,
     "length_penalty": 0.25,
     "length_scale_tokens": 2048,
+    "code_load_latency_tokens": 0.0,
     "advantage_mode": "decoupled",
     "rl_objective": "likelihood",
     "target_anchor_weight": 0.25,
@@ -306,6 +307,11 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
         raise ValueError("held-out fractions must leave training families")
     if not 0 <= config["length_penalty"] < 1:
         raise ValueError("length_penalty must be in [0, 1), so every verified success beats failure")
+    if (isinstance(config["code_load_latency_tokens"], bool)
+            or not isinstance(config["code_load_latency_tokens"], (int, float))
+            or not math.isfinite(config["code_load_latency_tokens"])
+            or config["code_load_latency_tokens"] < 0):
+        raise ValueError("code_load_latency_tokens must be finite and nonnegative")
     for name in ("learning_rate", "sft_learning_rate", "rl_learning_rate", "reference_kl_clip",
                  "bridge_timeout_seconds", "confident_length_std_floor"):
         value = config[name]
@@ -1727,8 +1733,14 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         batch_groups = []
         for _ in range(prompts_per_step):
             row, curriculum_selection = curriculum_pick(train_rows, config, state, rng)
-            ext_calls = task_metadata(row).get("externalCalls", 0)
-            has_ext = isinstance(ext_calls, (int, float)) and not isinstance(ext_calls, bool) and ext_calls > 0
+            meta = task_metadata(row)
+            ext_calls = meta.get("externalCalls", 0)
+            code_load_calls = meta.get("codeLoadCalls", 0)
+            has_ext = (
+                (isinstance(ext_calls, (int, float)) and not isinstance(ext_calls, bool) and ext_calls > 0)
+                or (isinstance(code_load_calls, (int, float)) and not isinstance(code_load_calls, bool) and code_load_calls > 0)
+                or isinstance((row.get("task") or {}).get("files"), dict)
+            )
             if likelihood_mode:
                 if rollout_fraction > 0.0 and has_ext and rng.random() < rollout_fraction:
                     group_mode = "rollout"
@@ -1913,6 +1925,10 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                     turns = adapter.extract_turn_targets(row["messages"])
                     turn_cache[row["id"]] = turns
                 row_has_tools = any(m.get("role") == "tool" for m in row["messages"])
+                row_has_code_load = (
+                    isinstance((row.get("task") or {}).get("files"), dict)
+                    or any(m.get("role") == "tool" and m.get("name") == "code.load" for m in row["messages"])
+                )
                 mt_opsd_scored = 0
                 mt_opsd_active = 0
                 mt_opsd_ratios: list[float] = []
@@ -1940,20 +1956,46 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                         prefix_messages = rec_msgs[:-1]
                     else:
                         prefix_messages = rec_msgs
+                    rec_has_code_load = any(
+                        m.get("role") == "tool" and m.get("name") == "code.load"
+                        for m in prefix_messages
+                    )
                     turn_target = None
-                    if row_has_tools and all("message_index" in t for t in turns):
-                        tool_count_so_far = sum(1 for m in prefix_messages if m.get("role") == "tool")
-                        if tool_count_so_far >= k:
+                    if row_has_code_load or rec_has_code_load:
+                        # Flexible code.load rollouts may batch or choose different granularity
+                        # than the teacher; only align to a teacher turn when the exact prefix
+                        # tool observation sequence matches identically.
+                        if all("message_index" in t for t in turns):
+                            prefix_tool_obs = [
+                                (m.get("name"), m.get("content"))
+                                for m in prefix_messages
+                                if m.get("role") == "tool"
+                            ]
                             turn_target = next(
                                 (
                                     t for t in turns
-                                    if sum(1 for m in row["messages"][:t["message_index"]] if m.get("role") == "tool")
-                                    == tool_count_so_far
+                                    if [
+                                        (m.get("name"), m.get("content"))
+                                        for m in row["messages"][:t["message_index"]]
+                                        if m.get("role") == "tool"
+                                    ] == prefix_tool_obs
                                 ),
                                 None,
                             )
-                    if turn_target is None and k < len(turns):
-                        turn_target = turns[k]
+                    else:
+                        if row_has_tools and all("message_index" in t for t in turns):
+                            tool_count_so_far = sum(1 for m in prefix_messages if m.get("role") == "tool")
+                            if tool_count_so_far >= k:
+                                turn_target = next(
+                                    (
+                                        t for t in turns
+                                        if sum(1 for m in row["messages"][:t["message_index"]] if m.get("role") == "tool")
+                                        == tool_count_so_far
+                                    ),
+                                    None,
+                                )
+                        if turn_target is None and k < len(turns):
+                            turn_target = turns[k]
                     if turn_target is None:
                         continue
                     eff_anchor = (

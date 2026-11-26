@@ -46,6 +46,20 @@ def compression_coefficient(config: dict, step: int, *, gate_open: bool = True) 
     return config["length_penalty"] * factor
 
 
+def _record_code_load_calls(record: dict) -> int:
+    grade = record.get("grade") if isinstance(record.get("grade"), dict) else {}
+    raw = grade.get("codeLoadCalls")
+    if raw is None:
+        raw = grade.get("code_load_calls")
+    if raw is None:
+        raw = record.get("codeLoadCalls")
+    if raw is None:
+        raw = record.get("code_load_calls", 0)
+    if isinstance(raw, bool) or not isinstance(raw, int) or raw < 0:
+        raise ValueError("code_load_calls must be a nonnegative integer")
+    return raw
+
+
 def execution_advantages(records: list[dict], config: dict, coefficient: float | None = None) -> dict:
     """Separate correctness and success-conditional length credit.
 
@@ -55,6 +69,9 @@ def execution_advantages(records: list[dict], config: dict, coefficient: float |
     In ``decoupled`` mode only correctness is standardized; in ``centered``
     mode both components retain fixed raw scale. Changing coefficient changes
     the length contribution linearly in every group, including all-success.
+    When ``code_load_latency_tokens > 0``, effective length cost includes
+    ``code_load_latency_tokens * code_load_calls`` so RL jointly optimizes
+    tokens and code.load tool-call round-trip latency.
     """
     if not records:
         raise ValueError("execution advantages require at least one rollout")
@@ -64,16 +81,21 @@ def execution_advantages(records: list[dict], config: dict, coefficient: float |
     scale = config["length_scale_tokens"]
     if not math.isfinite(scale) or scale <= 0:
         raise ValueError("length_scale_tokens must be finite and positive")
+    raw_latency = config.get("code_load_latency_tokens", 0.0)
+    if isinstance(raw_latency, bool) or not isinstance(raw_latency, (int, float)) or not math.isfinite(raw_latency) or raw_latency < 0:
+        raise ValueError("code_load_latency_tokens must be finite and nonnegative")
+    latency_tokens = float(raw_latency)
     correct = [float(bool(record["grade"]["success"])) for record in records]
     tokens = [record["generated_tokens"] for record in records]
     if any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in tokens):
         raise ValueError("generated token counts must be nonnegative integers")
+    code_loads = [_record_code_load_calls(record) for record in records]
     compress_only_accurate = bool(config.get("compress_only_accurate_groups", False))
     correctness = centered(correct, standardize=config.get("advantage_mode", "decoupled") == "decoupled")
     successful = [index for index, value in enumerate(correct) if value]
     length = [0.0] * len(records)
     if successful and (not compress_only_accurate or len(successful) == len(records)):
-        costs = [min(tokens[index] / scale, 1.0) for index in successful]
+        costs = [min((tokens[index] + latency_tokens * code_loads[index]) / scale, 1.0) for index in successful]
         mean_cost = statistics.fmean(costs)
         for index, cost in zip(successful, costs):
             length[index] = mean_cost - cost

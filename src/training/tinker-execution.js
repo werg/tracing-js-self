@@ -13,6 +13,8 @@ import {independentEffectfulReference} from '../semantic/source-reference.js';
 import {compileBoundedTypeScript} from '../typescript.js';
 import {decode} from '../values.js';
 import {sourceUsesGlobalFetch} from './tinker-http-fetch.js';
+import {normalizeCodebaseSpec, codebaseSourceHash, renderRepoManifest,
+  serveCodeLoad, codeLoadResultBytes} from './tinker-codebase.js';
 
 export const TINKER_EXECUTION_SCHEMA = 'readable-js-execution/1';
 export const TINKER_TRACE_FORMATS = Object.freeze(['full', 'compact', 'actions-only']);
@@ -195,14 +197,20 @@ function normalizeTask(input) {
   demand(plain(input), 'Task must be an object');
   demand(typeof input.id === 'string' && input.id.length > 0 && input.id.length <= 256, 'Task id required');
   demand(typeof input.family === 'string' && input.family.length > 0, 'Source family required');
-  demand(typeof input.source === 'string' && input.source.length > 0 && input.source.length <= 262144, 'Bounded source required');
+  const hasFiles = input.files !== undefined && input.files !== null;
+  const codebase = hasFiles ? normalizeCodebaseSpec(input) : null;
+  if (!hasFiles) {
+    demand(typeof input.source === 'string' && input.source.length > 0 && input.source.length <= 262144, 'Bounded source required');
+  }
   const entry = input.entry ?? 'run';
   demand(/^[A-Za-z_$][\w$]*$/.test(entry), 'Entry must be an identifier');
   const args = input.inputGraph ? decodeOwnedGraph(JSON.stringify(input.inputGraph)) : decodeReadable(input.args ?? []);
   demand(Array.isArray(args) && args.length <= 32, 'At most 32 input arguments are supported');
-  const language = input.language ?? 'js';
+  const language = input.language ?? (hasFiles && /\.(?:ts|tsx|mts|cts)$/i.test(codebase.entryFile) ? 'ts' : 'js');
   demand(['js', 'ts'].includes(language), 'Language must be js or ts');
-  let source = language === 'ts' ? compileBoundedTypeScript(input.source, {path: input.path ?? 'training.ts'}).javascript : input.source;
+  let source = hasFiles
+    ? codebase.files[codebase.entryFile]
+    : (language === 'ts' ? compileBoundedTypeScript(input.source, {path: input.path ?? 'training.ts'}).javascript : input.source);
   const randomSeed = input.randomSeed ?? 17;
   demand(Number.isInteger(randomSeed) && randomSeed >= 0 && randomSeed <= 0xffffffff, 'randomSeed must be uint32');
   const nativeBindings = clone(input.nativeBindings ?? []), names = new Set();
@@ -234,26 +242,35 @@ function normalizeTask(input) {
     const sequential = fixture.calls.flatMap((call, index) => hostOperation(call.operation).kind === 'promise' ? [index] : []);
     demand(isDeepStrictEqual(fixture.settlementOrder, sequential), 'Out-of-order concurrent observations require a separate execution profile');
   }
-  const parsedSource = parse(source, {ecmaVersion: 'latest', sourceType: 'script'});
-  for (const declaration of parsedSource.body) if (declaration.type === 'FunctionDeclaration')
-    demand(!names.has(declaration.id.name), 'Native binding shadows a source function');
-  if (parsedSource.body[0]?.directive !== 'use strict') source = '"use strict";\n' + source;
-  const sourceHash = normalizedSourceHash(source);
-  const preamble = nativeBindings.map(binding => 'function ' + binding.name + '(...args){return host.' +
-    (binding.kind === 'promise' ? 'natlangCall' : 'natlangCallSync') + '(' + JSON.stringify(binding.name) + ',undefined,args);}').join('\n');
-  const executableSource = source + '\n' + preamble;
-  const executionMode = input.executionMode ?? 'owned';
+  let sourceHash, executableSource;
+  if (hasFiles) {
+    sourceHash = codebaseSourceHash(codebase.files, codebase.entryFile, entry);
+    executableSource = source;
+  } else {
+    const parsedSource = parse(source, {ecmaVersion: 'latest', sourceType: 'script'});
+    for (const declaration of parsedSource.body) if (declaration.type === 'FunctionDeclaration')
+      demand(!names.has(declaration.id.name), 'Native binding shadows a source function');
+    if (parsedSource.body[0]?.directive !== 'use strict') source = '"use strict";\n' + source;
+    sourceHash = normalizedSourceHash(source);
+    const preamble = nativeBindings.map(binding => 'function ' + binding.name + '(...args){return host.' +
+      (binding.kind === 'promise' ? 'natlangCall' : 'natlangCallSync') + '(' + JSON.stringify(binding.name) + ',undefined,args);}').join('\n');
+    executableSource = source + '\n' + preamble;
+  }
+  const executionMode = input.executionMode ?? (hasFiles ? 'native' : 'owned');
   demand(['owned', 'native'].includes(executionMode), 'executionMode must be owned or native');
+  if (hasFiles) demand(executionMode === 'native', 'Multi-file tasks require executionMode: "native"');
   const randomMode = input.randomMode ?? 'seeded';
   demand(['seeded', 'tool'].includes(randomMode), 'randomMode must be seeded or tool');
   const maxSteps = input.maxSteps ?? 100000, timeoutMs = input.timeoutMs ?? 10000;
   demand(Number.isSafeInteger(maxSteps) && maxSteps > 0 && maxSteps <= 1000000, 'Invalid teacher step limit');
   demand(Number.isSafeInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 60000, 'Invalid teacher timeout');
-  const task = {...clone(input), entry, language, ...(executionMode !== 'owned' ? {executionMode} : {}),
+  const task = {...clone(input), ...(hasFiles ? {source, files: codebase.files, entryFile: codebase.entryFile,
+    initialLoadedFiles: codebase.initialLoadedFiles} : {}), entry, language, ...(executionMode !== 'owned' ? {executionMode} : {}),
     ...(randomMode !== 'seeded' ? {randomMode} : {}), randomSeed, nativeBindings, args: encodeReadable(args), freshRandomCalls: 0,
     fixture: {calls: decodedCalls.map(call => ({operation: call.operation, arguments: encodeReadable(call.arguments),
       status: call.status ?? 'fulfilled', result: encodeReadable(call.result)})), settlementOrder: fixture.settlementOrder}, maxSteps, timeoutMs};
   return {id: input.id, family: input.family, sourceHash, source, executableSource, entry, args, fixture, nativeBindings,
+    ...(hasFiles ? {files: codebase.files, entryFile: codebase.entryFile, initialLoadedFiles: codebase.initialLoadedFiles} : {}),
     executionMode, randomMode, randomSeed, maxSteps, timeoutMs, task};
 }
 
@@ -273,10 +290,30 @@ function privateOperation(prepared, operation, args) {
 }
 
 function toolDeclaration(operation, prepared) {
+  if (operation === 'code.load') {
+    return {
+      type: 'function',
+      function: {
+        name: 'code.load',
+        description: 'Load source code on demand from unloaded repository files. Pass {"arguments":[req1, ...]} where each request is {"path":"rel/path.js"} (whole file), {"path":"rel/path.js","symbol":"name"} (symbol snippet with imports and top-level consts), or {"path":"rel/path.js","startLine":1,"endLine":50} (1-based inclusive line range). Batch multiple requests in one call when helpful.',
+        parameters: {
+          type: 'object',
+          properties: {
+            arguments: {
+              type: 'array',
+              description: 'Ordered list of code.load request objects ({path}, {path, symbol}, or {path, startLine, endLine}).',
+            },
+          },
+          required: ['arguments'],
+        },
+      },
+    };
+  }
   const binding = prepared.nativeBindings.find(item => item.name === operation);
   const spec = own(HOST_OPERATIONS, operation) ? HOST_OPERATIONS[operation] : null;
   const arity = spec ? spec.arity : null;
-  const fetchHint = operation === 'http.request' && sourceUsesGlobalFetch(prepared.source)
+  const scanSource = prepared.files ? Object.values(prepared.files).join('\n') : prepared.source;
+  const fetchHint = operation === 'http.request' && sourceUsesGlobalFetch(scanSource)
     ? 'Invoke JS external operation http.request (promise, 4 arguments: [url, method, headersObject, bodyOrNull]).'
     : null;
   const description = binding?.description ?? fetchHint ?? (spec
@@ -304,22 +341,37 @@ function toolDeclaration(operation, prepared) {
 function initialMessages(prepared) {
   // Derive available tools only from public source/bindings, never the private
   // expected call inventory (which could reveal which branch will execute).
+  const scanSource = prepared.files ? Object.values(prepared.files).join('\n') : prepared.source;
   const names = new Set(prepared.nativeBindings.map(binding => binding.name));
-  for (const match of prepared.source.matchAll(/\bhost\.([A-Za-z_$][\w$]*)/g)) {
+  if (prepared.files) names.add('code.load');
+  for (const match of scanSource.matchAll(/\bhost\.([A-Za-z_$][\w$]*)/g)) {
     const operation = HOST_METHODS[match[1]] ?? 'demo.' + match[1];
     if (own(HOST_OPERATIONS, operation)) names.add(operation);
   }
-  if (/\bDate\.now\b/.test(prepared.source)) names.add('platform.dateNow');
-  for (const match of prepared.source.matchAll(/\bconsole\.(log|info|warn|error)\b/g)) names.add('platform.console.' + match[1]);
-  const usesMathRandom = /\bMath\.random\b/.test(prepared.source);
+  if (/\bDate\.now\b/.test(scanSource)) names.add('platform.dateNow');
+  for (const match of scanSource.matchAll(/\bconsole\.(log|info|warn|error)\b/g)) names.add('platform.console.' + match[1]);
+  const usesMathRandom = /\bMath\.random\b/.test(scanSource);
   if (usesMathRandom && prepared.randomMode === 'tool') names.add('platform.random');
-  if (sourceUsesGlobalFetch(prepared.source)) names.add('http.request');
+  if (sourceUsesGlobalFetch(scanSource)) names.add('http.request');
   const operations = [...names].sort();
-  const parts = [
-    'Execute this JavaScript program:',
-    '```javascript\n' + prepared.source + '\n```',
-    'Entry: ' + prepared.entry + ' with arguments ' + JSON.stringify(encodeReadable(prepared.args)),
-  ];
+  let parts;
+  if (prepared.files) {
+    parts = [
+      'Execute this multi-file JavaScript/TypeScript program. Use code.load to inspect unloaded files or symbols on demand.',
+      renderRepoManifest(prepared.files, prepared.entryFile, prepared.initialLoadedFiles),
+    ];
+    for (const relPath of prepared.initialLoadedFiles) {
+      const fenceLang = /\.(?:ts|tsx|mts|cts)$/i.test(relPath) ? 'typescript' : 'javascript';
+      parts.push('File: ' + relPath + '\n```' + fenceLang + '\n' + prepared.files[relPath] + '\n```');
+    }
+    parts.push('Entry: ' + prepared.entry + ' in ' + prepared.entryFile + ' with arguments ' + JSON.stringify(encodeReadable(prepared.args)));
+  } else {
+    parts = [
+      'Execute this JavaScript program:',
+      '```javascript\n' + prepared.source + '\n```',
+      'Entry: ' + prepared.entry + ' with arguments ' + JSON.stringify(encodeReadable(prepared.args)),
+    ];
+  }
   if (usesMathRandom) {
     if (prepared.randomMode === 'tool') {
       parts.push('Math.random() is non-deterministic: invoke the platform.random tool with {"arguments":[]} for each Math.random() call.');
@@ -328,7 +380,10 @@ function initialMessages(prepared) {
         ' with state=(Math.imul(state,1664525)+1013904223)>>>0; return state/4294967296.');
     }
   }
-  const messages = [{role: 'system', content: SYSTEM}];
+  const systemPrompt = prepared.files
+    ? SYSTEM + '\n- For unloaded repository files, invoke code.load with {"arguments":[...]} on demand (whole file for small files, symbol snippet or line range for large files; you may batch multiple requests).'
+    : SYSTEM;
+  const messages = [{role: 'system', content: systemPrompt}];
   if (operations.length) {
     const tools = operations.map(op => toolDeclaration(op, prepared));
     messages.push({role: 'tool_declare', content: JSON.stringify(tools)});
@@ -346,6 +401,8 @@ export async function prepareTinkerTask(input, options = {}) {
   if (prepared.executionMode === 'native') {
     const format = options.traceFormat ? traceFormat(options) : 'actions-only';
     const baseRefInput = {source: prepared.executableSource, entry: prepared.entry,
+      ...(prepared.files ? {files: prepared.files, entryFile: prepared.entryFile,
+        initialLoadedFiles: prepared.initialLoadedFiles, nativeBindings: prepared.nativeBindings} : {}),
       inputGraph: encodeNativeGraph(prepared.args), fixture: prepared.fixture,
       randomSeed: prepared.randomMode === 'tool' ? null : prepared.randomSeed,
       randomMode: prepared.randomMode, executionMode: 'native'};
@@ -366,7 +423,9 @@ export async function prepareTinkerTask(input, options = {}) {
       reference = await independentEffectfulReference(baseRefInput, {timeoutMs: prepared.timeoutMs});
     }
     demand(reference.callbackFailures.length === 0 && (reference.unhandledRejections ?? []).length === 0, 'Unsettled guest failures cannot be admitted');
-    const result = {...prepared, bundle: null, outcome: reference.outcome, effects: reference.effects, traceTurns};
+    const turnEvents = Array.isArray(reference.turnEvents) ? reference.turnEvents : null;
+    const result = {...prepared, bundle: null, outcome: reference.outcome, effects: reference.effects, traceTurns,
+      ...(turnEvents ? {turnEvents} : {})};
     readableMessagesFromJournal(null, result, {traceFormat: format});
     return result;
   }
@@ -531,9 +590,37 @@ export function readableMessagesFromJournal(bundle, prepared, options = {}) {
   const dispatches = prepared.effects.filter(row => row.kind === 'dispatch');
   const settlements = new Map(prepared.effects.filter(row => row.kind === 'settlement').map(row => [row.call, row]));
   if (bundle === null) {
-    // Native V8 execution mode: emit exact recorded external tool-call sequence and final completion,
-    // attaching causal per-turn native compact trace lines when available and requested.
+    // Native V8 execution mode: emit exact recorded external tool-call sequence (and causal
+    // code.load turns for multi-file tasks) plus final completion, attaching causal per-turn
+    // native compact trace lines when available and requested.
     const turns = format !== 'actions-only' && Array.isArray(prepared.traceTurns) ? prepared.traceTurns : null;
+    if (prepared.files && Array.isArray(prepared.turnEvents)) {
+      let emittedDispatches = 0;
+      for (let index = 0; index < prepared.turnEvents.length; index++) {
+        const event = prepared.turnEvents[index];
+        const callId = 'call_' + (index + 1);
+        if (event.kind === 'code.load') {
+          messages.push(assistantToolCallMessage('code.load', event.arguments, turns?.[index] ?? [], channel, callId));
+          const loadResults = serveCodeLoad(prepared.files, event.arguments);
+          messages.push(observation('code.load', 'fulfilled', loadResults, callId));
+        } else {
+          const receipt = dispatches[event.dispatchIndex];
+          demand(receipt, 'Missing external dispatch for turn event');
+          emittedDispatches++;
+          const call = publicOperation(prepared, receipt.operation, graphRoots(receipt.arguments));
+          messages.push(assistantToolCallMessage(call.operation, encodeReadable(call.arguments), turns?.[index] ?? [], channel, callId));
+          const settlement = settlements.get(receipt.call);
+          demand(settlement, 'Missing external settlement');
+          messages.push(observation(call.operation, settlement.status, graphRoots(settlement.result)[0], callId));
+        }
+      }
+      demand(emittedDispatches === dispatches.length, 'Multi-file turnEvents/dispatch count mismatch');
+      const roots = graphRoots(prepared.outcome.graph), value = roots.pop();
+      const completion = encodeReadable({arguments: roots, value});
+      messages.push(assistantMessage({type: 'complete', kind: prepared.outcome.kind,
+        arguments: completion.arguments, value: completion.value}, turns?.[prepared.turnEvents.length] ?? [], channel));
+      return messages;
+    }
     for (let index = 0; index < dispatches.length; index++) {
       const receipt = dispatches[index];
       const call = publicOperation(prepared, receipt.operation, graphRoots(receipt.arguments));
@@ -591,7 +678,10 @@ export async function exportTinkerExample(input, options = {}) {
       sourceVerified: true, teacher: prepared.executionMode === 'native' ? 'native-v8-reference' : 'owned-runtime+native-reference', traceFormat: format, reasoningChannel: channel, traceAudit,
       traceRenderer: 'causal-event-source', referenceNarrationScope: 'event-source-aliases-without-final-heap-inference',
       externalObservationsTrainable: false, runtimeIdentifiersInTargets: false,
-      externalCalls: prepared.fixture.calls.length, profile: 'sequential-data-execution',
+      externalCalls: prepared.fixture.calls.length,
+      ...(prepared.files ? {codeLoadCalls: (prepared.turnEvents ?? []).filter(e => e.kind === 'code.load').length,
+        fileCount: Object.keys(prepared.files).length, entryFile: prepared.entryFile} : {}),
+      profile: 'sequential-data-execution',
       exceptionProfile: 'declared-error/name-message/1', optimizerSteps: 0}};
 }
 
@@ -666,6 +756,7 @@ function parseToolCall(tc) {
   let args;
   if (Array.isArray(rawArgs)) args = rawArgs;
   else if (plain(rawArgs) && Array.isArray(rawArgs.arguments) && Object.keys(rawArgs).length === 1) args = rawArgs.arguments;
+  else if (fn.name === 'code.load' && plain(rawArgs) && plain(rawArgs.arguments) && Object.keys(rawArgs).length === 1) args = [rawArgs.arguments];
   else if (plain(rawArgs) && Object.keys(rawArgs).length === 0) args = [];
   else throw new TypeError('Invalid tool call arguments');
   const toolCallId = typeof tc.id === 'string' && tc.id.length > 0 ? tc.id : null;
@@ -714,7 +805,8 @@ export function parseStudentAction(input) {
  * ends the rollout without disclosing the expected next operation or result. */
 export function createTinkerSession(prepared) {
   const broker = createFixtureBroker(prepared.fixture);
-  let done = false, completed = false, success = false, reason = 'incomplete', failureCategory = 'incomplete', generatedTokens = 0, calls = 0, turns = 0;
+  let done = false, completed = false, success = false, reason = 'incomplete', failureCategory = 'incomplete',
+    generatedTokens = 0, calls = 0, turns = 0, codeLoadCalls = 0, codeLoadBytes = 0;
   const maxTurns = prepared.task.maxTurns ?? 256;
   demand(Number.isSafeInteger(maxTurns) && maxTurns > 0 && maxTurns <= 4096, 'Invalid rollout turn limit');
   const count = total => {
@@ -724,7 +816,8 @@ export function createTinkerSession(prepared) {
   const grade = total => {
     if (total !== undefined) count(total);
     return {success: done && success, reward: done && success ? 1 / (1 + generatedTokens / 1000) : 0,
-      reason, failureCategory, generatedTokens, externalCalls: calls, complete: completed};
+      reason, failureCategory, generatedTokens, externalCalls: calls, complete: completed,
+      ...(prepared.files ? {codeLoadCalls, codeLoadBytes} : {})};
   };
   const reject = (why, category = why) => { done = true; success = false; reason = why; failureCategory = category;
     broker.abort(); return {messages: [], done, grade: grade()}; };
@@ -765,6 +858,15 @@ export function createTinkerSession(prepared) {
         const batch = action.type === 'calls' ? action.calls : [action];
         const observations = [];
         for (const item of batch) {
+          if (prepared.files && item.operation === 'code.load') {
+            const args = decodeReadable(item.arguments);
+            const loadResults = serveCodeLoad(prepared.files, args);
+            codeLoadCalls++;
+            codeLoadBytes += codeLoadResultBytes(loadResults);
+            const toolCallId = item.toolCallId ?? ('code_load_' + codeLoadCalls);
+            observations.push(observation('code.load', 'fulfilled', loadResults, toolCallId));
+            continue;
+          }
           const args = decodeReadable(item.arguments);
           demand(Array.isArray(args), 'Call arguments must be an array');
           const request = privateOperation(prepared, item.operation, args);
