@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {encodeReadable, decodeReadable, prepareTinkerTask, exportTinkerExample,
   createTinkerSession, parseStudentAction, normalizedSourceHash,
   assistantVisibleText, assistantThinkingText} from '../src/training/tinker-execution.js';
+import {hardEffectfulTasks, hardEffectfulTemplates} from '../src/training/tinker-hard-effectful.js';
 
 const task = (source, options = {}) => ({id: 'case', family: 'family', source, args: [], ...options});
 const complete = (value, args = [], kind = 'return') => {
@@ -390,4 +391,38 @@ test('native V8 compact trace bounds massive loops with head+tail compaction', a
   assert.equal(prepared.traceTurns[0].length, 300);
   assert.ok(prepared.traceTurns[0].some(line => /^\.\.\. \(\d+ steps omitted\) \.\.\.$/.test(line)));
   assert.equal(prepared.traceTurns[0].at(-1), 'return 499500');
+});
+
+test('hard multi-turn native effectful suite defines 16x5 tier-5 tasks and exports verified compact traces', async () => {
+  const templates = hardEffectfulTemplates();
+  const tasks = hardEffectfulTasks();
+  assert.equal(templates.length, 16);
+  assert.equal(tasks.length, 80);
+  assert.equal(new Set(tasks.map(t => t.id)).size, 80);
+  assert.equal(new Set(tasks.map(t => t.family)).size, 16);
+  for (const t of tasks) {
+    assert.equal(t.executionMode, 'native');
+    assert.equal(t.metadata.tier, 5);
+    assert.ok(t.fixture.calls.length >= 3 && t.fixture.calls.length <= 18, `${t.id} calls=${t.fixture.calls.length}`);
+  }
+  // Verify representative sample spanning Date.now(), Math.random(), HTTP, FS, KV bindings, RegExp/URL, and aliasing.
+  const sampleIds = [
+    'hard-eff-deadline-bounded-diff-scan-1',
+    'hard-eff-jittered-backoff-retry-client-1',
+    'hard-eff-ttl-lru-cache-engine-0',
+    'hard-eff-weighted-reservoir-sampler-0',
+    'hard-eff-circuit-breaker-half-open-clock-0',
+    'hard-eff-idempotency-key-router-0',
+    'hard-eff-regex-log-redactor-pipeline-0',
+    'hard-eff-canary-traffic-splitter-1',
+  ];
+  for (const id of sampleIds) {
+    const task = tasks.find(t => t.id === id);
+    assert.ok(task, 'missing sample task ' + id);
+    const exported = await exportTinkerExample(task, {traceFormat: 'compact'});
+    assert.equal(exported.metadata.traceAudit.replayVerified, true, id);
+    assert.equal(exported.metadata.traceAudit.canonicalCausalNarration, true, id);
+    assert.equal(exported.metadata.externalCalls, task.fixture.calls.length, id);
+    assert.ok(exported.metadata.traceAudit.narrationLines > 0, id);
+  }
 });
