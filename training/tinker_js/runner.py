@@ -29,7 +29,7 @@ from typing import Any
 from .learning import (DIFFICULTY_SAMPLING_DEFAULTS, choose_validation_checkpoint, compression_coefficient,
                        curriculum_pick, difficulty_pick, execution_advantages, likelihood_advantages,
                        pick_turn_target, sft_epoch_rows, task_metadata, update_curriculum, update_task_difficulty)
-from .metrics import paired_statistics, summarize_records
+from .metrics import paired_statistics, summarize_records, task_eval_bucket
 
 
 DEFAULTS: dict[str, Any] = {
@@ -1076,13 +1076,16 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
 
     def _run_eval_job(row: dict, repeat: int, seed: int) -> dict:
         record = rollout(bridge, adapter, row["task"], config, seed)
+        lang = row.get("language") or (row.get("task") or {}).get("language")
+        extra_lang = {"language": lang} if lang else {}
         record.update(task_id=row["id"], family=row["family"], source_hash=row["sourceHash"],
                       stage=stage, split=split, repeat=repeat,
                       configuration_hash=config_fingerprint(config), model=config["model"],
                       task_hash=digest(row["task"]), sampling_checkpoint=checkpoint,
                       implementation_hash=implementation_hash, selection_hash=selection["hash"],
                       split_component=row.get("split_component"),
-                      features=task_metadata(row)["features"], tier=task_metadata(row)["tier"])
+                      features=task_metadata(row)["features"], tier=task_metadata(row)["tier"],
+                      **extra_lang)
         return record
 
     def _record_eval_result(record: dict) -> None:
