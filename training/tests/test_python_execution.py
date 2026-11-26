@@ -25,6 +25,7 @@ from tinker_py.codec import (
 )
 from tinker_py.execution import (
     TINKER_PY_EXECUTION_SCHEMA,
+    _scan_public_source_tools,
     assistant_thinking_text,
     assistant_visible_text,
     audit_python_conversation,
@@ -509,13 +510,16 @@ def run(state, key):
         exp_a = export_python_example(task_a, trace_format="compact", reasoning_channel="thinking")
         exp_b = export_python_example(task_b, trace_format="compact", reasoning_channel="thinking")
 
-        # Verify tool_declare comes strictly from public source and includes all 5 ops
+        # Verify tool_declare comes strictly from public source and includes all 5 ops,
+        # and every tool (including 0-arg platform.time / platform.random) requires ["arguments"].
         tool_decl = json.loads(exp_a["messages"][1]["content"])
         declared_names = sorted(t["function"]["name"] for t in tool_decl)
         self.assertEqual(
             declared_names,
             ["kv_get", "kv_set", "platform.print", "platform.random", "platform.time"],
         )
+        for decl in tool_decl:
+            self.assertEqual(decl["function"]["parameters"]["required"], ["arguments"])
 
         # Verify zero future leakage: prefix up to first diverging tool observation (kv_get) must be IDENTICAL!
         audit = audit_python_supervision([exp_a, exp_b], {"formats": ["compact"], "samplePerFeature": 4})
@@ -533,6 +537,58 @@ def run(state, key):
         # Verify prepared traceTurns length == dispatches + 1
         prep = prepare_python_task(task_a, trace_format="compact")
         self.assertEqual(len(prep["traceTurns"]), 6)  # 5 dispatches + 1 final
+
+    def test_scan_public_source_tools_detects_datetime_today_and_requires_arguments(self):
+        # 1. Exact waditu__tushare last_tddate pattern (datetime.datetime.today())
+        tushare_src = (
+            "import datetime\n\n"
+            "def day_last_week(days=-7):\n"
+            "    lasty = datetime.datetime.today().date() + datetime.timedelta(days)\n"
+            "    return str(lasty)\n\n"
+            "def last_tddate():\n"
+            "    today = datetime.datetime.today().date()\n"
+            "    today = int(today.strftime('%w'))\n"
+            "    if today == 0:\n"
+            "        return day_last_week(-2)\n"
+            "    return day_last_week(-1)\n"
+        )
+        ops, uses_rand = _scan_public_source_tools(tushare_src, "seeded", [])
+        self.assertEqual(ops, ["platform.time"])
+        self.assertFalse(uses_rand)
+
+        task = {
+            "id": "py-datetime-today-test",
+            "family": "py-datetime-today",
+            "language": "py",
+            "source": tushare_src,
+            "entry": "last_tddate",
+            "args": [],
+            "fixture": {
+                "calls": [
+                    {"operation": "platform.time", "arguments": [], "status": "fulfilled", "result": 1700000000.0},
+                    {"operation": "platform.time", "arguments": [], "status": "fulfilled", "result": 1700000000.25},
+                ]
+            },
+        }
+        exported = export_python_example(task, trace_format="compact")
+        self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+        tool_decl = json.loads(exported["messages"][1]["content"])
+        self.assertEqual([d["function"]["name"] for d in tool_decl], ["platform.time"])
+        self.assertEqual(tool_decl[0]["function"]["parameters"]["required"], ["arguments"])
+
+        # 2. Aliases and direct from-imports for datetime.today() / date.today()
+        for src in (
+            "import datetime as dt\ndef run(): return dt.date.today().isoformat()\n",
+            "from datetime import datetime\ndef run(): return datetime.today().year\n",
+            "from datetime import date as d\ndef run(): return d.today().day\n",
+        ):
+            detected, _ = _scan_public_source_tools(src, "seeded", [])
+            self.assertEqual(detected, ["platform.time"], src)
+
+        # 3. datetime.now() does NOT invoke time.time() in CPython, so platform.time is not falsely declared.
+        now_src = "import datetime\ndef run(): return datetime.datetime.now().year\n"
+        now_ops, _ = _scan_public_source_tools(now_src, "seeded", [])
+        self.assertEqual(now_ops, [])
 
     def test_exact_failure_categories(self):
         task = self._workflow_task("py-wf-grade", kv_val=12, rand_val=0.5, ts=1700000001.0)

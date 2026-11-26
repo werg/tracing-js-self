@@ -67,6 +67,8 @@ def failure_category(record: dict) -> str:
     detail = str(grade.get("failureCategory", grade.get("category", ""))).lower()
     if detail:
         return detail
+    if "tool_call_schema_error" in reason:
+        return "tool_call_schema_error"
     if any(value in reason for value in ("parse", "malformed", "invalid_action", "invalid action")):
         return "malformed_action"
     if any(value in reason for value in ("truncat", "token_budget")):

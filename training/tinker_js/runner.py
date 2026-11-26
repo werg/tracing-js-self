@@ -69,8 +69,11 @@ DEFAULTS: dict[str, Any] = {
     "advantage_mode": "decoupled",
     "rl_objective": "likelihood",
     "target_anchor_weight": 0.25,
+    "tool_turn_anchor_weight": None,
     "likelihood_std_floor": 0.5,
     "confident_length_std_floor": 64.0,
+    "compress_only_accurate_groups": False,
+    "compression_ll_threshold": None,
     "opsd_coef": 0.0,
     "opsd_clip": 5.0,
     "opsd_ll_threshold": -0.5,
@@ -79,6 +82,7 @@ DEFAULTS: dict[str, Any] = {
     "opsd_norm_mode": "trajectory",
     "rl_group_temperature_spread": 0.0,
     "multiturn_rollout_fraction": 0.0,
+    "multiturn_opsd_on_failure": False,
     "compression_warmup_steps": 0,
     "compression_ramp_steps": 4,
     "compression_min_accuracy": 0.5,
@@ -283,7 +287,8 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
         value = config[name]
         if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
             raise ValueError(f"{name} must be a positive integer")
-    for name in ("checkpoint_every_update", "enforce_turn_budget"):
+    for name in ("checkpoint_every_update", "enforce_turn_budget",
+                 "compress_only_accurate_groups", "multiturn_opsd_on_failure"):
         if not isinstance(config[name], bool):
             raise ValueError(f"{name} must be a boolean")
     for name in ("sft_epochs", "rl_steps", "validation_every", "compression_warmup_steps", "compression_ramp_steps"):
@@ -312,6 +317,17 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
     if (isinstance(config["target_anchor_weight"], bool) or not isinstance(config["target_anchor_weight"], (int, float))
             or not math.isfinite(config["target_anchor_weight"]) or config["target_anchor_weight"] < 0):
         raise ValueError("target_anchor_weight must be finite and nonnegative")
+    if config["tool_turn_anchor_weight"] is not None:
+        if (isinstance(config["tool_turn_anchor_weight"], bool)
+                or not isinstance(config["tool_turn_anchor_weight"], (int, float))
+                or not math.isfinite(config["tool_turn_anchor_weight"])
+                or config["tool_turn_anchor_weight"] < 0):
+            raise ValueError("tool_turn_anchor_weight must be null or finite and nonnegative")
+    if config["compression_ll_threshold"] is not None:
+        if (isinstance(config["compression_ll_threshold"], bool)
+                or not isinstance(config["compression_ll_threshold"], (int, float))
+                or not math.isfinite(config["compression_ll_threshold"])):
+            raise ValueError("compression_ll_threshold must be null or finite")
     if (isinstance(config["likelihood_std_floor"], bool) or not isinstance(config["likelihood_std_floor"], (int, float))
             or not math.isfinite(config["likelihood_std_floor"]) or config["likelihood_std_floor"] < 0):
         raise ValueError("likelihood_std_floor must be finite and nonnegative")
@@ -896,10 +912,12 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int, *, t
             message = sample.get("message")
             if isinstance(message, dict) and message.get("role") == "assistant":
                 messages.append(copy.deepcopy(message))
-            if not sample.get("complete", True) or sample.get("stop_reason") in ("length", "max_tokens"):
+            if not sample.get("complete", True) or sample.get("stop_reason") in ("length", "max_tokens", "max_length"):
+                is_truncated = sample.get("stop_reason") in ("length", "max_tokens", "max_length")
                 forced_failure = (sample.get("failure_reason")
                     or ("sampling_provenance_error" if sample.get("provenance_error") else None)
-                    or ("sample_parse_error" if sample.get("parse_error") else None)
+                    or ("truncated_sample" if is_truncated else None)
+                    or ("sample_parse_error" if (sample.get("parse_error") or not sample.get("complete", True)) else None)
                     or "truncated_sample")
                 break
             if not isinstance(message, dict) or message.get("role") != "assistant":
@@ -1856,6 +1874,13 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         counters = state.setdefault("rl_group_counts", {"all_failure": 0, "mixed_success": 0,
                                                          "all_success": 0, "zero_advantage": 0, "useful": 0})
         curriculum_results = []
+        multiturn_opsd_turns = 0
+        multiturn_opsd_enabled = (
+            likelihood_mode
+            and rollout_fraction > 0.0
+            and bool(config.get("multiturn_opsd_on_failure", False))
+            and hasattr(adapter, "score_rollout_turn_failure")
+        )
         for group_idx, (row, curriculum_selection, _seeds, _tt, group_mode) in enumerate(batch_groups):
             group_records = records[group_idx * group_size:(group_idx + 1) * group_size]
             is_likelihood_group = (group_mode == "likelihood")
@@ -1882,6 +1907,103 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                         opsd_deltas is not None and any(abs(v) > 1e-12 for v in opsd_deltas)
                     ):
                         record["has_token_advantages"] = True
+            if (not is_likelihood_group) and multiturn_opsd_enabled and row.get("messages"):
+                turns = turn_cache.get(row["id"])
+                if turns is None:
+                    turns = adapter.extract_turn_targets(row["messages"])
+                    turn_cache[row["id"]] = turns
+                row_has_tools = any(m.get("role") == "tool" for m in row["messages"])
+                mt_opsd_scored = 0
+                mt_opsd_active = 0
+                mt_opsd_ratios: list[float] = []
+                teacher_scorer = adapter.reference_client if config.get("opsd_teacher") == "reference" else None
+                raw_tool_anchor = config.get("tool_turn_anchor_weight")
+                base_anchor = float(config.get("target_anchor_weight", 0.25))
+                for index, record in enumerate(group_records):
+                    if record["grade"].get("success"):
+                        continue
+                    if record["grade"].get("reason") in ("turn_budget_exhausted", "generated_token_budget_exhausted"):
+                        continue
+                    samples = record.get("samples") or []
+                    if not samples or not turns:
+                        continue
+                    k = len(samples) - 1
+                    fail_sample = samples[k]
+                    if fail_sample.get("provenance_error"):
+                        continue
+                    rec_msgs = record.get("messages") or []
+                    if (
+                        rec_msgs
+                        and isinstance(fail_sample.get("message"), dict)
+                        and rec_msgs[-1].get("role") == "assistant"
+                    ):
+                        prefix_messages = rec_msgs[:-1]
+                    else:
+                        prefix_messages = rec_msgs
+                    turn_target = None
+                    if row_has_tools and all("message_index" in t for t in turns):
+                        tool_count_so_far = sum(1 for m in prefix_messages if m.get("role") == "tool")
+                        if tool_count_so_far >= k:
+                            turn_target = next(
+                                (
+                                    t for t in turns
+                                    if sum(1 for m in row["messages"][:t["message_index"]] if m.get("role") == "tool")
+                                    == tool_count_so_far
+                                ),
+                                None,
+                            )
+                    if turn_target is None and k < len(turns):
+                        turn_target = turns[k]
+                    if turn_target is None:
+                        continue
+                    eff_anchor = (
+                        float(raw_tool_anchor)
+                        if (turn_target.get("is_tool_call") and raw_tool_anchor is not None)
+                        else base_anchor
+                    )
+                    credit = adapter.score_rollout_turn_failure(
+                        fail_sample,
+                        prefix_messages,
+                        turn_target,
+                        opsd_coef=float(config.get("opsd_coef", 0.0)),
+                        opsd_clip=float(config.get("opsd_clip", 5.0)),
+                        teacher_scorer=teacher_scorer,
+                        anchor_weight=eff_anchor,
+                    )
+                    opsd_deltas = credit.get("opsd_token_deltas")
+                    anchor_sample = credit.get("anchor_sample")
+                    scored_toks = int(credit.get("opsd_tokens_scored", 0) or 0)
+                    base_adv = float(sig["advantages"][index])
+                    assigned_credit = False
+                    nonzero_credit = False
+                    if opsd_deltas is not None:
+                        fail_sample["opsd_token_deltas"] = opsd_deltas
+                        fail_sample["token_advantages"] = [base_adv + float(d) for d in opsd_deltas]
+                        if any(abs(float(d)) > 1e-12 for d in opsd_deltas):
+                            record["has_token_advantages"] = True
+                            assigned_credit = True
+                            nonzero_credit = True
+                    if scored_toks > 0:
+                        mt_opsd_scored += 1
+                        if opsd_deltas is not None and any(abs(float(d)) > 1e-12 for d in opsd_deltas):
+                            mt_opsd_active += 1
+                        if credit.get("opsd_mean_log_ratio") is not None:
+                            mt_opsd_ratios.append(float(credit["opsd_mean_log_ratio"]))
+                        assigned_credit = True
+                    if anchor_sample is not None:
+                        record["multiturn_anchor_sample"] = anchor_sample
+                        assigned_credit = True
+                        nonzero_credit = True
+                    if assigned_credit:
+                        record["multiturn_failed_turn_index"] = k
+                        multiturn_opsd_turns += 1
+                    if nonzero_credit:
+                        sig["zero_advantage_group"] = False
+                if mt_opsd_scored > 0:
+                    sig["opsd_scored_rollouts"] = sig.get("opsd_scored_rollouts", 0) + mt_opsd_scored
+                    sig["opsd_active_rollouts"] = sig.get("opsd_active_rollouts", 0) + mt_opsd_active
+                    if mt_opsd_ratios:
+                        sig["opsd_mean_log_ratio"] = statistics.fmean(mt_opsd_ratios)
             counters[sig["group_kind"]] += 1
             counters["zero_advantage" if sig["zero_advantage_group"] else "useful"] += 1
             curriculum_results.append(update_curriculum(train_rows, config, state, curriculum_selection, group_records))
@@ -1901,6 +2023,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             if abs(record["advantage"]) > 1e-12
             or abs(record.get("target_advantage", 0.0)) > 1e-12
             or bool(record.get("has_token_advantages"))
+            or record.get("multiturn_anchor_sample") is not None
         ]
         update_records = records if config["reference_kl_coef"] else nonzero
         regularization_only = bool(update_records) and not nonzero
@@ -1909,6 +2032,10 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         if update_records:
             trajectories = [{"samples": record["samples"], "advantage": record["advantage"]}
                             for record in update_records]
+            for record in update_records:
+                anchor = record.get("multiturn_anchor_sample")
+                if anchor is not None:
+                    trajectories.append({"samples": [anchor], "advantage": 0.0, "is_anchor": True})
             options = {"loss_fn": config["rl_loss_fn"], "loss_fn_config": config["rl_loss_fn_config"],
                        "learning_rate": lr}
             metrics, pending = _submit_update(adapter, output_dir, state, config, stage="rl", step=step + 1,
@@ -1956,7 +2083,8 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                          "opsd_mean_log_ratio": opsd_mean_ratio}
                         if opsd_enabled else {}),
                      **({"multiturn_rollout_groups": multiturn_rollout_groups,
-                         "multiturn_rollout_acc": multiturn_rollout_acc}
+                         "multiturn_rollout_acc": multiturn_rollout_acc,
+                         "multiturn_opsd_turns": multiturn_opsd_turns}
                         if multiturn_hybrid else {}),
                      "group_kind": signals["group_kind"], "zero_advantage_group": signals["zero_advantage_group"],
                      "compression_coefficient": coefficient, "length_signal": signals["length_signal"],
@@ -1978,7 +2106,8 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             mt_str = ""
             if multiturn_hybrid:
                 mt_acc_str = f"{multiturn_rollout_acc:.1%}" if multiturn_rollout_acc is not None else "n/a"
-                mt_str = f" multiturn={multiturn_rollout_groups}/{len(batch_groups)}({mt_acc_str})"
+                opsd_turns_str = f",opsd_turns={multiturn_opsd_turns}" if config.get("multiturn_opsd_on_failure") else ""
+                mt_str = f" multiturn={multiturn_rollout_groups}/{len(batch_groups)}({mt_acc_str}{opsd_turns_str})"
             print(f"rl step {step + 1}/{config['rl_steps']}: lr={lr:.2e} "
                   f"mean_ll={ll_str} best_ll={best_str} term={step_acc:.1%} "
                   f"mean_tok={step_tok:.0f} useful={useful_in_step}/{len(all_signals)} "

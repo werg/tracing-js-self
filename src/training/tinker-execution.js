@@ -290,7 +290,7 @@ function toolDeclaration(operation, prepared) {
             description: `Ordered JS arguments passed to ${operation}.`,
           },
         },
-        required: arity === 0 ? [] : ['arguments'],
+        required: ['arguments'],
       },
     },
   };

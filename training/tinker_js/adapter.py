@@ -843,6 +843,146 @@ class TinkerAdapter:
             "sampler_revision": self.sampling_revision,
         }
 
+    def score_rollout_turn_failure(
+        self,
+        sample: Mapping[str, Any],
+        prefix_messages: Sequence[Mapping[str, Any]],
+        turn_target: Mapping[str, Any],
+        *,
+        opsd_coef: float = 0.0,
+        opsd_clip: float = 5.0,
+        teacher_scorer=None,
+        anchor_weight: float = 0.0,
+    ) -> dict[str, Any]:
+        """Score a failing rollout turn's thinking under C3_user_front OPSD and optional target action anchor."""
+        if sample.get("provenance_error"):
+            return {"opsd_token_deltas": None, "anchor_sample": None,
+                    "opsd_tokens_scored": 0, "opsd_mean_log_ratio": None}
+        msg_model_id, content_thinking_id, end_message_id = self.thinking_token_ids()
+        token_ids = [int(t) for t in sample.get("token_ids", [])]
+        raw_logprobs = list(sample.get("logprobs") or [])
+        prompt_tokens = [int(t) for t in sample.get("prompt_tokens", [])]
+        sdk = self._sdk()
+        client = self.sampling_client
+        if client is None:
+            client = self.create_sampling_client()
+
+        # Extract thinking token span inside sampled turn tokens.
+        think_start: int | None = None
+        if len(token_ids) >= 2 and token_ids[0] == msg_model_id and token_ids[1] == content_thinking_id:
+            think_start = 2
+        elif len(token_ids) >= 1 and token_ids[0] == content_thinking_id:
+            think_start = 1
+
+        opsd_token_deltas: list[float] | None = None
+        opsd_tokens_scored = 0
+        log_ratio_sum = 0.0
+        if (
+            opsd_coef > 0
+            and think_start is not None
+            and len(raw_logprobs) == len(token_ids)
+        ):
+            try:
+                think_end = think_start + token_ids[think_start:].index(end_message_id) + 1
+            except ValueError:
+                think_end = len(token_ids)
+            z_tokens = token_ids[think_start:think_end]
+            z_s_lps = raw_logprobs[think_start:think_end]
+            if (
+                z_tokens
+                and len(z_s_lps) == len(z_tokens)
+                and all(isinstance(lp, (int, float)) and not isinstance(lp, bool) and math.isfinite(lp) for lp in z_s_lps)
+            ):
+                teacher_thinking_prompt: list[int] | None = None
+                full_trace_text = turn_target.get("full_trace_text")
+                if full_trace_text and prefix_messages:
+                    trace_header = (
+                        "<mechanistic_trace>\n" + str(full_trace_text) + "\n</mechanistic_trace>\n\n"
+                        "Reference execution trace above (do not cite it; derive your execution naturally from the code below).\n\n"
+                    )
+                    teacher_prefix_messages = copy.deepcopy(list(prefix_messages))
+                    user_idx = next(
+                        (i for i, m in enumerate(teacher_prefix_messages)
+                         if m.get("role") == "user" and isinstance(m.get("content"), str)),
+                        None,
+                    )
+                    if user_idx is not None:
+                        teacher_prefix_messages[user_idx]["content"] = (
+                            trace_header + teacher_prefix_messages[user_idx]["content"]
+                        )
+                    else:
+                        teacher_prefix_messages.insert(0, {"role": "user", "content": trace_header.strip()})
+                    with self._lock:
+                        teacher_prefix_tokens = list(
+                            sdk.renderer.build_generation_prompt(
+                                self._messages(teacher_prefix_messages), effort=self.effort
+                            ).to_ints()
+                        )
+                    teacher_thinking_prompt = teacher_prefix_tokens + [msg_model_id, content_thinking_id]
+                elif turn_target.get("teacher_thinking_prompt_tokens"):
+                    teacher_thinking_prompt = [int(t) for t in turn_target["teacher_thinking_prompt_tokens"]]
+
+                if teacher_thinking_prompt and len(teacher_thinking_prompt) + len(z_tokens) <= self.max_context_tokens:
+                    t_client = teacher_scorer or client
+                    t_full = teacher_thinking_prompt + z_tokens
+                    t_values = self._retry_idempotent(
+                        lambda: t_client.compute_logprobs(
+                            sdk.types.ModelInput.from_ints(t_full),
+                            prompt_logprobs_last_n=len(z_tokens),
+                        ),
+                        "multiturn failure OPSD teacher scoring",
+                        attempts=2,
+                    )
+                    if len(t_values) != len(t_full):
+                        raise AdapterError("Multiturn teacher scoring returned misaligned log probabilities")
+                    t_lps = [_finite(v, "teacher thinking logprob") for v in t_values[-len(z_tokens):]]
+                    opsd_token_deltas = [0.0] * len(token_ids)
+                    for offset, (s_lp, t_lp) in enumerate(zip(z_s_lps, t_lps)):
+                        diff = float(t_lp) - float(s_lp)
+                        clipped = max(-opsd_clip, min(opsd_clip, diff))
+                        opsd_token_deltas[think_start + offset] = opsd_coef * clipped
+                        log_ratio_sum += diff
+                        opsd_tokens_scored += 1
+
+        anchor_sample: dict[str, Any] | None = None
+        target_tokens = [int(t) for t in (turn_target.get("target_action_tokens") or [])]
+        if anchor_weight > 0 and target_tokens and prompt_tokens:
+            if self.effort > 0.0:
+                anchor_prompt = prompt_tokens + [msg_model_id, content_thinking_id, end_message_id]
+            else:
+                anchor_prompt = list(prompt_tokens)
+            if len(anchor_prompt) + len(target_tokens) <= self.max_context_tokens:
+                a_full = anchor_prompt + target_tokens
+                a_values = self._retry_idempotent(
+                    lambda: client.compute_logprobs(
+                        sdk.types.ModelInput.from_ints(a_full),
+                        prompt_logprobs_last_n=len(target_tokens),
+                    ),
+                    "multiturn failure target anchor logprob scoring",
+                    attempts=2,
+                )
+                if len(a_values) != len(a_full):
+                    raise AdapterError("Multiturn target anchor scoring returned misaligned log probabilities")
+                target_lps = [_finite(v, "target action logprob") for v in a_values[-len(target_tokens):]]
+                anchor_sample = {
+                    "prompt_tokens": anchor_prompt,
+                    "token_ids": target_tokens,
+                    "logprobs": target_lps,
+                    "token_advantages": [float(anchor_weight)] * len(target_tokens),
+                    "sampler_revision": sample.get("sampler_revision", self.sampling_revision),
+                    "is_target_anchor": True,
+                    "turn_index": turn_target.get("turn_index", 0),
+                    "operation": turn_target.get("operation"),
+                    "is_tool_call": bool(turn_target.get("is_tool_call")),
+                }
+
+        return {
+            "opsd_token_deltas": opsd_token_deltas,
+            "anchor_sample": anchor_sample,
+            "opsd_tokens_scored": opsd_tokens_scored,
+            "opsd_mean_log_ratio": (log_ratio_sum / opsd_tokens_scored) if opsd_tokens_scored > 0 else None,
+        }
+
     def token_accounting(self, tokens: Sequence[int]) -> dict[str, int]:
         """Partition original TML tokens, conservatively retaining unknown boundaries.
 
@@ -1124,7 +1264,26 @@ class TinkerAdapter:
                     parse_error = f"Renderer parsing failed ({type(exc).__name__})"
             accounting = self.token_accounting(tokens)
         stop_reason = str(sequences[0].stop_reason) if len(sequences) == 1 else "invalid_response"
-        complete = bool(tokens) and clean and not provenance_errors and stop_reason not in {"length", "max_tokens", "max_length"}
+        is_length_stop = stop_reason in {"length", "max_tokens", "max_length"}
+        complete = bool(tokens) and clean and not provenance_errors and not is_length_stop
+        failure_reason = None
+        if not provenance_errors and not complete and not is_length_stop:
+            has_tool_invoke_tag = (
+                isinstance(message.get("content"), str) and "<|content_invoke_tool_json|>" in message["content"]
+            )
+            if not has_tool_invoke_tag:
+                tok = getattr(sdk, "tokenizer", None)
+                if tok is not None and hasattr(tok, "decode"):
+                    try:
+                        has_tool_invoke_tag = any(
+                            self._token_pieces.get(t, tok.decode([t])) == "<|content_invoke_tool_json|>"
+                            for t in tokens
+                        )
+                    except Exception:
+                        has_tool_invoke_tag = False
+            failure_reason = "tool_call_schema_error" if has_tool_invoke_tag else "sample_parse_error"
+            if parse_error is None:
+                parse_error = f"Renderer returned non-clean termination ({termination_name})"
         record = {
             "message": message,
             "text": assistant_text(message),
@@ -1143,6 +1302,8 @@ class TinkerAdapter:
             record["provenance_error"] = "; ".join(provenance_errors)
         if parse_error:
             record["parse_error"] = parse_error
+        if failure_reason:
+            record["failure_reason"] = failure_reason
         return record
 
     def _update(self, datums: list, loss_fn: str, learning_rate: float | None,
@@ -1260,13 +1421,25 @@ class TinkerAdapter:
         sdk = self._sdk()
         datums, samples, reference_values, sampling_values = [], [], [], []
         shaping_clipped = 0
-        traj_lengths = [sum(len(s.get("token_ids", [])) for s in trajectory["samples"]) for trajectory in trajectories]
-        mean_traj_len = statistics.fmean(traj_lengths) if traj_lengths else 1.0
+        traj_lengths = [
+            sum(len(s.get("token_ids", [])) for s in trajectory["samples"] if not s.get("is_target_anchor"))
+            for trajectory in trajectories
+        ]
+        non_anchor_lengths = [
+            length for trajectory, length in zip(trajectories, traj_lengths)
+            if not trajectory.get("is_anchor") and length > 0
+        ]
+        mean_traj_len = statistics.fmean(non_anchor_lengths) if non_anchor_lengths else 1.0
         for trajectory, traj_len in zip(trajectories, traj_lengths):
+            is_anchor_traj = bool(trajectory.get("is_anchor"))
             raw_advantage = _finite(trajectory["advantage"], "advantage")
-            scale = (mean_traj_len / traj_len) if (self.rl_token_normalization == "trajectory" and traj_len > 0) else 1.0
+            scale = (
+                (mean_traj_len / traj_len)
+                if (not is_anchor_traj and self.rl_token_normalization == "trajectory" and traj_len > 0)
+                else 1.0
+            )
             advantage = raw_advantage * scale
-            if self.rl_token_normalization == "trajectory" and traj_len > 0:
+            if not is_anchor_traj and self.rl_token_normalization == "trajectory" and traj_len > 0:
                 if self.opsd_norm_mode == "trajectory":
                     opsd_scale = scale
                 elif self.opsd_norm_mode == "sqrt":
@@ -1276,7 +1449,9 @@ class TinkerAdapter:
             else:
                 opsd_scale = 1.0
             for sample in trajectory["samples"]:
-                if sample.get("opsd_token_deltas") is not None:
+                if sample.get("is_target_anchor"):
+                    arrays = rl_token_arrays(sample, 0.0)
+                elif sample.get("opsd_token_deltas") is not None:
                     deltas = [_finite(d, "opsd token delta") for d in sample["opsd_token_deltas"]]
                     if len(deltas) != len(sample.get("token_ids", [])):
                         raise ValueError("opsd_token_deltas must align with sampled token_ids")
@@ -1294,7 +1469,7 @@ class TinkerAdapter:
                 else:
                     arrays = rl_token_arrays(sample, advantage)
                 self._budget(len(arrays["input_tokens"]) + 1)
-                if self.reference_kl_coef:
+                if self.reference_kl_coef and not sample.get("is_target_anchor"):
                     reference = self.score_sample(sample, sampler=self.reference_client)
                     prefix = len(sample["prompt_tokens"]) - 1
                     for offset, (old, ref) in enumerate(zip(sample["logprobs"], reference)):
