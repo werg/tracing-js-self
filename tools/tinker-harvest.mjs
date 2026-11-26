@@ -34,6 +34,8 @@ const {values} = parseArgs({options: {
   'max-per-repo': {type: 'string', default: '30'},
   'clone-tests': {type: 'boolean', default: true},
   'skip-npm': {type: 'boolean', default: false},
+  'min-source-chars': {type: 'string', default: '0'},
+  'min-trace-lines': {type: 'string', default: '0'},
   limit: {type: 'string'},
 }});
 
@@ -45,6 +47,8 @@ const harvestMode = values.mode === 'native' ? 'native' : 'owned';
 const jobs = Math.max(1, Math.min(8, Number(values.jobs) || 4));
 const maxPerFn = Math.max(1, Math.min(12, Number(values['max-per-fn']) || 3));
 const maxPerRepo = Math.max(1, Math.min(200, Number(values['max-per-repo']) || 30));
+const minSourceChars = Math.max(0, Number(values['min-source-chars']) || 0);
+const minTraceLines = Math.max(0, Number(values['min-trace-lines']) || 0);
 const limit = values.limit ? Number(values.limit) : null;
 
 mkdirSync(outputDir, {recursive: true});
@@ -284,20 +288,25 @@ function bundleLocalFile(repoMeta, absFile, exportName = null) {
   }
 }
 
-function collectSourceAndTestFiles(dir, out = {code: [], tests: []}) {
+function collectSourceAndTestFiles(dir, out = {code: [], tests: []}, rootDir = dir) {
   if (!existsSync(dir)) return out;
   for (const entry of readdirSync(dir, {withFileTypes: true})) {
     const n = entry.name;
     if (n.startsWith('.') || ['node_modules', 'dist', 'build', 'coverage', 'docs', 'examples', 'example', 'demo', 'demos', 'bench', 'benchmarks', 'fixtures', 'vendor', 'website'].includes(n)) continue;
     const p = join(dir, n);
     if (entry.isDirectory()) {
-      collectSourceAndTestFiles(p, out);
-    } else if (/\.(?:c|m)?[jt]s$/.test(n) && !n.endsWith('.d.ts') && !/\.config\.|\.eslintrc|\.prettierrc/.test(n)) {
+      collectSourceAndTestFiles(p, out, rootDir);
+    } else if (/\.(?:c|m)?[jt]s$/i.test(n) && !n.endsWith('.d.ts') && !/\.config\.|\.eslintrc|\.prettierrc/.test(n)) {
       const sz = statSync(p).size;
       if (sz === 0 || sz > 256 * 1024) continue;
-      if (/(?:^|\/)(?:test|tests|__tests__|spec|specs)(?:\/|$)|\.(?:test|spec)\.[cm]?[jt]s$/i.test(p)) out.tests.push(p);
+      const rel = relative(rootDir, p).replace(/\\/g, '/');
+      if (/(?:^|\/)(?:test|tests|__tests__|spec|specs)(?:\/|$)|\.(?:test|spec)\.[cm]?[jt]s$/i.test(rel)) out.tests.push(p);
       else out.code.push(p);
     }
+  }
+  if (dir === rootDir) {
+    out.code.sort();
+    out.tests.sort();
   }
   return out;
 }
@@ -306,9 +315,9 @@ function extractTestCallsFromFiles(repoDir, testFiles, exportNames, aliases = []
   const byFn = new Map();
   const exportSet = new Set(exportNames);
   const aliasSet = new Set(aliases);
-  for (const file of testFiles.slice(0, 60)) {
+  for (const file of testFiles.slice(0, 120)) {
     let text = readFileSync(file, 'utf8');
-    if (/\.ts$/.test(file)) {
+    if (/\.[cm]?ts$/i.test(file)) {
       try {
         text = esbuild.transformSync(text, {loader: 'ts', target: 'es2022', logLevel: 'silent'}).code;
       } catch {
@@ -318,10 +327,24 @@ function extractTestCallsFromFiles(repoDir, testFiles, exportNames, aliases = []
     let ast;
     try { ast = parse(text, {ecmaVersion: 'latest', sourceType: 'module'}); }
     catch { try { ast = parse(text, {ecmaVersion: 'latest', sourceType: 'script'}); } catch { continue; } }
-    // Collect simple static const/let bindings in the file so calls like fn(fixture) resolve!
+    // Collect simple static const/let bindings and local import/require aliases so calls resolve cleanly.
     const env = new Map();
+    const localAliases = new Map();
     walkAst(ast, node => {
-      if (node.type === 'VariableDeclarator' && node.id?.type === 'Identifier' && node.init) {
+      if (node.type === 'ImportDeclaration' && Array.isArray(node.specifiers)) {
+        for (const spec of node.specifiers) {
+          if (spec.type === 'ImportDefaultSpecifier' && exportSet.has('default')) {
+            localAliases.set(spec.local.name, 'default');
+          } else if (spec.type === 'ImportSpecifier' && spec.imported?.type === 'Identifier' && exportSet.has(spec.imported.name)) {
+            localAliases.set(spec.local.name, spec.imported.name);
+          }
+        }
+      } else if (node.type === 'VariableDeclarator' && node.id?.type === 'Identifier' && node.init) {
+        if (exportSet.has('default') && node.init.type === 'CallExpression' &&
+            node.init.callee?.type === 'Identifier' && node.init.callee.name === 'require') {
+          localAliases.set(node.id.name, 'default');
+          return;
+        }
         const r = evalStaticAst(node.init, env);
         if (r.ok && !env.has(node.id.name)) env.set(node.id.name, r.value);
       }
@@ -331,6 +354,7 @@ function extractTestCallsFromFiles(repoDir, testFiles, exportNames, aliases = []
       let fnName = null;
       if (node.callee.type === 'Identifier') {
         if (exportSet.has(node.callee.name)) fnName = node.callee.name;
+        else if (localAliases.has(node.callee.name)) fnName = localAliases.get(node.callee.name);
         else if (aliasSet.has(node.callee.name) && exportSet.has('default')) fnName = 'default';
       } else if (node.callee.type === 'MemberExpression' && !node.callee.computed &&
           node.callee.property.type === 'Identifier' && exportSet.has(node.callee.property.name)) {
@@ -1358,10 +1382,21 @@ async function collectAllCandidates() {
 async function qualify(task) {
   const t0 = performance.now();
   try {
-    const prepared = await prepareTinkerTask(task);
-    const messages = readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: prepared.bundle ? 'compact' : 'actions-only', reasoningChannel: 'thinking'});
+    if (minSourceChars > 0 && task.source.length < minSourceChars) {
+      return {status: 'refused', category: 'source-too-short', reason: `source ${task.source.length} chars < ${minSourceChars}`, id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin};
+    }
+    const prepared = await prepareTinkerTask(task, {traceFormat: 'compact'});
+    const messages = readableMessagesFromJournal(prepared.bundle, prepared, {traceFormat: 'compact', reasoningChannel: 'thinking'});
     const traceChars = messages.filter(m => m.role === 'assistant')
       .reduce((n, m) => n + assistantVisibleText(m).length + assistantThinkingText(m).length + (m.tool_calls ? JSON.stringify(m.tool_calls).length : 0), 0);
+    const traceLines = messages.filter(m => m.role === 'assistant')
+      .reduce((n, m) => {
+        const thinking = assistantThinkingText(m).trim();
+        return n + (thinking ? thinking.split('\n').length : 0);
+      }, 0);
+    if (minTraceLines > 0 && traceLines < minTraceLines) {
+      return {status: 'refused', category: 'trace-too-short', reason: `compact trace ${traceLines} lines < ${minTraceLines}`, id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin};
+    }
     if (traceChars > 80000) {
       return {status: 'refused', category: 'trace-too-long', reason: `compact trace ${traceChars} chars > 80000`, id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin};
     }
@@ -1374,11 +1409,12 @@ async function qualify(task) {
         ...(cloneHash ? {lineage: [...new Set([...task.metadata.lineage, 'near-clone:' + cloneHash])]} : {}),
         sourceChars: prepared.source.length,
         traceChars,
+        traceLines,
         externalCalls: prepared.fixture.calls.length,
         completeKind: prepared.outcome.kind,
       },
     };
-    return {status: 'admitted', elapsedMs: Math.round(performance.now() - t0), id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin, traceChars, externalCalls: prepared.fixture.calls.length, completeKind: prepared.outcome.kind, task: enriched};
+    return {status: 'admitted', elapsedMs: Math.round(performance.now() - t0), id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin, traceChars, traceLines, externalCalls: prepared.fixture.calls.length, completeKind: prepared.outcome.kind, task: enriched};
   } catch (err) {
     return {status: 'refused', elapsedMs: Math.round(performance.now() - t0), category: failureCategory(err), reason: String(err.message).slice(0, 200), id: task.id, pkg: task.metadata.package, origin: task.metadata.sourceOrigin};
   }
