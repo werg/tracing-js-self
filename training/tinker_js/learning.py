@@ -114,6 +114,12 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
     std_floor = float(config.get("likelihood_std_floor", 0.5))
     if not math.isfinite(std_floor) or std_floor < 0:
         raise ValueError("likelihood_std_floor must be finite and nonnegative")
+    length_std_floor = float(config.get("confident_length_std_floor", 64.0))
+    if not math.isfinite(length_std_floor) or length_std_floor <= 0:
+        raise ValueError("confident_length_std_floor must be finite and positive")
+    opsd_norm_mode = config.get("opsd_norm_mode", "trajectory")
+    if opsd_norm_mode not in {"trajectory", "sqrt", "none"}:
+        raise ValueError("opsd_norm_mode must be trajectory, sqrt, or none")
     opsd_coef = float(config.get("opsd_coef", 0.0))
     if not math.isfinite(opsd_coef) or opsd_coef < 0:
         raise ValueError("opsd_coef must be finite and nonnegative")
@@ -160,7 +166,7 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
             toks = [float(records[idx]["generated_tokens"]) for idx in confident]
             mean_tok = statistics.fmean(toks)
             tok_dev = math.sqrt(statistics.fmean((t - mean_tok) ** 2 for t in toks))
-            tok_denom = max(tok_dev, 64.0)
+            tok_denom = max(tok_dev, length_std_floor)
             for idx, tok in zip(confident, toks):
                 length[idx] = max(-2.0, min(2.0, (mean_tok - tok) / tok_denom))
     advantages = [acc + coefficient * saving for acc, saving in zip(ll_adv, length)]
@@ -174,6 +180,7 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
             target_advantages[index] = anchor_weight * (exp_val / total_exp) * len(valid_indices)
 
     token_advantages: list[list[float] | None] = [None] * len(records)
+    opsd_token_deltas: list[list[float] | None] = [None] * len(records)
     opsd_scored_rollouts = 0
     opsd_active_rollouts = 0
     opsd_log_ratio_sum = 0.0
@@ -196,19 +203,26 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
             if not gate_pass:
                 continue
             base_adv = advantages[index]
+            tok_deltas: list[float] = []
             tok_adv: list[float] = []
             for s_lp, t_lp in zip(s_lps, t_lps):
                 diff = float(t_lp) - float(s_lp)
                 clipped = max(-opsd_clip, min(opsd_clip, diff))
-                tok_adv.append(base_adv + opsd_coef * clipped)
+                delta = opsd_coef * clipped
+                tok_deltas.append(delta)
+                tok_adv.append(base_adv + delta)
                 opsd_log_ratio_sum += diff
                 opsd_log_ratio_tokens += 1
+            opsd_token_deltas[index] = tok_deltas
             token_advantages[index] = tok_adv
             opsd_active_rollouts += 1
 
     has_token_signal = any(
         ta is not None and any(abs(v) > 1e-12 for v in ta)
         for ta in token_advantages
+    ) or any(
+        od is not None and any(abs(v) > 1e-12 for v in od)
+        for od in opsd_token_deltas
     )
     has_signal = (
         any(abs(value) > 1e-12 for value in advantages)
@@ -220,6 +234,7 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
         "advantages": advantages,
         "target_advantages": target_advantages,
         "token_advantages": token_advantages,
+        "opsd_token_deltas": opsd_token_deltas,
         "correctness_advantages": ll_adv,
         "length_advantages": length,
         "length_contributions": [coefficient * value for value in length],

@@ -29,7 +29,7 @@ from typing import Any
 from .learning import (DIFFICULTY_SAMPLING_DEFAULTS, choose_validation_checkpoint, compression_coefficient,
                        curriculum_pick, difficulty_pick, execution_advantages, likelihood_advantages,
                        pick_turn_target, sft_epoch_rows, task_metadata, update_curriculum, update_task_difficulty)
-from .metrics import paired_statistics, summarize_records
+from .metrics import paired_statistics, summarize_records, task_eval_bucket
 
 
 DEFAULTS: dict[str, Any] = {
@@ -70,11 +70,15 @@ DEFAULTS: dict[str, Any] = {
     "rl_objective": "likelihood",
     "target_anchor_weight": 0.25,
     "likelihood_std_floor": 0.5,
+    "confident_length_std_floor": 64.0,
     "opsd_coef": 0.0,
     "opsd_clip": 5.0,
     "opsd_ll_threshold": -0.5,
     "opsd_max_trace_chars": 12000,
     "opsd_teacher": "self",
+    "opsd_norm_mode": "trajectory",
+    "rl_group_temperature_spread": 0.0,
+    "multiturn_rollout_fraction": 0.0,
     "compression_warmup_steps": 0,
     "compression_ramp_steps": 4,
     "compression_min_accuracy": 0.5,
@@ -297,7 +301,8 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
         raise ValueError("held-out fractions must leave training families")
     if not 0 <= config["length_penalty"] < 1:
         raise ValueError("length_penalty must be in [0, 1), so every verified success beats failure")
-    for name in ("learning_rate", "sft_learning_rate", "rl_learning_rate", "reference_kl_clip", "bridge_timeout_seconds"):
+    for name in ("learning_rate", "sft_learning_rate", "rl_learning_rate", "reference_kl_clip",
+                 "bridge_timeout_seconds", "confident_length_std_floor"):
         value = config[name]
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
             raise ValueError(f"{name} must be finite and positive")
@@ -326,7 +331,8 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
         raise ValueError("opsd_max_trace_chars must be a positive integer")
     if config["opsd_teacher"] not in {"self", "reference"}:
         raise ValueError("opsd_teacher must be self or reference")
-    for name in ("accuracy_tolerance", "min_token_saving", "compression_min_accuracy"):
+    for name in ("accuracy_tolerance", "min_token_saving", "compression_min_accuracy",
+                 "rl_group_temperature_spread", "multiturn_rollout_fraction"):
         value = config[name]
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= 1:
             raise ValueError(f"{name} must be finite in [0, 1]")
@@ -339,6 +345,7 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
                           ("trace_format", {"full", "compact", "actions-only"}),
                           ("reasoning_channel", {"auto", "thinking", "text"}),
                           ("rl_token_normalization", {"none", "trajectory"}),
+                          ("opsd_norm_mode", {"trajectory", "sqrt", "none"}),
                           ("lr_schedule", {"constant", "cosine", "linear"}),
                           ("prompt_style", {"standard", "concise"})):
         if config[name] not in choices:
@@ -853,7 +860,7 @@ def _step_action(message: dict, text: str | None = None) -> Any:
     return visible_text(message) if text is None else text
 
 
-def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> dict:
+def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int, *, temperature: float | None = None) -> dict:
     """Sample a complete execution, never showing private task fields to the model."""
     started = bridge.request("start", task=task)
     session_id = started["sessionId"]
@@ -870,8 +877,13 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int) -> d
             if remaining <= 0:
                 forced_failure = "generated_token_budget_exhausted"
                 break
-            sample = adapter.sample(copy.deepcopy(messages), max_tokens=min(config["max_tokens"], remaining),
-                                    seed=(seed + turn) % 2147483647)
+            sample_kwargs: dict[str, Any] = {
+                "max_tokens": min(config["max_tokens"], remaining),
+                "seed": (seed + turn) % 2147483647,
+            }
+            if temperature is not None and _accepts_kwarg(adapter.sample, "temperature"):
+                sample_kwargs["temperature"] = temperature
+            sample = adapter.sample(copy.deepcopy(messages), **sample_kwargs)
             token_ids = sample.get("token_ids")
             if not isinstance(token_ids, list) or any(isinstance(token, bool) or not isinstance(token, int)
                                                       for token in token_ids):
@@ -1064,13 +1076,16 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
 
     def _run_eval_job(row: dict, repeat: int, seed: int) -> dict:
         record = rollout(bridge, adapter, row["task"], config, seed)
+        lang = row.get("language") or (row.get("task") or {}).get("language")
+        extra_lang = {"language": lang} if lang else {}
         record.update(task_id=row["id"], family=row["family"], source_hash=row["sourceHash"],
                       stage=stage, split=split, repeat=repeat,
                       configuration_hash=config_fingerprint(config), model=config["model"],
                       task_hash=digest(row["task"]), sampling_checkpoint=checkpoint,
                       implementation_hash=implementation_hash, selection_hash=selection["hash"],
                       split_component=row.get("split_component"),
-                      features=task_metadata(row)["features"], tier=task_metadata(row)["tier"])
+                      features=task_metadata(row)["features"], tier=task_metadata(row)["tier"],
+                      **extra_lang)
         return record
 
     def _record_eval_result(record: dict) -> None:
@@ -1673,6 +1688,14 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
     prompts_per_step = config.get("rl_prompts_per_step", 1)
     concurrency = max(1, int(config.get("rollout_concurrency", 1)))
     likelihood_mode = config.get("rl_objective") == "likelihood"
+    rollout_fraction = float(config.get("multiturn_rollout_fraction", 0.0)) if likelihood_mode else 0.0
+    temp_spread = float(config.get("rl_group_temperature_spread", 0.0))
+    base_temp = float(config["temperature"])
+    group_size = config["group_size"]
+    if temp_spread > 0.0 and group_size >= 2:
+        group_temps = [base_temp + temp_spread * (i / (group_size - 1)) for i in range(group_size)]
+    else:
+        group_temps = [base_temp] * group_size
     turn_cache: dict[str, list[dict]] = {}
     ephemeral_sampler_active = False
     for step in range(state["rl_steps_completed"], config["rl_steps"]):
@@ -1686,21 +1709,31 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         batch_groups = []
         for _ in range(prompts_per_step):
             row, curriculum_selection = curriculum_pick(train_rows, config, state, rng)
-            turn_target = None
+            ext_calls = task_metadata(row).get("externalCalls", 0)
+            has_ext = isinstance(ext_calls, (int, float)) and not isinstance(ext_calls, bool) and ext_calls > 0
             if likelihood_mode:
-                turns = turn_cache.get(row["id"])
-                if turns is None:
-                    turns = adapter.extract_turn_targets(row["messages"])
-                    turn_cache[row["id"]] = turns
-                if not turns:
-                    raise ValueError(f"Task {row['id']} has no assistant turns for likelihood RL")
-                turn_target = pick_turn_target(turns, config, rng)
-            seeds = [rng.randrange(2147483647) for _ in range(config["group_size"])]
-            batch_groups.append((row, curriculum_selection, seeds, turn_target))
+                if rollout_fraction > 0.0 and has_ext and rng.random() < rollout_fraction:
+                    group_mode = "rollout"
+                    turn_target = None
+                else:
+                    group_mode = "likelihood"
+                    turns = turn_cache.get(row["id"])
+                    if turns is None:
+                        turns = adapter.extract_turn_targets(row["messages"])
+                        turn_cache[row["id"]] = turns
+                    if not turns:
+                        raise ValueError(f"Task {row['id']} has no assistant turns for likelihood RL")
+                    turn_target = pick_turn_target(turns, config, rng)
+            else:
+                group_mode = "rollout"
+                turn_target = None
+            seeds = [rng.randrange(2147483647) for _ in range(group_size)]
+            batch_groups.append((row, curriculum_selection, seeds, turn_target, group_mode))
         if prompts_per_step == 1:
-            row, curriculum_selection, seeds, turn_target = batch_groups[0]
+            row, curriculum_selection, seeds, turn_target, group_mode = batch_groups[0]
             group_context = digest({"step": step + 1, "task": row["task"], "seeds": seeds,
                                     **({"turn_index": turn_target["turn_index"]} if turn_target is not None else {}),
+                                    **({"mode": group_mode} if rollout_fraction > 0.0 else {}),
                                     "config_hash": config_fingerprint(config), "compression_coefficient": coefficient,
                                     "curriculum": curriculum_selection,
                                     "implementation_hash": state.get("implementation_hash"),
@@ -1708,13 +1741,18 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         else:
             group_context = digest({"step": step + 1,
                                     "groups": [{"task": r["task"], "seeds": s, "curriculum": c,
-                                                **({"turn_index": tt["turn_index"]} if tt is not None else {})}
-                                               for r, c, s, tt in batch_groups],
+                                                **({"turn_index": tt["turn_index"]} if tt is not None else {}),
+                                                **({"mode": gm} if rollout_fraction > 0.0 else {})}
+                                               for r, c, s, tt, gm in batch_groups],
                                     "config_hash": config_fingerprint(config), "compression_coefficient": coefficient,
                                     "implementation_hash": state.get("implementation_hash"),
                                     "policy": policy})
-        expected_total = prompts_per_step * config["group_size"]
-        flat_plan = [(r, c, s, tt) for r, c, seeds, tt in batch_groups for s in seeds]
+        expected_total = prompts_per_step * group_size
+        flat_plan = [
+            (r, c, s, tt, gm, group_temps[idx])
+            for r, c, seeds, tt, gm in batch_groups
+            for idx, s in enumerate(seeds)
+        ]
         destination = output_dir / "rollouts" / f"rl-{step + 1:06d}.jsonl"
         partial = destination.with_suffix(".partial.jsonl")
         records = read_jsonl(destination if destination.exists() else partial) if destination.exists() or partial.exists() else []
@@ -1726,14 +1764,14 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         write_jsonl(partial, records)
         pending_plan = flat_plan[len(records):]
 
-        def _run_rl_rollout(row: dict, seed: int, turn_target: dict | None) -> dict:
-            if likelihood_mode:
+        def _run_rl_rollout(row: dict, seed: int, turn_target: dict | None, group_mode: str, rollout_temp: float) -> dict:
+            if group_mode == "likelihood":
                 assert turn_target is not None
                 score_teacher = bool(config.get("opsd_coef", 0.0) > 0)
                 sample_kwargs: dict[str, Any] = {
                     "seed": seed,
                     "max_tokens": config["max_tokens"],
-                    "temperature": config["temperature"],
+                    "temperature": rollout_temp,
                 }
                 if score_teacher:
                     sample_kwargs["score_teacher"] = True
@@ -1766,18 +1804,21 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                     "token_categories": sample["token_categories"],
                 }
             else:
-                record = rollout(bridge, adapter, row["task"], config, seed)
+                rollout_kwargs = {"temperature": rollout_temp} if temp_spread > 0.0 else {}
+                record = rollout(bridge, adapter, row["task"], config, seed, **rollout_kwargs)
+            lang = row.get("language") or (row.get("task") or {}).get("language")
+            extra_lang = {"language": lang} if lang else {}
             record.update(group_context=group_context, task_id=row["id"], family=row["family"],
                           source_hash=row["sourceHash"], split="train", step=step + 1,
                           policy=copy.deepcopy(policy),
                           split_component=row.get("split_component"), features=task_metadata(row)["features"],
-                          tier=task_metadata(row)["tier"])
+                          tier=task_metadata(row)["tier"], **extra_lang)
             return record
 
         if concurrency == 1 or len(pending_plan) <= 1:
-            for row, _curriculum_selection, seed, turn_target in pending_plan:
+            for row, _curriculum_selection, seed, turn_target, group_mode, rollout_temp in pending_plan:
                 try:
-                    record = _run_rl_rollout(row, seed, turn_target)
+                    record = _run_rl_rollout(row, seed, turn_target, group_mode, rollout_temp)
                 except RolloutError as error:
                     append_jsonl(output_dir / "infrastructure-errors.jsonl", {
                         **error.record, "phase": "rl", "step": step + 1,
@@ -1788,8 +1829,8 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         else:
             ordered_results: list[dict | None] = [None] * len(pending_plan)
             with concurrent.futures.ThreadPoolExecutor(max_workers=min(concurrency, len(pending_plan))) as pool:
-                futures = {pool.submit(_run_rl_rollout, row, seed, turn_target): idx
-                           for idx, (row, _c, seed, turn_target) in enumerate(pending_plan)}
+                futures = {pool.submit(_run_rl_rollout, row, seed, turn_target, group_mode, rollout_temp): idx
+                           for idx, (row, _c, seed, turn_target, group_mode, rollout_temp) in enumerate(pending_plan)}
                 try:
                     for future in concurrent.futures.as_completed(futures):
                         idx = futures[future]
@@ -1811,14 +1852,14 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         if any(sample.get("sampler_revision", policy["sampler_path"]) != policy["sampler_path"]
                for record in records for sample in record["samples"]):
             raise ValueError("sampled RL sequence does not match the durable sampler checkpoint")
-        group_size = config["group_size"]
         all_signals = []
         counters = state.setdefault("rl_group_counts", {"all_failure": 0, "mixed_success": 0,
                                                          "all_success": 0, "zero_advantage": 0, "useful": 0})
         curriculum_results = []
-        for group_idx, (row, curriculum_selection, _seeds, _tt) in enumerate(batch_groups):
+        for group_idx, (row, curriculum_selection, _seeds, _tt, group_mode) in enumerate(batch_groups):
             group_records = records[group_idx * group_size:(group_idx + 1) * group_size]
-            sig = likelihood_advantages(group_records, config, coefficient) if likelihood_mode else execution_advantages(group_records, config, coefficient)
+            is_likelihood_group = (group_mode == "likelihood")
+            sig = likelihood_advantages(group_records, config, coefficient) if is_likelihood_group else execution_advantages(group_records, config, coefficient)
             all_signals.append(sig)
             for index, record in enumerate(group_records):
                 record.update(advantage=sig["advantages"][index],
@@ -1826,7 +1867,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                               length_advantage=sig["length_advantages"][index],
                               length_contribution=sig["length_contributions"][index],
                               compression_coefficient=coefficient)
-                if likelihood_mode:
+                if is_likelihood_group:
                     t_adv = sig["target_advantages"][index]
                     record["target_advantage"] = t_adv
                     if record["samples"]:
@@ -1834,7 +1875,13 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                     tok_adv = (sig.get("token_advantages") or [None] * len(group_records))[index]
                     if tok_adv is not None and record["samples"]:
                         record["samples"][0]["token_advantages"] = tok_adv
-                        record["has_token_advantages"] = any(abs(v) > 1e-12 for v in tok_adv)
+                    opsd_deltas = (sig.get("opsd_token_deltas") or [None] * len(group_records))[index]
+                    if opsd_deltas is not None and record["samples"]:
+                        record["samples"][0]["opsd_token_deltas"] = opsd_deltas
+                    if (tok_adv is not None and any(abs(v) > 1e-12 for v in tok_adv)) or (
+                        opsd_deltas is not None and any(abs(v) > 1e-12 for v in opsd_deltas)
+                    ):
+                        record["has_token_advantages"] = True
             counters[sig["group_kind"]] += 1
             counters["zero_advantage" if sig["zero_advantage_group"] else "useful"] += 1
             curriculum_results.append(update_curriculum(train_rows, config, state, curriculum_selection, group_records))
@@ -1887,6 +1934,16 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         opsd_scored = sum(s.get("opsd_scored_rollouts", 0) for s in all_signals)
         opsd_ratios = [s["opsd_mean_log_ratio"] for s in all_signals if s.get("opsd_mean_log_ratio") is not None]
         opsd_mean_ratio = statistics.fmean(opsd_ratios) if opsd_ratios else None
+        multiturn_hybrid = likelihood_mode and rollout_fraction > 0.0
+        multiturn_rollout_groups = sum(1 for _, _, _, _, gm in batch_groups if gm == "rollout")
+        rollout_group_records = [
+            rec for g_idx, (_, _, _, _, gm) in enumerate(batch_groups) if gm == "rollout"
+            for rec in records[g_idx * group_size:(g_idx + 1) * group_size]
+        ]
+        multiturn_rollout_acc = (
+            sum(1 for r in rollout_group_records if r["grade"]["success"]) / len(rollout_group_records)
+            if rollout_group_records else None
+        )
         append_jsonl(output_dir / "metrics.jsonl", {"stage": "rl", "step": step + 1,
                      "update_attempt_id": pending["attempt_id"] if pending else None,
                      "learning_rate": lr,
@@ -1898,6 +1955,9 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                      **({"opsd_active_rollouts": opsd_active, "opsd_scored_rollouts": opsd_scored,
                          "opsd_mean_log_ratio": opsd_mean_ratio}
                         if opsd_enabled else {}),
+                     **({"multiturn_rollout_groups": multiturn_rollout_groups,
+                         "multiturn_rollout_acc": multiturn_rollout_acc}
+                        if multiturn_hybrid else {}),
                      "group_kind": signals["group_kind"], "zero_advantage_group": signals["zero_advantage_group"],
                      "compression_coefficient": coefficient, "length_signal": signals["length_signal"],
                      "correctness_signal": signals["correctness_signal"], "curriculum": curriculum_result,
@@ -1915,10 +1975,14 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             if opsd_enabled:
                 ratio_str = f"{opsd_mean_ratio:+.3f}" if opsd_mean_ratio is not None else "n/a"
                 opsd_str = f" opsd={opsd_active}/{opsd_scored}({ratio_str})"
+            mt_str = ""
+            if multiturn_hybrid:
+                mt_acc_str = f"{multiturn_rollout_acc:.1%}" if multiturn_rollout_acc is not None else "n/a"
+                mt_str = f" multiturn={multiturn_rollout_groups}/{len(batch_groups)}({mt_acc_str})"
             print(f"rl step {step + 1}/{config['rl_steps']}: lr={lr:.2e} "
                   f"mean_ll={ll_str} best_ll={best_str} term={step_acc:.1%} "
                   f"mean_tok={step_tok:.0f} useful={useful_in_step}/{len(all_signals)} "
-                  f"coef={coefficient:.3f}{opsd_str} {status_label} ({time.monotonic() - step_started:.1f}s)",
+                  f"coef={coefficient:.3f}{opsd_str}{mt_str} {status_label} ({time.monotonic() - step_started:.1f}s)",
                   file=sys.stderr, flush=True)
         else:
             print(f"rl step {step + 1}/{config['rl_steps']}: lr={lr:.2e} "

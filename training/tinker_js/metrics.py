@@ -8,6 +8,45 @@ import random
 import statistics
 
 
+EVAL_BUCKETS = (
+    "python",
+    "hairy-real",
+    "hard-effectful",
+    "oss-unit-test",
+    "hard-js-owned",
+    "oss-probe",
+)
+
+
+def task_eval_bucket(row_or_record: dict) -> str:
+    """Classify a dataset row or rollout/eval record into one disjoint evaluation bucket."""
+    task = row_or_record.get("task") if isinstance(row_or_record.get("task"), dict) else {}
+    meta = row_or_record.get("metadata") if isinstance(row_or_record.get("metadata"), dict) else {}
+    task_meta = task.get("metadata") if isinstance(task.get("metadata"), dict) else {}
+    features: set[str] = set()
+    for candidate in (row_or_record.get("features"), task_meta.get("features"), meta.get("features")):
+        if isinstance(candidate, (list, tuple, set)):
+            features.update(f for f in candidate if isinstance(f, str))
+    task_id = str(row_or_record.get("task_id") or row_or_record.get("id") or task.get("id") or "")
+    language = (
+        row_or_record.get("language")
+        or task.get("language")
+        or meta.get("language")
+        or task_meta.get("language")
+    )
+    if language == "py" or task_id.startswith("py-") or "python" in features:
+        return "python"
+    if "hairy-real" in features:
+        return "hairy-real"
+    if "hard-effectful" in features:
+        return "hard-effectful"
+    if "unit-test-input" in features:
+        return "oss-unit-test"
+    if task_id.startswith("generated-"):
+        return "hard-js-owned"
+    return "oss-probe"
+
+
 def quantile(values: list[float], probability: float) -> float | None:
     if not values:
         return None
@@ -69,12 +108,14 @@ def summarize_records(records: list[dict]) -> dict:
         raise ValueError("infrastructure attempts must be reported separately from graded model executions")
     result = _basic(records)
     groups: dict[str, dict[str, list[dict]]] = {
-        "by_family": defaultdict(list), "by_feature": defaultdict(list), "by_tier": defaultdict(list)}
+        "by_family": defaultdict(list), "by_feature": defaultdict(list),
+        "by_tier": defaultdict(list), "by_bucket": defaultdict(list)}
     categories: Counter = Counter()
     turns = []
     for record in records:
         groups["by_family"][record.get("family") or record.get("task_id") or "unknown"].append(record)
         groups["by_tier"][str(record.get("tier", 1))].append(record)
+        groups["by_bucket"][task_eval_bucket(record)].append(record)
         for feature in record.get("features", []):
             groups["by_feature"][feature].append(record)
         samples = record.get("samples", [])
