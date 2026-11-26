@@ -34,10 +34,39 @@ PY_HOST_METHODS: dict[str, str] = {
 
 PY_HOST_OPERATIONS: dict[str, dict[str, Any]] = {
     "platform.print": {"arity": None, "description": "Invoke Python print(*args) external operation."},
-    "platform.time": {"arity": 0, "description": "Invoke Python time.time()/time.monotonic() external clock operation (0 arguments)."},
+    "platform.time": {
+        "arity": 0,
+        "description": "Invoke Python time.time()/time.monotonic()/datetime.now()/today() external clock operation (0 arguments).",
+    },
     "platform.random": {"arity": 0, "description": "Invoke Python random.random() external operation (0 arguments)."},
-    "fs.readText": {"arity": 1, "description": "Invoke Python external operation fs.readText (1 argument)."},
-    "fs.writeText": {"arity": 2, "description": "Invoke Python external operation fs.writeText (2 arguments)."},
+    "platform.log": {
+        "arity": 2,
+        "description": "Invoke Python logging operation (2 arguments: [level_name, formatted_message]). Returns None.",
+    },
+    "platform.uuid": {
+        "arity": 0,
+        "description": "Invoke Python uuid.uuid4() external operation (0 arguments). Returns canonical UUID string.",
+    },
+    "platform.secrets": {
+        "arity": 2,
+        "description": 'Invoke Python secrets external operation (2 arguments: [method_name, int_arg], e.g. ["token_hex", 16] or ["randbelow", 100]).',
+    },
+    "fs.readText": {"arity": 1, "description": "Invoke Python external operation fs.readText (1 argument: [path])."},
+    "fs.readBytes": {"arity": 1, "description": "Read binary file contents from path (1 argument: [path]). Returns bytes."},
+    "fs.writeText": {"arity": 2, "description": "Invoke Python external operation fs.writeText (2 arguments: [path, text])."},
+    "fs.writeBytes": {"arity": 2, "description": "Write binary bytes to path (2 arguments: [path, data]). Returns None."},
+    "fs.exists": {"arity": 1, "description": "Check whether filesystem path exists (1 argument: [path]). Returns bool."},
+    "fs.isFile": {"arity": 1, "description": "Check whether filesystem path is a regular file (1 argument: [path]). Returns bool."},
+    "fs.isDir": {"arity": 1, "description": "Check whether filesystem path is a directory (1 argument: [path]). Returns bool."},
+    "fs.listdir": {"arity": 1, "description": "List entry names in directory path (1 argument: [path]). Returns sorted list of strings."},
+    "env.get": {"arity": 1, "description": "Read environment variable (1 argument: [key]). Returns string value or None."},
+    "shell.exec": {
+        "arity": 1,
+        "description": (
+            'Execute subprocess command (1 argument: {"args": str | list[str], "shell": bool}). '
+            'Returns {"returncode": int, "stdout": str | bytes, "stderr": str | bytes}.'
+        ),
+    },
     "http.get": {"arity": 1, "description": "Invoke Python external operation http.get (1 argument)."},
     "http.request": {
         "arity": 1,
@@ -52,12 +81,13 @@ PY_HOST_OPERATIONS: dict[str, dict[str, Any]] = {
 }
 
 SYSTEM_PROMPT = """Execute the supplied Python program accurately.
-- For every external read, write, clock, print, random, HTTP, or host call, invoke the declared tool with {"arguments":[...]} in exact execution order; never invent observations.
+- For every external read, write, env lookup, log, subprocess, clock, print, random, uuid, secrets, HTTP, or host call, invoke the declared tool with {"arguments":[...]} in exact execution order; never invent observations.
+- Filesystem calls (open/Path/os.listdir/os.path) map to fs.readText, fs.readBytes, fs.writeText, fs.writeBytes, fs.exists, fs.isFile, fs.isDir, fs.listdir; env (os.getenv/os.environ) maps to env.get; logging maps to platform.log; subprocess.run/check_output maps to shell.exec; datetime.now/utcnow/today maps to platform.time; uuid.uuid4 maps to platform.uuid; secrets maps to platform.secrets.
 - HTTP calls (urllib.request.urlopen, requests.get/post/request/Session) invoke http.request with {"arguments":[{"method":"GET"|...,"url":str,"headers"?:{...},"body"?:str|bytes}]} (omit empty "headers" and None "body").
 - When execution finishes, end with one JSON completion in a ```json code fence (or bare JSON):
   {"type":"complete","kind":"return"|"throw","arguments":[final input args],"value":resultOrError}
 - Final "arguments" must reflect all input mutations and aliases. Standard exceptions use {"name":"ValueError","message":"..."}.
-- Special Python values: {"$py":"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$py":"tuple","items":[...]}, {"$py":"set","items":[...]}, {"$py":"bytes","b64":"..."}, {"$py":"dict","entries":[[k,v],...]} for non-string or $py-keyed dicts, {"$py":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the arguments array for tool calls)."""
+- Special Python values: {"$py":"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$py":"tuple","items":[...]}, {"$py":"set","items":[...]}, {"$py":"frozenset","items":[...]}, {"$py":"bytes","b64":"..."}, {"$py":"complex","real":...,"imag":...}, {"$py":"decimal","value":"..."}, {"$py":"datetime","iso":"..."}, {"$py":"date","iso":"..."}, {"$py":"timedelta","days":...,"seconds":...,"microseconds":...}, {"$py":"path","value":"..."}, {"$py":"enum","class":"...","name":"...","value":...}, {"$py":"object","class":"...","attrs":{...}}, {"$py":"dict","entries":[[k,v],...]} for non-string or $py-keyed dicts, {"$py":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the arguments array for tool calls)."""
 
 
 def _demand(condition: bool, message: str) -> None:
@@ -137,6 +167,13 @@ _HTTP_REQUESTS_MEMBERS = frozenset({
 })
 
 
+_LOG_METHODS = frozenset({"debug", "info", "warning", "warn", "error", "critical", "fatal", "exception", "log"})
+_SECRETS_METHODS = frozenset({"token_hex", "token_urlsafe", "token_bytes", "randbelow", "randbits", "choice"})
+_SUBPROCESS_FUNCS = frozenset({"run", "check_output"})
+_PATH_IO_DIRECT_METHODS = frozenset({"read_text", "write_text", "read_bytes", "write_bytes", "iterdir"})
+_PATH_FS_METHODS = _PATH_IO_DIRECT_METHODS | frozenset({"exists", "is_file", "is_dir", "open"})
+
+
 def _scan_public_source_tools(source: str, random_mode: str, native_bindings: list[dict[str, Any]]) -> tuple[list[str], bool]:
     """Derive available tool names STRICTLY from public source and bindings (NEVER fixture)."""
     names: set[str] = {b["name"] for b in native_bindings}
@@ -147,6 +184,7 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
     time_direct: set[str] = set()
     datetime_aliases: set[str] = set()
     datetime_cls_aliases: set[str] = set()
+    date_cls_aliases: set[str] = set()
     random_aliases: set[str] = set()
     random_direct: set[str] = set()
     urllib_root_aliases: set[str] = set()
@@ -154,6 +192,26 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
     urlopen_direct: set[str] = set()
     requests_aliases: set[str] = set()
     requests_direct: set[str] = set()
+    os_aliases: set[str] = set()
+    os_path_aliases: set[str] = set()
+    os_getenv_direct: set[str] = set()
+    os_environ_direct: set[str] = set()
+    os_listdir_direct: set[str] = set()
+    os_exists_direct: set[str] = set()
+    os_isfile_direct: set[str] = set()
+    os_isdir_direct: set[str] = set()
+    io_aliases: set[str] = set()
+    io_open_direct: set[str] = set()
+    uses_pathlib = False
+    logging_aliases: set[str] = set()
+    logging_direct: set[str] = set()
+    logging_imported = False
+    subprocess_aliases: set[str] = set()
+    subprocess_direct: set[str] = set()
+    uuid_aliases: set[str] = set()
+    uuid4_direct: set[str] = set()
+    secrets_aliases: set[str] = set()
+    secrets_direct: set[str] = set()
 
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -175,6 +233,26 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
                     urllib_root_aliases.add("urllib")
                 elif alias.name == "requests" or alias.name.startswith("requests."):
                     requests_aliases.add(alias.asname or "requests")
+                elif alias.name == "os":
+                    os_aliases.add(alias.asname or "os")
+                elif alias.name == "os.path":
+                    if alias.asname:
+                        os_path_aliases.add(alias.asname)
+                    else:
+                        os_aliases.add("os")
+                elif alias.name == "io":
+                    io_aliases.add(alias.asname or "io")
+                elif alias.name == "pathlib":
+                    uses_pathlib = True
+                elif alias.name == "logging" or alias.name.startswith("logging."):
+                    logging_imported = True
+                    logging_aliases.add(alias.asname or "logging")
+                elif alias.name == "subprocess":
+                    subprocess_aliases.add(alias.asname or "subprocess")
+                elif alias.name == "uuid":
+                    uuid_aliases.add(alias.asname or "uuid")
+                elif alias.name == "secrets":
+                    secrets_aliases.add(alias.asname or "secrets")
         elif isinstance(node, ast.ImportFrom):
             if node.module == "time":
                 for alias in node.names:
@@ -185,9 +263,12 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
             elif node.module == "datetime":
                 for alias in node.names:
                     if alias.name == "*":
-                        datetime_cls_aliases.update(("datetime", "date"))
-                    elif alias.name in ("datetime", "date"):
-                        datetime_cls_aliases.add(alias.asname or alias.name)
+                        datetime_cls_aliases.add("datetime")
+                        date_cls_aliases.add("date")
+                    elif alias.name == "datetime":
+                        datetime_cls_aliases.add(alias.asname or "datetime")
+                    elif alias.name == "date":
+                        date_cls_aliases.add(alias.asname or "date")
             elif node.module == "random":
                 for alias in node.names:
                     if alias.name == "*":
@@ -213,8 +294,92 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
                         requests_direct.add(alias.asname or alias.name)
                     elif alias.name == "*":
                         requests_direct.update(_HTTP_REQUESTS_MEMBERS)
+            elif node.module == "os":
+                for alias in node.names:
+                    if alias.name == "*":
+                        os_getenv_direct.add("getenv")
+                        os_environ_direct.add("environ")
+                        os_listdir_direct.add("listdir")
+                        os_path_aliases.add("path")
+                    elif alias.name == "getenv":
+                        os_getenv_direct.add(alias.asname or "getenv")
+                    elif alias.name == "environ":
+                        os_environ_direct.add(alias.asname or "environ")
+                    elif alias.name == "listdir":
+                        os_listdir_direct.add(alias.asname or "listdir")
+                    elif alias.name == "path":
+                        os_path_aliases.add(alias.asname or "path")
+            elif node.module == "os.path":
+                for alias in node.names:
+                    if alias.name == "*":
+                        os_exists_direct.add("exists")
+                        os_isfile_direct.add("isfile")
+                        os_isdir_direct.add("isdir")
+                    elif alias.name == "exists":
+                        os_exists_direct.add(alias.asname or "exists")
+                    elif alias.name == "isfile":
+                        os_isfile_direct.add(alias.asname or "isfile")
+                    elif alias.name == "isdir":
+                        os_isdir_direct.add(alias.asname or "isdir")
+            elif node.module == "io":
+                for alias in node.names:
+                    if alias.name == "open":
+                        io_open_direct.add(alias.asname or "open")
+            elif node.module == "pathlib":
+                uses_pathlib = True
+            elif node.module == "logging":
+                logging_imported = True
+                for alias in node.names:
+                    if alias.name == "*":
+                        logging_direct.update(_LOG_METHODS)
+                    elif alias.name in _LOG_METHODS:
+                        logging_direct.add(alias.asname or alias.name)
+            elif node.module == "subprocess":
+                for alias in node.names:
+                    if alias.name == "*":
+                        subprocess_direct.update(_SUBPROCESS_FUNCS)
+                    elif alias.name in _SUBPROCESS_FUNCS:
+                        subprocess_direct.add(alias.asname or alias.name)
+            elif node.module == "uuid":
+                for alias in node.names:
+                    if alias.name in ("uuid4", "*"):
+                        uuid4_direct.add(alias.asname or "uuid4" if alias.name != "*" else "uuid4")
+            elif node.module == "secrets":
+                for alias in node.names:
+                    if alias.name == "*":
+                        secrets_direct.update(_SECRETS_METHODS)
+                    elif alias.name in _SECRETS_METHODS:
+                        secrets_direct.add(alias.asname or alias.name)
 
-    def _record_attr(attr_node: ast.Attribute) -> None:
+    def _add_open_mode_ops(call_node: ast.Call, mode_pos_idx: int) -> None:
+        mode_node: ast.AST | None = None
+        for kw in call_node.keywords:
+            if kw.arg == "mode":
+                mode_node = kw.value
+                break
+        if mode_node is None and len(call_node.args) > mode_pos_idx:
+            mode_node = call_node.args[mode_pos_idx]
+        if mode_node is None:
+            names.add("fs.readText")
+            return
+        if isinstance(mode_node, ast.Constant) and isinstance(mode_node.value, str):
+            m = mode_node.value
+            is_bin = "b" in m
+            is_write = any(c in m for c in ("w", "a", "x", "+"))
+            is_read = ("r" in m) or ("+" in m) or not is_write
+            if is_read:
+                names.add("fs.readBytes" if is_bin else "fs.readText")
+            if is_write:
+                names.add("fs.writeBytes" if is_bin else "fs.writeText")
+            return
+        names.update(("fs.readText", "fs.writeText", "fs.readBytes", "fs.writeBytes"))
+
+    pathlib_likely = uses_pathlib or any(
+        isinstance(node, ast.Attribute) and node.attr in _PATH_IO_DIRECT_METHODS
+        for node in ast.walk(tree)
+    )
+
+    def _record_attr(attr_node: ast.Attribute, *, in_call: ast.Call | None = None) -> None:
         nonlocal uses_random
         attr = attr_node.attr
         if isinstance(attr_node.value, ast.Name):
@@ -225,7 +390,9 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
                     names.add(op)
             elif owner in time_aliases and attr in ("time", "monotonic"):
                 names.add("platform.time")
-            elif owner in datetime_cls_aliases and attr == "today":
+            elif owner in datetime_cls_aliases and attr in ("now", "utcnow", "today"):
+                names.add("platform.time")
+            elif owner in date_cls_aliases and attr == "today":
                 names.add("platform.time")
             elif owner in random_aliases:
                 if attr in ("random", "randint", "randrange", "choice", "uniform", "shuffle", "sample"):
@@ -236,22 +403,93 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
                 names.add("http.request")
             elif owner in requests_aliases and attr in _HTTP_REQUESTS_MEMBERS:
                 names.add("http.request")
+            elif owner in os_aliases:
+                if attr in ("getenv", "environ"):
+                    names.add("env.get")
+                elif attr == "listdir":
+                    names.add("fs.listdir")
+            elif owner in os_path_aliases:
+                if attr == "exists":
+                    names.add("fs.exists")
+                elif attr == "isfile":
+                    names.add("fs.isFile")
+                elif attr == "isdir":
+                    names.add("fs.isDir")
+            elif owner in io_aliases and attr == "open":
+                if in_call is not None:
+                    _add_open_mode_ops(in_call, 1)
+                else:
+                    names.add("fs.readText")
+            elif owner in logging_aliases and attr in _LOG_METHODS:
+                names.add("platform.log")
+            elif owner in subprocess_aliases and attr in _SUBPROCESS_FUNCS:
+                names.add("shell.exec")
+            elif owner in uuid_aliases and attr == "uuid4":
+                names.add("platform.uuid")
+            elif owner in secrets_aliases and attr in _SECRETS_METHODS:
+                names.add("platform.secrets")
         elif isinstance(attr_node.value, ast.Attribute) and isinstance(attr_node.value.value, ast.Name):
             root_name = attr_node.value.value.id
             inner_attr = attr_node.value.attr
-            if root_name in datetime_aliases and inner_attr in ("datetime", "date") and attr == "today":
-                names.add("platform.time")
+            if root_name in datetime_aliases:
+                if inner_attr == "datetime" and attr in ("now", "utcnow", "today"):
+                    names.add("platform.time")
+                elif inner_attr == "date" and attr == "today":
+                    names.add("platform.time")
             elif root_name in urllib_root_aliases and inner_attr == "request" and attr == "urlopen":
                 names.add("http.request")
             elif root_name in requests_aliases and inner_attr == "api" and attr in _HTTP_REQUESTS_MEMBERS:
                 names.add("http.request")
+            elif root_name in os_aliases and inner_attr == "path":
+                if attr == "exists":
+                    names.add("fs.exists")
+                elif attr == "isfile":
+                    names.add("fs.isFile")
+                elif attr == "isdir":
+                    names.add("fs.isDir")
+            elif root_name in os_aliases and inner_attr == "environ":
+                names.add("env.get")
 
+        # Handle Path methods and logger instance methods cleanly.
+        if attr == "read_text":
+            names.add("fs.readText")
+        elif attr == "write_text":
+            names.add("fs.writeText")
+        elif attr == "read_bytes":
+            names.add("fs.readBytes")
+        elif attr == "write_bytes":
+            names.add("fs.writeBytes")
+        elif attr == "iterdir":
+            names.add("fs.listdir")
+        elif pathlib_likely:
+            if attr == "exists":
+                names.add("fs.exists")
+            elif attr == "is_file":
+                names.add("fs.isFile")
+            elif attr == "is_dir":
+                names.add("fs.isDir")
+            elif attr == "open" and in_call is not None:
+                skip_open = isinstance(attr_node.value, ast.Name) and (
+                    attr_node.value.id in io_aliases
+                    or attr_node.value.id in urllib_req_aliases
+                )
+                if not skip_open:
+                    _add_open_mode_ops(in_call, 0)
+
+        if logging_imported and attr in _LOG_METHODS:
+            names.add("platform.log")
+
+    call_func_ids: set[int] = {
+        id(node.func) for node in ast.walk(tree) if isinstance(node, ast.Call)
+    }
     for node in ast.walk(tree):
         if isinstance(node, ast.Call):
             fn = node.func
             if isinstance(fn, ast.Name):
                 if fn.id == "print":
                     names.add("platform.print")
+                elif fn.id == "open" or fn.id in io_open_direct:
+                    _add_open_mode_ops(node, 1)
                 elif fn.id in time_direct:
                     names.add("platform.time")
                 elif fn.id in random_direct:
@@ -260,13 +498,37 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
                         names.add("platform.random")
                 elif fn.id in urlopen_direct or fn.id in requests_direct:
                     names.add("http.request")
+                elif fn.id in os_getenv_direct:
+                    names.add("env.get")
+                elif fn.id in os_listdir_direct:
+                    names.add("fs.listdir")
+                elif fn.id in os_exists_direct:
+                    names.add("fs.exists")
+                elif fn.id in os_isfile_direct:
+                    names.add("fs.isFile")
+                elif fn.id in os_isdir_direct:
+                    names.add("fs.isDir")
+                elif fn.id in logging_direct:
+                    names.add("platform.log")
+                elif fn.id in subprocess_direct:
+                    names.add("shell.exec")
+                elif fn.id in uuid4_direct:
+                    names.add("platform.uuid")
+                elif fn.id in secrets_direct:
+                    names.add("platform.secrets")
             elif isinstance(fn, ast.Attribute):
-                _record_attr(fn)
-        elif isinstance(node, ast.Attribute):
+                _record_attr(fn, in_call=node)
+        elif isinstance(node, ast.Attribute) and id(node) not in call_func_ids:
             _record_attr(node)
-        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+        elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load) and id(node) not in call_func_ids:
             if node.id in urlopen_direct or node.id in requests_direct:
                 names.add("http.request")
+            elif node.id in os_environ_direct:
+                names.add("env.get")
+            elif node.id in io_open_direct:
+                names.add("fs.readText")
+            elif node.id == "open":
+                names.add("fs.readText")
 
     if uses_random and random_mode == "tool":
         names.add("platform.random")
