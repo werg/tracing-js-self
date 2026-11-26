@@ -6,7 +6,8 @@ import unittest
 from types import SimpleNamespace
 
 from tinker_js.adapter import TinkerAdapter, rl_token_arrays
-from tinker_js.learning import likelihood_advantages
+from tinker_js.learning import (curriculum_pick, difficulty_pick, difficulty_weight, likelihood_advantages,
+                                pick_turn_target, update_task_difficulty)
 from tinker_js.runner import DEFAULTS, load_config
 
 
@@ -429,6 +430,181 @@ class LikelihoodRLTests(unittest.TestCase):
             self.assertEqual(rl_metric["opsd_active_rollouts"], 2)
             self.assertEqual(rl_metric["opsd_scored_rollouts"], 2)
             self.assertIsNotNone(rl_metric["opsd_mean_log_ratio"])
+
+    def test_difficulty_sampling_config_defaults_and_validation(self):
+        cfg = load_config(None, {"rl_steps": 2})
+        ds = cfg["difficulty_sampling"]
+        self.assertFalse(ds["enabled"])
+        self.assertEqual(ds["effectful_boost"], 2.0)
+        self.assertEqual(ds["unit_test_boost"], 1.6)
+        self.assertEqual(ds["tier5_boost"], 1.5)
+        self.assertEqual(ds["long_boost"], 1.4)
+        self.assertEqual(ds["hard_weight"], 3.5)
+        self.assertEqual(ds["easy_weight"], 0.3)
+        self.assertEqual(ds["hard_ll_threshold"], -0.5)
+        self.assertEqual(ds["easy_ll_threshold"], -0.05)
+        self.assertEqual(ds["easy_token_threshold"], 900)
+        self.assertEqual(ds["tool_turn_boost"], 1.8)
+
+        with self.assertRaises(ValueError):
+            load_config(None, {"difficulty_sampling": {"enabled": "yes"}})
+        with self.assertRaises(ValueError):
+            load_config(None, {"difficulty_sampling": {"enabled": True, "hard_weight": 0}})
+        with self.assertRaises(ValueError):
+            load_config(None, {"difficulty_sampling": {"enabled": True, "hard_ll_threshold": -0.01, "easy_ll_threshold": -0.5}})
+        with self.assertRaises(ValueError):
+            load_config(None, {"difficulty_sampling": {"enabled": True, "bogus_key": 1.0}})
+
+    def test_difficulty_sampling_prior_and_online_weights(self):
+        import random
+        cfg = load_config(None, {"difficulty_sampling": {"enabled": True}})
+        plain = {"id": "plain", "family": "f0", "sourceHash": "h0",
+                 "metadata": {"tier": 3, "features": ["native-v8"], "externalCalls": 0}}
+        rich = {"id": "rich", "family": "f1", "sourceHash": "h1",
+                "metadata": {"tier": 5, "features": ["native-v8", "unit-test-input", "longer-execution"], "externalCalls": 4}}
+        state: dict = {}
+
+        # Base prior multiplies all four boosts cleanly.
+        self.assertAlmostEqual(difficulty_weight(plain, cfg, state), 1.0)
+        self.assertAlmostEqual(difficulty_weight(rich, cfg, state), 2.0 * 1.6 * 1.5 * 1.4, places=6)
+
+        # Sampling proportional to prior heavily favors the rich task.
+        rng = random.Random(42)
+        picks = [curriculum_pick([plain, rich], cfg, state, rng)[0]["id"] for _ in range(400)]
+        self.assertGreater(picks.count("rich"), 300)
+
+        # Online feedback: failing/truncated task gets hard_weight boost.
+        update_task_difficulty(
+            cfg, state, "plain",
+            [{"terminated": False, "generated_tokens": 800}, {"terminated": True, "generated_tokens": 500}],
+            {"best_target_ll": -2.0},
+        )
+        self.assertAlmostEqual(difficulty_weight(plain, cfg, state), 3.5, places=6)
+        self.assertEqual(state["task_difficulty"]["plain"]["visits"], 1)
+        self.assertAlmostEqual(state["task_difficulty"]["plain"]["last_term_rate"], 0.5)
+
+        # Online feedback: mastered concise task is downweighted to easy_weight (strictly > 0).
+        update_task_difficulty(
+            cfg, state, "plain",
+            [{"terminated": True, "generated_tokens": 400}, {"terminated": True, "generated_tokens": 500}],
+            {"best_target_ll": -0.01},
+        )
+        self.assertAlmostEqual(difficulty_weight(plain, cfg, state), 0.3, places=6)
+        self.assertGreater(difficulty_weight(plain, cfg, state), 0.0)
+        self.assertEqual(state["task_difficulty"]["plain"]["visits"], 2)
+
+        # Mastered but verbose task (> easy_token_threshold) stays at 1.0 so compression still replays it.
+        update_task_difficulty(
+            cfg, state, "plain",
+            [{"terminated": True, "generated_tokens": 1200}, {"terminated": True, "generated_tokens": 1400}],
+            {"best_target_ll": -0.01},
+        )
+        self.assertAlmostEqual(difficulty_weight(plain, cfg, state), 1.0, places=6)
+
+        # Deterministic replay from the same RNG seed.
+        a = [difficulty_pick([plain, rich], cfg, state, random.Random(99))[0]["id"] for _ in range(20)]
+        b = [difficulty_pick([plain, rich], cfg, state, random.Random(99))[0]["id"] for _ in range(20)]
+        self.assertEqual(a, b)
+
+    def test_pick_turn_target_oversamples_tool_calls(self):
+        import random
+        turns = [
+            {"turn_index": 0, "is_tool_call": True, "operation": "platform.dateNow"},
+            {"turn_index": 1, "is_tool_call": False, "operation": "complete"},
+        ]
+        cfg_on = load_config(None, {"difficulty_sampling": {"enabled": True, "tool_turn_boost": 3.0}})
+        rng = random.Random(7)
+        draws = [pick_turn_target(turns, cfg_on, rng)["is_tool_call"] for _ in range(1000)]
+        tool_frac = sum(draws) / len(draws)
+        # Expected 3 / (3 + 1) = 0.75.
+        self.assertGreater(tool_frac, 0.68)
+        self.assertLess(tool_frac, 0.82)
+
+        # Disabled config matches uniform randrange exactly.
+        cfg_off = load_config(None, {"difficulty_sampling": {"enabled": False, "tool_turn_boost": 3.0}})
+        rng_a = random.Random(123)
+        rng_b = random.Random(123)
+        for _ in range(30):
+            self.assertEqual(pick_turn_target(turns, cfg_off, rng_a), turns[rng_b.randrange(len(turns))])
+
+    def test_difficulty_sampling_train_rl_persistence_and_backward_compat(self):
+        import json, random, tempfile
+        from pathlib import Path
+        from tinker_js.runner import train_rl
+
+        class FakeTwoTaskAdapter:
+            backend_name = "fixture"
+            def __init__(self):
+                self.sampling_revision = "tinker://sampler/0"
+                self.picked_ops = []
+            def create_training_client(self, checkpoint=None): return None
+            def create_sampling_client(self, checkpoint=None): self.sampling_revision = checkpoint or "base"
+            def refresh_sampler(self): self.sampling_revision = "ephemeral-1"
+            def checkpoint(self, name, **kwargs):
+                return {"training_path": f"tinker://train/{name}", "sampler_path": f"tinker://sampler/{name}", "step": 1}
+            def extract_turn_targets(self, messages):
+                return [
+                    {"turn_index": 0, "prefix_tokens": [1], "thinking_prompt_tokens": [1, 10, 11],
+                     "target_action_tokens": [10, 20, 30], "is_tool_call": True, "operation": "platform.dateNow"},
+                    {"turn_index": 1, "prefix_tokens": [1, 2], "thinking_prompt_tokens": [1, 2, 10, 11],
+                     "target_action_tokens": [10, 21, 31], "is_tool_call": False, "operation": "complete"},
+                ]
+            def sample_thinking_and_score_target(self, turn_target, *, seed, max_tokens=None, temperature=None):
+                self.picked_ops.append(turn_target["operation"])
+                is_hard = turn_target["operation"] == "platform.dateNow"
+                ll = -2.5 if is_hard else -0.01
+                return {
+                    "prompt_tokens": list(turn_target["thinking_prompt_tokens"]),
+                    "token_ids": [50, 51, 99],
+                    "logprobs": [-0.3, -0.2, -0.1],
+                    "target_tokens": list(turn_target["target_action_tokens"]),
+                    "target_logprobs": [ll / 3.0] * 3,
+                    "target_logprob_sum": ll,
+                    "target_logprob_mean": ll / 3.0,
+                    "terminated": True,
+                    "truncated": False,
+                    "provenance_error": None,
+                    "generated_tokens": 3,
+                    "sampler_revision": self.sampling_revision,
+                    "operation": turn_target["operation"],
+                    "is_tool_call": turn_target["is_tool_call"],
+                    "turn_index": turn_target["turn_index"],
+                    "token_categories": {"reasoning": 3, "trace": 0, "protocol": 0, "other": 0, "unclassified": 0},
+                }
+            def rl_train(self, trajectories, **options):
+                return {"step": 1, "examples": len(trajectories), "metrics": {"loss:sum": 0.1}}
+
+        rows = [
+            {"id": "easy-1", "family": "f1", "sourceHash": "h1", "split": "train",
+             "task": {"id": "easy-1", "family": "f1", "source": "function run(){return 1;}", "args": []},
+             "messages": [{"role": "assistant", "content": "x"}],
+             "metadata": {"tier": 2, "features": ["native-v8"], "externalCalls": 0}},
+            {"id": "hard-1", "family": "f2", "sourceHash": "h2", "split": "train",
+             "task": {"id": "hard-1", "family": "f2", "source": "function run(){return Date.now();}", "args": []},
+             "messages": [{"role": "assistant", "content": "x"}],
+             "metadata": {"tier": 5, "features": ["native-v8", "unit-test-input"], "externalCalls": 3}},
+        ]
+
+        # Enabled: task_difficulty persists in state.json across steps.
+        cfg_on = load_config(overrides={"rl_steps": 3, "group_size": 2, "validation_every": 0,
+                                        "checkpoint_every": 3, "difficulty_sampling": {"enabled": True}})
+        state_on = {"phase": "sft_done", "rl_steps_completed": 0, "training_path": None, "sampler_path": None,
+                    "compression_gate_open": True, "evaluations": []}
+        with tempfile.TemporaryDirectory() as directory:
+            train_rl(None, FakeTwoTaskAdapter(), rows, cfg_on, Path(directory), state_on, random.Random(17))
+            saved = json.loads((Path(directory) / "state.json").read_text())
+            self.assertIn("task_difficulty", saved)
+            total_visits = sum(entry["visits"] for entry in saved["task_difficulty"].values())
+            self.assertEqual(total_visits, 3)
+
+        # Disabled: state has no task_difficulty entry (backward compatible).
+        cfg_off = load_config(overrides={"rl_steps": 2, "group_size": 2, "validation_every": 0, "checkpoint_every": 2})
+        state_off = {"phase": "sft_done", "rl_steps_completed": 0, "training_path": None, "sampler_path": None,
+                     "compression_gate_open": True, "evaluations": []}
+        with tempfile.TemporaryDirectory() as directory:
+            train_rl(None, FakeTwoTaskAdapter(), rows, cfg_off, Path(directory), state_off, random.Random(17))
+            saved_off = json.loads((Path(directory) / "state.json").read_text())
+            self.assertNotIn("task_difficulty", saved_off)
 
 
 if __name__ == "__main__":

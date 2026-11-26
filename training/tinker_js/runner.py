@@ -26,8 +26,9 @@ import threading
 import time
 from typing import Any
 
-from .learning import (choose_validation_checkpoint, compression_coefficient, curriculum_pick,
-                       execution_advantages, likelihood_advantages, sft_epoch_rows, task_metadata, update_curriculum)
+from .learning import (DIFFICULTY_SAMPLING_DEFAULTS, choose_validation_checkpoint, compression_coefficient,
+                       curriculum_pick, difficulty_pick, execution_advantages, likelihood_advantages,
+                       pick_turn_target, sft_epoch_rows, task_metadata, update_curriculum, update_task_difficulty)
 from .metrics import paired_statistics, summarize_records
 
 
@@ -101,6 +102,7 @@ DEFAULTS: dict[str, Any] = {
     "enforce_turn_budget": False,
     "curriculum": {"enabled": False, "retention_fraction": 0.25, "groups_per_tier": 20,
                    "window_groups": 20, "minimum_groups": 4, "advance_success_rate": 0.25},
+    "difficulty_sampling": copy.deepcopy(DIFFICULTY_SAMPLING_DEFAULTS),
     "bridge_timeout_seconds": 60,
 }
 
@@ -372,6 +374,25 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= upper:
             raise ValueError(f"curriculum.{name} must be finite in [0, {upper}]")
     config["curriculum"] = curriculum
+    ds = config["difficulty_sampling"]
+    if not isinstance(ds, dict) or not isinstance(ds.get("enabled", False), bool):
+        raise ValueError("difficulty_sampling must be an object with boolean enabled")
+    unknown_ds = set(ds) - set(DEFAULTS["difficulty_sampling"])
+    if unknown_ds:
+        raise ValueError(f"difficulty_sampling has unsupported fields: {sorted(unknown_ds)}")
+    ds = {**DEFAULTS["difficulty_sampling"], **ds}
+    for name in ("effectful_boost", "unit_test_boost", "tier5_boost", "long_boost",
+                 "hard_weight", "easy_weight", "tool_turn_boost", "easy_token_threshold"):
+        value = ds[name]
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+            raise ValueError(f"difficulty_sampling.{name} must be finite and positive")
+    for name in ("hard_ll_threshold", "easy_ll_threshold"):
+        value = ds[name]
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise ValueError(f"difficulty_sampling.{name} must be finite")
+    if ds["hard_ll_threshold"] > ds["easy_ll_threshold"]:
+        raise ValueError("difficulty_sampling.hard_ll_threshold must not exceed easy_ll_threshold")
+    config["difficulty_sampling"] = ds
     if not 0 <= config["effort"] < 1:
         raise ValueError("effort must be in [0, 1)")
     if config["bridge_timeout_seconds"] <= 0:
@@ -1588,7 +1609,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                     turn_cache[row["id"]] = turns
                 if not turns:
                     raise ValueError(f"Task {row['id']} has no assistant turns for likelihood RL")
-                turn_target = turns[rng.randrange(len(turns))]
+                turn_target = pick_turn_target(turns, config, rng)
             seeds = [rng.randrange(2147483647) for _ in range(config["group_size"])]
             batch_groups.append((row, curriculum_selection, seeds, turn_target))
         if prompts_per_step == 1:
@@ -1732,6 +1753,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             counters[sig["group_kind"]] += 1
             counters["zero_advantage" if sig["zero_advantage_group"] else "useful"] += 1
             curriculum_results.append(update_curriculum(train_rows, config, state, curriculum_selection, group_records))
+            update_task_difficulty(config, state, row["id"], group_records, sig)
         signals = all_signals[0] if prompts_per_step == 1 else {
             "group_kind": "batched",
             "zero_advantage_group": all(s["zero_advantage_group"] for s in all_signals),

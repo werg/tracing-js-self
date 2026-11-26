@@ -260,9 +260,124 @@ def sft_epoch_rows(rows: list[dict], config: dict, epoch: int) -> list[dict]:
     return ordered
 
 
+DIFFICULTY_SAMPLING_DEFAULTS: dict[str, Any] = {
+    "enabled": False,
+    "effectful_boost": 2.0,
+    "unit_test_boost": 1.6,
+    "tier5_boost": 1.5,
+    "long_boost": 1.4,
+    "hard_weight": 3.5,
+    "easy_weight": 0.3,
+    "hard_ll_threshold": -0.5,
+    "easy_ll_threshold": -0.05,
+    "easy_token_threshold": 900,
+    "tool_turn_boost": 1.8,
+}
+
+
+def difficulty_weight(row: dict, config: dict, state: dict) -> float:
+    ds = {**DIFFICULTY_SAMPLING_DEFAULTS, **(config.get("difficulty_sampling") or {})}
+    meta = task_metadata(row)
+    features = set(meta.get("features", []))
+    ext_calls = meta.get("externalCalls", 0)
+    weight = 1.0
+    if isinstance(ext_calls, (int, float)) and not isinstance(ext_calls, bool) and ext_calls > 0:
+        weight *= float(ds["effectful_boost"])
+    if "unit-test-input" in features:
+        weight *= float(ds["unit_test_boost"])
+    if meta["tier"] >= 5:
+        weight *= float(ds["tier5_boost"])
+    if "longer-execution" in features:
+        weight *= float(ds["long_boost"])
+    stats_table = state.setdefault("task_difficulty", {})
+    stats = stats_table.get(row["id"])
+    if isinstance(stats, dict) and stats.get("visits", 0) > 0:
+        last_term_rate = stats.get("last_term_rate")
+        last_best_ll = stats.get("last_best_ll")
+        last_mean_tok = stats.get("last_mean_tok")
+        if ((last_term_rate is not None and last_term_rate < 1.0)
+                or last_best_ll is None
+                or last_best_ll < float(ds["hard_ll_threshold"])):
+            weight *= float(ds["hard_weight"])
+        elif (last_best_ll >= float(ds["easy_ll_threshold"])
+              and last_mean_tok is not None
+              and last_mean_tok <= float(ds["easy_token_threshold"])):
+            weight *= float(ds["easy_weight"])
+    return max(weight, 1e-12)
+
+
+def difficulty_pick(rows: list[dict], config: dict, state: dict, rng: random.Random) -> tuple[dict, dict]:
+    if not rows:
+        raise ValueError("difficulty_pick requires at least one training row")
+    weights = [difficulty_weight(row, config, state) for row in rows]
+    total = sum(weights)
+    target = rng.random() * total
+    acc = 0.0
+    chosen_index = len(rows) - 1
+    for index, weight in enumerate(weights):
+        acc += weight
+        if acc >= target:
+            chosen_index = index
+            break
+    row = rows[chosen_index]
+    return row, {
+        "enabled": False,
+        "active_tier": task_metadata(row)["tier"],
+        "rehearsal": False,
+        "difficulty_weighted": True,
+        "weight": weights[chosen_index],
+    }
+
+
+def update_task_difficulty(config: dict, state: dict, task_id: str,
+                           group_records: list[dict], sig: dict) -> dict | None:
+    if not (config.get("difficulty_sampling") or {}).get("enabled", False):
+        return None
+    table = state.setdefault("task_difficulty", {})
+    prev = table.get(task_id)
+    visits = (int(prev.get("visits", 0)) if isinstance(prev, dict) else 0) + 1
+    term_flags = [
+        bool(record["terminated"]) if "terminated" in record else bool(record.get("grade", {}).get("success"))
+        for record in group_records
+    ]
+    last_term_rate = sum(term_flags) / len(term_flags) if term_flags else 0.0
+    last_best_ll = sig.get("best_target_ll")
+    toks = [float(record.get("generated_tokens", 0)) for record in group_records]
+    last_mean_tok = statistics.fmean(toks) if toks else 0.0
+    entry = {
+        "last_best_ll": last_best_ll,
+        "last_mean_tok": last_mean_tok,
+        "last_term_rate": last_term_rate,
+        "visits": visits,
+    }
+    table[task_id] = entry
+    return entry
+
+
+def pick_turn_target(turns: list[dict], config: dict, rng: random.Random) -> dict:
+    if not turns:
+        raise ValueError("pick_turn_target requires at least one turn target")
+    ds = config.get("difficulty_sampling") or {}
+    enabled = bool(ds.get("enabled", False))
+    boost = float(ds.get("tool_turn_boost", DIFFICULTY_SAMPLING_DEFAULTS["tool_turn_boost"])) if enabled else 1.0
+    if not enabled or boost <= 1.0:
+        return turns[rng.randrange(len(turns))]
+    weights = [boost if turn.get("is_tool_call") else 1.0 for turn in turns]
+    total = sum(weights)
+    target = rng.random() * total
+    acc = 0.0
+    for turn, weight in zip(turns, weights):
+        acc += weight
+        if acc >= target:
+            return turn
+    return turns[-1]
+
+
 def curriculum_pick(rows: list[dict], config: dict, state: dict, rng: random.Random) -> tuple[dict, dict]:
     curriculum = config.get("curriculum", {})
     if not curriculum.get("enabled", False):
+        if (config.get("difficulty_sampling") or {}).get("enabled", False):
+            return difficulty_pick(rows, config, state, rng)
         row = rows[rng.randrange(len(rows))]
         return row, {"enabled": False, "active_tier": task_metadata(row)["tier"], "rehearsal": False}
     tiers = sorted({task_metadata(row)["tier"] for row in rows})
