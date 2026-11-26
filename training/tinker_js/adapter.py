@@ -287,6 +287,9 @@ class TinkerAdapter:
         self.rl_token_normalization = self.config.get("rl_token_normalization", "none")
         if self.rl_token_normalization not in {"none", "trajectory"}:
             raise ValueError("rl_token_normalization must be none or trajectory")
+        self.opsd_norm_mode = self.config.get("opsd_norm_mode", "trajectory")
+        if self.opsd_norm_mode not in {"trajectory", "sqrt", "none"}:
+            raise ValueError("opsd_norm_mode must be trajectory, sqrt, or none")
         self.max_tokens = _positive_int(self.config.get("max_tokens", 4096), "max_tokens")
         self.temperature = _finite(self.config.get("temperature", 1.0), "temperature")
         if self.temperature < 0:
@@ -798,6 +801,48 @@ class TinkerAdapter:
             },
         }
 
+    def score_target_without_thinking(
+        self,
+        turn_target: Mapping[str, Any],
+        *,
+        scorer=None,
+    ) -> dict:
+        """Score exact zero-thinking target action log-likelihood log P(y_t | prefix_no_thinking)."""
+        target_tokens = list(turn_target["target_action_tokens"])
+        if not target_tokens:
+            raise ValueError("turn_target requires nonempty target_action_tokens")
+        if self.effort == 0.0 or not turn_target.get("thinking_prompt_tokens"):
+            prefix_no_thinking = list(turn_target["prefix_tokens"])
+        else:
+            _msg_model_id, _content_thinking_id, end_message_id = self.thinking_token_ids()
+            prefix_no_thinking = list(turn_target["thinking_prompt_tokens"]) + [end_message_id]
+        full_ids = prefix_no_thinking + target_tokens
+        self._budget(len(full_ids))
+        sdk = self._sdk()
+        client = scorer or self.sampling_client
+        if client is None:
+            client = self.create_sampling_client()
+        values = self._retry_idempotent(
+            lambda: client.compute_logprobs(
+                sdk.types.ModelInput.from_ints(full_ids),
+                prompt_logprobs_last_n=len(target_tokens),
+            ),
+            "zero-thinking target action logprob scoring",
+            attempts=2,
+        )
+        if len(values) != len(full_ids):
+            raise AdapterError("Zero-thinking target scoring returned misaligned log probabilities")
+        target_logprobs = [_finite(v, "target action logprob") for v in values[-len(target_tokens):]]
+        target_logprob_sum = sum(target_logprobs)
+        return {
+            "target_logprobs": target_logprobs,
+            "target_logprob_sum": target_logprob_sum,
+            "target_logprob_mean": target_logprob_sum / len(target_logprobs),
+            "prompt_tokens": len(prefix_no_thinking),
+            "target_tokens": len(target_tokens),
+            "sampler_revision": self.sampling_revision,
+        }
+
     def token_accounting(self, tokens: Sequence[int]) -> dict[str, int]:
         """Partition original TML tokens, conservatively retaining unknown boundaries.
 
@@ -1024,15 +1069,19 @@ class TinkerAdapter:
         return {"prompt_tokens": len(prompt_tokens), "reserved_output_tokens": budget,
                 "total_tokens": len(prompt_tokens) + budget, "limit": self.max_context_tokens}
 
-    def sample(self, messages: Sequence[Mapping[str, Any]], max_tokens: int | None = None, seed: int | None = None) -> dict:
+    def sample(self, messages: Sequence[Mapping[str, Any]], max_tokens: int | None = None,
+               seed: int | None = None, temperature: float | None = None) -> dict:
         sdk = self._sdk()
         with self._lock:
             prompt, prompt_tokens, budget = self._generation_prompt(messages, max_tokens)
+            temp = self.temperature if temperature is None else _finite(temperature, "temperature")
+            if temp < 0:
+                raise ValueError("temperature must be nonnegative")
             if self.sampling_client is None:
                 self.create_sampling_client()
             client = self.sampling_client
             revision = self.sampling_revision
-            params = {"max_tokens": budget, "temperature": self.temperature, "stop": sdk.renderer.get_stop_sequences()}
+            params = {"max_tokens": budget, "temperature": temp, "stop": sdk.renderer.get_stop_sequences()}
             if seed is not None:
                 params["seed"] = _seed(seed)
             sampling_params = sdk.types.SamplingParams(**params)
@@ -1214,11 +1263,29 @@ class TinkerAdapter:
         traj_lengths = [sum(len(s.get("token_ids", [])) for s in trajectory["samples"]) for trajectory in trajectories]
         mean_traj_len = statistics.fmean(traj_lengths) if traj_lengths else 1.0
         for trajectory, traj_len in zip(trajectories, traj_lengths):
-            advantage = _finite(trajectory["advantage"], "advantage")
+            raw_advantage = _finite(trajectory["advantage"], "advantage")
             scale = (mean_traj_len / traj_len) if (self.rl_token_normalization == "trajectory" and traj_len > 0) else 1.0
-            advantage = advantage * scale
+            advantage = raw_advantage * scale
+            if self.rl_token_normalization == "trajectory" and traj_len > 0:
+                if self.opsd_norm_mode == "trajectory":
+                    opsd_scale = scale
+                elif self.opsd_norm_mode == "sqrt":
+                    opsd_scale = math.sqrt(scale)
+                else:
+                    opsd_scale = 1.0
+            else:
+                opsd_scale = 1.0
             for sample in trajectory["samples"]:
-                if scale != 1.0 and sample.get("token_advantages") is not None:
+                if sample.get("opsd_token_deltas") is not None:
+                    deltas = [_finite(d, "opsd token delta") for d in sample["opsd_token_deltas"]]
+                    if len(deltas) != len(sample.get("token_ids", [])):
+                        raise ValueError("opsd_token_deltas must align with sampled token_ids")
+                    scaled_sample = dict(sample)
+                    scaled_sample["token_advantages"] = [
+                        advantage + delta * opsd_scale for delta in deltas
+                    ]
+                    arrays = rl_token_arrays(scaled_sample, advantage)
+                elif scale != 1.0 and sample.get("token_advantages") is not None:
                     scaled_sample = dict(sample)
                     scaled_sample["token_advantages"] = [
                         _finite(x, "token advantage") * scale for x in sample["token_advantages"]
