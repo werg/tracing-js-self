@@ -68,10 +68,11 @@ def execution_advantages(records: list[dict], config: dict, coefficient: float |
     tokens = [record["generated_tokens"] for record in records]
     if any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in tokens):
         raise ValueError("generated token counts must be nonnegative integers")
+    compress_only_accurate = bool(config.get("compress_only_accurate_groups", False))
     correctness = centered(correct, standardize=config.get("advantage_mode", "decoupled") == "decoupled")
     successful = [index for index, value in enumerate(correct) if value]
     length = [0.0] * len(records)
-    if successful:
+    if successful and (not compress_only_accurate or len(successful) == len(records)):
         costs = [min(tokens[index] / scale, 1.0) for index in successful]
         mean_cost = statistics.fmean(costs)
         for index, cost in zip(successful, costs):
@@ -95,10 +96,12 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
     at -200 nats), standardized with a minimum std floor (`likelihood_std_floor`,
     default 0.5 nats) so already-confident groups do not amplify 0.005-nat noise.
     Within the high-confidence subset (terminated thoughts within 0.5 nats of the
-    best thought and >= -1.0 nats), shorter thoughts receive a standardized length
-    saving bonus scaled by `coefficient`, preventing compression from ever
+    best thought and >= -1.0 nats, optionally gated by `compression_ll_threshold`
+    and `compress_only_accurate_groups`), shorter thoughts receive a standardized
+    length saving bonus scaled by `coefficient`, preventing compression from ever
     rewarding wrong shortcuts. Target action tokens y receive a posterior-weighted
-    EM anchor advantage proportional to softmax(ll_i).
+    EM anchor advantage proportional to softmax(ll_i) (optionally overridden for
+    external tool-call turns via `tool_turn_anchor_weight`).
     """
     if not records:
         raise ValueError("likelihood advantages require at least one rollout")
@@ -111,6 +114,23 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
     anchor_weight = float(config.get("target_anchor_weight", 0.25))
     if not math.isfinite(anchor_weight) or anchor_weight < 0:
         raise ValueError("target_anchor_weight must be finite and nonnegative")
+    raw_tool_anchor = config.get("tool_turn_anchor_weight")
+    if raw_tool_anchor is not None:
+        if isinstance(raw_tool_anchor, bool) or not isinstance(raw_tool_anchor, (int, float)):
+            raise ValueError("tool_turn_anchor_weight must be null or finite and nonnegative")
+        tool_anchor_weight = float(raw_tool_anchor)
+        if not math.isfinite(tool_anchor_weight) or tool_anchor_weight < 0:
+            raise ValueError("tool_turn_anchor_weight must be null or finite and nonnegative")
+    else:
+        tool_anchor_weight = anchor_weight
+    compress_only_accurate = bool(config.get("compress_only_accurate_groups", False))
+    compression_ll_threshold = config.get("compression_ll_threshold", config.get("compression_min_group_ll"))
+    if compression_ll_threshold is not None:
+        if isinstance(compression_ll_threshold, bool) or not isinstance(compression_ll_threshold, (int, float)):
+            raise ValueError("compression_ll_threshold must be null or finite")
+        compression_ll_threshold = float(compression_ll_threshold)
+        if not math.isfinite(compression_ll_threshold):
+            raise ValueError("compression_ll_threshold must be null or finite")
     std_floor = float(config.get("likelihood_std_floor", 0.5))
     if not math.isfinite(std_floor) or std_floor < 0:
         raise ValueError("likelihood_std_floor must be finite and nonnegative")
@@ -155,12 +175,25 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
     else:
         ll_adv = raw_centered
 
+    mean_valid_ll = statistics.fmean(valid_lls) if valid_lls else None
+    mean_group_ll = statistics.fmean(ll_values)
+    allow_compression = bool(valid_indices)
+    if compress_only_accurate and len(valid_indices) != len(records):
+        allow_compression = False
+    if compression_ll_threshold is not None and (
+        mean_valid_ll is None
+        or mean_valid_ll < compression_ll_threshold
+        or mean_group_ll < compression_ll_threshold
+    ):
+        allow_compression = False
+
     length = [0.0] * len(records)
-    if valid_indices:
+    if allow_compression:
         best_ll = max(valid_lls)
+        min_rollout_ll = max(-1.0, compression_ll_threshold) if compression_ll_threshold is not None else -1.0
         confident = [
             idx for idx, ll in zip(valid_indices, valid_lls)
-            if ll >= best_ll - 0.5 and ll >= -1.0
+            if ll >= best_ll - 0.5 and ll >= min_rollout_ll
         ]
         if len(confident) >= 2:
             toks = [float(records[idx]["generated_tokens"]) for idx in confident]
@@ -172,12 +205,21 @@ def likelihood_advantages(records: list[dict], config: dict, coefficient: float 
     advantages = [acc + coefficient * saving for acc, saving in zip(ll_adv, length)]
 
     target_advantages = [0.0] * len(records)
-    if valid_indices and anchor_weight > 0:
+    if valid_indices and (anchor_weight > 0 or tool_anchor_weight > 0):
         max_ll = max(valid_lls)
         exps = [math.exp(max(ll - max_ll, -50.0)) for ll in valid_lls]
         total_exp = sum(exps) or 1.0
         for index, exp_val in zip(valid_indices, exps):
-            target_advantages[index] = anchor_weight * (exp_val / total_exp) * len(valid_indices)
+            rec = records[index]
+            sample0 = (rec.get("samples") or [None])[0]
+            is_tool_call = bool(
+                rec.get("is_tool_call")
+                if "is_tool_call" in rec
+                else (sample0.get("is_tool_call") if isinstance(sample0, dict) else False)
+            )
+            eff_weight = tool_anchor_weight if is_tool_call else anchor_weight
+            if eff_weight > 0:
+                target_advantages[index] = eff_weight * (exp_val / total_exp) * len(valid_indices)
 
     token_advantages: list[list[float] | None] = [None] * len(records)
     opsd_token_deltas: list[list[float] | None] = [None] * len(records)

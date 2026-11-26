@@ -252,8 +252,12 @@ test('native V8 executionMode runs RegExp, JSON, URL, Date, and non-deterministi
   assert.equal(prepared.bundle, null);
   assert.equal(prepared.outcome.kind, 'return');
   const session = createTinkerSession(prepared);
-  const tools = JSON.parse(session.messages.find(m => m.role === 'tool_declare').content).map(x => x.function.name);
+  const declaredTools = JSON.parse(session.messages.find(m => m.role === 'tool_declare').content);
+  const tools = declaredTools.map(x => x.function.name);
   assert.ok(tools.includes('platform.dateNow') && tools.includes('platform.random') && tools.includes('platform.console.warn'));
+  for (const decl of declaredTools) {
+    assert.deepEqual(decl.function.parameters.required, ['arguments'], `expected required:['arguments'] for ${decl.function.name}`);
+  }
   const tc = (name, args, id) => ({role: 'assistant', content: '', tool_calls: [{type: 'function', id, function: {name, arguments: JSON.stringify({arguments: args})}}]});
   const s1 = await session.step(tc('platform.dateNow', [], 'c1'), 10);
   assert.equal(s1.done, false);

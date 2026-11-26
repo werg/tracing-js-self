@@ -145,6 +145,8 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
 
     time_aliases: set[str] = set()
     time_direct: set[str] = set()
+    datetime_aliases: set[str] = set()
+    datetime_cls_aliases: set[str] = set()
     random_aliases: set[str] = set()
     random_direct: set[str] = set()
     urllib_root_aliases: set[str] = set()
@@ -158,6 +160,8 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
             for alias in node.names:
                 if alias.name == "time":
                     time_aliases.add(alias.asname or "time")
+                elif alias.name == "datetime":
+                    datetime_aliases.add(alias.asname or "datetime")
                 elif alias.name == "random":
                     random_aliases.add(alias.asname or "random")
                 elif alias.name == "urllib":
@@ -174,11 +178,22 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
         elif isinstance(node, ast.ImportFrom):
             if node.module == "time":
                 for alias in node.names:
-                    if alias.name in ("time", "monotonic"):
+                    if alias.name == "*":
+                        time_direct.update(("time", "monotonic"))
+                    elif alias.name in ("time", "monotonic"):
                         time_direct.add(alias.asname or alias.name)
+            elif node.module == "datetime":
+                for alias in node.names:
+                    if alias.name == "*":
+                        datetime_cls_aliases.update(("datetime", "date"))
+                    elif alias.name in ("datetime", "date"):
+                        datetime_cls_aliases.add(alias.asname or alias.name)
             elif node.module == "random":
                 for alias in node.names:
-                    if alias.name in ("random", "randint", "randrange", "choice", "uniform", "shuffle", "sample"):
+                    if alias.name == "*":
+                        uses_random = True
+                        random_direct.add("random")
+                    elif alias.name in ("random", "randint", "randrange", "choice", "uniform", "shuffle", "sample"):
                         uses_random = True
                         if alias.name == "random":
                             random_direct.add(alias.asname or "random")
@@ -210,8 +225,11 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
                     names.add(op)
             elif owner in time_aliases and attr in ("time", "monotonic"):
                 names.add("platform.time")
+            elif owner in datetime_cls_aliases and attr == "today":
+                names.add("platform.time")
             elif owner in random_aliases:
-                uses_random = True
+                if attr in ("random", "randint", "randrange", "choice", "uniform", "shuffle", "sample"):
+                    uses_random = True
                 if attr == "random" and random_mode == "tool":
                     names.add("platform.random")
             elif owner in urllib_req_aliases and attr == "urlopen":
@@ -221,7 +239,9 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
         elif isinstance(attr_node.value, ast.Attribute) and isinstance(attr_node.value.value, ast.Name):
             root_name = attr_node.value.value.id
             inner_attr = attr_node.value.attr
-            if root_name in urllib_root_aliases and inner_attr == "request" and attr == "urlopen":
+            if root_name in datetime_aliases and inner_attr in ("datetime", "date") and attr == "today":
+                names.add("platform.time")
+            elif root_name in urllib_root_aliases and inner_attr == "request" and attr == "urlopen":
                 names.add("http.request")
             elif root_name in requests_aliases and inner_attr == "api" and attr in _HTTP_REQUESTS_MEMBERS:
                 names.add("http.request")
@@ -257,7 +277,6 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
 def _tool_declaration(operation: str, native_bindings: list[dict[str, Any]]) -> dict[str, Any]:
     binding = next((b for b in native_bindings if b["name"] == operation), None)
     spec = PY_HOST_OPERATIONS.get(operation)
-    arity = spec["arity"] if spec else None
     description = (
         binding.get("description")
         if binding and binding.get("description")
@@ -276,7 +295,7 @@ def _tool_declaration(operation: str, native_bindings: list[dict[str, Any]]) -> 
                         "description": f"Ordered Python arguments passed to {operation}.",
                     }
                 },
-                "required": [] if arity == 0 else ["arguments"],
+                "required": ["arguments"],
             },
         },
     }

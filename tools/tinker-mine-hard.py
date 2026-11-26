@@ -275,10 +275,21 @@ def mine_dataset(
 
     cached_by_id: dict[str, dict[str, Any]] = {}
     if resume_scores_path is not None and resume_scores_path.is_file():
-        for rec in read_jsonl(resume_scores_path):
-            rid = rec.get("id")
-            if isinstance(rid, str) and rec.get("mode") == mode:
-                cached_by_id[rid] = rec
+        raw_lines = resume_scores_path.read_text(encoding="utf-8").splitlines()
+        for line_idx, raw_line in enumerate(raw_lines):
+            if not raw_line.strip():
+                continue
+            try:
+                rec = json.loads(raw_line)
+            except ValueError:
+                if line_idx == len(raw_lines) - 1:
+                    print(f"mine-hard ({mode}): ignoring truncated trailing line in {resume_scores_path}", file=sys.stderr, flush=True)
+                    break
+                raise
+            if isinstance(rec, dict):
+                rid = rec.get("id")
+                if isinstance(rid, str) and rec.get("mode") == mode:
+                    cached_by_id[rid] = rec
         if cached_by_id:
             print(f"mine-hard ({mode}): loaded {len(cached_by_id)} cached scores from {resume_scores_path}", file=sys.stderr, flush=True)
 
@@ -305,6 +316,7 @@ def mine_dataset(
                     (cached.get("error") in ("no_turns", "context_overflow"))
                     or (not bool(cached.get("terminated")))
                     or (min_ll is None)
+                    or (not math.isfinite(float(min_ll)))
                     or (float(min_ll) < float(hard_ll_threshold))
                     or (int(cached.get("generated_tokens") or 0) >= long_thought_tokens)
                 )
