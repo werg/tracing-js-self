@@ -1159,3 +1159,16 @@ class TinkerAdapter:
             lambda: self.training_client.save_weights_for_sampler(name=name, **sampler_kwargs), "sampler checkpoint save"
         )
         return {"training_path": training.path, "sampler_path": sampler.path, "step": self.training_steps}
+
+    def delete_checkpoint(self, path: str) -> bool:
+        """Best-effort delete of a superseded remote Tinker checkpoint to stay within free storage quota."""
+        if self._injected_runtime or not isinstance(path, str) or not path.startswith("tinker://"):
+            return False
+        try:
+            rest = self._sdk().rest_factory()
+            if hasattr(rest, "delete_checkpoint_from_tinker_path"):
+                self._wait(rest.delete_checkpoint_from_tinker_path(path), "checkpoint deletion")
+                return True
+        except Exception:
+            return False
+        return False

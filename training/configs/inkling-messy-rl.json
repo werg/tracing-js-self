@@ -35,7 +35,7 @@
   "evaluation_samples": 1,
   "max_eval_tasks": 100,
   "evaluation_manifest": null,
-  "checkpoint_every": 10,
+  "checkpoint_every": 20,
   "checkpoint_every_update": false,
   "recovery_checkpoint_ttl_seconds": 86400,
   "enforce_turn_budget": true,

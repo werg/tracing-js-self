@@ -1237,6 +1237,7 @@ def _commit_update(adapter: Any, output_dir: Path, state: dict, rng: random.Rand
     recovered = _finish_update_recovery(output_dir, pending)
     state.clear()
     state.update(recovered)
+    prune_remote_checkpoints(adapter, state, output_dir)
 
 
 def _accepts_kwarg(func: Any, name: str) -> bool:
@@ -1288,6 +1289,37 @@ def save_state(output_dir: Path, state: dict, rng: random.Random) -> None:
     atomic_json(output_dir / "state.json", state)
 
 
+def prune_remote_checkpoints(adapter: Any, state: dict, output_dir: Path) -> None:
+    """Delete superseded remote Tinker checkpoints (keeping active, selected, pending, and SFT anchor)."""
+    deleter = getattr(adapter, "delete_checkpoint", None)
+    if not callable(deleter):
+        return
+    keep: set[str] = set()
+    for key in ("training_path", "sampler_path", "sft_training_path", "sft_sampler_path"):
+        val = state.get(key)
+        if isinstance(val, str) and val.startswith("tinker://"):
+            keep.add(val)
+    for container_key in ("selected_checkpoint", "pending_validation"):
+        container = state.get(container_key)
+        if isinstance(container, dict):
+            for key in ("training_path", "sampler_path"):
+                val = container.get(key)
+                if isinstance(val, str) and val.startswith("tinker://"):
+                    keep.add(val)
+    pruned = set(state.get("pruned_checkpoints", []))
+    ckpt_file = output_dir / "checkpoints.jsonl"
+    if not ckpt_file.exists():
+        return
+    for entry in read_jsonl(ckpt_file):
+        for key in ("training_path", "sampler_path"):
+            path = entry.get(key)
+            if isinstance(path, str) and path.startswith("tinker://") and path not in keep and path not in pruned:
+                if deleter(path):
+                    pruned.add(path)
+    if pruned != set(state.get("pruned_checkpoints", [])):
+        state["pruned_checkpoints"] = sorted(pruned)
+
+
 def save_checkpoint(adapter: Any, output_dir: Path, state: dict, rng: random.Random, name: str,
                     *, validation_pending: bool = False) -> None:
     saved = adapter.checkpoint(name)
@@ -1301,6 +1333,7 @@ def save_checkpoint(adapter: Any, output_dir: Path, state: dict, rng: random.Ran
                                        "sampler_path": saved["sampler_path"]}
     save_state(output_dir, state, rng)
     append_jsonl(output_dir / "checkpoints.jsonl", {"name": name, **copy.deepcopy(state)})
+    prune_remote_checkpoints(adapter, state, output_dir)
 
 
 def _ensure_initial_checkpoint(adapter: Any, output_dir: Path, state: dict,
@@ -1939,12 +1972,21 @@ def validate_token_budgets(bridge: Any, adapter: Any, rows: list[dict], config: 
                     if episode_trainable > config["max_tokens"]:
                         over_turn_budget.append({"id": row["id"], "tokens": episode_trainable,
                                                  "limit": config["max_tokens"]})
-            started = bridge.request("start", task=row["task"])
-            try:
-                checked = adapter.validate_prompt(prompt_messages(started["messages"], config), max_tokens=config["max_tokens"])
+            if row.get("messages"):
+                prefix = []
+                for msg in row["messages"]:
+                    if msg.get("role") == "assistant":
+                        break
+                    prefix.append(msg)
+                checked = adapter.validate_prompt(prompt_messages(prefix, config), max_tokens=config["max_tokens"])
                 prompt_tokens.append(checked["prompt_tokens"])
-            finally:
-                bridge.request("close", sessionId=started["sessionId"])
+            else:
+                started = bridge.request("start", task=row["task"])
+                try:
+                    checked = adapter.validate_prompt(prompt_messages(started["messages"], config), max_tokens=config["max_tokens"])
+                    prompt_tokens.append(checked["prompt_tokens"])
+                finally:
+                    bridge.request("close", sessionId=started["sessionId"])
         except Exception as error:
             raise ValueError(f"token preflight for task {row['id']}: {error}") from error
     if config.get("enforce_turn_budget", False) and (over_turn_budget or over_episode_budget):
