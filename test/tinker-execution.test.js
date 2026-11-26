@@ -137,6 +137,20 @@ test('clock and console effects stay on the existing capability boundary', async
   await session.step(call('platform.dateNow', []), 10);
   await session.step(call('platform.console.log', [123]), 20);
   assert.equal((await session.step(complete(123), 30)).grade.success, true);
+  // Sequential multi-tool-call turns execute in order and return matching tool observations.
+  const batched = await prepareTinkerTask(task('function run(){host.store("a",1);host.store("b",2);return 3;}', {
+    fixture: {calls: [{operation: 'demo.store', arguments: ['a', 1]}, {operation: 'demo.store', arguments: ['b', 2]}]}}));
+  const batchSession = createTinkerSession(batched);
+  const step = await batchSession.step({role: 'assistant', content: '', tool_calls: [
+    {type: 'function', id: 'tc1', function: {name: 'demo.store', arguments: '{"arguments":["a",1]}'}},
+    {type: 'function', id: 'tc2', function: {name: 'demo.store', arguments: '{"arguments":["b",2]}'}},
+  ]}, 15);
+  assert.equal(step.done, false);
+  assert.equal(step.messages.length, 2);
+  assert.deepEqual(step.messages.map(m => [m.role, m.tool_call_id, m.name]), [
+    ['tool', 'tc1', 'demo.store'], ['tool', 'tc2', 'demo.store'],
+  ]);
+  assert.equal((await batchSession.step(complete(3), 25)).grade.success, true);
 });
 
 test('fresh randomness is privately materialized once and preserved for reproducible start/export', async () => {

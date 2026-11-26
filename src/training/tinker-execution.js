@@ -588,24 +588,27 @@ function validateActionObject(action) {
   throw new TypeError('Unknown action type');
 }
 
+function parseToolCall(tc) {
+  const fn = tc?.function;
+  demand(fn && typeof fn.name === 'string' && fn.name.length > 0, 'Invalid tool call function');
+  let rawArgs = fn.arguments;
+  if (typeof rawArgs === 'string') {
+    const trimmedArgs = rawArgs.trim();
+    rawArgs = trimmedArgs ? JSON.parse(trimmedArgs) : {};
+  }
+  let args;
+  if (Array.isArray(rawArgs)) args = rawArgs;
+  else if (plain(rawArgs) && Array.isArray(rawArgs.arguments) && Object.keys(rawArgs).length === 1) args = rawArgs.arguments;
+  else if (plain(rawArgs) && Object.keys(rawArgs).length === 0) args = [];
+  else throw new TypeError('Invalid tool call arguments');
+  const toolCallId = typeof tc.id === 'string' && tc.id.length > 0 ? tc.id : null;
+  return {type: 'call', operation: fn.name, arguments: args, ...(toolCallId ? {toolCallId} : {})};
+}
+
 export function parseStudentAction(input) {
   if (input && typeof input === 'object' && !Array.isArray(input) && Array.isArray(input.tool_calls) && input.tool_calls.length > 0) {
-    demand(input.tool_calls.length === 1, 'Expected exactly one external tool call per turn');
-    const tc = input.tool_calls[0];
-    const fn = tc?.function;
-    demand(fn && typeof fn.name === 'string' && fn.name.length > 0, 'Invalid tool call function');
-    let rawArgs = fn.arguments;
-    if (typeof rawArgs === 'string') {
-      const trimmedArgs = rawArgs.trim();
-      rawArgs = trimmedArgs ? JSON.parse(trimmedArgs) : {};
-    }
-    let args;
-    if (Array.isArray(rawArgs)) args = rawArgs;
-    else if (plain(rawArgs) && Array.isArray(rawArgs.arguments) && Object.keys(rawArgs).length === 1) args = rawArgs.arguments;
-    else if (plain(rawArgs) && Object.keys(rawArgs).length === 0) args = [];
-    else throw new TypeError('Invalid tool call arguments');
-    const toolCallId = typeof tc.id === 'string' && tc.id.length > 0 ? tc.id : null;
-    return {type: 'call', operation: fn.name, arguments: args, ...(toolCallId ? {toolCallId} : {})};
+    if (input.tool_calls.length === 1) return parseToolCall(input.tool_calls[0]);
+    return {type: 'calls', calls: input.tool_calls.map(parseToolCall)};
   }
   const text = typeof input === 'string' ? input : assistantVisibleText(input);
   demand(typeof text === 'string' && text.length <= 1048576, 'Invalid action text');
@@ -692,22 +695,27 @@ export function createTinkerSession(prepared) {
         } catch { return reject('incomplete-or-invalid-completion', 'invalid-completion'); }
       }
       try {
-        const args = decodeReadable(action.arguments);
-        demand(Array.isArray(args), 'Call arguments must be an array');
-        const request = privateOperation(prepared, action.operation, args);
-        const expected = prepared.fixture.calls[calls];
-        // No counterfactual fixture result may be exposed to a different request.
-        demand(expected && expected.operation === request.operation &&
-          isDeepStrictEqual(encodeNativeGraph(request.arguments), expected.argumentGraph), 'External request mismatch');
-        let status = 'fulfilled', value;
-        try { value = await broker.invoke(request.operation, request.arguments); }
-        catch (error) {
-          demand(expected.status === 'rejected', 'Environment infrastructure failure');
-          status = 'rejected'; value = error;
+        const batch = action.type === 'calls' ? action.calls : [action];
+        const observations = [];
+        for (const item of batch) {
+          const args = decodeReadable(item.arguments);
+          demand(Array.isArray(args), 'Call arguments must be an array');
+          const request = privateOperation(prepared, item.operation, args);
+          const expected = prepared.fixture.calls[calls];
+          // No counterfactual fixture result may be exposed to a different request.
+          demand(expected && expected.operation === request.operation &&
+            isDeepStrictEqual(encodeNativeGraph(request.arguments), expected.argumentGraph), 'External request mismatch');
+          let status = 'fulfilled', value;
+          try { value = await broker.invoke(request.operation, request.arguments); }
+          catch (error) {
+            demand(expected.status === 'rejected', 'Environment infrastructure failure');
+            status = 'rejected'; value = error;
+          }
+          calls++;
+          const toolCallId = item.toolCallId ?? ('call_' + calls);
+          observations.push(observation(item.operation, status, value, toolCallId));
         }
-        calls++;
-        const toolCallId = action.toolCallId ?? ('call_' + calls);
-        return {messages: [observation(action.operation, status, value, toolCallId)], done: false};
+        return {messages: observations, done: false};
       } catch { return reject('external-request-mismatch', 'incorrect-external-request'); }
     },
     grade,
