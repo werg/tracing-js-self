@@ -9,7 +9,6 @@ intercepted external call via next_turn().
 from __future__ import annotations
 
 import ast
-import json
 import math
 import re
 from dataclasses import dataclass
@@ -105,57 +104,238 @@ def _extract_branch_map(source: str) -> dict[int, _BranchMeta]:
     return branches
 
 
-def _local_fingerprint(value: Any) -> tuple:
-    """Side-effect-free value fingerprint: NEVER calls __eq__, __repr__, or __str__."""
-    if value is None:
-        return ("none",)
-    t = type(value)
-    if t is bool:
-        return ("bool", value)
-    if t is int:
-        return ("int", value)
-    if t is float:
-        if math.isnan(value):
-            return ("float_nan",)
-        if value == 0.0 and math.copysign(1.0, value) < 0.0:
-            return ("float_neg0",)
-        return ("float", value)
-    if t is str:
-        return ("str", value)
-    if t is bytes:
-        return ("bytes", value)
-    return ("obj", id(value), t.__name__)
+def _is_exact_scalar(t: type) -> bool:
+    return (
+        t is type(None)
+        or t is bool
+        or t is int
+        or t is float
+        or t is str
+        or t is bytes
+    )
 
 
-def _format_scalar(value: Any, max_string_length: int = 160) -> str | None:
-    """Format built-in scalars safely; return None for non-scalar objects."""
-    if value is None:
+def _is_exact_container(t: type) -> bool:
+    return (
+        t is tuple
+        or t is list
+        or t is dict
+        or t is set
+        or t is frozenset
+    )
+
+
+def _format_value_inner(
+    v: Any,
+    depth: int,
+    max_depth: int,
+    max_items: int,
+    max_chars: int,
+    seen: set[int],
+    standalone_str_max: int,
+) -> str:
+    t = type(v)
+    if t is type(None):
         return "None"
-    t = type(value)
     if t is bool:
-        return "True" if value else "False"
+        return "True" if v else "False"
     if t is int:
-        text = str(value)
-        if len(text) > max_string_length:
-            return text[: max_string_length - 3] + "..."
+        if v.bit_length() > 1000:
+            return f"<int bits={v.bit_length()}>"
+        text = str(v)
+        limit = standalone_str_max if depth == 0 else 80
+        if len(text) > limit:
+            return text[: max(0, limit - 3)] + "..."
         return text
     if t is float:
-        if math.isnan(value):
+        if math.isnan(v):
             return "NaN"
-        if math.isinf(value):
-            return "Infinity" if value > 0 else "-Infinity"
-        if value == 0.0 and math.copysign(1.0, value) < 0.0:
+        if math.isinf(v):
+            return "Infinity" if v > 0 else "-Infinity"
+        if v == 0.0 and math.copysign(1.0, v) < 0.0:
             return "-0.0"
-        return repr(value)
+        return repr(v)
     if t is str:
-        clipped = value[: max(0, max_string_length - 3)] + "..." if len(value) > max_string_length else value
-        return json.dumps(clipped, ensure_ascii=False)
-    if t is bytes:
-        text = repr(value)
-        if len(text) > max_string_length:
-            return text[: max_string_length - 3] + "..."
+        str_limit = standalone_str_max if depth == 0 else 80
+        if len(v) > str_limit:
+            text = repr(v[: max(0, str_limit - 3)] + "...")
+        else:
+            text = repr(v)
+        if len(text) > str_limit + 16:
+            return text[: str_limit + 13] + "..."
         return text
-    return None
+    if t is bytes:
+        n = len(v)
+        if n == 0:
+            return "b''"
+        preview = v[:16].hex()
+        suffix = "..." if n > 16 else ""
+        return f"bytes({n}:{preview}{suffix})"
+
+    if _is_exact_container(t):
+        n = len(v)
+        if n == 0:
+            if t is tuple:
+                return "()"
+            if t is list:
+                return "[]"
+            if t is dict:
+                return "{}"
+            if t is set:
+                return "set()"
+            return "frozenset()"
+
+        vid = id(v)
+        if vid in seen:
+            return "<...>"
+        if depth >= max_depth:
+            if t is tuple:
+                return "(...)"
+            if t is list:
+                return "[...]"
+            if t is dict:
+                return "{...}"
+            if t is set:
+                return "{...}"
+            return "frozenset(...)"
+
+        seen.add(vid)
+        try:
+            if t is list or t is tuple:
+                count = min(n, max_items)
+                parts: list[str] = []
+                approx_len = 2
+                truncated = n > max_items
+                for i in range(count):
+                    item_str = _format_value_inner(
+                        v[i], depth + 1, max_depth, max_items, max_chars, seen, standalone_str_max
+                    )
+                    parts.append(item_str)
+                    approx_len += len(item_str) + 2
+                    if approx_len > max_chars + 16 and i + 1 < n:
+                        truncated = True
+                        break
+                if truncated:
+                    parts.append("...")
+                if t is tuple:
+                    rendered = f"({parts[0]},)" if (n == 1 and not truncated) else "(" + ", ".join(parts) + ")"
+                else:
+                    rendered = "[" + ", ".join(parts) + "]"
+            elif t is dict:
+                parts = []
+                approx_len = 2
+                truncated = n > max_items
+                for i, (k, val) in enumerate(dict.items(v)):
+                    if i >= max_items:
+                        break
+                    ks = _format_value_inner(
+                        k, depth + 1, max_depth, max_items, max_chars, seen, standalone_str_max
+                    )
+                    vs = _format_value_inner(
+                        val, depth + 1, max_depth, max_items, max_chars, seen, standalone_str_max
+                    )
+                    piece = f"{ks}: {vs}"
+                    parts.append(piece)
+                    approx_len += len(piece) + 2
+                    if approx_len > max_chars + 16 and i + 1 < n:
+                        truncated = True
+                        break
+                if truncated:
+                    parts.append("...")
+                rendered = "{" + ", ".join(parts) + "}"
+            else:
+                # Exact set or frozenset: sort formatted items for small sets so output is
+                # deterministic across subprocess PYTHONHASHSEED values without calling guest __lt__.
+                if n <= 32:
+                    all_parts = [
+                        _format_value_inner(
+                            item, depth + 1, max_depth, max_items, max_chars, seen, standalone_str_max
+                        )
+                        for item in v
+                    ]
+                    all_parts.sort()
+                    parts = all_parts[:max_items]
+                    if n > max_items:
+                        parts.append("...")
+                    body = ", ".join(parts)
+                    rendered = "{" + body + "}" if t is set else "frozenset({" + body + "})"
+                else:
+                    rendered = f"set(len={n})" if t is set else f"frozenset(len={n})"
+        finally:
+            seen.discard(vid)
+
+        if len(rendered) > max_chars:
+            return rendered[: max(0, max_chars - 3)] + "..."
+        return rendered
+
+    return f"<{t.__name__}>"
+
+
+def _format_value(
+    v: Any,
+    depth: int = 0,
+    max_depth: int = 3,
+    max_items: int = 8,
+    max_chars: int = 120,
+    *,
+    standalone_str_max: int = 160,
+) -> str:
+    """Strictly side-effect-free formatter for exact built-in primitives and containers.
+
+    Checks exact types via `type(v) is ...` (never `isinstance()`), guards against
+    cycles via active-ancestor `seen` IDs, and renders all non-builtin objects or
+    subclasses as `<TypeName>` without invoking `__repr__`, `__str__`, `__eq__`,
+    `__iter__`, `__getitem__`, or `__len__`.
+    """
+    try:
+        return _format_value_inner(
+            v,
+            depth,
+            max_depth,
+            max_items,
+            max_chars,
+            set(),
+            standalone_str_max,
+        )
+    except Exception:
+        return f"<{type(v).__name__}>"
+
+
+def _local_fingerprint(
+    value: Any,
+    *,
+    max_string_length: int = 160,
+    max_container_chars: int = 120,
+) -> tuple:
+    """Side-effect-free value snapshot: NEVER calls __eq__, __repr__, __str__, or subclass dunders."""
+    t = type(value)
+    if t is type(None):
+        return ("builtin", id(t), None, None)
+    if t is bool:
+        return ("builtin", id(t), value, None)
+    if t is int:
+        return ("builtin", id(t), value, None)
+    if t is float:
+        if math.isnan(value):
+            return ("builtin", id(t), "nan", None)
+        if value == 0.0 and math.copysign(1.0, value) < 0.0:
+            return ("builtin", id(t), "-0.0", None)
+        return ("builtin", id(t), value, None)
+    if t is str:
+        n = len(value)
+        preview = value if n <= max_string_length else value[:max_string_length]
+        return ("builtin", id(t), preview, n)
+    if t is bytes:
+        return ("builtin", id(t), value[:16], len(value))
+    if _is_exact_container(t):
+        preview = _format_value(
+            value,
+            depth=0,
+            max_chars=max_container_chars,
+            standalone_str_max=max_string_length,
+        )
+        return ("builtin", id(t), preview, len(value))
+    return ("obj", id(t), id(value))
 
 
 def _safe_exception_message(exc: BaseException, max_len: int = 160) -> str:
@@ -163,11 +343,11 @@ def _safe_exception_message(exc: BaseException, max_len: int = 160) -> str:
     try:
         if type(exc).__str__ is BaseException.__str__:
             text = str(exc)
-        elif hasattr(exc, "args") and isinstance(exc.args, tuple):
-            parts = []
-            for a in exc.args:
-                s = _format_scalar(a, max_len)
-                parts.append(s if s is not None else type(a).__name__)
+        elif hasattr(exc, "args") and type(exc.args) is tuple:
+            parts = [
+                _format_value(a, max_chars=max_len, standalone_str_max=max_len)
+                for a in exc.args
+            ]
             text = ", ".join(parts)
         else:
             text = ""
@@ -272,7 +452,7 @@ class CompactPythonTracer:
         for name, val in frame.f_locals.items():
             if not name or name.startswith("__") or name.startswith("."):
                 continue
-            snap[name] = _local_fingerprint(val)
+            snap[name] = _local_fingerprint(val, max_string_length=self.max_string_length)
         return snap
 
     def _emit_local_diffs(self, frame: Any, state: _FrameState) -> None:
@@ -281,14 +461,17 @@ class CompactPythonTracer:
         for name, val in frame.f_locals.items():
             if not name or name.startswith("__") or name.startswith("."):
                 continue
-            fp = _local_fingerprint(val)
+            fp = _local_fingerprint(val, max_string_length=self.max_string_length)
             current[name] = fp
             if prev.get(name) != fp:
-                scalar = _format_scalar(val, self.max_string_length)
-                if scalar is not None:
-                    self._emit(f"{name} = {scalar}")
+                t = type(val)
+                if _is_exact_container(t):
+                    self._emit(f"{name} = {fp[2]}")
+                elif _is_exact_scalar(t):
+                    rendered = _format_value(val, standalone_str_max=self.max_string_length)
+                    self._emit(f"{name} = {rendered}")
                 else:
-                    self._emit(f"{name} -> {type(val).__name__}")
+                    self._emit(f"{name} -> {t.__name__}")
         state.prev_locals = current
 
     def _resolve_pending_branch(self, state: _FrameState, next_lineno: int, event: str) -> None:
@@ -342,11 +525,12 @@ class CompactPythonTracer:
                 self._emit_local_diffs(frame, state)
                 fn_name = state.fn_name
                 scope = "" if fn_name in (self.entry_name, "<module>") else f" ({fn_name})"
-                scalar = _format_scalar(arg, self.max_string_length)
-                if scalar is not None:
-                    self._emit(f"return{scope} {scalar}")
+                t_arg = type(arg)
+                if _is_exact_scalar(t_arg) or _is_exact_container(t_arg):
+                    rendered = _format_value(arg, standalone_str_max=self.max_string_length)
+                    self._emit(f"return{scope} {rendered}")
                 else:
-                    self._emit(f"return{scope} -> {type(arg).__name__}")
+                    self._emit(f"return{scope} -> {t_arg.__name__}")
             self._frames.pop(fid, None)
             return None
 

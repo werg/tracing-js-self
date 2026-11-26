@@ -34,7 +34,7 @@ from tinker_py.execution import (
     initial_messages,
     prepare_python_task,
 )
-from tinker_py.tracer import create_python_tracer
+from tinker_py.tracer import _format_value, create_python_tracer
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -299,6 +299,139 @@ def run(n):
         self.assertEqual(len(turns), 1)
         self.assertLessEqual(len(turns[0]), 20)
         self.assertTrue(any("steps omitted" in line for line in turns[0]))
+
+    def test_get_stats_rich_container_trace_and_audit(self):
+        source = """\
+def get_stats(ids):
+    counts = {}
+    for pair in zip(ids, ids[1:]):
+        counts[pair] = counts.get(pair, 0) + 1
+    return counts
+"""
+        task = {
+            "id": "py-get-stats-1",
+            "family": "py-bpe-stats",
+            "language": "py",
+            "source": source,
+            "entry": "get_stats",
+            "args": [[1, 2, 3, 1, 2]],
+            "fixture": {"calls": []},
+        }
+        prepared = prepare_python_task(task, trace_format="compact")
+        exported = export_python_example(task, trace_format="compact", reasoning_channel="thinking")
+        audit = audit_python_conversation(
+            prepared,
+            exported["messages"],
+            trace_format="compact",
+            reasoning_channel="thinking",
+        )
+        self.assertTrue(audit["replayVerified"])
+        self.assertTrue(audit["canonicalCausalNarration"])
+
+        thinking = assistant_thinking_text(exported["messages"][-1])
+        lines = thinking.splitlines()
+        self.assertIn("counts = {}", lines)
+        self.assertIn("pair = (1, 2)", lines)
+        self.assertIn("counts = {(1, 2): 1}", lines)
+        self.assertIn("counts = {(1, 2): 1, (2, 3): 1}", lines)
+        self.assertIn("counts = {(1, 2): 1, (2, 3): 1, (3, 1): 1}", lines)
+        self.assertIn("counts = {(1, 2): 2, (2, 3): 1, (3, 1): 1}", lines)
+        self.assertIn("return {(1, 2): 2, (2, 3): 1, (3, 1): 1}", lines)
+
+    def test_poison_objects_and_container_subclasses_never_invoke_dunders(self):
+        source = """\
+class PoisonObj:
+    def __repr__(self):
+        raise AssertionError("boom __repr__")
+    def __str__(self):
+        raise AssertionError("boom __str__")
+    def __eq__(self, other):
+        raise AssertionError("boom __eq__")
+
+class PoisonList(list):
+    def __iter__(self):
+        raise AssertionError("boom PoisonList.__iter__")
+    def __getitem__(self, idx):
+        raise AssertionError("boom PoisonList.__getitem__")
+    def __repr__(self):
+        raise AssertionError("boom PoisonList.__repr__")
+
+class PoisonDict(dict):
+    def __iter__(self):
+        raise AssertionError("boom PoisonDict.__iter__")
+    def items(self):
+        raise AssertionError("boom PoisonDict.items")
+    def __getitem__(self, key):
+        raise AssertionError("boom PoisonDict.__getitem__")
+    def __repr__(self):
+        raise AssertionError("boom PoisonDict.__repr__")
+
+def run(x):
+    p = PoisonObj()
+    pl = PoisonList([1, 2, 3])
+    pd = PoisonDict({"k": 9})
+    box = [p, pl, pd, x]
+    box.append(x + 1)
+    return len(box)
+"""
+        task = {
+            "id": "py-poison-subclasses",
+            "family": "py-poison",
+            "language": "py",
+            "source": source,
+            "entry": "run",
+            "args": [7],
+            "fixture": {"calls": []},
+        }
+        exported = export_python_example(task, trace_format="compact", reasoning_channel="thinking")
+        self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+        thinking = assistant_thinking_text(exported["messages"][-1])
+        self.assertIn("p -> PoisonObj", thinking)
+        self.assertIn("pl -> PoisonList", thinking)
+        self.assertIn("pd -> PoisonDict", thinking)
+        self.assertIn("box = [<PoisonObj>, <PoisonList>, <PoisonDict>, 7]", thinking)
+        self.assertIn("box = [<PoisonObj>, <PoisonList>, <PoisonDict>, 7, 8]", thinking)
+        self.assertIn("return 5", thinking)
+
+    def test_cyclic_containers_and_format_value_bounds(self):
+        source = """\
+def run():
+    a = []
+    a.append(a)
+    d = {}
+    d["self"] = d
+    return (a, d)
+"""
+        tracer = create_python_tracer(source, entry_name="run")
+        code = compile(source, "<guest>", "exec")
+        ns: dict = {}
+        exec(code, ns)
+        sys.settrace(tracer.trace_dispatch)
+        try:
+            res = ns["run"]()
+        finally:
+            sys.settrace(None)
+        self.assertIs(res[0][0], res[0])
+        self.assertIs(res[1]["self"], res[1])
+        turns = tracer.finalize()
+        self.assertEqual(len(turns), 1)
+        joined = "\n".join(turns[0])
+        self.assertIn("a = [<...>]", joined)
+        self.assertIn("d = {'self': <...>}", joined)
+        self.assertIn("return ([<...>], {'self': <...>})", joined)
+
+        # Direct _format_value bounds & edge cases
+        self.assertEqual(_format_value((42,)), "(42,)")
+        self.assertEqual(_format_value(b"\xde\xad\xbe\xef"), "bytes(4:deadbeef)")
+        self.assertEqual(_format_value({3, 1, 2}), "{1, 2, 3}")
+        self.assertEqual(_format_value(frozenset({"b", "a"})), "frozenset({'a', 'b'})")
+        self.assertTrue(_format_value(list(range(20))).endswith(", ...]"))
+        self.assertLessEqual(len(_format_value(["x" * 60] * 10)), 120)
+        self.assertTrue(_format_value("a" * 200).endswith("...'"))
+        # Inside container, string truncated at 80 chars
+        inner_str = _format_value(["b" * 120], max_chars=200)
+        self.assertIn("...", inner_str)
+        self.assertLess(len(inner_str), 100)
 
 
 class EffectfulPythonAndGradingTests(unittest.TestCase):
@@ -762,6 +895,261 @@ def test_sample_audit_score():
             re_exported = export_python_example(atask, trace_format="compact", reasoning_channel="thinking")
             self.assertTrue(re_exported["metadata"]["traceAudit"]["replayVerified"])
             self.assertGreater(re_exported["metadata"]["traceAudit"]["narrationLines"], 0)
+
+    def test_harvester_v2_filters_parametrize_aliases_and_priority(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            repos_dir = root / "repos"
+            repo = repos_dir / "v2_quality_lib"
+            (repo / "pkg").mkdir(parents=True)
+            (repo / "tests").mkdir(parents=True)
+
+            (repo / "pkg" / "__init__.py").write_text("", encoding="utf-8")
+            # Alphabetically first module: synthetic-probe-only functions, including a
+            # trivial 1-line constant return and a function whose first line hits TypeError
+            # (caught) on mismatched synthetic probe args.
+            (repo / "pkg" / "a_probes.py").write_text(
+                """\
+def trivial_constant(x):
+    \"\"\"Trivial single-line return that should be dropped by --min-trace-lines 4.\"\"\"
+    return 42
+
+def caught_first_line_type_error(x):
+    \"\"\"Raises TypeError on first line when passed an int/list/str/dict probe and catches it.\"\"\"
+    try:
+        return x() + 1
+    except TypeError:
+        acc = 0
+        for i in range(4):
+            acc += i
+        return acc
+
+def probe_only_loop(nums):
+    \"\"\"Multi-step function with no unit tests (only synthetic probes).\"\"\"
+    total = 0
+    for val in nums:
+        if isinstance(val, int):
+            total += val * 2
+    return total
+""",
+                encoding="utf-8",
+            )
+            # Alphabetically later module: real unit-tested functions using aliases,
+            # @pytest.mark.parametrize, self.assertEqual, and pytest.raises(TypeError, ...).
+            (repo / "pkg" / "z_tested.py").write_text(
+                """\
+def pair_score(items, scale):
+    \"\"\"Accumulate adjacent pair sums scaled by a factor.\"\"\"
+    out = []
+    for a, b in zip(items, items[1:]):
+        out.append((a + b) * scale)
+    return out
+
+def strict_positive_sum(nums):
+    \"\"\"Sum positive integers; raises TypeError on non-list or non-int element.\"\"\"
+    if not isinstance(nums, list):
+        raise TypeError("nums must be a list")
+    total = 0
+    for v in nums:
+        if not isinstance(v, int):
+            raise TypeError("element must be int")
+        if v > 0:
+            total += v
+    return total
+""",
+                encoding="utf-8",
+            )
+            (repo / "tests" / "test_z_tested.py").write_text(
+                """\
+import unittest
+import pytest
+from pkg.z_tested import pair_score as ps, strict_positive_sum as sps
+
+@pytest.mark.parametrize("seq,factor,expected", [
+    ([1, 2, 3, 4], 2, [6, 10, 14]),
+    ([5, 1, 2], 3, [18, 9]),
+])
+def test_pair_score_parametrized(seq, factor, expected):
+    assert ps(seq, factor) == expected
+
+class StrictTests(unittest.TestCase):
+    def test_strict_positive_and_type_error(self):
+        self.assertEqual(sps([1, -2, 3, 4]), 8)
+        pytest.raises(TypeError, sps, [1, "bad", 3])
+        pytest.raises(TypeError, sps, "not-a-list")
+""",
+                encoding="utf-8",
+            )
+
+            # 1. Default run with --min-trace-lines 4 and --drop-probe-type-errors (default True)
+            #    and --max-per-repo 4 to verify py-unit-test priority over a_probes.py!
+            out_default = root / "out_default"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO / "tools/tinker-harvest-py.py"),
+                    "--local-repos",
+                    str(repos_dir),
+                    "--output-dir",
+                    str(out_default),
+                    "--jobs",
+                    "2",
+                    "--max-per-repo",
+                    "4",
+                    "--max-per-fn",
+                    "3",
+                    "--min-source-chars",
+                    "50",
+                    "--min-trace-lines",
+                    "4",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 0, msg=f"stderr={proc.stderr}\nstdout={proc.stdout}")
+            rows = [
+                json.loads(line)
+                for line in (out_default / "harvested.jsonl").read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            census = json.loads((out_default / "census.json").read_text(encoding="utf-8"))
+
+            # All 4 slots should be filled by the 4 real py-unit-test inputs from z_tested.py
+            # with >= 4 trace lines (2 parametrized pair_score + 1 valid strict_positive_sum
+            # + 1 pytest.raises TypeError on [1, "bad", 3]), beating synthetic probes from
+            # alphabetically earlier a_probes.py!
+            self.assertEqual(len(rows), 4)
+            self.assertEqual(census["unitTestInputAdmitted"], 4)
+            entries = [r["entry"] for r in rows]
+            self.assertEqual(entries.count("pair_score"), 2)
+            self.assertEqual(entries.count("strict_positive_sum"), 2)
+            self.assertNotIn("trivial_constant", entries)
+            self.assertNotIn("caught_first_line_type_error", entries)
+
+            # Verify the genuine unit-test TypeError case from pytest.raises was kept!
+            sps_args = [r["args"] for r in rows if r["entry"] == "strict_positive_sum"]
+            self.assertIn([[1, "bad", 3]], sps_args)
+            self.assertIn([[1, -2, 3, 4]], sps_args)
+
+            # Verify --min-trace-lines 4 was enforced on every admitted task
+            for r in rows:
+                self.assertGreaterEqual(r["metadata"]["narrationLines"], 4)
+
+            # 2. Run with higher --max-per-repo so synthetic probes are also evaluated,
+            #    verifying trivial_constant (too few trace lines) and caught_first_line_type_error
+            #    (first trace line is raise TypeError on synthetic probe) are both rejected.
+            out_wide = root / "out_wide"
+            proc_wide = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO / "tools/tinker-harvest-py.py"),
+                    "--local-repos",
+                    str(repos_dir),
+                    "--output-dir",
+                    str(out_wide),
+                    "--jobs",
+                    "2",
+                    "--max-per-repo",
+                    "20",
+                    "--max-per-fn",
+                    "3",
+                    "--min-source-chars",
+                    "50",
+                    "--min-trace-lines",
+                    "4",
+                    "--drop-probe-type-errors",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            self.assertEqual(proc_wide.returncode, 0, msg=f"stderr={proc_wide.stderr}\nstdout={proc_wide.stdout}")
+            wide_rows = [
+                json.loads(line)
+                for line in (out_wide / "harvested.jsonl").read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            wide_entries = {r["entry"] for r in wide_rows}
+            self.assertIn("probe_only_loop", wide_entries)
+            self.assertNotIn("trivial_constant", wide_entries)
+            self.assertNotIn("caught_first_line_type_error", wide_entries)
+
+            # 2b. With --min-trace-lines 0 and --drop-probe-type-errors, the short genuine
+            #     unit-test TypeError ("not-a-list") IS kept while synthetic probe TypeErrors
+            #     (caught_first_line_type_error) remain dropped!
+            out_short_ut = root / "out_short_ut"
+            proc_short_ut = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO / "tools/tinker-harvest-py.py"),
+                    "--local-repos",
+                    str(repos_dir),
+                    "--output-dir",
+                    str(out_short_ut),
+                    "--jobs",
+                    "2",
+                    "--max-per-repo",
+                    "20",
+                    "--max-per-fn",
+                    "3",
+                    "--min-source-chars",
+                    "50",
+                    "--min-trace-lines",
+                    "0",
+                    "--drop-probe-type-errors",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            self.assertEqual(proc_short_ut.returncode, 0, msg=f"stderr={proc_short_ut.stderr}\nstdout={proc_short_ut.stdout}")
+            short_ut_rows = [
+                json.loads(line)
+                for line in (out_short_ut / "harvested.jsonl").read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            short_sps_args = [r["args"] for r in short_ut_rows if r["entry"] == "strict_positive_sum"]
+            self.assertIn(["not-a-list"], short_sps_args)
+            self.assertNotIn("caught_first_line_type_error", {r["entry"] for r in short_ut_rows})
+
+            # 3. Verify --keep-probe-type-errors allows caught_first_line_type_error through.
+            out_keep = root / "out_keep"
+            proc_keep = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO / "tools/tinker-harvest-py.py"),
+                    "--local-repos",
+                    str(repos_dir),
+                    "--output-dir",
+                    str(out_keep),
+                    "--jobs",
+                    "2",
+                    "--max-per-repo",
+                    "20",
+                    "--max-per-fn",
+                    "3",
+                    "--min-source-chars",
+                    "50",
+                    "--min-trace-lines",
+                    "4",
+                    "--keep-probe-type-errors",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            self.assertEqual(proc_keep.returncode, 0, msg=f"stderr={proc_keep.stderr}\nstdout={proc_keep.stdout}")
+            keep_rows = [
+                json.loads(line)
+                for line in (out_keep / "harvested.jsonl").read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            self.assertIn("caught_first_line_type_error", {r["entry"] for r in keep_rows})
 
 
 if __name__ == "__main__":

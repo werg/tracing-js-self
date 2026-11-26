@@ -390,6 +390,125 @@ def _eval_const_expr(node: ast.AST, env: dict[str, Any], depth: int = 0) -> tupl
     return False, None
 
 
+def _resolve_callee(node: ast.AST, aliases: dict[str, str]) -> str | None:
+    if isinstance(node, ast.Name):
+        return aliases.get(node.id, node.id)
+    if isinstance(node, ast.Attribute):
+        owner = node.value
+        if isinstance(owner, ast.Name) and owner.id in ("self", "cls", "pytest", "unittest", "assert"):
+            return None
+        return node.attr
+    return None
+
+
+def _bind_loop_target(target: ast.AST, value: Any, env: dict[str, Any]) -> bool:
+    if isinstance(target, ast.Name):
+        env[target.id] = value
+        return True
+    if isinstance(target, (ast.Tuple, ast.List)):
+        if not isinstance(value, (tuple, list)) or len(value) != len(target.elts):
+            return False
+        for sub_target, sub_val in zip(target.elts, value):
+            if not _bind_loop_target(sub_target, sub_val, env):
+                return False
+        return True
+    return False
+
+
+def _eval_parametrize_rows(node: ast.AST, env: dict[str, Any], num_names: int) -> list[Any]:
+    ok, val = _eval_const_expr(node, env)
+    if ok and isinstance(val, (list, tuple)):
+        return list(val)
+    if isinstance(node, (ast.List, ast.Tuple)):
+        rows: list[Any] = []
+        for elt in node.elts:
+            if isinstance(elt, ast.Call):
+                is_param = (
+                    (isinstance(elt.func, ast.Attribute) and elt.func.attr == "param")
+                    or (isinstance(elt.func, ast.Name) and elt.func.id == "param")
+                )
+                if is_param and not any(isinstance(a, ast.Starred) for a in elt.args):
+                    pvals: list[Any] = []
+                    all_ok = True
+                    for a in elt.args:
+                        a_ok, a_val = _eval_const_expr(a, env)
+                        if not a_ok:
+                            all_ok = False
+                            break
+                        pvals.append(a_val)
+                    if all_ok and pvals:
+                        if num_names == 1 and len(pvals) == 1:
+                            rows.append(pvals[0])
+                        else:
+                            rows.append(tuple(pvals))
+                    continue
+            e_ok, e_val = _eval_const_expr(elt, env)
+            if e_ok:
+                rows.append(e_val)
+        return rows
+    return []
+
+
+def _extract_parametrize_envs(decorators: list[ast.expr], env: dict[str, Any]) -> list[dict[str, Any]]:
+    envs: list[dict[str, Any]] = [{}]
+    for dec in decorators:
+        if not isinstance(dec, ast.Call):
+            continue
+        is_paramz = (
+            (isinstance(dec.func, ast.Attribute) and dec.func.attr == "parametrize")
+            or (isinstance(dec.func, ast.Name) and dec.func.id == "parametrize")
+        )
+        if not is_paramz:
+            continue
+        argnames_node: ast.AST | None = dec.args[0] if len(dec.args) >= 1 else None
+        argvalues_node: ast.AST | None = dec.args[1] if len(dec.args) >= 2 else None
+        for kw in dec.keywords:
+            if kw.arg == "argnames" and argnames_node is None:
+                argnames_node = kw.value
+            elif kw.arg == "argvalues" and argvalues_node is None:
+                argvalues_node = kw.value
+        if argnames_node is None or argvalues_node is None:
+            continue
+
+        ok_names, raw_names = _eval_const_expr(argnames_node, env)
+        if not ok_names:
+            continue
+        if isinstance(raw_names, str):
+            names = [p.strip() for p in raw_names.split(",") if p.strip()]
+        elif isinstance(raw_names, (list, tuple)) and all(isinstance(x, str) for x in raw_names):
+            names = [x.strip() for x in raw_names if x.strip()]
+        else:
+            continue
+        if not names:
+            continue
+
+        rows = _eval_parametrize_rows(argvalues_node, env, len(names))
+        if not rows:
+            continue
+        row_dicts: list[dict[str, Any]] = []
+        if len(names) == 1:
+            key = names[0]
+            for r in rows:
+                row_dicts.append({key: r})
+        else:
+            for r in rows:
+                if isinstance(r, (tuple, list)) and len(r) == len(names):
+                    row_dicts.append(dict(zip(names, r)))
+        if not row_dicts:
+            continue
+
+        combined: list[dict[str, Any]] = []
+        for base in envs:
+            for rd in row_dicts:
+                combined.append({**base, **rd})
+                if len(combined) >= 64:
+                    break
+            if len(combined) >= 64:
+                break
+        envs = combined
+    return envs
+
+
 def extract_unit_test_inputs(repo_dir: Path, test_files: list[Path]) -> dict[str, list[dict[str, Any]]]:
     """Extract real unit-test call inputs from test files via AST."""
     by_fn: dict[str, list[dict[str, Any]]] = {}
@@ -411,9 +530,20 @@ def extract_unit_test_inputs(repo_dir: Path, test_files: list[Path]) -> dict[str
         seen.add(sig)
         by_fn.setdefault(fn_name, []).append({"args": encoded, "file": rel_file, "sig": sig})
 
-    def scan_body(stmts: list[ast.stmt], env: dict[str, Any], rel_file: str) -> None:
+    def scan_body(
+        stmts: list[ast.stmt],
+        env: dict[str, Any],
+        rel_file: str,
+        aliases: dict[str, str],
+    ) -> None:
         local_env = dict(env)
+        local_aliases = dict(aliases)
         for stmt in stmts:
+            if isinstance(stmt, ast.ImportFrom):
+                for a in stmt.names:
+                    if a.name != "*" and a.asname:
+                        local_aliases[a.asname] = a.name
+                continue
             # Update constant bindings sequentially before walking calls in subsequent statements.
             if isinstance(stmt, ast.Assign):
                 ok, val = _eval_const_expr(stmt.value, local_env)
@@ -425,25 +555,55 @@ def extract_unit_test_inputs(repo_dir: Path, test_files: list[Path]) -> dict[str
                 ok, val = _eval_const_expr(stmt.value, local_env)
                 if ok:
                     local_env[stmt.target.id] = val
+            elif isinstance(stmt, ast.For):
+                ok, iter_val = _eval_const_expr(stmt.iter, local_env)
+                if ok and isinstance(iter_val, (list, tuple)) and len(iter_val) <= 64:
+                    for item in iter_val:
+                        loop_env = dict(local_env)
+                        if _bind_loop_target(stmt.target, item, loop_env):
+                            scan_body(stmt.body, loop_env, rel_file, local_aliases)
+                    continue
 
-            # Walk nested calls in this statement.
+            # Walk nested calls in this statement (covers assert fn(...) == ...,
+            # self.assertEqual(fn(...), ...), with pytest.raises(...): fn(...),
+            # pytest.raises(Exc, fn, *args), and self.assertRaises(Exc, fn, *args)).
             for sub in ast.walk(stmt):
                 if isinstance(sub, ast.Call):
+                    raises_name = (
+                        sub.func.attr
+                        if isinstance(sub.func, ast.Attribute)
+                        else (sub.func.id if isinstance(sub.func, ast.Name) else None)
+                    )
+                    callee_idx: int | None = None
+                    if raises_name in ("raises", "assertRaises") and len(sub.args) >= 2:
+                        callee_idx = 1
+                    elif raises_name == "assertRaisesRegex" and len(sub.args) >= 3:
+                        callee_idx = 2
+                    if callee_idx is not None:
+                        call_arg_nodes = sub.args[callee_idx + 1 :]
+                        if not sub.keywords and not any(isinstance(a, ast.Starred) for a in call_arg_nodes):
+                            fn_name = _resolve_callee(sub.args[callee_idx], local_aliases)
+                            if fn_name and fn_name not in IGNORED_TEST_CALLEES:
+                                evaluated: list[Any] = []
+                                all_ok = True
+                                for arg_node in call_arg_nodes:
+                                    ok, val = _eval_const_expr(arg_node, local_env)
+                                    if not ok:
+                                        all_ok = False
+                                        break
+                                    evaluated.append(val)
+                                if all_ok:
+                                    record_call(fn_name, evaluated, rel_file)
+                        continue
+
                     if sub.keywords:
                         continue
                     if any(isinstance(a, ast.Starred) for a in sub.args):
                         continue
-                    fn_name: str | None = None
-                    if isinstance(sub.func, ast.Name):
-                        fn_name = sub.func.id
-                    elif isinstance(sub.func, ast.Attribute):
-                        owner = sub.func.value
-                        if isinstance(owner, ast.Name) and owner.id in ("self", "cls", "pytest", "unittest", "assert"):
-                            continue
-                        fn_name = sub.func.attr
+                    fn_name = _resolve_callee(sub.func, local_aliases)
                     if not fn_name or fn_name in IGNORED_TEST_CALLEES:
                         continue
-                    evaluated: list[Any] = []
+                    evaluated = []
                     all_ok = True
                     for arg_node in sub.args:
                         ok, val = _eval_const_expr(arg_node, local_env)
@@ -462,8 +622,13 @@ def extract_unit_test_inputs(repo_dir: Path, test_files: list[Path]) -> dict[str
             continue
         rel_file = str(tfile.relative_to(repo_dir))
         mod_env: dict[str, Any] = {}
+        mod_aliases: dict[str, str] = {}
         for stmt in tree.body:
-            if isinstance(stmt, ast.Assign):
+            if isinstance(stmt, ast.ImportFrom):
+                for a in stmt.names:
+                    if a.name != "*" and a.asname:
+                        mod_aliases[a.asname] = a.name
+            elif isinstance(stmt, ast.Assign):
                 ok, val = _eval_const_expr(stmt.value, mod_env)
                 if ok:
                     for target in stmt.targets:
@@ -475,13 +640,18 @@ def extract_unit_test_inputs(repo_dir: Path, test_files: list[Path]) -> dict[str
                     mod_env[stmt.target.id] = val
         for stmt in tree.body:
             if isinstance(stmt, ast.FunctionDef):
-                scan_body(stmt.body, mod_env, rel_file)
+                for p_env in _extract_parametrize_envs(stmt.decorator_list, mod_env):
+                    scan_body(stmt.body, {**mod_env, **p_env}, rel_file, mod_aliases)
             elif isinstance(stmt, ast.ClassDef):
+                cls_envs = _extract_parametrize_envs(stmt.decorator_list, mod_env)
                 for item in stmt.body:
                     if isinstance(item, ast.FunctionDef):
-                        scan_body(item.body, mod_env, rel_file)
+                        for c_env in cls_envs:
+                            base_env = {**mod_env, **c_env}
+                            for f_env in _extract_parametrize_envs(item.decorator_list, base_env):
+                                scan_body(item.body, {**base_env, **f_env}, rel_file, mod_aliases)
             else:
-                scan_body([stmt], mod_env, rel_file)
+                scan_body([stmt], mod_env, rel_file, mod_aliases)
 
     return by_fn
 
@@ -829,17 +999,87 @@ def _detect_features(snippet: str, recorded_calls: list[dict[str, Any]], from_un
     return sorted(feats)
 
 
-def _qualify_candidate(cand: dict[str, Any]) -> dict[str, Any]:
+_FIRST_LINE_TYPE_ERR_RE = re.compile(
+    r"^raise(?:\s+\([^)]+\))?\s+(?:TypeError|AttributeError)\b"
+)
+
+
+def _extract_completion_outcome(messages: list[dict[str, Any]]) -> tuple[str | None, Any]:
+    for msg in reversed(messages):
+        if msg.get("role") != "assistant":
+            continue
+        vis = assistant_visible_text(msg)
+        if "```json\n" in vis:
+            try:
+                body = vis.split("```json\n", 1)[1].split("\n```", 1)[0]
+                comp = json.loads(body)
+                if isinstance(comp, dict):
+                    return comp.get("kind"), comp.get("value")
+            except Exception:
+                return None, None
+        break
+    return None, None
+
+
+def _qualify_candidate(
+    cand: dict[str, Any],
+    *,
+    min_trace_lines: int = 0,
+    drop_probe_type_errors: bool = True,
+) -> dict[str, Any]:
     task = cand["task"]
     try:
         exported = export_python_example(task, trace_format="compact", reasoning_channel="thinking")
-        trace_chars = sum(
-            len(assistant_visible_text(m))
-            + len(assistant_thinking_text(m))
-            + (len(_json_compact(m["tool_calls"])) if m.get("tool_calls") else 0)
-            for m in exported["messages"]
-            if m.get("role") == "assistant"
-        )
+        trace_lines: list[str] = []
+        trace_chars = 0
+        for m in exported["messages"]:
+            if m.get("role") != "assistant":
+                continue
+            thinking = assistant_thinking_text(m)
+            if thinking.strip():
+                trace_lines.extend(thinking.strip().splitlines())
+            trace_chars += (
+                len(assistant_visible_text(m))
+                + len(thinking)
+                + (len(_json_compact(m["tool_calls"])) if m.get("tool_calls") else 0)
+            )
+
+        if drop_probe_type_errors and cand["origin"] == "py-oss-probe":
+            if trace_lines and _FIRST_LINE_TYPE_ERR_RE.match(trace_lines[0]):
+                return {
+                    "status": "refused",
+                    "reason": "probe-first-line-type-error",
+                    "id": task["id"],
+                    "repo": cand["repo"],
+                    "origin": cand["origin"],
+                    "family": task["family"],
+                }
+            comp_kind, comp_val = _extract_completion_outcome(exported["messages"])
+            if (
+                comp_kind == "throw"
+                and isinstance(comp_val, dict)
+                and comp_val.get("name") in ("TypeError", "AttributeError")
+            ):
+                return {
+                    "status": "refused",
+                    "reason": f"probe-{comp_val['name']}",
+                    "id": task["id"],
+                    "repo": cand["repo"],
+                    "origin": cand["origin"],
+                    "family": task["family"],
+                }
+
+        narration_lines = int(exported["metadata"]["traceAudit"]["narrationLines"])
+        if min_trace_lines > 0 and narration_lines < min_trace_lines:
+            return {
+                "status": "refused",
+                "reason": f"trace-too-short ({narration_lines} < {min_trace_lines} lines)",
+                "id": task["id"],
+                "repo": cand["repo"],
+                "origin": cand["origin"],
+                "family": task["family"],
+            }
+
         if trace_chars > 80_000:
             return {
                 "status": "refused",
@@ -847,6 +1087,7 @@ def _qualify_candidate(cand: dict[str, Any]) -> dict[str, Any]:
                 "id": task["id"],
                 "repo": cand["repo"],
                 "origin": cand["origin"],
+                "family": task["family"],
             }
         enriched_task = {
             **exported["task"],
@@ -856,7 +1097,7 @@ def _qualify_candidate(cand: dict[str, Any]) -> dict[str, Any]:
                 "sourceChars": len(exported["task"]["source"]),
                 "traceChars": trace_chars,
                 "externalCalls": len(exported["task"]["fixture"]["calls"]),
-                "narrationLines": exported["metadata"]["traceAudit"]["narrationLines"],
+                "narrationLines": narration_lines,
             },
         }
         return {
@@ -864,6 +1105,7 @@ def _qualify_candidate(cand: dict[str, Any]) -> dict[str, Any]:
             "id": task["id"],
             "repo": cand["repo"],
             "origin": cand["origin"],
+            "family": task["family"],
             "sourceHash": exported["sourceHash"],
             "traceChars": trace_chars,
             "externalCalls": len(exported["task"]["fixture"]["calls"]),
@@ -876,6 +1118,7 @@ def _qualify_candidate(cand: dict[str, Any]) -> dict[str, Any]:
             "id": task["id"],
             "repo": cand["repo"],
             "origin": cand["origin"],
+            "family": task["family"],
         }
 
 
@@ -886,14 +1129,19 @@ def harvest_repo(
     max_per_fn: int,
     min_source_chars: int,
     max_source_chars: int,
+    drop_probe_type_errors: bool = True,
 ) -> list[dict[str, Any]]:
     repo_name = _slug(repo_dir.name)
     source_files, test_files = _walk_py_files(repo_dir)
     unit_inputs = extract_unit_test_inputs(repo_dir, test_files)
 
-    candidates: list[dict[str, Any]] = []
+    unit_candidates: list[dict[str, Any]] = []
+    probe_candidates: list[dict[str, Any]] = []
+    repo_cap = max_per_repo * 3
+    fn_probe_cap = max(max_per_fn * 2, max_per_fn + 2)
+
     for src_file in source_files:
-        if len(candidates) >= max_per_repo * 3:
+        if len(unit_candidates) >= repo_cap:
             break
         try:
             text = src_file.read_text(encoding="utf-8", errors="ignore")
@@ -905,7 +1153,7 @@ def harvest_repo(
         mod_slug = _slug(str(src_file.relative_to(repo_dir).with_suffix("")))
 
         for idx, stmt in enumerate(tree.body):
-            if len(candidates) >= max_per_repo * 3:
+            if len(unit_candidates) >= repo_cap:
                 break
             if not isinstance(stmt, ast.FunctionDef):
                 continue
@@ -923,8 +1171,9 @@ def harvest_repo(
                 if arg_len >= min_arity and (max_arity is None or arg_len <= max_arity):
                     probes.append((entry["args"], True, entry["file"]))
 
-            # Add compact fallback probes matching arity if unit-test inputs are scarce.
-            if len(probes) < max_per_fn:
+            # Add compact fallback probes matching arity if unit-test inputs are scarce
+            # and we haven't already saturated the synthetic probe budget for this repo.
+            if len(probes) < max_per_fn and len(probe_candidates) < repo_cap:
                 fallback_arity = min_arity if min_arity in FALLBACK_PROBES_BY_ARITY else (
                     max_arity if max_arity in FALLBACK_PROBES_BY_ARITY else None
                 )
@@ -933,10 +1182,15 @@ def harvest_repo(
                         probes.append((encode_readable(raw_args), False, None))
 
             kept_for_fn = 0
+            kept_unit_for_fn = 0
             seen_probe_sigs: set[str] = set()
             for encoded_args, from_unit_test, test_file in probes:
-                if kept_for_fn >= max_per_fn:
-                    break
+                if from_unit_test:
+                    if kept_unit_for_fn >= fn_probe_cap or len(unit_candidates) >= repo_cap:
+                        continue
+                else:
+                    if kept_for_fn >= fn_probe_cap or len(probe_candidates) >= repo_cap:
+                        break
                 sig = _json_compact(encoded_args)
                 if sig in seen_probe_sigs:
                     continue
@@ -945,8 +1199,8 @@ def harvest_repo(
                 probe = _probe_snippet(snippet, stmt.name, encoded_args)
                 if not probe.get("ok"):
                     continue
-                # For synthetic fallback probes, skip TypeError mismatches (wrong arg types).
-                if not from_unit_test and probe.get("kind") == "throw":
+                # For synthetic fallback probes, skip TypeError/AttributeError mismatches when enabled.
+                if drop_probe_type_errors and not from_unit_test and probe.get("kind") == "throw":
                     val = probe.get("result", {}).get("value")
                     if isinstance(val, dict) and val.get("name") in ("TypeError", "AttributeError"):
                         continue
@@ -974,10 +1228,16 @@ def harvest_repo(
                         "lineage": [f"py-repo:{repo_name}", f"py-fn:{repo_name}:{mod_slug}:{stmt.name}"],
                     },
                 }
-                candidates.append({"repo": repo_name, "origin": origin, "task": task})
+                cand = {"repo": repo_name, "origin": origin, "task": task}
+                if from_unit_test:
+                    unit_candidates.append(cand)
+                    kept_unit_for_fn += 1
+                else:
+                    probe_candidates.append(cand)
                 kept_for_fn += 1
 
-    return candidates
+    # Always prioritize real py-unit-test candidates before synthetic probes.
+    return [*unit_candidates, *probe_candidates]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -989,6 +1249,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-per-fn", type=int, default=3, help="Max admitted inputs per function.")
     parser.add_argument("--min-source-chars", type=int, default=200, help="Minimum self-contained snippet length.")
     parser.add_argument("--max-source-chars", type=int, default=35000, help="Maximum self-contained snippet length.")
+    parser.add_argument("--min-trace-lines", type=int, default=0, help="Minimum compact trace line count required to admit a task.")
+    parser.add_argument(
+        "--drop-probe-type-errors",
+        dest="drop_probe_type_errors",
+        action="store_true",
+        default=True,
+        help="Drop synthetic py-oss-probe candidates whose first trace event or outcome is TypeError/AttributeError (default: enabled).",
+    )
+    parser.add_argument(
+        "--keep-probe-type-errors",
+        dest="drop_probe_type_errors",
+        action="store_false",
+        help="Keep synthetic py-oss-probe TypeError/AttributeError candidates.",
+    )
     args = parser.parse_args(argv)
 
     local_repos_dir = Path(args.local_repos).resolve()
@@ -1012,19 +1286,31 @@ def main(argv: list[str] | None = None) -> int:
             max_per_fn=args.max_per_fn,
             min_source_chars=args.min_source_chars,
             max_source_chars=args.max_source_chars,
+            drop_probe_type_errors=args.drop_probe_type_errors,
         )
         all_candidates.extend(cands)
+
+    def _qualify(cand: dict[str, Any]) -> dict[str, Any]:
+        return _qualify_candidate(
+            cand,
+            min_trace_lines=args.min_trace_lines,
+            drop_probe_type_errors=args.drop_probe_type_errors,
+        )
 
     records: list[dict[str, Any]] = []
     if all_candidates:
         if jobs == 1:
-            records = [_qualify_candidate(c) for c in all_candidates]
+            records = [_qualify(c) for c in all_candidates]
         else:
             with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as pool:
-                records = list(pool.map(_qualify_candidate, all_candidates))
+                records = list(pool.map(_qualify, all_candidates))
+
+    # Give py-unit-test candidates priority before synthetic probes when enforcing caps.
+    records.sort(key=lambda r: 0 if r["origin"] == "py-unit-test" else 1)
 
     seen_dedup: set[tuple[str, str]] = set()
     repo_counts: dict[str, int] = {}
+    fn_counts: dict[str, int] = {}
     admitted: list[dict[str, Any]] = []
     by_repo: dict[str, dict[str, int]] = {}
     by_origin: dict[str, dict[str, int]] = {}
@@ -1041,6 +1327,9 @@ def main(argv: list[str] | None = None) -> int:
             continue
         if repo_counts.get(rec["repo"], 0) >= args.max_per_repo:
             continue
+        fn_key = rec["family"]
+        if fn_counts.get(fn_key, 0) >= args.max_per_fn:
+            continue
         task = rec["task"]
         input_sig = _sha256([task["entry"], task["args"], task["fixture"]])
         dedup_key = (rec["sourceHash"], input_sig)
@@ -1048,6 +1337,7 @@ def main(argv: list[str] | None = None) -> int:
             continue
         seen_dedup.add(dedup_key)
         repo_counts[rec["repo"]] = repo_counts.get(rec["repo"], 0) + 1
+        fn_counts[fn_key] = fn_counts.get(fn_key, 0) + 1
         r_stat["admitted"] += 1
         o_stat["admitted"] += 1
         admitted.append(task)
