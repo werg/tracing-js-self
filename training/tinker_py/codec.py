@@ -8,11 +8,58 @@ from __future__ import annotations
 
 import base64
 import dataclasses
+import datetime
+import decimal
+import enum
+import functools
+import io
 import math
+import pathlib
+import types
 from typing import Any
 
 MAX_DEPTH = 64
 MAX_NODES = 16384
+
+_ORIG_DATETIME = datetime.datetime
+_ORIG_DATE = datetime.date
+_ORIG_TIMEDELTA = datetime.timedelta
+_ORIG_DECIMAL = decimal.Decimal
+_ORIG_PURE_PATH = pathlib.PurePath
+
+_NON_PLAIN_OBJECT_TYPES = (
+    type,
+    types.ModuleType,
+    io.IOBase,
+    types.FunctionType,
+    types.MethodType,
+    types.BuiltinFunctionType,
+    types.BuiltinMethodType,
+    types.GeneratorType,
+    types.CoroutineType,
+    types.AsyncGeneratorType,
+    types.CodeType,
+    types.FrameType,
+    types.TracebackType,
+    list,
+    dict,
+    set,
+    frozenset,
+    tuple,
+    str,
+    bytes,
+    int,
+    float,
+    bool,
+    complex,
+    BaseException,
+    enum.Enum,
+    _ORIG_DATETIME,
+    _ORIG_DATE,
+    _ORIG_TIMEDELTA,
+    _ORIG_DECIMAL,
+    _ORIG_PURE_PATH,
+)
 
 
 def _demand(condition: bool, message: str) -> None:
@@ -32,6 +79,53 @@ def _is_plain_dataclass(value: Any) -> bool:
     return dataclasses.is_dataclass(value) and not isinstance(value, type)
 
 
+def _get_plain_object_dict(value: Any) -> dict[str, Any] | None:
+    if isinstance(value, _NON_PLAIN_OBJECT_TYPES) or _is_plain_dataclass(value) or callable(value):
+        return None
+    try:
+        raw_dict = object.__getattribute__(value, "__dict__")
+    except AttributeError:
+        return None
+    if type(raw_dict) is not dict:
+        return None
+    return raw_dict
+
+
+@functools.lru_cache(maxsize=512)
+def _decoded_object_cls(cls_name: str) -> type:
+    return type(cls_name, (), {})
+
+
+def _create_plain_object(cls_name: str) -> Any:
+    if cls_name == "SimpleNamespace":
+        return types.SimpleNamespace()
+    return _decoded_object_cls(cls_name)()
+
+
+@functools.lru_cache(maxsize=1024)
+def _cached_enum_member(cls_name: str, member_name: str, val_type: type, cache_val: Any, raw_val: Any) -> enum.Enum:
+    del val_type, cache_val
+    return enum.Enum(cls_name, [(member_name, raw_val)])[member_name]
+
+
+def _reconstruct_enum(cls_name: str, member_name: str, value: Any) -> enum.Enum:
+    try:
+        cache_val: Any = value
+        if type(value) is float:
+            if math.isnan(value):
+                cache_val = ("nan",)
+            elif _is_neg_zero(value):
+                cache_val = ("-0",)
+        return _cached_enum_member(cls_name, member_name, type(value), cache_val, value)
+    except TypeError:
+        try:
+            return enum.Enum(cls_name, [(member_name, value)])[member_name]
+        except Exception as exc:
+            raise TypeError(f"Invalid enum value: {cls_name}.{member_name}") from exc
+    except Exception as exc:
+        raise TypeError(f"Invalid enum value: {cls_name}.{member_name}") from exc
+
+
 def encode_exception(exc: BaseException) -> dict[str, str]:
     """Encode a Python exception as {name, message} without arbitrary side effects."""
     exc_type = type(exc)
@@ -47,6 +141,13 @@ def _canonical_set_sort_key(value: Any, depth: int = 0) -> tuple:
     _demand(depth <= MAX_DEPTH, "Readable value budget exceeded")
     if value is None:
         return (0, 0)
+    if isinstance(value, enum.Enum):
+        return (
+            14,
+            type(value).__name__,
+            value.name,
+            _canonical_set_sort_key(value.value, depth + 1),
+        )
     if isinstance(value, bool):
         return (1, 1 if value else 0)
     if isinstance(value, int):
@@ -65,6 +166,24 @@ def _canonical_set_sort_key(value: Any, depth: int = 0) -> tuple:
         return (5, value)
     if isinstance(value, tuple):
         return (6, tuple(_canonical_set_sort_key(item, depth + 1) for item in value))
+    if isinstance(value, frozenset):
+        return (7, tuple(sorted(_canonical_set_sort_key(item, depth + 1) for item in value)))
+    if isinstance(value, complex):
+        return (
+            8,
+            _canonical_set_sort_key(value.real, depth + 1),
+            _canonical_set_sort_key(value.imag, depth + 1),
+        )
+    if isinstance(value, _ORIG_DECIMAL):
+        return (9, str(value))
+    if isinstance(value, _ORIG_DATETIME):
+        return (10, 0 if value.tzinfo is None else 1, value.isoformat())
+    if isinstance(value, _ORIG_DATE):
+        return (11, value.isoformat())
+    if isinstance(value, _ORIG_TIMEDELTA):
+        return (12, value.days, value.seconds, value.microseconds)
+    if isinstance(value, _ORIG_PURE_PATH):
+        return (13, str(value))
     raise TypeError(f"Unsupported set element type: {type(value).__name__}")
 
 
@@ -81,6 +200,13 @@ def encode_readable(value: Any, *, allow_exceptions: bool = False) -> Any:
 
         if item is None:
             return None
+        if isinstance(item, enum.Enum):
+            return {
+                "$py": "enum",
+                "class": type(item).__name__,
+                "name": item.name,
+                "value": visit(item.value, _pointer(path, "value"), depth + 1),
+            }
         if isinstance(item, bool):
             return item
         if isinstance(item, int):
@@ -93,15 +219,42 @@ def encode_readable(value: Any, *, allow_exceptions: bool = False) -> Any:
             if math.isinf(item):
                 return {"$py": "Infinity" if item > 0 else "-Infinity"}
             return item
+        if isinstance(item, complex):
+            return {
+                "$py": "complex",
+                "real": visit(item.real, _pointer(path, "real"), depth + 1),
+                "imag": visit(item.imag, _pointer(path, "imag"), depth + 1),
+            }
         if isinstance(item, str):
             return item
         if isinstance(item, bytes):
             return {"$py": "bytes", "b64": base64.b64encode(item).decode("ascii")}
+        if isinstance(item, _ORIG_DECIMAL):
+            return {"$py": "decimal", "value": str(item)}
+        if isinstance(item, _ORIG_DATETIME):
+            return {"$py": "datetime", "iso": item.isoformat()}
+        if isinstance(item, _ORIG_DATE):
+            return {"$py": "date", "iso": item.isoformat()}
+        if isinstance(item, _ORIG_TIMEDELTA):
+            return {
+                "$py": "timedelta",
+                "days": item.days,
+                "seconds": item.seconds,
+                "microseconds": item.microseconds,
+            }
+        if isinstance(item, _ORIG_PURE_PATH):
+            return {"$py": "path", "value": str(item)}
 
         if isinstance(item, tuple):
             return {
                 "$py": "tuple",
                 "items": [visit(child, _pointer(path, idx), depth + 1) for idx, child in enumerate(item)],
+            }
+        if isinstance(item, frozenset):
+            ordered_fs = sorted(item, key=_canonical_set_sort_key)
+            return {
+                "$py": "frozenset",
+                "items": [visit(child, _pointer(path, idx), depth + 1) for idx, child in enumerate(ordered_fs)],
             }
 
         if isinstance(item, BaseException):
@@ -164,6 +317,27 @@ def encode_readable(value: Any, *, allow_exceptions: bool = False) -> Any:
                 "items": [visit(child, _pointer(path, idx), depth + 1) for idx, child in enumerate(ordered)],
             }
 
+        raw_dict = _get_plain_object_dict(item)
+        if raw_dict is not None:
+            _demand(
+                all(type(k) is str for k in dict.keys(raw_dict)),
+                "Plain object attributes must have string keys",
+            )
+            obj_id = id(item)
+            if obj_id in seen:
+                return {"$py": "ref", "path": seen[obj_id]}
+            seen[obj_id] = path
+            keepalive.append(item)
+            attrs_out = {
+                k: visit(v, _pointer(_pointer(path, "attrs"), k), depth + 1)
+                for k, v in dict.items(raw_dict)
+            }
+            return {
+                "$py": "object",
+                "class": type(item).__name__,
+                "attrs": attrs_out,
+            }
+
         raise TypeError(f"Only data values cross the training boundary (got {type(item).__name__})")
 
     return visit(value, "", 0)
@@ -183,6 +357,22 @@ class _TupleBox:
         self.items = items
 
 
+class _FrozensetBox:
+    __slots__ = ("items",)
+
+    def __init__(self, items: list[Any]) -> None:
+        self.items = items
+
+
+class _EnumBox:
+    __slots__ = ("cls_name", "member_name", "value")
+
+    def __init__(self, cls_name: str, member_name: str, value: Any) -> None:
+        self.cls_name = cls_name
+        self.member_name = member_name
+        self.value = value
+
+
 class _SetBox:
     __slots__ = ("target", "items")
 
@@ -199,12 +389,23 @@ class _DictPending:
         self.pairs = pairs
 
 
+class _ObjectPending:
+    __slots__ = ("target", "pairs")
+
+    def __init__(self, target: Any, pairs: list[tuple[str, Any]]) -> None:
+        self.target = target
+        self.pairs = pairs
+
+
 def decode_readable(value: Any) -> Any:
     """Decode readable JSON with $py tags back into a Python data graph."""
     locations: dict[str, Any] = {}
     tuple_boxes: list[_TupleBox] = []
+    frozenset_boxes: list[_FrozensetBox] = []
+    enum_boxes: list[_EnumBox] = []
     set_boxes: list[_SetBox] = []
     dict_pendings: list[_DictPending] = []
+    object_pendings: list[_ObjectPending] = []
     lists: list[list[Any]] = []
     nodes = 0
 
@@ -243,6 +444,77 @@ def decode_readable(value: Any) -> Any:
                 except Exception as exc:
                     raise TypeError("Invalid base64 in bytes value") from exc
 
+            if tag == "datetime":
+                _demand(set(item.keys()) == {"$py", "iso"} and isinstance(item.get("iso"), str), "Invalid datetime value")
+                try:
+                    return _ORIG_DATETIME.fromisoformat(item["iso"])
+                except ValueError as exc:
+                    raise TypeError("Invalid ISO datetime string") from exc
+
+            if tag == "date":
+                _demand(set(item.keys()) == {"$py", "iso"} and isinstance(item.get("iso"), str), "Invalid date value")
+                try:
+                    return _ORIG_DATE.fromisoformat(item["iso"])
+                except ValueError as exc:
+                    raise TypeError("Invalid ISO date string") from exc
+
+            if tag == "timedelta":
+                _demand(set(item.keys()) == {"$py", "days", "seconds", "microseconds"}, "Invalid timedelta value")
+                days = item["days"]
+                seconds = item["seconds"]
+                microseconds = item["microseconds"]
+                _demand(
+                    isinstance(days, int)
+                    and not isinstance(days, bool)
+                    and isinstance(seconds, int)
+                    and not isinstance(seconds, bool)
+                    and isinstance(microseconds, int)
+                    and not isinstance(microseconds, bool),
+                    "Invalid timedelta components",
+                )
+                try:
+                    return _ORIG_TIMEDELTA(days=days, seconds=seconds, microseconds=microseconds)
+                except OverflowError as exc:
+                    raise TypeError("Timedelta out of range") from exc
+
+            if tag == "decimal":
+                _demand(set(item.keys()) == {"$py", "value"} and isinstance(item.get("value"), str), "Invalid decimal value")
+                try:
+                    return _ORIG_DECIMAL(item["value"])
+                except (decimal.InvalidOperation, ValueError) as exc:
+                    raise TypeError("Invalid decimal literal") from exc
+
+            if tag == "path":
+                _demand(set(item.keys()) == {"$py", "value"} and isinstance(item.get("value"), str), "Invalid path value")
+                return pathlib.Path(item["value"])
+
+            if tag == "complex":
+                _demand(set(item.keys()) == {"$py", "real", "imag"}, "Invalid complex value")
+                real = visit(item["real"], _pointer(path, "real"), depth + 1)
+                imag = visit(item["imag"], _pointer(path, "imag"), depth + 1)
+                _demand(
+                    isinstance(real, (int, float))
+                    and not isinstance(real, bool)
+                    and isinstance(imag, (int, float))
+                    and not isinstance(imag, bool),
+                    "Invalid complex components",
+                )
+                return complex(real, imag)
+
+            if tag == "enum":
+                _demand(
+                    set(item.keys()) == {"$py", "class", "name", "value"}
+                    and isinstance(item.get("class"), str)
+                    and len(item["class"]) > 0
+                    and isinstance(item.get("name"), str)
+                    and len(item["name"]) > 0,
+                    "Invalid enum value",
+                )
+                enum_val = visit(item["value"], _pointer(path, "value"), depth + 1)
+                ebox = _EnumBox(item["class"], item["name"], enum_val)
+                enum_boxes.append(ebox)
+                return ebox
+
             if tag == "ref":
                 _demand(len(item) == 2 and isinstance(item.get("path"), str), "Invalid reference path")
                 return _RefMarker(item["path"])
@@ -255,6 +527,14 @@ def decode_readable(value: Any) -> Any:
                 for idx, child in enumerate(item["items"]):
                     box.items.append(visit(child, _pointer(path, idx), depth + 1))
                 return box
+
+            if tag == "frozenset":
+                _demand(len(item) == 2 and isinstance(item.get("items"), list), "Invalid frozenset value")
+                fsbox = _FrozensetBox([])
+                frozenset_boxes.append(fsbox)
+                for idx, child in enumerate(item["items"]):
+                    fsbox.items.append(visit(child, _pointer(path, idx), depth + 1))
+                return fsbox
 
             if tag == "set":
                 _demand(len(item) == 2 and isinstance(item.get("items"), list), "Invalid set value")
@@ -279,6 +559,23 @@ def decode_readable(value: Any) -> Any:
                     pairs.append((k, v))
                 return target_dict
 
+            if tag == "object":
+                _demand(
+                    set(item.keys()) == {"$py", "class", "attrs"}
+                    and isinstance(item.get("class"), str)
+                    and len(item["class"]) > 0
+                    and isinstance(item.get("attrs"), dict),
+                    "Invalid object value",
+                )
+                target_obj = _create_plain_object(item["class"])
+                locations[path] = target_obj
+                attr_pairs: list[tuple[str, Any]] = []
+                object_pendings.append(_ObjectPending(target_obj, attr_pairs))
+                for k, child in item["attrs"].items():
+                    _demand(isinstance(k, str), "Object attribute names must be strings")
+                    attr_pairs.append((k, visit(child, _pointer(_pointer(path, "attrs"), k), depth + 1)))
+                return target_obj
+
             raise TypeError(f"Unknown Python value tag: {tag!r}")
 
         target_plain: dict[Any, Any] = {}
@@ -301,44 +598,64 @@ def decode_readable(value: Any) -> Any:
             obj = locations[obj.path]
         return obj
 
-    # Pass 2: resolve _RefMarker inside lists, dicts, tuples, sets.
+    # Pass 2: resolve _RefMarker inside lists, dicts, objects, tuples, frozensets, enums, sets.
     for lst in lists:
         for i in range(len(lst)):
             lst[i] = resolve_ref(lst[i])
     for dp in dict_pendings:
         dp.pairs = [(resolve_ref(k), resolve_ref(v)) for k, v in dp.pairs]
+    for op in object_pendings:
+        op.pairs = [(k, resolve_ref(v)) for k, v in op.pairs]
     for tb in tuple_boxes:
         tb.items = [resolve_ref(x) for x in tb.items]
+    for fb in frozenset_boxes:
+        fb.items = [resolve_ref(x) for x in fb.items]
+    for eb in enum_boxes:
+        eb.value = resolve_ref(eb.value)
     for sb in set_boxes:
         sb.items = [resolve_ref(x) for x in sb.items]
     root = resolve_ref(root)
 
-    # Pass 3: materialize _TupleBox into real Python tuples (bottom-up).
-    tuple_map: dict[int, tuple[Any, ...]] = {}
+    # Pass 3: materialize immutable boxes (_TupleBox, _FrozensetBox, _EnumBox) bottom-up.
+    imm_map: dict[int, Any] = {}
     in_progress: set[int] = set()
 
-    def materialize_tuple(obj: Any) -> Any:
-        if not isinstance(obj, _TupleBox):
+    def materialize_immutable(obj: Any) -> Any:
+        if not isinstance(obj, (_TupleBox, _FrozensetBox, _EnumBox)):
             return obj
-        tid = id(obj)
-        if tid in tuple_map:
-            return tuple_map[tid]
-        _demand(tid not in in_progress, "Impossible pure-tuple cycle")
-        in_progress.add(tid)
-        result = tuple(materialize_tuple(x) for x in obj.items)
-        in_progress.remove(tid)
-        tuple_map[tid] = result
+        bid = id(obj)
+        if bid in imm_map:
+            return imm_map[bid]
+        _demand(bid not in in_progress, "Impossible immutable value cycle")
+        in_progress.add(bid)
+        if isinstance(obj, _TupleBox):
+            result: Any = tuple(materialize_immutable(x) for x in obj.items)
+        elif isinstance(obj, _FrozensetBox):
+            items = [materialize_immutable(x) for x in obj.items]
+            try:
+                result = frozenset(items)
+            except TypeError as exc:
+                raise TypeError("Unhashable frozenset element") from exc
+        else:
+            mat_val = materialize_immutable(obj.value)
+            result = _reconstruct_enum(obj.cls_name, obj.member_name, mat_val)
+        in_progress.remove(bid)
+        imm_map[bid] = result
         return result
 
     for tb in tuple_boxes:
-        materialize_tuple(tb)
+        materialize_immutable(tb)
+    for fb in frozenset_boxes:
+        materialize_immutable(fb)
+    for eb in enum_boxes:
+        materialize_immutable(eb)
 
     def finalize_ref(obj: Any) -> Any:
-        if isinstance(obj, _TupleBox):
-            return tuple_map[id(obj)]
+        if isinstance(obj, (_TupleBox, _FrozensetBox, _EnumBox)):
+            return imm_map[id(obj)]
         return obj
 
-    # Pass 4: replace _TupleBox references in lists, dicts, and sets.
+    # Pass 4: replace immutable box references in lists, dicts, objects, and sets.
     for lst in lists:
         for i in range(len(lst)):
             lst[i] = finalize_ref(lst[i])
@@ -350,6 +667,9 @@ def decode_readable(value: Any) -> Any:
                 dp.target[fk] = fv
             except TypeError as exc:
                 raise TypeError("Unhashable dict key") from exc
+    for op in object_pendings:
+        for k, v in op.pairs:
+            object.__setattr__(op.target, k, finalize_ref(v))
     for sb in set_boxes:
         for elem in sb.items:
             fe = finalize_ref(elem)
@@ -365,8 +685,8 @@ def describe_graph(roots: list[Any], *, allow_exceptions: bool = False) -> dict[
     """Produce a canonical structural + aliasing fingerprint for Python data graphs.
 
     Preserves exact primitive types (bool vs int vs float, -0/NaN/Inf),
-    dict insertion order, canonical set ordering, list/dict/set object identity,
-    and cyclic references.
+    dict insertion order, canonical set/frozenset ordering, list/dict/set/object
+    identity, and cyclic references.
     """
     _demand(isinstance(roots, list), "Graph roots must be a list")
     seen: dict[int, str] = {}
@@ -381,6 +701,8 @@ def describe_graph(roots: list[Any], *, allow_exceptions: bool = False) -> dict[
 
         if item is None:
             return ["none"]
+        if isinstance(item, enum.Enum):
+            return ["enum", type(item).__name__, item.name, visit(item.value, depth + 1)]
         if isinstance(item, bool):
             return ["bool", item]
         if isinstance(item, int):
@@ -393,12 +715,26 @@ def describe_graph(roots: list[Any], *, allow_exceptions: bool = False) -> dict[
             if math.isinf(item):
                 return ["float", "Infinity" if item > 0 else "-Infinity"]
             return ["float", item]
+        if isinstance(item, complex):
+            return ["complex", visit(item.real, depth + 1), visit(item.imag, depth + 1)]
         if isinstance(item, str):
             return ["str", item]
         if isinstance(item, bytes):
             return ["bytes", base64.b64encode(item).decode("ascii")]
+        if isinstance(item, _ORIG_DECIMAL):
+            return ["decimal", str(item)]
+        if isinstance(item, _ORIG_DATETIME):
+            return ["datetime", item.isoformat()]
+        if isinstance(item, _ORIG_DATE):
+            return ["date", item.isoformat()]
+        if isinstance(item, _ORIG_TIMEDELTA):
+            return ["timedelta", item.days, item.seconds, item.microseconds]
+        if isinstance(item, _ORIG_PURE_PATH):
+            return ["path", str(item)]
         if isinstance(item, tuple):
             return ["tuple", [visit(x, depth + 1) for x in item]]
+        if isinstance(item, frozenset):
+            return ["frozenset", [visit(x, depth + 1) for x in sorted(item, key=_canonical_set_sort_key)]]
 
         if isinstance(item, BaseException):
             _demand(allow_exceptions, "Only data values cross the training boundary")
@@ -457,6 +793,24 @@ def describe_graph(roots: list[Any], *, allow_exceptions: bool = False) -> dict[
                 record["items"].append(visit(child, depth + 1))
             return ["ref", oid]
 
+        raw_dict = _get_plain_object_dict(item)
+        if raw_dict is not None:
+            _demand(
+                all(type(k) is str for k in dict.keys(raw_dict)),
+                "Plain object attributes must have string keys",
+            )
+            obj_id = id(item)
+            if obj_id in seen:
+                return ["ref", seen[obj_id]]
+            oid = f"o{len(objects)}"
+            seen[obj_id] = oid
+            keepalive.append(item)
+            record = {"id": oid, "kind": "object", "class": type(item).__name__, "entries": []}
+            objects.append(record)
+            for k, v in dict.items(raw_dict):
+                record["entries"].append([visit(k, depth + 1), visit(v, depth + 1)])
+            return ["ref", oid]
+
         raise TypeError(f"Only data values cross the training boundary (got {type(item).__name__})")
 
     return {"roots": [visit(root, 0) for root in roots], "objects": objects}
@@ -464,8 +818,12 @@ def describe_graph(roots: list[Any], *, allow_exceptions: bool = False) -> dict[
 
 def realize_graph(graph: dict[str, Any]) -> list[Any]:
     """Reconstruct Python objects with exact aliasing/cycles from a describe_graph output."""
-    _demand(isinstance(graph, dict) and isinstance(graph.get("roots"), list) and isinstance(graph.get("objects"), list),
-            "Invalid Python graph")
+    _demand(
+        isinstance(graph, dict)
+        and isinstance(graph.get("roots"), list)
+        and isinstance(graph.get("objects"), list),
+        "Invalid Python graph",
+    )
     objects: dict[str, Any] = {}
     for node in graph["objects"]:
         kind = node["kind"]
@@ -475,6 +833,8 @@ def realize_graph(graph: dict[str, Any]) -> list[Any]:
             objects[node["id"]] = {}
         elif kind == "set":
             objects[node["id"]] = set()
+        elif kind == "object":
+            objects[node["id"]] = _create_plain_object(node["class"])
         else:
             raise TypeError(f"Unknown graph object kind: {kind!r}")
 
@@ -498,12 +858,28 @@ def realize_graph(graph: dict[str, Any]) -> list[Any]:
             if val == "-Infinity":
                 return float("-inf")
             return float(val)
+        if tag == "complex":
+            return complex(decode_token(token[1]), decode_token(token[2]))
         if tag == "str":
             return str(token[1])
         if tag == "bytes":
             return base64.b64decode(token[1].encode("ascii"), validate=True)
+        if tag == "decimal":
+            return _ORIG_DECIMAL(str(token[1]))
+        if tag == "datetime":
+            return _ORIG_DATETIME.fromisoformat(str(token[1]))
+        if tag == "date":
+            return _ORIG_DATE.fromisoformat(str(token[1]))
+        if tag == "timedelta":
+            return _ORIG_TIMEDELTA(days=int(token[1]), seconds=int(token[2]), microseconds=int(token[3]))
+        if tag == "path":
+            return pathlib.Path(str(token[1]))
+        if tag == "enum":
+            return _reconstruct_enum(str(token[1]), str(token[2]), decode_token(token[3]))
         if tag == "tuple":
             return tuple(decode_token(x) for x in token[1])
+        if tag == "frozenset":
+            return frozenset(decode_token(x) for x in token[1])
         if tag == "ref":
             oid = token[1]
             _demand(oid in objects, f"Unknown graph object ref: {oid!r}")
@@ -522,5 +898,8 @@ def realize_graph(graph: dict[str, Any]) -> list[Any]:
         elif kind == "set":
             for item in node["items"]:
                 target.add(decode_token(item))
+        elif kind == "object":
+            for k_tok, v_tok in node["entries"]:
+                object.__setattr__(target, decode_token(k_tok), decode_token(v_tok))
 
     return [decode_token(root) for root in graph["roots"]]

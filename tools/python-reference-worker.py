@@ -8,7 +8,9 @@ compact causal tracing, and writes one JSON response to stdout.
 
 from __future__ import annotations
 
+import asyncio
 import builtins
+import inspect
 import io
 import json
 import os
@@ -33,6 +35,7 @@ from tinker_py.codec import (  # noqa: E402
     encode_readable,
 )
 from tinker_py.http_tools import install_replay_http_hooks  # noqa: E402
+from tinker_py.io_tools import install_replay_io_hooks, is_guest_caller  # noqa: E402
 from tinker_py.tracer import TraceLimitError, create_python_tracer  # noqa: E402
 
 PY_HOST_METHODS: dict[str, str] = {
@@ -227,6 +230,7 @@ def main() -> int:
             return decode_readable(encode_readable(result_val, allow_exceptions=True))
 
         # Patch external platform interfaces before compiling/executing guest code.
+        io_depth = [0]
         has_http_fixture = any(c["operation"] == "http.request" for c in expected_calls)
         enable_urllib = has_http_fixture or ("urllib" in source) or ("urlopen" in source)
         enable_requests = has_http_fixture or ("requests" in source)
@@ -236,20 +240,37 @@ def main() -> int:
                 enable_urllib=enable_urllib,
                 enable_requests=enable_requests,
             )
+
+        real_time = time.time
+        real_monotonic = time.monotonic
+        real_random = random.random
+
         def _platform_print(*print_args: Any, **_kwargs: Any) -> None:
             invoke("platform.print", list(print_args))
 
         def _platform_time() -> Any:
+            if not is_guest_caller(io_depth):
+                return real_time()
+            return invoke("platform.time", [])
+
+        def _platform_monotonic() -> Any:
+            if not is_guest_caller(io_depth):
+                return real_monotonic()
             return invoke("platform.time", [])
 
         time.time = _platform_time  # type: ignore[assignment]
-        time.monotonic = _platform_time  # type: ignore[assignment]
+        time.monotonic = _platform_monotonic  # type: ignore[assignment]
 
         uses_tool_random = random_mode == "tool" or any(
             c["operation"] == "platform.random" for c in expected_calls
         )
         if uses_tool_random:
-            random.random = lambda: invoke("platform.random", [])  # type: ignore[assignment]
+            def _platform_random() -> Any:
+                if not is_guest_caller(io_depth):
+                    return real_random()
+                return invoke("platform.random", [])
+
+            random.random = _platform_random  # type: ignore[assignment]
         else:
             if not isinstance(random_seed, int) or isinstance(random_seed, bool) or not (0 <= random_seed <= 0xFFFFFFFF):
                 raise TypeError("randomSeed must be uint32")
@@ -264,6 +285,11 @@ def main() -> int:
 
         guest_builtins = dict(vars(builtins))
         guest_builtins["print"] = _platform_print
+        flush_io = install_replay_io_hooks(
+            invoke,
+            io_depth=io_depth,
+            guest_builtins=guest_builtins,
+        )
 
         guest_globals: dict[str, Any] = {
             "__builtins__": guest_builtins,
@@ -291,7 +317,15 @@ def main() -> int:
             if tracer is not None:
                 sys.settrace(tracer.trace_dispatch)
             try:
-                result_value = entry_fn(*args)
+                if inspect.iscoroutinefunction(entry_fn):
+                    result_value = asyncio.run(entry_fn(*args))
+                else:
+                    raw_result = entry_fn(*args)
+                    if inspect.isawaitable(raw_result):
+                        result_value = asyncio.run(raw_result)
+                    else:
+                        result_value = raw_result
+                flush_io()
             except Exception as exc:
                 kind = "throw"
                 result_value = encode_exception(exc)

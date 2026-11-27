@@ -6,15 +6,21 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
+import datetime
+from decimal import Decimal
+import enum
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import io
 import json
 import math
-from pathlib import Path
+import os
+from pathlib import Path, PurePosixPath
 import shutil
 import subprocess
 import sys
 import tempfile
 import threading
+from types import SimpleNamespace
 import unittest
 
 from tinker_js.runner import Bridge, implementation_identity
@@ -58,6 +64,28 @@ class _HostileObject:
 
     def __eq__(self, other: object) -> bool:
         raise AssertionError("__eq__ must never be called by tracer")
+
+
+class _SlotOnlyObject:
+    __slots__ = ("x",)
+
+    def __init__(self, x: int = 1) -> None:
+        self.x = x
+
+
+class _SampleColor(enum.Enum):
+    RED = 1
+    BLUE = 2
+
+
+class _SampleIntEnum(enum.IntEnum):
+    FAST = 10
+
+
+class _SampleNode:
+    def __init__(self, val: Any) -> None:
+        self.val = val
+        self.next: Any = None
 
 
 class CodecTests(unittest.TestCase):
@@ -163,11 +191,23 @@ class CodecTests(unittest.TestCase):
         self.assertEqual(encode_exception(KeyError("missing")), {"name": "KeyError", "message": "'missing'"})
 
         # Unrepresentable objects must be rejected
-        for bad in (lambda x: x, math, _HostileObject(), (x for x in range(3))):
+        for bad in (lambda x: x, math, (x for x in range(3)), io.StringIO("x"), object(), _SlotOnlyObject()):
             with self.assertRaises(TypeError):
                 encode_readable(bad)
             with self.assertRaises(TypeError):
                 describe_graph([bad])
+
+        # Plain custom class instances (including hostile dunders!) encode cleanly without calling __repr__/__str__/__eq__
+        h_empty = _HostileObject()
+        self.assertEqual(encode_readable(h_empty), {"$py": "object", "class": "_HostileObject", "attrs": {}})
+        h_data = _HostileObject()
+        h_data.x = 42
+        h_data.tag = "ok"
+        enc_h = encode_readable(h_data)
+        self.assertEqual(enc_h, {"$py": "object", "class": "_HostileObject", "attrs": {"x": 42, "tag": "ok"}})
+        dec_h = decode_readable(enc_h)
+        self.assertEqual((dec_h.x, dec_h.tag), (42, "ok"))
+        self.assertEqual(describe_graph([h_data]), describe_graph([dec_h]))
 
         # Depth budget guard
         deep: list = []
@@ -178,6 +218,103 @@ class CodecTests(unittest.TestCase):
             cur = nxt
         with self.assertRaises(TypeError):
             encode_readable(deep)
+
+    def test_rich_python_boundary_types_roundtrip_and_graph_equivalence(self):
+        dt_naive = datetime.datetime(2026, 11, 26, 15, 30, 45, 123456)
+        dt_utc = datetime.datetime(2026, 11, 26, 15, 30, 45, tzinfo=datetime.timezone.utc)
+        d_only = datetime.date(2026, 11, 26)
+        td_pos = datetime.timedelta(days=3, seconds=42, microseconds=99)
+        td_neg = datetime.timedelta(seconds=-5, microseconds=12)
+        dec_scale = Decimal("12.3400")
+        dec_neg_zero = Decimal("-0")
+        dec_inf = Decimal("Infinity")
+        dec_nan = Decimal("NaN")
+        p_obj = Path("sub/dir/file.txt")
+        pure_p = PurePosixPath("sub/dir/file.txt")
+        fs = frozenset({1, (2, 3), _SampleColor.RED, d_only, p_obj})
+        c_val = complex(3.5, -2.25)
+        c_special = complex(-0.0, float("nan"))
+
+        node_a = _SampleNode("head")
+        node_a.next = node_a  # cyclic plain custom object
+        ns_obj = SimpleNamespace(flag=True, items=[node_a])
+        escaped_obj = SimpleNamespace()
+        setattr(escaped_obj, "$py", "literal")
+
+        payload = {
+            "dt_naive": dt_naive,
+            "dt_utc": dt_utc,
+            "d_only": d_only,
+            "td_pos": td_pos,
+            "td_neg": td_neg,
+            "dec_scale": dec_scale,
+            "dec_neg_zero": dec_neg_zero,
+            "dec_inf": dec_inf,
+            "dec_nan": dec_nan,
+            "path": p_obj,
+            "pure_path": pure_p,
+            "frozenset": fs,
+            "complex": c_val,
+            "complex_special": c_special,
+            "enum": _SampleColor.BLUE,
+            "int_enum": _SampleIntEnum.FAST,
+            "node_alias": node_a,
+            "ns": ns_obj,
+            "escaped_obj": escaped_obj,
+        }
+
+        encoded = encode_readable(payload)
+        self.assertEqual(encoded["dt_naive"], {"$py": "datetime", "iso": dt_naive.isoformat()})
+        self.assertEqual(encoded["dt_utc"], {"$py": "datetime", "iso": dt_utc.isoformat()})
+        self.assertEqual(encoded["d_only"], {"$py": "date", "iso": "2026-11-26"})
+        self.assertEqual(encoded["td_pos"], {"$py": "timedelta", "days": 3, "seconds": 42, "microseconds": 99})
+        self.assertEqual(encoded["dec_scale"], {"$py": "decimal", "value": "12.3400"})
+        self.assertEqual(encoded["path"], {"$py": "path", "value": "sub/dir/file.txt"})
+        self.assertEqual(encoded["frozenset"]["$py"], "frozenset")
+        self.assertEqual(encoded["complex"], {"$py": "complex", "real": 3.5, "imag": -2.25})
+        self.assertEqual(encoded["complex_special"], {"$py": "complex", "real": {"$py": "-0"}, "imag": {"$py": "NaN"}})
+        self.assertEqual(encoded["enum"], {"$py": "enum", "class": "_SampleColor", "name": "BLUE", "value": 2})
+        self.assertEqual(encoded["int_enum"], {"$py": "enum", "class": "_SampleIntEnum", "name": "FAST", "value": 10})
+        self.assertEqual(encoded["node_alias"]["$py"], "object")
+        self.assertEqual(encoded["node_alias"]["attrs"]["next"], {"$py": "ref", "path": "/node_alias"})
+        self.assertEqual(encoded["ns"]["attrs"]["items"][0], {"$py": "ref", "path": "/node_alias"})
+
+        decoded = decode_readable(encoded)
+        self.assertEqual(decoded["dt_naive"], dt_naive)
+        self.assertEqual(decoded["dt_utc"], dt_utc)
+        self.assertEqual(decoded["d_only"], d_only)
+        self.assertEqual(decoded["td_pos"], td_pos)
+        self.assertEqual(decoded["td_neg"], td_neg)
+        self.assertEqual(str(decoded["dec_scale"]), "12.3400")
+        self.assertEqual(str(decoded["dec_neg_zero"]), "-0")
+        self.assertTrue(decoded["dec_inf"].is_infinite())
+        self.assertTrue(decoded["dec_nan"].is_nan())
+        self.assertEqual(decoded["path"], Path("sub/dir/file.txt"))
+        self.assertIsInstance(decoded["frozenset"], frozenset)
+        self.assertEqual(decoded["complex"], c_val)
+        self.assertLess(math.copysign(1.0, decoded["complex_special"].real), 0.0)
+        self.assertTrue(math.isnan(decoded["complex_special"].imag))
+        self.assertIsInstance(decoded["enum"], enum.Enum)
+        self.assertEqual((decoded["enum"].name, decoded["enum"].value), ("BLUE", 2))
+        self.assertIs(decoded["node_alias"].next, decoded["node_alias"])
+        self.assertIs(decoded["ns"].items[0], decoded["node_alias"])
+        self.assertEqual(getattr(decoded["escaped_obj"], "$py"), "literal")
+
+        graph = describe_graph([payload])
+        self.assertEqual(graph, describe_graph([decoded]))
+        realized = realize_graph(graph)
+        self.assertEqual(graph, describe_graph(realized))
+        self.assertIs(realized[0]["node_alias"].next, realized[0]["node_alias"])
+        self.assertIs(realized[0]["ns"].items[0], realized[0]["node_alias"])
+
+        # Type distinctions across new types
+        self.assertNotEqual(describe_graph([dt_naive]), describe_graph([dt_utc]))
+        self.assertNotEqual(describe_graph([dt_naive]), describe_graph([dt_naive.isoformat()]))
+        self.assertNotEqual(describe_graph([d_only]), describe_graph([datetime.datetime(2026, 11, 26, 0, 0)]))
+        self.assertNotEqual(describe_graph([Decimal("1.2")]), describe_graph([Decimal("1.20")]))
+        self.assertNotEqual(describe_graph([Decimal("1.2")]), describe_graph([1.2]))
+        self.assertNotEqual(describe_graph([frozenset({1, 2})]), describe_graph([{1, 2}]))
+        self.assertNotEqual(describe_graph([SimpleNamespace(x=1)]), describe_graph([{"x": 1}]))
 
 
 class PurePythonExecutionTests(unittest.TestCase):
@@ -451,7 +588,16 @@ def run(text):
             "source": source,
             "entry": "run",
             "args": ["lineA\u2028lineB"],
-            "fixture": {"calls": []},
+            "fixture": {
+                "calls": [
+                    {
+                        "operation": "fs.writeText",
+                        "arguments": ["should_stay_in_tmpdir.txt", "ok"],
+                        "status": "fulfilled",
+                        "result": None,
+                    }
+                ]
+            },
         }
         leaked = Path.cwd() / "should_stay_in_tmpdir.txt"
         self.assertFalse(leaked.exists())
@@ -587,10 +733,14 @@ def run(state, key):
             detected, _ = _scan_public_source_tools(src, "seeded", [])
             self.assertEqual(detected, ["platform.time"], src)
 
-        # 3. datetime.now() does NOT invoke time.time() in CPython, so platform.time is not falsely declared.
+        # 3. datetime.now() and datetime.utcnow() ARE intercepted and declare platform.time,
+        #    while pure datetime.datetime(2026, 1, 1) constructor does NOT declare platform.time.
         now_src = "import datetime\ndef run(): return datetime.datetime.now().year\n"
         now_ops, _ = _scan_public_source_tools(now_src, "seeded", [])
-        self.assertEqual(now_ops, [])
+        self.assertEqual(now_ops, ["platform.time"])
+        pure_dt_src = "import datetime\ndef run(): return datetime.datetime(2026, 1, 1).year\n"
+        pure_dt_ops, _ = _scan_public_source_tools(pure_dt_src, "seeded", [])
+        self.assertEqual(pure_dt_ops, [])
 
     def test_exact_failure_categories(self):
         task = self._workflow_task("py-wf-grade", kv_val=12, rand_val=0.5, ts=1700000001.0)
@@ -1735,8 +1885,8 @@ def run(url):
                 (repo / "pkg" / "__init__.py").write_text("", encoding="utf-8")
                 (repo / "pkg" / "client.py").write_text(
                     """\
+import ctypes
 import json
-import subprocess
 import urllib.error
 import urllib.request
 import requests
@@ -1765,8 +1915,8 @@ def sync_via_requests(base_url, payload):
         r2.raise_for_status()
     return r2.json()
 
-def blocked_subprocess(cmd):
-    return subprocess.run(cmd, check=False).returncode
+def blocked_ctypes(val):
+    return ctypes.c_int(val).value
 """,
                     encoding="utf-8",
                 )
@@ -1822,20 +1972,24 @@ def test_http_clients():
                 entries = {r["entry"] for r in rows}
                 self.assertIn("fetch_with_urllib", entries)
                 self.assertIn("sync_via_requests", entries)
-                self.assertNotIn("blocked_subprocess", entries)
+                self.assertNotIn("blocked_ctypes", entries)
 
                 for entry_name in ("fetch_with_urllib", "sync_via_requests"):
                     task_row = next(r for r in rows if r["entry"] == entry_name and "unit-test-input" in r["features"])
                     self.assertIn("http", task_row["features"])
                     self.assertIn("http.request", task_row["features"])
-                    self.assertEqual(len(task_row["fixture"]["calls"]), 2)
-                    self.assertTrue(all(c["operation"] == "http.request" for c in task_row["fixture"]["calls"]))
+                    ops = [c["operation"] for c in task_row["fixture"]["calls"]]
+                    if entry_name == "fetch_with_urllib":
+                        self.assertEqual(ops, ["fs.writeText", "http.request", "http.request"])
+                    else:
+                        self.assertEqual(ops, ["http.request", "http.request"])
 
                     # Replay completely offline with server dead!
                     exported = export_python_example(task_row, trace_format="compact", reasoning_channel="thinking")
                     self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
                     tool_decl = json.loads(exported["messages"][1]["content"])
-                    self.assertEqual([t["function"]["name"] for t in tool_decl], ["http.request"])
+                    expected_decls = ["fs.writeText", "http.request"] if entry_name == "fetch_with_urllib" else ["http.request"]
+                    self.assertEqual(sorted(t["function"]["name"] for t in tool_decl), expected_decls)
 
                     prepared = prepare_python_task(task_row, trace_format="compact")
                     session = create_python_session(prepared)
@@ -1858,6 +2012,538 @@ def test_http_clients():
                 pass
             if leaked_cwd_file.exists():
                 leaked_cwd_file.unlink()
+
+
+class StdlibAndIOInterceptionTests(unittest.TestCase):
+    def test_open_pathlib_os_fs_and_env_replay(self):
+        source = """\
+import os
+from pathlib import Path
+
+def run(cfg_dir, out_name):
+    mode = os.getenv("APP_MODE", "dev")
+    has_secret = "API_TOKEN" in os.environ
+    token = os.environ["API_TOKEN"] if has_secret else os.environ.get("FALLBACK_TOKEN", "none")
+
+    joined = os.path.join(cfg_dir, "settings.txt")
+    if os.path.exists(joined) and os.path.isfile(joined):
+        with open(joined, "r", encoding="utf-8") as fh:
+            first = fh.readline().strip()
+            rest = [ln.strip() for ln in fh]
+    else:
+        first = "missing"
+        rest = []
+
+    p = Path(cfg_dir)
+    entries = sorted(x.name for x in p.iterdir()) if os.path.isdir(cfg_dir) else []
+    listed = os.listdir(cfg_dir)
+
+    out_path = Path(cfg_dir) / out_name
+    out_path.write_text(f"{mode}:{token}:{first}", encoding="utf-8")
+    written_back = out_path.read_text(encoding="utf-8")
+
+    bin_path = Path(cfg_dir) / "blob.bin"
+    with open(bin_path, "wb") as bfh:
+        bfh.write(b"\\x00\\xff")
+    raw_bytes = bin_path.read_bytes()
+
+    try:
+        Path(cfg_dir, "absent.txt").read_text()
+        absent_err = "none"
+    except FileNotFoundError:
+        absent_err = "missing"
+
+    return {
+        "mode": mode,
+        "first": first,
+        "rest": rest,
+        "entries": entries,
+        "listed": listed,
+        "written_back": written_back,
+        "raw_bytes": raw_bytes,
+        "absent_err": absent_err,
+        "out_path": out_path,
+    }
+"""
+        task = {
+            "id": "py-io-fs-env-1",
+            "family": "py-io-fs-env",
+            "language": "py",
+            "source": source,
+            "entry": "run",
+            "args": ["/etc/myapp", "summary.txt"],
+            "fixture": {
+                "calls": [
+                    {"operation": "env.get", "arguments": ["APP_MODE"], "status": "fulfilled", "result": "prod"},
+                    {"operation": "env.get", "arguments": ["API_TOKEN"], "status": "fulfilled", "result": "tok-9"},
+                    {"operation": "env.get", "arguments": ["API_TOKEN"], "status": "fulfilled", "result": "tok-9"},
+                    {"operation": "fs.exists", "arguments": ["/etc/myapp/settings.txt"], "status": "fulfilled", "result": True},
+                    {"operation": "fs.isFile", "arguments": ["/etc/myapp/settings.txt"], "status": "fulfilled", "result": True},
+                    {"operation": "fs.readText", "arguments": ["/etc/myapp/settings.txt"], "status": "fulfilled", "result": "alpha\nbeta\ngamma\n"},
+                    {"operation": "fs.isDir", "arguments": ["/etc/myapp"], "status": "fulfilled", "result": True},
+                    {"operation": "fs.listdir", "arguments": ["/etc/myapp"], "status": "fulfilled", "result": ["b.cfg", "a.cfg"]},
+                    {"operation": "fs.listdir", "arguments": ["/etc/myapp"], "status": "fulfilled", "result": ["b.cfg", "a.cfg"]},
+                    {"operation": "fs.writeText", "arguments": ["/etc/myapp/summary.txt", "prod:tok-9:alpha"], "status": "fulfilled", "result": None},
+                    {"operation": "fs.readText", "arguments": ["/etc/myapp/summary.txt"], "status": "fulfilled", "result": "prod:tok-9:alpha"},
+                    {"operation": "fs.writeBytes", "arguments": ["/etc/myapp/blob.bin", encode_readable(b"\x00\xff")], "status": "fulfilled", "result": None},
+                    {"operation": "fs.readBytes", "arguments": ["/etc/myapp/blob.bin"], "status": "fulfilled", "result": encode_readable(b"\x00\xff")},
+                    {"operation": "fs.readText", "arguments": ["/etc/myapp/absent.txt"], "status": "rejected", "result": {"name": "FileNotFoundError", "message": "not found"}},
+                ]
+            },
+        }
+        exported = export_python_example(task, trace_format="compact", reasoning_channel="thinking")
+        self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+
+        tool_decl = json.loads(exported["messages"][1]["content"])
+        declared = sorted(t["function"]["name"] for t in tool_decl)
+        self.assertEqual(
+            declared,
+            ["env.get", "fs.exists", "fs.isDir", "fs.isFile", "fs.listdir", "fs.readBytes", "fs.readText", "fs.writeBytes", "fs.writeText"],
+        )
+        for decl in tool_decl:
+            self.assertEqual(decl["function"]["parameters"]["required"], ["arguments"])
+
+        comp = json.loads(assistant_visible_text(exported["messages"][-1]).split("```json\n", 1)[1].split("\n```", 1)[0])
+        val = decode_readable(comp["value"])
+        self.assertEqual(val["mode"], "prod")
+        self.assertEqual(val["first"], "alpha")
+        self.assertEqual(val["rest"], ["beta", "gamma"])
+        self.assertEqual(val["entries"], ["a.cfg", "b.cfg"])
+        self.assertEqual(val["raw_bytes"], b"\x00\xff")
+        self.assertEqual(val["absent_err"], "missing")
+        self.assertEqual(val["out_path"], Path("/etc/myapp/summary.txt"))
+
+        prepared = prepare_python_task(task, trace_format="compact")
+        sess = create_python_session(prepared)
+        for msg in exported["messages"][2:]:
+            if msg["role"] == "assistant":
+                sess.step(msg, 10)
+        self.assertTrue(sess.grade()["success"])
+
+    def test_logging_subprocess_datetime_uuid_secrets_replay(self):
+        source = """\
+import datetime
+import logging
+import secrets
+import subprocess
+import uuid
+
+def run(cmd):
+    logger = logging.getLogger("svc")
+    logging.info("starting %s", cmd[0])
+    logger.warning("attempt=%d", 2)
+
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    today_d = datetime.date.today()
+    uid = uuid.uuid4()
+    tok_hex = secrets.token_hex(4)
+    tok_url = secrets.token_urlsafe(6)
+    tok_bytes = secrets.token_bytes(3)
+    picked = secrets.randbelow(10)
+
+    cp = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    out2 = subprocess.check_output(["uname"], text=True)
+
+    try:
+        subprocess.run(["false"], check=True)
+        failed_rc = 0
+    except subprocess.CalledProcessError as exc:
+        failed_rc = exc.returncode
+
+    return {
+        "now": now_utc,
+        "today": today_d,
+        "uid": str(uid),
+        "tok_hex": tok_hex,
+        "tok_url": tok_url,
+        "tok_bytes": tok_bytes,
+        "picked": picked,
+        "cp_rc": cp.returncode,
+        "cp_out": cp.stdout.strip(),
+        "out2": out2.strip(),
+        "failed_rc": failed_rc,
+    }
+"""
+        task = {
+            "id": "py-io-platform-shell-1",
+            "family": "py-io-platform-shell",
+            "language": "py",
+            "source": source,
+            "entry": "run",
+            "args": [["echo", "hi"]],
+            "fixture": {
+                "calls": [
+                    {"operation": "platform.log", "arguments": ["INFO", "starting echo"], "status": "fulfilled", "result": None},
+                    {"operation": "platform.log", "arguments": ["WARNING", "attempt=2"], "status": "fulfilled", "result": None},
+                    {"operation": "platform.time", "arguments": [], "status": "fulfilled", "result": 1700000000.0},
+                    {"operation": "platform.time", "arguments": [], "status": "fulfilled", "result": 1700000001.0},
+                    {"operation": "platform.uuid", "arguments": [], "status": "fulfilled", "result": "12345678-1234-4123-8123-123456789abc"},
+                    {"operation": "platform.secrets", "arguments": ["token_hex", 4], "status": "fulfilled", "result": "deadbeef"},
+                    {"operation": "platform.secrets", "arguments": ["token_urlsafe", 6], "status": "fulfilled", "result": "abc_DEF0"},
+                    {"operation": "platform.secrets", "arguments": ["token_bytes", 3], "status": "fulfilled", "result": encode_readable(b"\x01\x02\x03")},
+                    {"operation": "platform.secrets", "arguments": ["randbelow", 10], "status": "fulfilled", "result": 7},
+                    {
+                        "operation": "shell.exec",
+                        "arguments": [{"args": ["echo", "hi"], "shell": False}],
+                        "status": "fulfilled",
+                        "result": {"returncode": 0, "stdout": "hi\n", "stderr": ""},
+                    },
+                    {
+                        "operation": "shell.exec",
+                        "arguments": [{"args": ["uname"], "shell": False}],
+                        "status": "fulfilled",
+                        "result": {"returncode": 0, "stdout": "Linux\n", "stderr": ""},
+                    },
+                    {
+                        "operation": "shell.exec",
+                        "arguments": [{"args": ["false"], "shell": False}],
+                        "status": "rejected",
+                        "result": {"name": "CalledProcessError", "message": "Command '['false']' returned non-zero exit status 1."},
+                    },
+                ]
+            },
+        }
+        exported = export_python_example(task, trace_format="compact", reasoning_channel="thinking")
+        self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+        tool_decl = json.loads(exported["messages"][1]["content"])
+        self.assertEqual(
+            sorted(t["function"]["name"] for t in tool_decl),
+            ["platform.log", "platform.secrets", "platform.time", "platform.uuid", "shell.exec"],
+        )
+
+        comp = json.loads(assistant_visible_text(exported["messages"][-1]).split("```json\n", 1)[1].split("\n```", 1)[0])
+        decoded = decode_readable(comp["value"])
+        self.assertEqual(decoded["now"], datetime.datetime(2023, 11, 14, 22, 13, 20, tzinfo=datetime.timezone.utc))
+        self.assertEqual(decoded["today"], datetime.date.fromtimestamp(1700000001.0))
+        self.assertEqual(decoded["uid"], "12345678-1234-4123-8123-123456789abc")
+        self.assertEqual(decoded["tok_hex"], "deadbeef")
+        self.assertEqual(decoded["tok_bytes"], b"\x01\x02\x03")
+        self.assertEqual(decoded["picked"], 7)
+        self.assertEqual(decoded["cp_out"], "hi")
+        self.assertEqual(decoded["out2"], "Linux")
+        self.assertEqual(decoded["failed_rc"], 1)
+
+    def test_asyncio_and_sqlite_in_memory_with_io_and_settrace(self):
+        source = """\
+import asyncio
+import datetime
+import logging
+import os
+import sqlite3
+
+async def _compute(x):
+    await asyncio.sleep(0)
+    return x * 10
+
+async def run(items):
+    prefix = os.getenv("ROW_PREFIX", "v")
+    now = datetime.datetime.now(datetime.timezone.utc)
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE scores (label TEXT, val INTEGER)")
+    vals = await asyncio.gather(*(_compute(i) for i in items))
+    for i, v in enumerate(vals):
+        conn.execute("INSERT INTO scores VALUES (?, ?)", (f"{prefix}{i}", v))
+    total = conn.execute("SELECT SUM(val) FROM scores").fetchone()[0]
+    conn.close()
+    logging.info("total=%d", total)
+    try:
+        sqlite3.connect("forbidden.db")
+        disk_blocked = False
+    except PermissionError:
+        disk_blocked = True
+    return {"total": total, "now": now, "disk_blocked": disk_blocked}
+"""
+        task = {
+            "id": "py-async-sqlite-1",
+            "family": "py-async-sqlite",
+            "language": "py",
+            "source": source,
+            "entry": "run",
+            "args": [[2, 3, 4]],
+            "fixture": {
+                "calls": [
+                    {"operation": "env.get", "arguments": ["ROW_PREFIX"], "status": "fulfilled", "result": "p"},
+                    {"operation": "platform.time", "arguments": [], "status": "fulfilled", "result": 1700000000.0},
+                    {"operation": "platform.log", "arguments": ["INFO", "total=90"], "status": "fulfilled", "result": None},
+                ]
+            },
+        }
+        exported = export_python_example(task, trace_format="compact", reasoning_channel="thinking")
+        self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+        tool_decl = json.loads(exported["messages"][1]["content"])
+        self.assertEqual(sorted(t["function"]["name"] for t in tool_decl), ["env.get", "platform.log", "platform.time"])
+
+        comp = json.loads(assistant_visible_text(exported["messages"][-1]).split("```json\n", 1)[1].split("\n```", 1)[0])
+        val = decode_readable(comp["value"])
+        self.assertEqual(val["total"], 90)
+        self.assertTrue(val["disk_blocked"])
+        self.assertEqual(val["now"], datetime.datetime(2023, 11, 14, 22, 13, 20, tzinfo=datetime.timezone.utc))
+
+    def test_scan_public_source_tools_covers_all_new_io_apis_and_ignores_pure_or_dummy(self):
+        cases = [
+            ("def run(p): return open(p).read()\n", ["fs.readText"]),
+            ("def run(p, txt):\n    with open(p, 'w') as f: f.write(txt)\n", ["fs.writeText"]),
+            ("def run(p): return open(p, 'rb').read()\n", ["fs.readBytes"]),
+            ("def run(p, b):\n    with open(p, 'wb') as f: f.write(b)\n", ["fs.writeBytes"]),
+            ("from pathlib import Path\ndef run(p): return Path(p).exists(), Path(p).iterdir()\n", ["fs.exists", "fs.listdir"]),
+            ("import os\ndef run(p): return os.path.join(p, 'a')\n", []),
+            ("import os\ndef run(k, p): return os.environ[k], os.listdir(p), os.path.exists(p)\n", ["env.get", "fs.exists", "fs.listdir"]),
+            ("import logging\ndef run(x): logging.getLogger('a').info('x=%s', x)\n", ["platform.log"]),
+            ("class _NoopLog:\n    def info(self, *a): pass\nlogging = _NoopLog()\ndef run(x): logging.info(x)\n", []),
+            ("import subprocess\ndef run(c): return subprocess.run(c).returncode\n", ["shell.exec"]),
+            ("import uuid\ndef run(): return str(uuid.uuid4())\n", ["platform.uuid"]),
+            ("import uuid\ndef run(s): return str(uuid.UUID(s))\n", []),
+            ("import secrets\ndef run(): return secrets.token_hex(8)\n", ["platform.secrets"]),
+            ("import secrets\ndef run(a, b): return secrets.compare_digest(a, b)\n", []),
+        ]
+        for src, expected_ops in cases:
+            with self.subTest(src=src):
+                ops, _ = _scan_public_source_tools(src, "seeded", [])
+                self.assertEqual(ops, expected_ops)
+
+    def test_io_causal_zero_future_leakage(self):
+        source = """\
+import os
+import subprocess
+import uuid
+
+def run(cfg_path, env_key):
+    tag = "cfg:" + os.path.basename(cfg_path)
+    raw = open(cfg_path, "r").read()
+    mode = os.getenv(env_key, "dev")
+    uid = str(uuid.uuid4())
+    if mode == "fast":
+        cp = subprocess.run(["echo", "fast:" + uid], capture_output=True, text=True)
+    else:
+        cp = subprocess.run(["echo", "slow:" + uid], capture_output=True, text=True)
+    return {"tag": tag, "raw": raw, "mode": mode, "uid": uid, "out": cp.stdout.strip()}
+"""
+        def make_task(tid: str, raw: str, mode: str, uid: str, out: str) -> dict:
+            return {
+                "id": tid,
+                "family": "py-io-causal",
+                "language": "py",
+                "source": source,
+                "entry": "run",
+                "args": ["/app/cfg.txt", "APP_MODE"],
+                "features": ["external", "fs", "env", "shell", "branch"],
+                "fixture": {
+                    "calls": [
+                        {"operation": "fs.readText", "arguments": ["/app/cfg.txt"], "status": "fulfilled", "result": raw},
+                        {"operation": "env.get", "arguments": ["APP_MODE"], "status": "fulfilled", "result": mode},
+                        {"operation": "platform.uuid", "arguments": [], "status": "fulfilled", "result": uid},
+                        {
+                            "operation": "shell.exec",
+                            "arguments": [{"args": ["echo", f"{mode}:{uid}"], "shell": False}],
+                            "status": "fulfilled",
+                            "result": {"returncode": 0, "stdout": out + "\n", "stderr": ""},
+                        },
+                    ]
+                },
+            }
+
+        exp_a = export_python_example(
+            make_task("io-causal-a", "SECRET_RAW_1", "fast", "11111111-1111-4111-8111-111111111111", "ok-a"),
+            trace_format="compact",
+        )
+        exp_b = export_python_example(
+            make_task("io-causal-b", "SECRET_RAW_2", "slow", "22222222-2222-4222-8222-222222222222", "ok-b"),
+            trace_format="compact",
+        )
+        audit = audit_python_supervision([exp_a, exp_b], {"formats": ["compact", "full", "actions-only"], "samplePerFeature": 4})
+        self.assertTrue(audit["valid"])
+        self.assertTrue(audit["allReplayed"])
+        self.assertGreaterEqual(audit["causalDivergencesChecked"], 1)
+        self.assertEqual(exp_a["messages"][3], exp_b["messages"][3])
+        turn0_think = assistant_thinking_text(exp_a["messages"][3])
+        self.assertIn("tag = 'cfg:cfg.txt'", turn0_think)
+        self.assertNotIn("SECRET_RAW_1", turn0_think)
+        self.assertNotIn("fast", turn0_think)
+
+    def test_live_capture_harvest_stdlib_io_async_sqlite_end_to_end_and_offline_replay(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            root = Path(tmpdir)
+            repos_dir = root / "repos"
+            repo = repos_dir / "live_io_lib"
+            (repo / "pkg").mkdir(parents=True)
+            (repo / "tests").mkdir(parents=True)
+            out_dir = root / "out"
+            live_input_file = root / "live_config.txt"
+            live_input_file.write_text("line1\nline2\n", encoding="utf-8")
+
+            (repo / "pkg" / "__init__.py").write_text("", encoding="utf-8")
+            (repo / "pkg" / "pipeline.py").write_text(
+                """\
+import asyncio
+import datetime
+from decimal import Decimal
+import enum
+import logging
+import os
+from pathlib import Path
+import secrets
+import shutil
+import sqlite3
+import subprocess
+import uuid
+
+class Status(enum.Enum):
+    OK = "ok"
+
+def run_io_pipeline(cfg_path, env_key, out_name):
+    \"\"\"Exercise open/Path/env/logging/subprocess/datetime/uuid/secrets/sqlite3.\"\"\"
+    env_val = os.getenv(env_key, "fallback")
+    with open(cfg_path, "r", encoding="utf-8") as fh:
+        lines = [ln.strip() for ln in fh if ln.strip()]
+    out_path = Path(out_name)
+    out_path.write_text("|".join(lines), encoding="utf-8")
+    copied = out_path.read_text(encoding="utf-8")
+    has_out = out_path.exists()
+    logging.info("processed %s lines=%d", env_val, len(lines))
+    cp = subprocess.run(["echo", "hi"], capture_output=True, text=True, check=True)
+    now_dt = datetime.datetime.now(datetime.timezone.utc)
+    uid_str = str(uuid.uuid4())
+    tok = secrets.token_hex(4)
+
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE items (n INTEGER)")
+    conn.execute("INSERT INTO items VALUES (?)", (len(lines),))
+    db_count = conn.execute("SELECT SUM(n) FROM items").fetchone()[0]
+    conn.close()
+
+    return {
+        "env_val": env_val,
+        "copied": copied,
+        "has_out": has_out,
+        "echo": cp.stdout.strip(),
+        "now_dt": now_dt,
+        "uid_len": len(uid_str),
+        "tok_len": len(tok),
+        "db_count": db_count,
+        "cost": Decimal("3.50"),
+        "out_path": out_path,
+        "status": Status.OK,
+    }
+
+async def async_sqlite_pipeline(env_key, vals):
+    \"\"\"Async pipeline combining asyncio, sqlite3 :memory:, logging, and env lookup.\"\"\"
+    tag = os.environ.get(env_key, "none")
+    await asyncio.sleep(0)
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE nums (v INTEGER)")
+    for v in vals:
+        conn.execute("INSERT INTO nums VALUES (?)", (v,))
+    total = conn.execute("SELECT SUM(v) FROM nums").fetchone()[0]
+    conn.close()
+    logging.warning("async tag=%s total=%d", tag, total)
+    return {"tag": tag, "total": total}
+
+def blocked_shutil(src, dst):
+    return shutil.copyfile(src, dst)
+""",
+                encoding="utf-8",
+            )
+            (repo / "tests" / "test_pipeline.py").write_text(
+                f"""\
+from pkg.pipeline import run_io_pipeline, async_sqlite_pipeline
+
+CFG = {str(live_input_file)!r}
+
+def test_pipelines():
+    res = run_io_pipeline(CFG, "HARVEST_LIVE_ENV", "copied_out.txt")
+    assert res["echo"] == "hi"
+    async_sqlite_pipeline("HARVEST_LIVE_ENV", [4, 5, 6])
+""",
+                encoding="utf-8",
+            )
+
+            proc_env = dict(os.environ)
+            proc_env["HARVEST_LIVE_ENV"] = "live-secret-42"
+            proc = subprocess.run(
+                [
+                    sys.executable,
+                    str(REPO / "tools/tinker-harvest-py.py"),
+                    "--local-repos",
+                    str(repos_dir),
+                    "--output-dir",
+                    str(out_dir),
+                    "--jobs",
+                    "2",
+                    "--max-per-repo",
+                    "10",
+                    "--max-per-fn",
+                    "3",
+                    "--min-source-chars",
+                    "80",
+                    "--max-source-chars",
+                    "35000",
+                ],
+                env=proc_env,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 0, msg=f"stderr={proc.stderr}\nstdout={proc.stdout}")
+
+            # Delete live temp file & make sure HARVEST_LIVE_ENV is unset in parent BEFORE offline replay!
+            live_input_file.unlink()
+            self.assertFalse(live_input_file.exists())
+            self.assertNotIn("HARVEST_LIVE_ENV", os.environ)
+
+            rows = [
+                json.loads(line)
+                for line in (out_dir / "harvested.jsonl").read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            entries = {r["entry"] for r in rows}
+            self.assertIn("run_io_pipeline", entries)
+            self.assertIn("async_sqlite_pipeline", entries)
+            self.assertNotIn("blocked_shutil", entries)
+
+            io_task = next(r for r in rows if r["entry"] == "run_io_pipeline" and "unit-test-input" in r["features"])
+            io_ops = [c["operation"] for c in io_task["fixture"]["calls"]]
+            self.assertEqual(
+                io_ops,
+                [
+                    "env.get",
+                    "fs.readText",
+                    "fs.writeText",
+                    "fs.readText",
+                    "fs.exists",
+                    "platform.log",
+                    "shell.exec",
+                    "platform.time",
+                    "platform.uuid",
+                    "platform.secrets",
+                ],
+            )
+            # Replay 100% offline with temp file deleted and env var unset!
+            exp_io = export_python_example(io_task, trace_format="compact", reasoning_channel="thinking")
+            self.assertTrue(exp_io["metadata"]["traceAudit"]["replayVerified"])
+            prep_io = prepare_python_task(io_task, trace_format="compact")
+            sess_io = create_python_session(prep_io)
+            for msg in exp_io["messages"][2:]:
+                if msg["role"] == "assistant":
+                    sess_io.step(msg, 20)
+            self.assertTrue(sess_io.grade()["success"])
+            comp_io = json.loads(assistant_visible_text(exp_io["messages"][-1]).split("```json\n", 1)[1].split("\n```", 1)[0])
+            dec_io = decode_readable(comp_io["value"])
+            self.assertEqual(dec_io["env_val"], "live-secret-42")
+            self.assertEqual(dec_io["copied"], "line1|line2")
+            self.assertEqual(dec_io["echo"], "hi")
+            self.assertEqual(dec_io["db_count"], 2)
+            self.assertEqual(dec_io["cost"], Decimal("3.50"))
+            self.assertEqual(dec_io["out_path"], Path("copied_out.txt"))
+            self.assertEqual((dec_io["status"].name, dec_io["status"].value), ("OK", "ok"))
+
+            async_task = next(r for r in rows if r["entry"] == "async_sqlite_pipeline" and "unit-test-input" in r["features"])
+            self.assertIn("async", async_task["features"])
+            self.assertEqual([c["operation"] for c in async_task["fixture"]["calls"]], ["env.get", "platform.log"])
+            exp_async = export_python_example(async_task, trace_format="compact", reasoning_channel="thinking")
+            self.assertTrue(exp_async["metadata"]["traceAudit"]["replayVerified"])
+            comp_async = json.loads(assistant_visible_text(exp_async["messages"][-1]).split("```json\n", 1)[1].split("\n```", 1)[0])
+            self.assertEqual(comp_async["value"], {"tag": "live-secret-42", "total": 15})
 
 
 if __name__ == "__main__":

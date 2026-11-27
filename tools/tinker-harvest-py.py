@@ -55,15 +55,12 @@ SKIP_DIRS = frozenset({
 })
 
 BLOCKED_STDLIB_MODULES = frozenset({
-    "os",
-    "subprocess",
     "socket",
     "ctypes",
     "multiprocessing",
     "threading",
     "signal",
     "shutil",
-    "sqlite3",
     "ftplib",
     "smtplib",
     "imaplib",
@@ -78,12 +75,9 @@ BLOCKED_STDLIB_MODULES = frozenset({
     "fcntl",
     "mmap",
     "ssl",
-    "http",
-    "pathlib",
     "tempfile",
     "sys",
     "importlib",
-    "inspect",
     "gc",
     "atexit",
     "faulthandler",
@@ -101,12 +95,9 @@ BLOCKED_STDLIB_MODULES = frozenset({
     "compileall",
     "py_compile",
     "concurrent",
-    "asyncio",
     "selectors",
     "select",
-    "queue",
     "sched",
-    "logging",
     "getpass",
     "curses",
     "readline",
@@ -119,11 +110,9 @@ BLOCKED_STDLIB_MODULES = frozenset({
     "fileinput",
     "filecmp",
     "glob",
-    "linecache",
     "xmlrpc",
     "wsgiref",
     "socketserver",
-    "secrets",
 })
 
 IGNORED_TEST_CALLEES = frozenset(dir(builtins)) | frozenset({
@@ -182,7 +171,9 @@ FALLBACK_PROBES_BY_ARITY: dict[int, list[list[Any]]] = {
 }
 
 _PROBE_SCRIPT = r"""
+import asyncio
 import builtins
+import inspect
 import io
 import json
 import random
@@ -193,6 +184,13 @@ import time
 sys.path.insert(0, sys.argv[1])
 from tinker_py.codec import decode_readable, encode_exception, encode_readable
 from tinker_py.http_tools import DEFAULT_HTTP_TIMEOUT_S, MAX_HTTP_BODY_BYTES, install_live_http_hooks
+from tinker_py.io_tools import (
+    DEFAULT_SUBPROCESS_TIMEOUT_S,
+    MAX_IO_BYTES,
+    MAX_LIVE_CALLS,
+    install_live_io_hooks,
+    is_guest_caller,
+)
 
 def _timeout(_sig, _frame):
     raise TimeoutError("probe timeout")
@@ -215,9 +213,16 @@ try:
     real_monotonic = time.monotonic
     real_random = random.random
 
+    def _next_det_time():
+        val = 1700000000.0 + time_counter[0] * 0.25
+        time_counter[0] += 1
+        return val
+
     def _rec_print(*p_args, **_kwargs):
         if io_depth[0] > 0:
             return
+        if len(recorded) >= MAX_LIVE_CALLS:
+            raise RuntimeError("too many recorded calls")
         enc_args = encode_readable(list(p_args))
         recorded.append({
             "operation": "platform.print",
@@ -227,10 +232,11 @@ try:
         })
 
     def _rec_time():
-        if io_depth[0] > 0:
+        if not is_guest_caller(io_depth):
             return real_time()
-        val = 1700000000.0 + time_counter[0] * 0.25
-        time_counter[0] += 1
+        if len(recorded) >= MAX_LIVE_CALLS:
+            raise RuntimeError("too many recorded calls")
+        val = _next_det_time()
         recorded.append({
             "operation": "platform.time",
             "arguments": [],
@@ -240,10 +246,11 @@ try:
         return val
 
     def _rec_monotonic():
-        if io_depth[0] > 0:
+        if not is_guest_caller(io_depth):
             return real_monotonic()
-        val = 1700000000.0 + time_counter[0] * 0.25
-        time_counter[0] += 1
+        if len(recorded) >= MAX_LIVE_CALLS:
+            raise RuntimeError("too many recorded calls")
+        val = _next_det_time()
         recorded.append({
             "operation": "platform.time",
             "arguments": [],
@@ -253,8 +260,10 @@ try:
         return val
 
     def _rec_random():
-        if io_depth[0] > 0:
+        if not is_guest_caller(io_depth):
             return real_random()
+        if len(recorded) >= MAX_LIVE_CALLS:
+            raise RuntimeError("too many recorded calls")
         val = rng.random()
         recorded.append({
             "operation": "platform.random",
@@ -282,6 +291,15 @@ try:
 
     guest_builtins = dict(vars(builtins))
     guest_builtins["print"] = _rec_print
+    flush_io = install_live_io_hooks(
+        recorded,
+        io_depth=io_depth,
+        guest_builtins=guest_builtins,
+        max_io_bytes=MAX_IO_BYTES,
+        max_recorded_calls=MAX_LIVE_CALLS,
+        default_subprocess_timeout=DEFAULT_SUBPROCESS_TIMEOUT_S,
+        next_time_fn=_next_det_time,
+    )
     ns = {"__builtins__": guest_builtins, "__name__": "__guest__"}
     code = compile(source, "<guest>", "exec")
     sys.stdout = io.StringIO()
@@ -289,7 +307,12 @@ try:
     try:
         exec(code, ns)
         fn = ns[entry]
-        result = fn(*args)
+        if inspect.iscoroutinefunction(fn):
+            result = asyncio.run(fn(*args))
+        else:
+            raw_res = fn(*args)
+            result = asyncio.run(raw_res) if inspect.isawaitable(raw_res) else raw_res
+        flush_io()
     except Exception as exc:
         kind = "throw"
         result = encode_exception(exc)
@@ -298,7 +321,7 @@ try:
         if hasattr(signal, "SIGALRM"):
             signal.setitimer(signal.ITIMER_REAL, 0.0)
 
-    if len(recorded) > 32:
+    if len(recorded) > MAX_LIVE_CALLS:
         raise RuntimeError("too many recorded calls")
     enc_out = encode_readable({"arguments": args, "value": result})
     real_stdout.write(json.dumps({
@@ -709,13 +732,13 @@ def extract_unit_test_inputs(repo_dir: Path, test_files: list[Path]) -> dict[str
                 if ok:
                     mod_env[stmt.target.id] = val
         for stmt in tree.body:
-            if isinstance(stmt, ast.FunctionDef):
+            if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 for p_env in _extract_parametrize_envs(stmt.decorator_list, mod_env):
                     scan_body(stmt.body, {**mod_env, **p_env}, rel_file, mod_aliases)
             elif isinstance(stmt, ast.ClassDef):
                 cls_envs = _extract_parametrize_envs(stmt.decorator_list, mod_env)
                 for item in stmt.body:
-                    if isinstance(item, ast.FunctionDef):
+                    if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)):
                         for c_env in cls_envs:
                             base_env = {**mod_env, **c_env}
                             for f_env in _extract_parametrize_envs(item.decorator_list, base_env):
@@ -835,14 +858,14 @@ def _stmt_source_slice(lines: list[str], stmt: ast.stmt) -> str:
     return "\n".join(lines[start:end])
 
 
-def _is_generator(fn: ast.FunctionDef) -> bool:
+def _is_generator(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     for sub in ast.walk(fn):
         if isinstance(sub, (ast.Yield, ast.YieldFrom)):
             return True
     return False
 
 
-def _fn_arity_bounds(fn: ast.FunctionDef) -> tuple[int, int | None]:
+def _fn_arity_bounds(fn: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[int, int | None]:
     total_pos = len(fn.args.posonlyargs) + len(fn.args.args)
     defaults = len(fn.args.defaults)
     min_args = max(0, total_pos - defaults)
@@ -942,7 +965,7 @@ def build_self_contained_snippet(
 ) -> str | None:
     """Compute AST dependency closure for one top-level function and emit self-contained source."""
     target_stmt = tree.body[target_idx]
-    if not isinstance(target_stmt, ast.FunctionDef):
+    if not isinstance(target_stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
         return None
     if target_stmt.name.startswith("_") or _is_generator(target_stmt):
         return None
@@ -1070,10 +1093,18 @@ def _detect_features(snippet: str, recorded_calls: list[dict[str, Any]], from_un
             feats.add(op)
             if op.startswith("http."):
                 feats.add("http")
+            elif op.startswith("fs."):
+                feats.add("fs")
+            elif op.startswith("env."):
+                feats.add("env")
+            elif op.startswith("shell."):
+                feats.add("shell")
+            elif op == "platform.log":
+                feats.add("logging")
     try:
         tree = ast.parse(snippet)
         for node in ast.walk(tree):
-            if isinstance(node, (ast.For, ast.While)):
+            if isinstance(node, (ast.For, ast.While, ast.AsyncFor)):
                 feats.add("loop")
             elif isinstance(node, ast.If):
                 feats.add("branch")
@@ -1083,6 +1114,8 @@ def _detect_features(snippet: str, recorded_calls: list[dict[str, Any]], from_un
                 feats.add("class")
             elif isinstance(node, (ast.ListComp, ast.DictComp, ast.SetComp, ast.GeneratorExp)):
                 feats.add("comprehension")
+            elif isinstance(node, (ast.AsyncFunctionDef, ast.Await)):
+                feats.add("async")
     except SyntaxError:
         pass
     return sorted(feats)
@@ -1244,7 +1277,7 @@ def harvest_repo(
         for idx, stmt in enumerate(tree.body):
             if len(unit_candidates) >= repo_cap:
                 break
-            if not isinstance(stmt, ast.FunctionDef):
+            if not isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
             snippet = build_self_contained_snippet(repo_dir, src_file, tree, lines, idx)
             if snippet is None:
