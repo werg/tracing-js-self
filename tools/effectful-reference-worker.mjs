@@ -20,6 +20,7 @@ import {
   resolveOperationSpec,
   VM_NODE_IO_RUNTIME_SCRIPT,
 } from '../src/training/tinker-node-io.js';
+import {executeVirtualCodebaseInContext} from '../src/training/tinker-codebase.js';
 
 let mode='original',phase='input';
 try{
@@ -33,6 +34,15 @@ try{
   const completeGraph=isNative?describeNativeCompletionGraph:describeCompletionGraph;
   const operations=[],decisions=[];
   const traceCollector=mode==='trace'?createNativeTraceCollector():null;
+  const isMultiFile=Boolean(input.files&&typeof input.files==='object'&&!Array.isArray(input.files));
+  const turnEvents=isMultiFile?[]:null;
+  let externalDispatchCount=0,traceActive=true;
+  const traceHooks=traceCollector?{
+    __traceBranch:(code,value)=>traceActive?traceCollector.hooks.__traceBranch(code,value):value,
+    __traceWrite:(name,value,rhsLabel)=>traceActive?traceCollector.hooks.__traceWrite(name,value,rhsLabel):value,
+    __traceUpdate:(argCode,value,prefix,operator)=>traceActive?traceCollector.hooks.__traceUpdate(argCode,value,prefix,operator):value,
+    __traceReturn:(owner,value,argLabel)=>traceActive?traceCollector.hooks.__traceReturn(owner,value,argLabel):value,
+  }:{};
   const callbackFailures=[],unhandledRejections=[],infrastructureFailures=[];
   process.on('unhandledRejection',error=>{
     try{unhandledRejections.push({kind:'throw',graph:completeGraph([],error,'throw')});}
@@ -50,6 +60,7 @@ try{
   };
   const invoke=(operation,args)=>{
     if(traceCollector)traceCollector.nextTurn();
+    if(turnEvents)turnEvents.push({kind:'external',dispatchIndex:externalDispatchCount++});
     if(isNative){
       const spec=resolveOperationSpec(operation,{nativeMode:true});
       try{
@@ -109,6 +120,7 @@ try{
   const nodeIoBrokerAdapter=isNative?{
     invokeSync:(op,a)=>{
       if(traceCollector)traceCollector.nextTurn();
+      if(turnEvents)turnEvents.push({kind:'external',dispatchIndex:externalDispatchCount++});
       try{return broker.invokeSync(op,a);}
       catch(error){
         if(error instanceof Error&&/Fixture (request mismatch|cancelled|has missing)/.test(error.message))
@@ -118,6 +130,7 @@ try{
     },
     invokeAsync:(op,a)=>{
       if(traceCollector)traceCollector.nextTurn();
+      if(turnEvents)turnEvents.push({kind:'external',dispatchIndex:externalDispatchCount++});
       try{
         return broker.invokeAsync(op,a).catch(error=>{
           if(error instanceof Error&&/Fixture (request mismatch|cancelled|has missing)/.test(error.message))
@@ -138,7 +151,7 @@ try{
         __platformNodeIo: createReplayNodeIoBridge(nodeIoBrokerAdapter),
       }
     : {};
-  const context=vm.createContext({...extraGlobals,...(traceCollector?traceCollector.hooks:{}),host,__args:args,__result:undefined,__kind:'return',
+  const context=vm.createContext({...extraGlobals,...traceHooks,host,__args:args,__result:undefined,__kind:'return',
     __tracingCapture:capture,__tracingBranch:branch,__tracingLogical:logical,
     [COMPLETION_HOOK]:(...args)=>{try{return completionCapture.capture(...args);}
       catch(error){return fail(error,'reference_instrumentation_unsupported');}},
@@ -148,6 +161,12 @@ try{
   if (isNative) {
     new vm.Script(VM_FETCH_RUNTIME_SCRIPT).runInContext(context, {timeout: input.timeoutMs ?? 5000});
     new vm.Script(VM_NODE_IO_RUNTIME_SCRIPT).runInContext(context, {timeout: input.timeoutMs ?? 5000});
+  }
+  if (isMultiFile && Array.isArray(input.nativeBindings)) {
+    for (const binding of input.nativeBindings) {
+      const op = binding.kind === 'promise' ? 'natlang.call' : 'natlang.callSync';
+      context[binding.name] = (...bArgs) => invoke(op, [binding.name, undefined, bArgs]);
+    }
   }
   const usesToolRandom=input.randomMode==='tool'||input.fixture.calls.some(call=>call.operation==='platform.random');
   if(usesToolRandom){
@@ -167,22 +186,44 @@ try{
     context.__platformDateNow=()=>invoke('platform.dateNow',[]);
     new vm.Script('Date.now = __platformDateNow;').runInContext(context,{timeout:input.timeoutMs??5000});
   }
-  phase='instrumentation';
-  const source=mode==='operations'?instrumentOperationSource(input.source):
-    mode==='branches'?instrumentBranchSource(input.source):
-    mode==='completions'?instrumentCompletionSource(input.source):
-    mode==='trace'?instrumentNativeTraceSource(input.source,{entryName:input.entry,sourceLength:input.traceSourceLength}).source:
-    input.source;
-  phase='compile';
-  // Catch only guest invocation throws *inside* the reference realm. Script
-  // compilation and vm deadline failures still escape as verifier failures.
-  const script=new vm.Script(source+'\ntry { __result = '+input.entry+
-    '.apply(undefined,__args); } catch (__guestThrown) { __kind="throw"; __result=__guestThrown; }',
-    {filename:'independent-effectful-reference.js'});
-  phase='execute';
-  script.runInContext(context,{timeout:input.timeoutMs??5000});
-  let value=context.__result,kind=context.__kind;
-  if(kind==='return')try{value=await value;}catch(error){kind='throw';value=error;}
+  let value,kind;
+  if(isMultiFile){
+    phase='execute';
+    const execResult=await executeVirtualCodebaseInContext({
+      context,
+      files:input.files,
+      entryFile:input.entryFile,
+      entry:input.entry,
+      initialLoadedFiles:input.initialLoadedFiles??[input.entryFile],
+      args,
+      timeoutMs:input.timeoutMs??5000,
+      traceMode:mode==='trace',
+      onCodeLoadEvent(req){
+        if(traceCollector)traceCollector.nextTurn();
+        turnEvents.push({kind:'code.load',arguments:[req]});
+      },
+      setTraceActive(active){traceActive=Boolean(active);},
+    });
+    value=execResult.value;
+    kind=execResult.kind;
+  }else{
+    phase='instrumentation';
+    const source=mode==='operations'?instrumentOperationSource(input.source):
+      mode==='branches'?instrumentBranchSource(input.source):
+      mode==='completions'?instrumentCompletionSource(input.source):
+      mode==='trace'?instrumentNativeTraceSource(input.source,{entryName:input.entry,sourceLength:input.traceSourceLength}).source:
+      input.source;
+    phase='compile';
+    // Catch only guest invocation throws *inside* the reference realm. Script
+    // compilation and vm deadline failures still escape as verifier failures.
+    const script=new vm.Script(source+'\ntry { __result = '+input.entry+
+      '.apply(undefined,__args); } catch (__guestThrown) { __kind="throw"; __result=__guestThrown; }',
+      {filename:'independent-effectful-reference.js'});
+    phase='execute';
+    script.runInContext(context,{timeout:input.timeoutMs??5000});
+    value=context.__result;kind=context.__kind;
+    if(kind==='return')try{value=await value;}catch(error){kind='throw';value=error;}
+  }
   // Allow queued callback failures to settle before certifying quiescence.
   await new Promise(resolve=>setImmediate(resolve));
   if(infrastructureFailures.length){
@@ -194,6 +235,7 @@ try{
   process.stdout.write(JSON.stringify({schema:'effectful-reference/4',exceptionProfile:DECLARED_EXCEPTION_PROFILE,outcome,
     effects:broker.finish(),operations,decisions,completions:completionCapture.observations,
     ...(traceCollector?{traceTurns:traceCollector.finalize()}:{}),
+    ...(turnEvents?{turnEvents}:{}),
     callbackFailures,unhandledRejections})+'\n');
 }catch(error){
   const category=error.category??(error.code==='ERR_SCRIPT_EXECUTION_TIMEOUT'?

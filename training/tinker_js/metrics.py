@@ -105,6 +105,19 @@ def _basic(records: list[dict]) -> dict:
                                              if not record["grade"]["success"]).items()))}
 
 
+def _record_code_load_calls(record: dict) -> float:
+    grade = record.get("grade") if isinstance(record.get("grade"), dict) else {}
+    for raw in (
+        grade.get("codeLoadCalls"),
+        grade.get("code_load_calls"),
+        record.get("codeLoadCalls"),
+        record.get("code_load_calls"),
+    ):
+        if raw is not None and not isinstance(raw, bool) and isinstance(raw, (int, float)) and math.isfinite(raw) and raw >= 0:
+            return float(raw)
+    return 0.0
+
+
 def summarize_records(records: list[dict]) -> dict:
     if any(record.get("grade") is None for record in records):
         raise ValueError("infrastructure attempts must be reported separately from graded model executions")
@@ -142,6 +155,7 @@ def summarize_records(records: list[dict]) -> dict:
                   token_category_scope="Exact adapter-provided token spans only; unavailable decomposition remains unclassified",
                   mean_tokens_per_turn=statistics.fmean(turns) if turns else None,
                   p95_tokens_per_turn=quantile(turns, .95),
+                  mean_code_load_calls=statistics.fmean(_record_code_load_calls(r) for r in records) if records else 0.0,
                   independent_components=len({record.get("split_component") or record.get("family") or record.get("task_id")
                                               for record in records}))
     if any("advantage" in record for record in records):
