@@ -5,7 +5,7 @@
   "evaluation_seed": 17,
   "effort": 0.5,
   "max_context_tokens": 65536,
-  "max_tokens": 12288,
+  "max_tokens": 16384,
   "temperature": 1.0,
   "learning_rate": 1.0e-05,
   "sft_learning_rate": 5.0e-05,
