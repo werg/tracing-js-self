@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {encodeReadable, decodeReadable, prepareTinkerTask, exportTinkerExample,
   createTinkerSession, parseStudentAction, normalizedSourceHash,
   assistantVisibleText, assistantThinkingText} from '../src/training/tinker-execution.js';
+import {describeGraph, realizeGraph} from '../src/training/graph.js';
 import {auditCausalPrefixPair} from '../src/training/tinker-supervision.js';
 import {hardEffectfulTasks, hardEffectfulTemplates} from '../src/training/tinker-hard-effectful.js';
 import {formatValue} from '../src/training/native-trace.js';
@@ -629,4 +630,354 @@ test('native V8 fetch() intercepts into http.request with Response API, causal z
     source: 'function run(){const svc={fetch:x=>x+1};return svc.fetch(2);}',
   }));
   assert.equal(memberCall.messages.some(m => m.role === 'tool_declare'), false);
+});
+
+test('custom Error subclasses, frozen/sealed objects, built-in JS types, and plain class instances round-trip with aliasing and graph equality', async () => {
+  // 1. Readable codec + describeGraph + realizeGraph for all Part 1 types
+  class Point {
+    constructor(x, y) { this.x = x; this.y = y; }
+    norm() { return this.x * this.x + this.y * this.y; }
+  }
+  class ValidationError extends Error {
+    constructor(msg, code) { super(msg); this.name = 'ValidationError'; this.code = code; }
+  }
+
+  const validDate = new Date(1700000000000);
+  const invalidDate = new Date(NaN);
+  const re = /foo\/bar\d+/gi;
+  const sharedObj = Object.freeze({id: 7, tags: Object.freeze(['a', 'b'])});
+  const sealedArr = Object.seal([10, 20]);
+  const map = new Map();
+  map.set('self', map);
+  map.set(sharedObj, [sharedObj, validDate]);
+  const set = new Set();
+  set.add(set);
+  set.add('alpha');
+  set.add(sharedObj);
+  const u8 = new Uint8Array([1, 2, 255]);
+  const f64 = new Float64Array([1.5, -0, NaN]);
+  const i32 = new Int32Array([-42, 100]);
+  const pt = new Point(3, 4);
+  pt.$js = 'not-a-tag';
+  const errVal = Object.freeze(new ValidationError('bad field', 422));
+
+  const payload = {
+    arguments: [sharedObj, sealedArr, validDate, map, set, u8, pt],
+    value: {
+      sameDate: validDate,
+      invalidDate,
+      re,
+      map,
+      set,
+      u8Again: u8,
+      f64,
+      i32,
+      big: 9007199254740993n,
+      pt,
+      errVal,
+    },
+  };
+
+  const encoded = encodeReadable(payload);
+  assert.equal(encoded.value.sameDate.$js, 'ref');
+  assert.deepEqual(encoded.value.invalidDate, {$js: 'date', ms: {$js: 'NaN'}});
+  assert.deepEqual(encoded.value.re, {$js: 'regexp', source: 'foo\\/bar\\d+', flags: 'gi'});
+  assert.equal(encoded.arguments[3].$js, 'map');
+  assert.equal(encoded.arguments[4].$js, 'set');
+  assert.equal(encoded.arguments[5].$js, 'typedarray');
+  assert.equal(encoded.arguments[5].type, 'Uint8Array');
+  assert.equal(encoded.arguments[6].$js, 'instance');
+  assert.equal(encoded.arguments[6].class, 'Point');
+  assert.deepEqual(encoded.value.errVal, {name: 'ValidationError', message: 'bad field'});
+
+  const decoded = decodeReadable(JSON.parse(JSON.stringify(encoded)));
+  assert.equal(decoded.arguments[2], decoded.value.sameDate);
+  assert.equal(decoded.value.sameDate.getTime(), 1700000000000);
+  assert.ok(Number.isNaN(decoded.value.invalidDate.getTime()));
+  assert.equal(decoded.value.re.source, re.source);
+  assert.equal(decoded.value.re.flags, 'gi');
+  assert.equal(decoded.arguments[3], decoded.value.map);
+  assert.equal(decoded.value.map.get('self'), decoded.value.map);
+  assert.deepEqual([...decoded.value.map.keys()][0], 'self');
+  assert.equal(decoded.value.map.get(decoded.arguments[0])[0], decoded.arguments[0]);
+  assert.equal(decoded.value.map.get(decoded.arguments[0])[1], decoded.arguments[2]);
+  assert.equal(decoded.arguments[4], decoded.value.set);
+  assert.ok(decoded.value.set.has(decoded.value.set));
+  assert.ok(decoded.value.set.has(decoded.arguments[0]));
+  assert.equal(decoded.arguments[5], decoded.value.u8Again);
+  assert.deepEqual(Array.from(decoded.value.u8Again), [1, 2, 255]);
+  assert.equal(decoded.value.f64[0], 1.5);
+  assert.ok(Object.is(decoded.value.f64[1], -0));
+  assert.ok(Number.isNaN(decoded.value.f64[2]));
+  assert.deepEqual(Array.from(decoded.value.i32), [-42, 100]);
+  assert.equal(decoded.value.big, 9007199254740993n);
+  assert.equal(decoded.arguments[6], decoded.value.pt);
+  assert.equal(decoded.value.pt.x, 3);
+  assert.equal(decoded.value.pt.$js, 'not-a-tag');
+
+  // describeGraph + realizeGraph structural & aliasing equivalence
+  const g1 = describeGraph([payload.arguments, payload.value]);
+  const realized = realizeGraph(g1);
+  const g2 = describeGraph(realized);
+  assert.deepEqual(g2, g1);
+
+  // Semantic distinctions preserved in describeGraph
+  assert.notDeepEqual(describeGraph([new Map([['a', 1], ['b', 2]])]), describeGraph([new Map([['b', 2], ['a', 1]])]));
+  assert.notDeepEqual(describeGraph([new Set([1, 2])]), describeGraph([new Set([2, 1])]));
+  assert.notDeepEqual(describeGraph([new Point(3, 4)]), describeGraph([{x: 3, y: 4, $js: 'not-a-tag'}]));
+  assert.notDeepEqual(describeGraph([new Uint8Array([1, 0])]), describeGraph([new Uint16Array([1])]));
+  assert.notDeepEqual(describeGraph([new Date(1000)]), describeGraph([new Date(1001)]));
+
+  // Hostile boundaries still fail closed without invoking getters/Proxy traps
+  let traps = 0;
+  const badProxy = new Proxy({a: 1}, {
+    get() { traps++; return 1; },
+    ownKeys() { traps++; return ['a']; },
+    getPrototypeOf() { traps++; return Object.prototype; },
+  });
+  const badGetter = Object.defineProperty({}, 'x', {enumerable: true, get() { traps++; return 1; }});
+  class HostileInstance { get secret() { traps++; return 9; } }
+  const badInst = new HostileInstance();
+  Object.defineProperty(badInst, 'leak', {enumerable: true, get() { traps++; return 1; }});
+  for (const hostile of [badProxy, badGetter, badInst, () => 1, Symbol('s'), new WeakMap(), {[Symbol('k')]: 1}]) {
+    assert.throws(() => encodeReadable(hostile), /Unsupported|Only data values|property key|accessor|plain/);
+    assert.throws(() => describeGraph([hostile]), /Unsupported|Only primitive|property key|accessor|plain/);
+  }
+  assert.equal(traps, 0);
+
+  // 2. End-to-end execution with custom Error subclass throw + frozen input + built-ins
+  const errTask = {
+    id: 'custom-error-throw-1',
+    family: 'custom-error-throw',
+    executionMode: 'native',
+    source: `class ValidationError extends Error {
+      constructor(msg, field) { super(msg); this.name = 'ValidationError'; this.field = field; }
+    }
+    function run(cfg) {
+      if (!cfg.ok) throw Object.freeze(new ValidationError('invalid cfg', 'ok'));
+      return cfg.val;
+    }`,
+    entry: 'run',
+    args: [Object.freeze({ok: false, val: 1})],
+  };
+  const expErr = await exportTinkerExample(errTask, {traceFormat: 'compact'});
+  assert.equal(expErr.metadata.traceAudit.replayVerified, true);
+  const compErr = parseStudentAction(expErr.messages.at(-1));
+  assert.equal(compErr.kind, 'throw');
+  assert.deepEqual(compErr.value, {name: 'ValidationError', message: 'invalid cfg'});
+  const sErr = createTinkerSession(await prepareTinkerTask(errTask));
+  assert.equal((await sErr.step(complete({name: 'ValidationError', message: 'invalid cfg'}, [{ok: false, val: 1}], 'throw'), 10)).grade.success, true);
+  assert.equal((await createTinkerSession(await prepareTinkerTask(errTask)).step(complete({name: 'Error', message: 'invalid cfg'}, [{ok: false, val: 1}], 'throw'), 10)).grade.success, false);
+
+  // 3. End-to-end execution returning Map, Set, Date, RegExp, TypedArray, class instance, and frozen array
+  const richTask = {
+    id: 'rich-builtins-1',
+    family: 'rich-builtins',
+    executionMode: 'native',
+    source: `class Summary {
+      constructor(tag, count) { this.tag = tag; this.count = count; }
+      label() { return this.tag + ':' + this.count; }
+    }
+    function run(d, m, bytes) {
+      const nextDate = new Date(d.getTime() + 1000);
+      m.set('count', (m.get('count') ?? 0) + bytes.length);
+      const seen = new Set(['x', 'y']);
+      const doubled = new Uint8Array(bytes.map(b => b * 2));
+      return {
+        nextDate,
+        re: /^ok-[0-9]+$/i,
+        m,
+        seen,
+        doubled,
+        summary: new Summary('done', m.get('count')),
+        frozen: Object.freeze([1, 2]),
+      };
+    }`,
+    entry: 'run',
+    args: encodeReadable([new Date(1700000000000), new Map([['count', 2]]), new Uint8Array([3, 5])]),
+  };
+  const expRich = await exportTinkerExample(richTask, {traceFormat: 'compact'});
+  assert.equal(expRich.metadata.traceAudit.replayVerified, true);
+  const richSession = createTinkerSession(await prepareTinkerTask(richTask));
+  for (const m of expRich.messages.filter(x => x.role === 'assistant')) {
+    await richSession.step(m, 30);
+  }
+  assert.equal(richSession.grade(30).success, true);
+});
+
+test('native V8 intercepts fs, process.env, child_process, crypto random/UUID, and pure path/url/Buffer/hash with causal zero future leakage', async () => {
+  const source = `const fs = require('node:fs');
+  const fsp = require('node:fs/promises');
+  const path = require('node:path');
+  const url = require('node:url');
+  const crypto = require('node:crypto');
+  const cp = require('node:child_process');
+
+  async function run(baseDir) {
+    const cfgPath = path.join(baseDir, 'config.json');
+    const resolved = path.resolve('out.txt');
+    const fileUrl = url.pathToFileURL(resolved).href;
+    const exists = fs.existsSync(cfgPath);
+    if (!exists) return {exists: false};
+    const entries = fs.readdirSync(baseDir);
+    const st = fs.statSync(cfgPath);
+    const raw = await fsp.readFile(cfgPath, 'utf8');
+    const bin = fs.readFileSync(path.join(baseDir, 'raw.bin'));
+    const apiKey = process.env.API_KEY;
+    const hasMissing = 'MISSING_ENV' in process.env;
+    const missingVal = process.env.MISSING_ENV;
+    const uuid = crypto.randomUUID();
+    const randBuf = crypto.randomBytes(3);
+    const digest = crypto.createHash('sha256').update(raw + ':' + Buffer.from(bin).toString('hex')).digest('hex').slice(0, 12);
+    const execOut = cp.execFileSync('echo', ['hi', apiKey], {encoding: 'utf8'}).trim();
+    const shellOut = cp.execSync('printf ok', {encoding: 'utf8'});
+    fs.writeFileSync(resolved, execOut + ':' + uuid);
+    return {
+      cwd: process.cwd(),
+      fileUrl,
+      entries,
+      isFile: st.isFile(),
+      size: st.size,
+      hasMissing,
+      missingVal,
+      uuid,
+      randHex: randBuf.toString('hex'),
+      digest,
+      execOut,
+      shellOut,
+    };
+  }`;
+
+  const makeIoTask = (id, secretKey, uuidVal) => ({
+    id,
+    family: 'native-node-io',
+    executionMode: 'native',
+    source,
+    entry: 'run',
+    args: ['cfg'],
+    fixture: {
+      calls: [
+        {operation: 'fs.exists', arguments: ['cfg/config.json'], status: 'fulfilled', result: true},
+        {operation: 'fs.readdir', arguments: ['cfg'], status: 'fulfilled', result: ['config.json', 'raw.bin']},
+        {operation: 'fs.stat', arguments: ['cfg/config.json'], status: 'fulfilled', result: {isFile: true, isDirectory: false, size: 16}},
+        {operation: 'fs.readText', arguments: ['cfg/config.json'], status: 'fulfilled', result: '{"mode":"prod"}'},
+        {operation: 'fs.readBytes', arguments: ['cfg/raw.bin'], status: 'fulfilled', result: encodeReadable(new Uint8Array([0xab, 0xcd]))},
+        {operation: 'env.get', arguments: ['API_KEY'], status: 'fulfilled', result: secretKey},
+        {operation: 'env.get', arguments: ['MISSING_ENV'], status: 'fulfilled', result: {$js: 'undefined'}},
+        {operation: 'env.get', arguments: ['MISSING_ENV'], status: 'fulfilled', result: {$js: 'undefined'}},
+        {operation: 'platform.uuid', arguments: [], status: 'fulfilled', result: uuidVal},
+        {operation: 'platform.randomBytes', arguments: [3], status: 'fulfilled', result: encodeReadable(new Uint8Array([1, 2, 3]))},
+        {operation: 'shell.exec', arguments: [{command: 'echo', args: ['hi', secretKey]}], status: 'fulfilled', result: {stdout: 'hi ' + secretKey + '\n', stderr: '', status: 0}},
+        {operation: 'shell.exec', arguments: [{command: 'printf ok', args: []}], status: 'fulfilled', result: {stdout: 'ok', stderr: '', status: 0}},
+        {operation: 'fs.writeText', arguments: ['/workspace/out.txt', 'hi ' + secretKey + ':' + uuidVal], status: 'fulfilled', result: {$js: 'undefined'}},
+      ],
+    },
+  });
+
+  const left = await exportTinkerExample(makeIoTask('io-left', 'SECRET_ALPHA', '11111111-1111-4111-8111-111111111111'), {traceFormat: 'compact'});
+  const right = await exportTinkerExample(makeIoTask('io-right', 'SECRET_BETA', '22222222-2222-4222-8222-222222222222'), {traceFormat: 'compact'});
+  assert.equal(left.metadata.traceAudit.replayVerified, true);
+  assert.equal(right.metadata.traceAudit.replayVerified, true);
+
+  const declaredTools = JSON.parse(left.messages.find(m => m.role === 'tool_declare').content);
+  const toolNames = declaredTools.map(t => t.function.name).sort();
+  assert.deepEqual(toolNames, [
+    'env.get',
+    'fs.exists',
+    'fs.readBytes',
+    'fs.readText',
+    'fs.readdir',
+    'fs.stat',
+    'fs.writeText',
+    'platform.randomBytes',
+    'platform.uuid',
+    'shell.exec',
+  ]);
+  for (const decl of declaredTools) {
+    assert.deepEqual(decl.function.parameters.required, ['arguments']);
+  }
+
+  // Divergence happens at observation index 5 (env.get API_KEY); prefix before that must be identical!
+  const audit = auditCausalPrefixPair(left, right, {divergenceObservation: 5});
+  assert.equal(audit.passed, true);
+  assert.equal(audit.testedDivergence, true);
+  assert.doesNotMatch(JSON.stringify(left.messages.slice(0, audit.identicalPrefixMessages)), /SECRET_ALPHA|11111111/);
+
+  const comp = parseStudentAction(left.messages.at(-1));
+  assert.equal(comp.kind, 'return');
+  assert.equal(comp.value.cwd, '/workspace');
+  assert.equal(comp.value.fileUrl, 'file:///workspace/out.txt');
+  assert.deepEqual(comp.value.entries, ['config.json', 'raw.bin']);
+  assert.equal(comp.value.isFile, true);
+  assert.equal(comp.value.size, 16);
+  assert.equal(comp.value.hasMissing, false);
+  assert.deepEqual(comp.value.missingVal, {$js: 'undefined'});
+  assert.equal(decodeReadable(comp.value).missingVal, undefined);
+  assert.equal(comp.value.uuid, '11111111-1111-4111-8111-111111111111');
+  assert.equal(comp.value.randHex, '010203');
+  assert.equal(comp.value.execOut, 'hi SECRET_ALPHA');
+  assert.equal(comp.value.shellOut, 'ok');
+
+  // Pure crypto.createHash + path + Buffer must NOT declare any tools!
+  const pureBuiltins = await exportTinkerExample({
+    id: 'pure-node-builtins',
+    family: 'pure-node-builtins',
+    executionMode: 'native',
+    source: `const path = require('node:path');
+    const crypto = require('node:crypto');
+    function run(a, b) {
+      const joined = path.join(a, b);
+      const buf = Buffer.from(joined, 'utf8');
+      return crypto.createHash('sha256').update(buf).digest('hex').slice(0, 16);
+    }`,
+    entry: 'run',
+    args: ['foo', 'bar.txt'],
+  });
+  assert.equal(pureBuiltins.messages.some(m => m.role === 'tool_declare'), false);
+  assert.equal(pureBuiltins.metadata.traceAudit.replayVerified, true);
+
+  // Frozen/sealed inputs work in owned mode too, and TypeScript + destructured Node I/O + rejected exec/fs errors work in native mode
+  const ownedFrozen = await exportTinkerExample(task('function run(x){return [x.a, x.b[1]];}', {
+    args: [Object.freeze({a: 10, b: Object.seal([1, 2])})],
+  }));
+  assert.equal(ownedFrozen.metadata.traceAudit.replayVerified, true);
+  assert.deepEqual(parseStudentAction(ownedFrozen.messages.at(-1)).value, [10, 2]);
+
+  const tsNodeIo = await exportTinkerExample({
+    id: 'ts-node-io-destructured-err',
+    family: 'ts-node-io',
+    language: 'ts',
+    executionMode: 'native',
+    source: `const { readFileSync, existsSync } = require('node:fs');
+    const { execFileSync } = require('node:child_process');
+    function run(path: string): {ok: boolean, uuid: string, errName: string} {
+      const ok = existsSync(path);
+      const uuid = crypto.randomUUID();
+      let errName = '';
+      try {
+        execFileSync('false', [], {encoding: 'utf8'});
+      } catch (e: unknown) {
+        errName = (e instanceof Error) ? e.name + ':' + e.message : 'not-error';
+      }
+      if (ok) readFileSync(path, 'utf8');
+      return {ok, uuid, errName};
+    }`,
+    entry: 'run',
+    args: ['missing.txt'],
+    fixture: {
+      calls: [
+        {operation: 'fs.exists', arguments: ['missing.txt'], status: 'fulfilled', result: false},
+        {operation: 'platform.uuid', arguments: [], status: 'fulfilled', result: '33333333-3333-4333-8333-333333333333'},
+        {operation: 'shell.exec', arguments: [{command: 'false', args: []}], status: 'rejected', result: {name: 'Error', message: 'exit 1'}},
+      ],
+    },
+  });
+  assert.equal(tsNodeIo.metadata.traceAudit.replayVerified, true);
+  const tsTools = JSON.parse(tsNodeIo.messages.find(m => m.role === 'tool_declare').content).map(t => t.function.name).sort();
+  assert.deepEqual(tsTools, ['fs.exists', 'fs.readText', 'platform.uuid', 'shell.exec']);
+  assert.deepEqual(parseStudentAction(tsNodeIo.messages.at(-1)).value, {
+    ok: false,
+    uuid: '33333333-3333-4333-8333-333333333333',
+    errName: 'Error:exit 1',
+  });
 });

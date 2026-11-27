@@ -7,12 +7,19 @@ import {createFixtureBroker} from '../src/training/fixture-broker.js';
 import {HOST_METHODS,hostOperation} from '../src/host/operations.js';
 import {decodeOwnedGraph} from '../src/host/graph-codec.js';
 import {describeCompletionGraph,DECLARED_EXCEPTION_PROFILE} from '../src/training/exception-profile.js';
+import {describeCompletionGraph as describeNativeCompletionGraph,realizeGraph} from '../src/training/graph.js';
 import {encode} from '../src/values.js';
 import {instrumentOperationSource} from '../src/training/operation-reference.js';
 import {instrumentBranchSource} from '../src/training/branch-reference.js';
 import {instrumentCompletionSource,createCompletionCapture,COMPLETION_HOOK} from '../src/training/completion-reference.js';
 import {instrumentNativeTraceSource,createNativeTraceCollector} from '../src/training/native-trace.js';
 import {normalizeFetchRequest,VM_FETCH_RUNTIME_SCRIPT} from '../src/training/tinker-http-fetch.js';
+import {
+  createNativeFixtureBroker,
+  createReplayNodeIoBridge,
+  resolveOperationSpec,
+  VM_NODE_IO_RUNTIME_SCRIPT,
+} from '../src/training/tinker-node-io.js';
 
 let mode='original',phase='input';
 try{
@@ -21,11 +28,14 @@ try{
   if(!['original','operations','branches','completions','trace'].includes(mode)||
     !/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(input.entry??''))
     throw new TypeError('Invalid reference mode or entry identifier');
-  const broker=createFixtureBroker(input.fixture),operations=[],decisions=[];
+  const isNative=input.executionMode==='native';
+  const broker=isNative?createNativeFixtureBroker(input.fixture):createFixtureBroker(input.fixture);
+  const completeGraph=isNative?describeNativeCompletionGraph:describeCompletionGraph;
+  const operations=[],decisions=[];
   const traceCollector=mode==='trace'?createNativeTraceCollector():null;
   const callbackFailures=[],unhandledRejections=[],infrastructureFailures=[];
   process.on('unhandledRejection',error=>{
-    try{unhandledRejections.push({kind:'throw',graph:describeCompletionGraph([],error,'throw')});}
+    try{unhandledRejections.push({kind:'throw',graph:completeGraph([],error,'throw')});}
     catch(cause){infrastructureFailures.push({category:'reference_instrumentation_unsupported',
       message:'Unrepresentable unhandled rejection: '+String(cause.message)});}
   });
@@ -34,12 +44,28 @@ try{
     throw error;
   };
   const failure=error=>{
-    try{callbackFailures.push({kind:'throw',graph:describeCompletionGraph([],error,'throw')});}
+    try{callbackFailures.push({kind:'throw',graph:completeGraph([],error,'throw')});}
     catch(cause){infrastructureFailures.push({category:'reference_instrumentation_unsupported',
       message:'Unrepresentable callback failure: '+String(cause.message)});}
   };
   const invoke=(operation,args)=>{
     if(traceCollector)traceCollector.nextTurn();
+    if(isNative){
+      const spec=resolveOperationSpec(operation,{nativeMode:true});
+      try{
+        const result=spec.kind==='promise'?broker.invokeAsync(operation,args):broker.invokeSync(operation,args);
+        if(result&&typeof result.then==='function')return result.catch(error=>{
+          if(error instanceof Error&&/Fixture (request mismatch|cancelled|has missing)/.test(error.message))
+            infrastructureFailures.push({category:'reference_process_failure',message:String(error.message)});
+          throw error;
+        });
+        return result;
+      }catch(error){
+        if(error instanceof Error&&/Fixture (request mismatch|cancelled|has missing)/.test(error.message))
+          infrastructureFailures.push({category:'reference_process_failure',message:String(error.message)});
+        throw error;
+      }
+    }
     try{const result=broker.invoke(operation,args.map((arg,index)=>
       hostOperation(operation).callbackIndices.includes(index)?(...values)=>{
         queueMicrotask(()=>{try{const result=arg(...values);
@@ -64,7 +90,7 @@ try{
   for(const [method,operation] of Object.entries(HOST_METHODS))host[method]=(...args)=>invoke(operation,args);
   for(const call of input.fixture.calls)if(call.operation.startsWith('demo.'))
     host[call.operation.slice(5)]=(...args)=>invoke(call.operation,args);
-  const args=decodeOwnedGraph(JSON.stringify(input.inputGraph));
+  const args=isNative?realizeGraph(input.inputGraph):decodeOwnedGraph(JSON.stringify(input.inputGraph));
   const completionCapture=createCompletionCapture({initialValues:args});
   const capture=(site,value)=>{
     if(operations.length>=16384)fail(new RangeError('Reference operation cap'),'reference_resource_limit');
@@ -80,10 +106,36 @@ try{
     decisions.push({site,decision:['bool',operator==='&&'?!value:
       operator==='||'?Boolean(value):value!==null&&value!==undefined]});return value;
   };
-  const extraGlobals = input.executionMode === 'native'
+  const nodeIoBrokerAdapter=isNative?{
+    invokeSync:(op,a)=>{
+      if(traceCollector)traceCollector.nextTurn();
+      try{return broker.invokeSync(op,a);}
+      catch(error){
+        if(error instanceof Error&&/Fixture (request mismatch|cancelled|has missing)/.test(error.message))
+          infrastructureFailures.push({category:'reference_process_failure',message:String(error.message)});
+        throw error;
+      }
+    },
+    invokeAsync:(op,a)=>{
+      if(traceCollector)traceCollector.nextTurn();
+      try{
+        return broker.invokeAsync(op,a).catch(error=>{
+          if(error instanceof Error&&/Fixture (request mismatch|cancelled|has missing)/.test(error.message))
+            infrastructureFailures.push({category:'reference_process_failure',message:String(error.message)});
+          throw error;
+        });
+      }catch(error){
+        if(error instanceof Error&&/Fixture (request mismatch|cancelled|has missing)/.test(error.message))
+          infrastructureFailures.push({category:'reference_process_failure',message:String(error.message)});
+        throw error;
+      }
+    },
+  }:null;
+  const extraGlobals = isNative
     ? {
-        URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone,
+        URL, URLSearchParams, TextEncoder, TextDecoder, atob, btoa, structuredClone, Buffer,
         __platformFetch: (reqInput, reqInit) => invoke('http.request', normalizeFetchRequest(reqInput, reqInit)),
+        __platformNodeIo: createReplayNodeIoBridge(nodeIoBrokerAdapter),
       }
     : {};
   const context=vm.createContext({...extraGlobals,...(traceCollector?traceCollector.hooks:{}),host,__args:args,__result:undefined,__kind:'return',
@@ -93,8 +145,9 @@ try{
     queueMicrotask:callback=>queueMicrotask(()=>{try{callback();}catch(error){failure(error);}}),
     console:Object.fromEntries(['log','info','warn','error'].map(method=>[method,(...args)=>
       invoke('platform.console.'+method,args)]))},{codeGeneration:{strings:false,wasm:false}});
-  if (input.executionMode === 'native') {
+  if (isNative) {
     new vm.Script(VM_FETCH_RUNTIME_SCRIPT).runInContext(context, {timeout: input.timeoutMs ?? 5000});
+    new vm.Script(VM_NODE_IO_RUNTIME_SCRIPT).runInContext(context, {timeout: input.timeoutMs ?? 5000});
   }
   const usesToolRandom=input.randomMode==='tool'||input.fixture.calls.some(call=>call.operation==='platform.random');
   if(usesToolRandom){
@@ -137,7 +190,7 @@ try{
     error.category=infrastructureFailures[0].category;throw error;
   }
   phase='observe';
-  const outcome={kind,graph:describeCompletionGraph(args,value,kind)};
+  const outcome={kind,graph:completeGraph(args,value,kind)};
   process.stdout.write(JSON.stringify({schema:'effectful-reference/4',exceptionProfile:DECLARED_EXCEPTION_PROFILE,outcome,
     effects:broker.finish(),operations,decisions,completions:completionCapture.observations,
     ...(traceCollector?{traceTurns:traceCollector.finalize()}:{}),
