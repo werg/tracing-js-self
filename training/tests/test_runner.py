@@ -544,6 +544,64 @@ class ConcurrencyAndScheduleTests(unittest.TestCase):
             reloaded = json.loads(raw)
             self.assertEqual(list(reloaded["obj"].keys()), ["key", "attempts", "z", "a"])
 
+    def test_preexported_rows_skip_bridge_and_skip_failed_raw_exports(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            ds = root / "mixed.jsonl"
+            pre_rows = [
+                {**row("pre-1", family="fam-pre-1", split="train"), "messages": [{"role": "user", "content": "u"}, {"role": "assistant", "content": "a"}]},
+                {**row("pre-2", family="fam-pre-2", split="validation"), "messages": [{"role": "user", "content": "u"}, {"role": "assistant", "content": "a"}]},
+                {**row("pre-3", family="fam-pre-3", split="test"), "messages": [{"role": "user", "content": "u"}, {"role": "assistant", "content": "a"}]},
+            ]
+            # Add a raw row that triggers a bridge failure.
+            raw_bad = {"id": "raw-bad", "family": "fam-bad", "source": "bad()", "entry": "run", "args": []}
+            write_jsonl(ds, [*pre_rows, raw_bad])
+
+            class FailingExportBridge(ControlledBridge):
+                def __init__(self):
+                    super().__init__()
+                    self.export_calls = []
+                def request(self, op, **payload):
+                    if op == "export":
+                        self.export_calls.append(payload["task"]["id"])
+                        raise BridgeError("boom on raw-bad")
+                    return super().request(op, **payload)
+
+            bridge = FailingExportBridge()
+            out = root / "out"
+            config = load_config(overrides={
+                "dataset": str(ds),
+                "output_dir": str(out),
+                "skip_failed_exports": True,
+            })
+            exported, _manifest = export_dataset(Path.cwd(), config, out, bridge)
+            # Pre-exported rows never called the bridge; only raw-bad did and was quarantined!
+            self.assertEqual(bridge.export_calls, ["raw-bad"])
+            self.assertEqual([r["id"] for r in exported], ["pre-1", "pre-2", "pre-3"])
+            errs = [json.loads(line) for line in (out / "export-errors.jsonl").read_text().splitlines() if line.strip()]
+            self.assertEqual(len(errs), 1)
+            self.assertEqual(errs[0]["task_id"], "raw-bad")
+
+    def test_evaluate_tolerates_single_rollout_error_when_enabled(self):
+        class OneFailureAdapter:
+            backend_name = "tinker"
+            def __init__(self):
+                self.calls = 0
+            def sample(self, messages, max_tokens=None, seed=None):
+                self.calls += 1
+                if self.calls == 2:
+                    raise RuntimeError("transient network blip")
+                return sample("complete", 4)
+
+        config = load_config(overrides={"tolerate_rollout_errors": True})
+        rows = [row(f"task-{i}", split="test") for i in range(4)]
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            summary = evaluate(ControlledBridge(), OneFailureAdapter(), rows, config, output, "baseline", split="test")
+            self.assertEqual(summary["executions"], 4)
+            self.assertEqual(summary["successes"], 3)
+            self.assertTrue((output / "infrastructure-errors.jsonl").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

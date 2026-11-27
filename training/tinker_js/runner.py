@@ -114,6 +114,8 @@ DEFAULTS: dict[str, Any] = {
                    "window_groups": 20, "minimum_groups": 4, "advance_success_rate": 0.25},
     "difficulty_sampling": copy.deepcopy(DIFFICULTY_SAMPLING_DEFAULTS),
     "bridge_timeout_seconds": 60,
+    "skip_failed_exports": True,
+    "tolerate_rollout_errors": False,
 }
 
 
@@ -765,8 +767,22 @@ def export_dataset(repo: Path, config: dict, output_dir: Path, bridge: Any,
         raise ValueError("diagnosticOnly tasks require a separate diagnostic_only evaluation dataset")
     exported: list[dict] = []
     channel = resolve_reasoning_channel(config)
+    skip_failed = bool(config.get("skip_failed_exports", True))
+    export_errors: list[dict] = []
 
-    def _export_one(active_bridge: Any, task: dict) -> dict:
+    def _is_preexported_row(item: dict) -> bool:
+        return (
+            isinstance(item.get("messages"), list)
+            and bool(item["messages"])
+            and isinstance(item.get("sourceHash"), str)
+            and isinstance(item.get("task"), dict)
+        )
+
+    def _export_one(active_bridge: Any, task: dict) -> dict | None:
+        if _is_preexported_row(task):
+            row = copy.deepcopy(task)
+            row["metadata"] = task_metadata(row)
+            return row
         try:
             row = active_bridge.request("export", task=task, traceFormat=config["trace_format"], reasoningChannel=channel)
             row["metadata"] = {**task.get("metadata", {}), **row.get("metadata", {})}
@@ -776,49 +792,65 @@ def export_dataset(repo: Path, config: dict, output_dir: Path, bridge: Any,
             row["messages"] = prompt_messages(row["messages"], config)
             return row
         except BridgeError as error:
+            if skip_failed:
+                err_rec = {"task_id": task.get("id", "(missing id)"), "error": str(error)}
+                export_errors.append(err_rec)
+                append_jsonl(output_dir / "export-errors.jsonl", err_rec)
+                print(f"warning: skipping failed export {err_rec['task_id']}: {error}", file=sys.stderr, flush=True)
+                return None
             raise BridgeError(f"task {task.get('id', '(missing id)')}: {error}") from error
 
-    export_workers = min(6, max(1, os.cpu_count() or 1)) if isinstance(bridge, Bridge) and len(tasks) > 32 else 1
-    if export_workers == 1:
-        for idx, task in enumerate(tasks, 1):
-            exported.append(_export_one(bridge, task))
-            if len(tasks) > 100 and idx % 100 == 0:
-                print(f"export: {idx}/{len(tasks)}", file=sys.stderr, flush=True)
+    raw_count = sum(1 for task in tasks if not _is_preexported_row(task))
+    if raw_count == 0:
+        exported = [row for row in (_export_one(bridge, task) for task in tasks) if row is not None]
+        if len(tasks) > 100:
+            print(f"export: loaded {len(exported)} pre-exported rows without re-execution", file=sys.stderr, flush=True)
     else:
-        ordered_exported: list[dict | None] = [None] * len(tasks)
-        extra_bridges = [Bridge(repo, config["bridge_timeout_seconds"]) for _ in range(export_workers - 1)]
-        bridges = [bridge, *extra_bridges]
-        progress_lock = threading.Lock()
-        done_export = 0
-        next_index = 0
+        export_workers = min(6, max(1, os.cpu_count() or 1)) if isinstance(bridge, Bridge) and raw_count > 32 else 1
+        if export_workers == 1:
+            for idx, task in enumerate(tasks, 1):
+                row = _export_one(bridge, task)
+                if row is not None:
+                    exported.append(row)
+                if len(tasks) > 100 and idx % 100 == 0:
+                    print(f"export: {idx}/{len(tasks)}", file=sys.stderr, flush=True)
+        else:
+            ordered_exported: list[dict | None] = [None] * len(tasks)
+            extra_bridges = [Bridge(repo, config["bridge_timeout_seconds"]) for _ in range(export_workers - 1)]
+            bridges = [bridge, *extra_bridges]
+            progress_lock = threading.Lock()
+            done_export = 0
+            next_index = 0
 
-        def _worker(worker_bridge: Bridge) -> None:
-            nonlocal next_index, done_export
-            while True:
-                with progress_lock:
-                    if next_index >= len(tasks):
-                        return
-                    idx = next_index
-                    next_index += 1
-                result = _export_one(worker_bridge, tasks[idx])
-                ordered_exported[idx] = result
-                with progress_lock:
-                    done_export += 1
-                    if done_export % 100 == 0 or done_export == len(tasks):
-                        print(f"export: {done_export}/{len(tasks)}", file=sys.stderr, flush=True)
+            def _worker(worker_bridge: Bridge) -> None:
+                nonlocal next_index, done_export
+                while True:
+                    with progress_lock:
+                        if next_index >= len(tasks):
+                            return
+                        idx = next_index
+                        next_index += 1
+                    result = _export_one(worker_bridge, tasks[idx])
+                    ordered_exported[idx] = result
+                    with progress_lock:
+                        done_export += 1
+                        if done_export % 100 == 0 or done_export == len(tasks):
+                            print(f"export: {done_export}/{len(tasks)}", file=sys.stderr, flush=True)
 
-        try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=export_workers) as pool:
-                futs = [pool.submit(_worker, b) for b in bridges]
-                for fut in concurrent.futures.as_completed(futs):
-                    fut.result()
-        finally:
-            for extra in extra_bridges:
-                try:
-                    extra.close()
-                except Exception:
-                    pass
-        exported = [row for row in ordered_exported if row is not None]
+            try:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=export_workers) as pool:
+                    futs = [pool.submit(_worker, b) for b in bridges]
+                    for fut in concurrent.futures.as_completed(futs):
+                        fut.result()
+            finally:
+                for extra in extra_bridges:
+                    try:
+                        extra.close()
+                    except Exception:
+                        pass
+            exported = [row for row in ordered_exported if row is not None]
+    if not exported:
+        raise BridgeError("all dataset tasks failed during export")
     rows, split_manifest = split_examples(exported, config["split_seed"], config["holdout_fraction"],
                                           config["validation_fraction"], evaluation_only=config["evaluation_only"])
     if implementation_identity(repo)["hash"] != implementation["hash"]:
@@ -1133,6 +1165,31 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
               f"(acc={ok_count / done_count:.1%}, mean_tok={tok_sum / done_count:.0f})",
               file=sys.stderr, flush=True)
 
+    tolerate_errors = bool(config.get("tolerate_rollout_errors", False))
+    infra_error_count = 0
+    max_tolerated_errors = max(5, int(0.10 * total_jobs))
+
+    def _infra_failure_eval_record(row: dict, repeat: int, error: RolloutError) -> dict:
+        lang = row.get("language") or (row.get("task") or {}).get("language")
+        extra_lang = {"language": lang} if lang else {}
+        rec = copy.deepcopy(error.record)
+        gen_toks = int(rec.get("generated_tokens") or 0)
+        rec.update(
+            task_id=row["id"], family=row["family"], source_hash=row["sourceHash"],
+            stage=stage, split=split, repeat=repeat,
+            configuration_hash=config_fingerprint(config), model=config["model"],
+            task_hash=digest(row["task"]), sampling_checkpoint=checkpoint,
+            implementation_hash=implementation_hash, selection_hash=selection["hash"],
+            split_component=row.get("split_component"),
+            features=task_metadata(row)["features"], tier=task_metadata(row)["tier"],
+            complete=False,
+            grade={"success": False, "reward": 0.0, "reason": "infrastructure_error",
+                   "failureCategory": "infrastructure_error", "generatedTokens": gen_toks,
+                   "externalCalls": 0, "complete": False, "environmentReward": 0.0},
+            **extra_lang,
+        )
+        return rec
+
     concurrency = max(1, int(config.get("rollout_concurrency", 1)))
     if concurrency == 1 or len(pending_jobs) <= 1:
         for row, repeat, seed in pending_jobs:
@@ -1143,7 +1200,11 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                     **error.record, "phase": "evaluation", "stage": stage, "split": split,
                     "repeat": repeat, "configuration_hash": config_fingerprint(config),
                     "sampling_checkpoint": checkpoint})
-                raise
+                infra_error_count += 1
+                if not tolerate_errors or infra_error_count > max_tolerated_errors:
+                    raise
+                print(f"warning: tolerating eval rollout error on {row['id']}: {error}", file=sys.stderr, flush=True)
+                _record_eval_result(_infra_failure_eval_record(row, repeat, error))
     else:
         with concurrent.futures.ThreadPoolExecutor(max_workers=min(concurrency, len(pending_jobs))) as pool:
             futures = {pool.submit(_run_eval_job, row, repeat, seed): (row, repeat)
@@ -1158,7 +1219,11 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                             **error.record, "phase": "evaluation", "stage": stage, "split": split,
                             "repeat": repeat, "configuration_hash": config_fingerprint(config),
                             "sampling_checkpoint": checkpoint})
-                        raise
+                        infra_error_count += 1
+                        if not tolerate_errors or infra_error_count > max_tolerated_errors:
+                            raise
+                        print(f"warning: tolerating eval rollout error on {row['id']}: {error}", file=sys.stderr, flush=True)
+                        record = _infra_failure_eval_record(row, repeat, error)
                     _record_eval_result(record)
             except Exception:
                 for future in futures:
@@ -1854,6 +1919,29 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                           tier=task_metadata(row)["tier"], **extra_lang)
             return record
 
+        tolerate_rl_errors = bool(config.get("tolerate_rollout_errors", False))
+        rl_step_infra_errors = 0
+
+        def _infra_failure_rl_record(row: dict, seed: int, group_mode: str, error: RolloutError) -> dict:
+            lang = row.get("language") or (row.get("task") or {}).get("language")
+            extra_lang = {"language": lang} if lang else {}
+            return {
+                "task_id": row["id"], "family": row["family"], "seed": seed,
+                "backend": getattr(adapter, "backend_name", "test-double"),
+                "samples": [], "messages": [], "generated_tokens": 0,
+                "complete": False, "terminated": False,
+                "rl_mode": group_mode,
+                "infrastructure_error": {"type": type(error).__name__, "message": str(error)},
+                "grade": {"success": False, "reward": 0.0, "reason": "infrastructure_error",
+                          "failureCategory": "infrastructure_error", "generatedTokens": 0,
+                          "externalCalls": 0, "complete": False, "environmentReward": 0.0},
+                "group_context": group_context, "source_hash": row["sourceHash"], "split": "train",
+                "step": step + 1, "policy": copy.deepcopy(policy),
+                "split_component": row.get("split_component"),
+                "features": task_metadata(row)["features"], "tier": task_metadata(row)["tier"],
+                **extra_lang,
+            }
+
         if concurrency == 1 or len(pending_plan) <= 1:
             for row, _curriculum_selection, seed, turn_target, group_mode, rollout_temp in pending_plan:
                 try:
@@ -1862,7 +1950,11 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                     append_jsonl(output_dir / "infrastructure-errors.jsonl", {
                         **error.record, "phase": "rl", "step": step + 1,
                         "group_context": group_context, "configuration_hash": config_fingerprint(config)})
-                    raise
+                    rl_step_infra_errors += 1
+                    if not tolerate_rl_errors or rl_step_infra_errors >= len(pending_plan):
+                        raise
+                    print(f"warning: tolerating RL rollout error on {row['id']}: {error}", file=sys.stderr, flush=True)
+                    record = _infra_failure_rl_record(row, seed, group_mode, error)
                 records.append(record)
                 append_jsonl(partial, record)
         else:
@@ -1876,10 +1968,16 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                         try:
                             ordered_results[idx] = future.result()
                         except RolloutError as error:
+                            row_i, _c_i, seed_i, _tt_i, mode_i, _temp_i = pending_plan[idx]
                             append_jsonl(output_dir / "infrastructure-errors.jsonl", {
                                 **error.record, "phase": "rl", "step": step + 1,
                                 "group_context": group_context, "configuration_hash": config_fingerprint(config)})
-                            raise
+                            rl_step_infra_errors += 1
+                            if not tolerate_rl_errors or rl_step_infra_errors >= len(pending_plan):
+                                raise
+                            print(f"warning: tolerating RL rollout error on {row_i['id']}: {error}",
+                                  file=sys.stderr, flush=True)
+                            ordered_results[idx] = _infra_failure_rl_record(row_i, seed_i, mode_i, error)
                 except Exception:
                     for future in futures:
                         future.cancel()
