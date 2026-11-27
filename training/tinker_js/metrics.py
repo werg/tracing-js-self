@@ -9,6 +9,8 @@ import statistics
 
 
 EVAL_BUCKETS = (
+    "frontend",
+    "multifile",
     "python",
     "hairy-real",
     "hard-effectful",
@@ -28,6 +30,22 @@ def task_eval_bucket(row_or_record: dict) -> str:
         if isinstance(candidate, (list, tuple, set)):
             features.update(f for f in candidate if isinstance(f, str))
     task_id = str(row_or_record.get("task_id") or row_or_record.get("id") or task.get("id") or "")
+    environment = (
+        row_or_record.get("environment")
+        or task.get("environment")
+        or meta.get("environment")
+        or task_meta.get("environment")
+    )
+    if environment == "browser" or "frontend" in features or "browser-dom" in features:
+        return "frontend"
+    has_files = bool(
+        isinstance(row_or_record.get("files"), dict) and row_or_record.get("files")
+        or isinstance(task.get("files"), dict) and task.get("files")
+        or meta.get("multifile")
+        or task_meta.get("multifile")
+    )
+    if has_files or "multifile" in features or "code-load" in features:
+        return "multifile"
     language = (
         row_or_record.get("language")
         or task.get("language")
