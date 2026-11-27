@@ -65,13 +65,11 @@ SKIP_DIRS = frozenset({
 })
 
 BLOCKED_STDLIB_MODULES = frozenset({
-    "subprocess",
     "socket",
     "ctypes",
     "multiprocessing",
     "signal",
     "shutil",
-    "sqlite3",
     "ftplib",
     "smtplib",
     "imaplib",
@@ -95,7 +93,6 @@ BLOCKED_STDLIB_MODULES = frozenset({
     "xmlrpc",
     "wsgiref",
     "socketserver",
-    "secrets",
 })
 
 STDLIB_MODULES = frozenset(getattr(sys, "stdlib_module_names", ())) | frozenset({
@@ -228,13 +225,21 @@ from tinker_py.codebase import (
     normalize_codebase_files,
 )
 from tinker_py.codec import decode_readable, encode_exception, encode_readable
+from tinker_py.http_tools import DEFAULT_HTTP_TIMEOUT_S, MAX_HTTP_BODY_BYTES, install_live_http_hooks
+from tinker_py.io_tools import (
+    DEFAULT_SUBPROCESS_TIMEOUT_S,
+    MAX_IO_BYTES,
+    MAX_LIVE_CALLS,
+    install_live_io_hooks,
+    is_guest_caller,
+)
 
 def _timeout(_sig, _frame):
     raise TimeoutError("multifile probe timeout")
 
 if hasattr(signal, "SIGALRM"):
     signal.signal(signal.SIGALRM, _timeout)
-    signal.setitimer(signal.ITIMER_REAL, 4.0)
+    signal.setitimer(signal.ITIMER_REAL, 6.0)
 
 real_stdout = sys.stdout
 try:
@@ -246,9 +251,20 @@ try:
     recorded = []
     rng = random.Random(17)
     time_counter = [0]
+    io_depth = [0]
+    real_time = time.time
+    real_monotonic = time.monotonic
+    real_random = random.random
+
+    def _next_det_time():
+        val = 1700000000.0 + time_counter[0] * 0.25
+        time_counter[0] += 1
+        return val
 
     def _rec_print(*p_args, **_kwargs):
-        if len(recorded) >= 32:
+        if io_depth[0] > 0:
+            return
+        if len(recorded) >= MAX_LIVE_CALLS:
             raise RuntimeError("too many recorded calls")
         recorded.append({
             "operation": "platform.print",
@@ -258,10 +274,25 @@ try:
         })
 
     def _rec_time():
-        if len(recorded) >= 32:
+        if not is_guest_caller(io_depth):
+            return real_time()
+        if len(recorded) >= MAX_LIVE_CALLS:
             raise RuntimeError("too many recorded calls")
-        val = 1700000000.0 + time_counter[0] * 0.25
-        time_counter[0] += 1
+        val = _next_det_time()
+        recorded.append({
+            "operation": "platform.time",
+            "arguments": [],
+            "status": "fulfilled",
+            "result": val,
+        })
+        return val
+
+    def _rec_monotonic():
+        if not is_guest_caller(io_depth):
+            return real_monotonic()
+        if len(recorded) >= MAX_LIVE_CALLS:
+            raise RuntimeError("too many recorded calls")
+        val = _next_det_time()
         recorded.append({
             "operation": "platform.time",
             "arguments": [],
@@ -271,7 +302,9 @@ try:
         return val
 
     def _rec_random():
-        if len(recorded) >= 32:
+        if not is_guest_caller(io_depth):
+            return real_random()
+        if len(recorded) >= MAX_LIVE_CALLS:
             raise RuntimeError("too many recorded calls")
         val = rng.random()
         recorded.append({
@@ -282,26 +315,34 @@ try:
         })
         return val
 
-    time.time = _rec_time
-    time.monotonic = _rec_time
-    random.random = _rec_random
+    all_src = "\n".join(files.values())
+    enable_urllib = ("urllib" in all_src) or ("urlopen" in all_src)
+    enable_requests = "requests" in all_src
+    if enable_urllib or enable_requests:
+        install_live_http_hooks(
+            recorded,
+            max_body_bytes=MAX_HTTP_BODY_BYTES,
+            default_timeout=DEFAULT_HTTP_TIMEOUT_S,
+            enable_urllib=enable_urllib,
+            enable_requests=enable_requests,
+            io_depth=io_depth,
+        )
 
-    # Block unsafe OS / filesystem mutation calls even if a module imports os/pathlib for pure helpers.
-    import os as _os
-    def _deny_os(*_a, **_kw):
-        raise PermissionError("OS side effects disabled in probe")
-    for _attr in ("system", "popen", "remove", "unlink", "rmdir", "makedirs", "mkdir", "rename", "replace", "chmod", "chown", "kill", "fork", "execv", "execve", "execl", "spawnv"):
-        if hasattr(_os, _attr):
-            setattr(_os, _attr, _deny_os)
-    _real_open = builtins.open
-    def _safe_open(file, mode="r", *a, **kw):
-        if any(ch in str(mode) for ch in ("w", "a", "x", "+")):
-            raise PermissionError("File writes disabled in probe")
-        return _real_open(file, mode, *a, **kw)
+    time.time = _rec_time
+    time.monotonic = _rec_monotonic
+    random.random = _rec_random
 
     guest_builtins = dict(vars(builtins))
     guest_builtins["print"] = _rec_print
-    guest_builtins["open"] = _safe_open
+    flush_io = install_live_io_hooks(
+        recorded,
+        io_depth=io_depth,
+        guest_builtins=guest_builtins,
+        max_io_bytes=MAX_IO_BYTES,
+        max_recorded_calls=MAX_LIVE_CALLS,
+        default_subprocess_timeout=DEFAULT_SUBPROCESS_TIMEOUT_S,
+        next_time_fn=_next_det_time,
+    )
 
     guest_to_rel = {guest_filename_for(p): p for p in files}
     touched_non_entry = set()
@@ -335,6 +376,7 @@ try:
             result = encode_exception(exc)
         finally:
             sys.settrace(None)
+            flush_io()
     finally:
         sys.stdout = real_stdout
         if hasattr(signal, "SIGALRM"):
@@ -347,7 +389,7 @@ try:
         "result": enc_out,
         "recordedCalls": recorded,
         "touchedFiles": sorted(touched_non_entry),
-    }, ensure_ascii=False, separators=(",", ":"), allow_nan=False) + "\n")
+    }, ensure_ascii=True, separators=(",", ":"), allow_nan=False) + "\n")
 except Exception as exc:
     sys.stdout = real_stdout
     if hasattr(signal, "SIGALRM"):
