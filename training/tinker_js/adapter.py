@@ -1194,12 +1194,18 @@ class TinkerAdapter:
                 "length_band": "long" if execution_tokens >= self.sft_diagnostic_long_tokens else "short",
                 "tier": tier, "features": features}
 
-    def _generation_prompt(self, messages: Sequence[Mapping[str, Any]], max_tokens: int | None = None):
+    def _generation_prompt(self, messages: Sequence[Mapping[str, Any]], max_tokens: int | None = None,
+                           *, clamp_to_context: bool = False):
         prompt = self._sdk().renderer.build_generation_prompt(self._messages(messages), effort=self.effort)
         prompt_tokens = list(prompt.to_ints())
         if not prompt_tokens:
             raise ValueError("Renderer produced an empty generation prompt")
         budget = self.max_tokens if max_tokens is None else _positive_int(max_tokens, "max_tokens")
+        if clamp_to_context:
+            remaining = self.max_context_tokens - len(prompt_tokens)
+            if remaining <= 0:
+                self._budget(len(prompt_tokens), 1)
+            budget = min(budget, remaining)
         self._budget(len(prompt_tokens), budget)
         return prompt, prompt_tokens, budget
 
@@ -1210,10 +1216,13 @@ class TinkerAdapter:
                 "total_tokens": len(prompt_tokens) + budget, "limit": self.max_context_tokens}
 
     def sample(self, messages: Sequence[Mapping[str, Any]], max_tokens: int | None = None,
-               seed: int | None = None, temperature: float | None = None) -> dict:
+               seed: int | None = None, temperature: float | None = None,
+               clamp_to_context: bool = False) -> dict:
         sdk = self._sdk()
         with self._lock:
-            prompt, prompt_tokens, budget = self._generation_prompt(messages, max_tokens)
+            prompt, prompt_tokens, budget = self._generation_prompt(
+                messages, max_tokens, clamp_to_context=clamp_to_context
+            )
             temp = self.temperature if temperature is None else _finite(temperature, "temperature")
             if temp < 0:
                 raise ValueError("temperature must be nonnegative")

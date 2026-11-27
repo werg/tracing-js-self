@@ -26,6 +26,7 @@ import threading
 import time
 from typing import Any
 
+from .adapter import ContextOverflow
 from .learning import (DIFFICULTY_SAMPLING_DEFAULTS, choose_validation_checkpoint, compression_coefficient,
                        curriculum_pick, difficulty_pick, execution_advantages, likelihood_advantages,
                        pick_turn_target, sft_epoch_rows, task_metadata, update_curriculum, update_task_difficulty)
@@ -905,7 +906,15 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int, *, t
             }
             if temperature is not None and _accepts_kwarg(adapter.sample, "temperature"):
                 sample_kwargs["temperature"] = temperature
-            sample = adapter.sample(copy.deepcopy(messages), **sample_kwargs)
+            if turn > 0 and _accepts_kwarg(adapter.sample, "clamp_to_context"):
+                sample_kwargs["clamp_to_context"] = True
+            try:
+                sample = adapter.sample(copy.deepcopy(messages), **sample_kwargs)
+            except ContextOverflow:
+                if turn > 0:
+                    forced_failure = "context_budget_exhausted"
+                    break
+                raise
             token_ids = sample.get("token_ids")
             if not isinstance(token_ids, list) or any(isinstance(token, bool) or not isinstance(token, int)
                                                       for token in token_ids):
@@ -1938,7 +1947,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                 for index, record in enumerate(group_records):
                     if record["grade"].get("success"):
                         continue
-                    if record["grade"].get("reason") in ("turn_budget_exhausted", "generated_token_budget_exhausted"):
+                    if record["grade"].get("reason") in ("turn_budget_exhausted", "generated_token_budget_exhausted", "context_budget_exhausted"):
                         continue
                     samples = record.get("samples") or []
                     if not samples or not turns:

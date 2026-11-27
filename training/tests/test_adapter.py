@@ -294,6 +294,14 @@ class AdapterTests(unittest.TestCase):
         with self.assertRaises(ContextOverflow):
             adapter.sample([{"role": "user", "content": "program"}])
         self.assertEqual(service.calls, [])
+        # Multi-turn rollouts pass clamp_to_context=True so growing histories
+        # dynamically use the remaining free context instead of crashing.
+        clamped = adapter.sample([{"role": "user", "content": "program"}], clamp_to_context=True)
+        self.assertEqual(clamped["generated_tokens"], 3)
+        self.assertEqual(service.sampler.calls[-1]["sampling_params"].max_tokens, 2)
+        adapter_full, _, _ = fake_adapter({"max_context_tokens": 3, "max_tokens": 3})
+        with self.assertRaises(ContextOverflow):
+            adapter_full.sample([{"role": "user", "content": "program"}], clamp_to_context=True)
 
     def test_multi_turn_rl_uses_each_original_prompt(self):
         adapter, service, _ = fake_adapter()
