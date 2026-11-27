@@ -30,9 +30,10 @@ const SKIP_DIRS = new Set([
 
 const SOURCE_EXT_RE = /\.(?:js|mjs|cjs|ts|tsx|mts|cts)$/i;
 const SKIP_FILE_RE = /(?:\.d\.ts|\.test\.|\.spec\.|\.min\.|\.bundle\.|\.config\.|config\.js$|config\.ts$|rollup|webpack|vite\.|jest\.|vitest\.|babel\.|eslint|prettier|gulpfile|gruntfile)/i;
-const MAX_SINGLE_FILE_BYTES = 48 * 1024;
+export const MAX_SINGLE_FILE_BYTES = 128 * 1024;
 const MIN_SINGLE_FILE_BYTES = 20;
-const MAX_PACKAGE_TOTAL_BYTES = 350 * 1024;
+export const MAX_PACKAGE_TOTAL_BYTES = 2 * 1024 * 1024;
+export const MAX_HARVEST_FILES = 160;
 
 function extractStaticSpecifiers(code) {
   const specs = new Set();
@@ -106,11 +107,12 @@ function collectCandidateRoots(repoDir) {
  * ensuring the entry module + its reachable local closure are self-contained and
  * accompanied by real sibling distractor files from the same repo. */
 export function buildMultiFilePackagesFromRoot(repoDir, {minFiles = 3, maxFiles = 25} = {}) {
+  const clampedMaxFiles = Math.min(MAX_HARVEST_FILES, Math.max(minFiles, maxFiles));
   const packages = [];
   const seenFileSets = new Set();
 
   for (const root of collectCandidateRoots(repoDir)) {
-    const absFiles = walkSourceFiles(root, 4, 120);
+    const absFiles = walkSourceFiles(root, 6, Math.max(200, clampedMaxFiles * 3));
     if (absFiles.length < minFiles) continue;
 
     const allFiles = {};
@@ -163,20 +165,19 @@ export function buildMultiFilePackagesFromRoot(repoDir, {minFiles = 3, maxFiles 
       return visited;
     };
 
-    // Rank entry candidates: index/main files with >= 1 local dependency first.
+    // Rank entry candidates: index/main files with larger local dependency closures first.
     const entryCandidates = allPaths
       .filter(p => (deps.get(p)?.length ?? 0) > 0 && !hasExternalDep.get(p))
+      .map(p => ({path: p, closure: computeClosure(p)}))
+      .filter(c => c.closure && c.closure.size >= 2 && c.closure.size <= clampedMaxFiles)
       .sort((a, b) => {
-        const aIdx = /(?:^|\/)(?:index|main)\.[^/]+$/i.test(a) ? 0 : 1;
-        const bIdx = /(?:^|\/)(?:index|main)\.[^/]+$/i.test(b) ? 0 : 1;
-        return (aIdx - bIdx) || a.localeCompare(b);
+        const aIdx = /(?:^|\/)(?:index|main)\.[^/]+$/i.test(a.path) ? 0 : 1;
+        const bIdx = /(?:^|\/)(?:index|main)\.[^/]+$/i.test(b.path) ? 0 : 1;
+        return (aIdx - bIdx) || (b.closure.size - a.closure.size) || a.path.localeCompare(b.path);
       });
 
-    for (const entryFile of entryCandidates.slice(0, 6)) {
-      const closure = computeClosure(entryFile);
-      if (!closure || closure.size < 2 || closure.size > maxFiles) continue;
-
-      // Assemble files map: closure + real sibling distractors from allPaths up to maxFiles.
+    for (const {path: entryFile, closure} of entryCandidates.slice(0, 16)) {
+      // Assemble files map: closure + real sibling distractors from allPaths up to clampedMaxFiles.
       const selectedPaths = [...closure].sort();
       let totalBytes = selectedPaths.reduce((s, p) => s + Buffer.byteLength(allFiles[p], 'utf8'), 0);
       if (totalBytes > MAX_PACKAGE_TOTAL_BYTES) continue;
@@ -190,7 +191,9 @@ export function buildMultiFilePackagesFromRoot(repoDir, {minFiles = 3, maxFiles 
           return (aSame - bSame) || a.localeCompare(b);
         });
 
-      const targetCount = Math.min(maxFiles, Math.max(minFiles, Math.min(allPaths.length, closure.size + 6)));
+      const targetCount = clampedMaxFiles > 25
+        ? Math.min(clampedMaxFiles, allPaths.length)
+        : Math.min(clampedMaxFiles, Math.max(minFiles, Math.min(allPaths.length, closure.size + 6)));
       for (const distPath of distractors) {
         if (selectedPaths.length >= targetCount) break;
         const b = Buffer.byteLength(allFiles[distPath], 'utf8');
@@ -214,9 +217,9 @@ export function buildMultiFilePackagesFromRoot(repoDir, {minFiles = 3, maxFiles 
         closureSize: closure.size,
         distractorCount: selectedPaths.length - closure.size,
       });
-      if (packages.length >= 4) break;
+      if (packages.length >= 8) break;
     }
-    if (packages.length >= 4) break;
+    if (packages.length >= 8) break;
   }
 
   return packages;
@@ -226,8 +229,13 @@ function generateProbeArguments(fnName) {
   const lower = fnName.toLowerCase();
   const candidates = [];
   // Domain-informed probes first based on export name
-  if (/parse|lex|token|compile|eval|match|glob|path|url|query|format|slug|camel|kebab|snake|trim|escape|decode|encode|hash|split|join|strip|clean|normalize|sanitize|template|render/.test(lower)) {
+  if (/parse|lex|token|compile|eval|match|glob|path|url|query|format|slug|camel|kebab|snake|trim|escape|decode|encode|hash|split|join|strip|clean|normalize|sanitize|template|render|marked|djot|yaml|css|ast|html/.test(lower)) {
     candidates.push(
+      ['# Title\n\nParagraph with *emphasis*, **strong**, and `code`.\n\n- Alpha\n- Beta\n\n> Quote line\n'],
+      ['function sum(xs) { let s = 0; for (const x of xs) s += x; return s; }', {ecmaVersion: 2022}],
+      ['const cfg = { ok: true, count: 1 + 2 * 3 };', {ecmaVersion: 2022}],
+      ['name: service\nversion: 2\ntags:\n  - prod\n  - edge\nconfig:\n  retries: 3\n'],
+      ['main > .card:hover { color: #224466; margin: 4px 8px; }'],
       ['hello-world_123'],
       ['foo/bar/baz.js'],
       ['a=1&b=two&c=3'],
@@ -236,6 +244,25 @@ function generateProbeArguments(fnName) {
       ['  Hello, World!  '],
       ['alpha/beta', 'gamma'],
       ['https://example.com/a/b?x=1'],
+    );
+  }
+  if (/semver|ver|satisf|range|coerce|inc|diff|major|minor|patch|valid|clean|compare|subset|intersect|gt|lt|eq|sort/.test(lower)) {
+    candidates.push(
+      ['1.2.3-alpha.1+build.42'],
+      ['1.2.3', '^1.0.0'],
+      ['1.2.3', 'minor'],
+      ['1.2.3', '2.0.0-beta.1'],
+      ['^1.2.3 || >=2.0.0 <3.0.0'],
+      ['>=1.2.0 <2.0.0', '^1.5.0'],
+      [['1.0.0', '1.5.2', '2.0.0-beta.1', '1.9.0'], '>=1.2.0 <2.0.0'],
+      [['2.1.0', '1.0.0-alpha.1', '1.0.0', '1.2.3']],
+    );
+  }
+  if (/date|time|duration|interval|zone|iso|utc|calendar|day|month|year/.test(lower)) {
+    candidates.push(
+      ['2025-11-27T10:30:00Z'],
+      [{year: 2025, month: 11, day: 27, hour: 10, minute: 30}],
+      ['2025-01-15', '2025-11-27'],
     );
   }
   if (/sort|filter|map|reduce|merge|diff|chunk|flatten|uniq|group|zip|clamp|range|sum|mean|avg|median|stats|math|calc|add|sub|mul|div|fib|prime|vector|matrix|graph|tree|search|find/.test(lower)) {
@@ -382,10 +409,19 @@ export async function harvestMultiFileRepos(reposDirs, {
   minFiles = 3,
   maxFiles = 25,
   maxTasks = 200,
+  minLoadedFiles = 1,
+  minEpisodeChars = 0,
+  maxEpisodeChars = Infinity,
+  idPrefix = 'multifile-js',
+  excludeIds = null,
+  excludeSourceHashes = null,
   traceFormat = 'compact',
   reasoningChannel = 'thinking',
   singleRepoMode = false,
 } = {}) {
+  const clampedMaxFiles = Math.min(MAX_HARVEST_FILES, Math.max(minFiles, maxFiles));
+  const blockedIds = excludeIds instanceof Set ? excludeIds : new Set(excludeIds ?? []);
+  const blockedHashes = excludeSourceHashes instanceof Set ? excludeSourceHashes : new Set(excludeSourceHashes ?? []);
   const dirs = Array.isArray(reposDirs) ? reposDirs : [reposDirs];
   const repoEntries = [];
 
@@ -412,6 +448,9 @@ export async function harvestMultiFileRepos(reposDirs, {
     packagesInspected: 0,
     probesAttempted: 0,
     probesCrossFilePassed: 0,
+    filteredByLoadedFiles: 0,
+    filteredByEpisodeChars: 0,
+    filteredByCollision: 0,
     exportAttempts: 0,
     exportFailures: 0,
     verifiedTasks: 0,
@@ -425,7 +464,7 @@ export async function harvestMultiFileRepos(reposDirs, {
   for (const repo of selectedRepos) {
     if (examples.length >= maxTasks) break;
     stats.reposScanned++;
-    const packages = buildMultiFilePackagesFromRoot(repo.dir, {minFiles, maxFiles});
+    const packages = buildMultiFilePackagesFromRoot(repo.dir, {minFiles, maxFiles: clampedMaxFiles});
     if (!packages.length) continue;
     stats.reposWithPackages++;
 
@@ -445,7 +484,7 @@ export async function harvestMultiFileRepos(reposDirs, {
 
       const pkgCache = {analysisCache: new Map(), cjsCache: new Map()};
       let pkgFatal = false;
-      for (const fnName of exportFns.slice(0, 12)) {
+      for (const fnName of exportFns.slice(0, 28)) {
         if (pkgFatal || repoTasks >= maxPerRepo || examples.length >= maxTasks) break;
         let fnTasks = 0;
         const seenSigs = new Set();
@@ -462,17 +501,39 @@ export async function harvestMultiFileRepos(reposDirs, {
             break;
           }
           if (!hit) continue;
+          const loadedPaths = new Set(hit.codeLoadEvents.map(e => e.path).filter(Boolean));
+          if (loadedPaths.size < minLoadedFiles) {
+            stats.filteredByLoadedFiles++;
+            continue;
+          }
           if (seenSigs.has(hit.outcomeSignature)) continue;
           seenSigs.add(hit.outcomeSignature);
           stats.probesCrossFilePassed++;
 
+          // Fast lower-bound pre-filter to avoid spawning exportTinkerExample on tiny episodes
+          if (minEpisodeChars > 0) {
+            const estManifest = Object.keys(pkg.files).length * 140;
+            const estEntry = Buffer.byteLength(pkg.files[pkg.entryFile] ?? '', 'utf8');
+            let estLoaded = 0;
+            for (const lp of loadedPaths) estLoaded += Buffer.byteLength(pkg.files[lp] ?? '', 'utf8');
+            const estUpper = estManifest + estEntry + estLoaded + 28000;
+            if (estUpper < minEpisodeChars * 0.75) {
+              stats.filteredByEpisodeChars++;
+              continue;
+            }
+          }
+
           const isTs = /\.(?:ts|tsx|mts|cts)$/i.test(pkg.entryFile);
           const hasSymbolLoad = hit.codeLoadEvents.some(e => Boolean(e.symbol));
           const hasWholeFileLoad = hit.codeLoadEvents.some(e => !e.symbol);
-          const taskId = `multifile-js-${slugify(repo.name)}-${slugify(fnName)}-${examples.length + 1}`;
+          const taskId = `${idPrefix}-${slugify(repo.name)}-${slugify(fnName)}-${examples.length + 1}`;
+          if (blockedIds.has(taskId)) {
+            stats.filteredByCollision++;
+            continue;
+          }
           const task = {
             id: taskId,
-            family: `multifile-js/${repo.name}/${pkg.entryFile}`,
+            family: `${idPrefix}/${repo.name}/${pkg.entryFile}`,
             language: isTs ? 'ts' : 'js',
             executionMode: 'native',
             files: pkg.files,
@@ -497,6 +558,7 @@ export async function harvestMultiFileRepos(reposDirs, {
               repo: repo.name,
               fileCount: Object.keys(pkg.files).length,
               closureSize: pkg.closureSize,
+              loadedFileCount: loadedPaths.size,
               distractorFiles: pkg.distractorCount,
             },
           };
@@ -509,7 +571,18 @@ export async function harvestMultiFileRepos(reposDirs, {
               stats.exportFailures++;
               continue;
             }
+            if (blockedHashes.has(exported.sourceHash)) {
+              stats.filteredByCollision++;
+              continue;
+            }
+            const episodeChars = JSON.stringify(exported.messages).length;
+            if (episodeChars < minEpisodeChars || episodeChars > maxEpisodeChars) {
+              stats.filteredByEpisodeChars++;
+              continue;
+            }
+            exported.metadata.episodeChars = episodeChars;
             examples.push(exported);
+            blockedIds.add(taskId);
             fnTasks++;
             repoTasks++;
             stats.verifiedTasks++;
@@ -550,9 +623,30 @@ async function main() {
       'min-files': {type: 'string', default: '3'},
       'max-files': {type: 'string', default: '25'},
       'max-tasks': {type: 'string', default: '200'},
+      'min-loaded-files': {type: 'string', default: '1'},
+      'min-episode-chars': {type: 'string', default: '0'},
+      'max-episode-chars': {type: 'string', default: '220000'},
+      'id-prefix': {type: 'string', default: 'multifile-js'},
+      'exclude-jsonl': {type: 'string', default: ''},
+      'single-repo': {type: 'boolean', default: false},
       'trace-format': {type: 'string', default: 'compact'},
     },
   });
+  const excludeIds = new Set();
+  const excludeSourceHashes = new Set();
+  if (values['exclude-jsonl']) {
+    for (const p of values['exclude-jsonl'].split(',').map(s => s.trim()).filter(Boolean)) {
+      if (!existsSync(p)) continue;
+      for (const line of readFileSync(p, 'utf8').split('\n')) {
+        if (!line.trim()) continue;
+        try {
+          const row = JSON.parse(line);
+          if (row.id) excludeIds.add(row.id);
+          if (row.sourceHash) excludeSourceHashes.add(row.sourceHash);
+        } catch {}
+      }
+    }
+  }
   const reposDirs = values['repos-dir'].split(',').map(s => s.trim()).filter(Boolean);
   const {stats} = await harvestMultiFileRepos(reposDirs, {
     outputDir: values['output-dir'],
@@ -560,8 +654,15 @@ async function main() {
     maxPerRepo: Math.max(1, Number(values['max-per-repo']) || 8),
     maxPerFn: Math.max(1, Number(values['max-per-fn']) || 2),
     minFiles: Math.max(2, Number(values['min-files']) || 3),
-    maxFiles: Math.max(3, Number(values['max-files']) || 25),
+    maxFiles: Math.min(MAX_HARVEST_FILES, Math.max(3, Number(values['max-files']) || 25)),
     maxTasks: Math.max(1, Number(values['max-tasks']) || 200),
+    minLoadedFiles: Math.max(1, Number(values['min-loaded-files']) || 1),
+    minEpisodeChars: Math.max(0, Number(values['min-episode-chars']) || 0),
+    maxEpisodeChars: Number(values['max-episode-chars']) > 0 ? Number(values['max-episode-chars']) : Infinity,
+    idPrefix: values['id-prefix'] || 'multifile-js',
+    excludeIds,
+    excludeSourceHashes,
+    singleRepoMode: Boolean(values['single-repo']),
     traceFormat: values['trace-format'],
   });
   console.log(JSON.stringify(stats, null, 2));

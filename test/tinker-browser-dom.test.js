@@ -535,3 +535,206 @@ test('debounced async search with setTimeout/clearTimeout + fetch + DOM renderin
   });
 });
 
+test('combined multi-file + browser DOM app supports on-demand code.load, DOM/events/storage/fetch/timers, zero leakage, and flexible live session grading', async () => {
+  const initialHtml = `<!DOCTYPE html>
+<html>
+<head><title>Workspace Tasks</title></head>
+<body>
+  <main id="app">
+    <header><span id="user-badge">guest</span><span id="status">idle</span></header>
+    <ul id="task-list"><li class="task" data-id="t0">Seed task</li></ul>
+    <button id="sync-btn" type="button">Sync</button>
+  </main>
+</body>
+</html>`;
+
+  const files = {
+    'src/app.js': [
+      "import { loadToken, saveLastSync } from './storage.js';",
+      "import { syncRemoteTasks } from './api.js';",
+      "import { renderTasks, setStatus } from './dom.js';",
+      "import { unusedExportReport } from './distractor.js';",
+      'export async function run(userId, doExport) {',
+      '  if (doExport) return unusedExportReport(userId);',
+      '  const token = loadToken();',
+      '  document.getElementById("user-badge").textContent = userId;',
+      '  const ok = confirm("Sync tasks for " + userId + "?");',
+      '  if (!ok) {',
+      '    setStatus("cancelled");',
+      '    return {synced: false, status: document.getElementById("status").textContent, count: document.querySelectorAll("#task-list li").length};',
+      '  }',
+      '  const tag = prompt("Tag filter:", "all");',
+      '  const payload = await syncRemoteTasks(userId, token, tag);',
+      '  renderTasks(payload.items);',
+      '  const delayedStatus = await new Promise(resolve => {',
+      '    setTimeout(() => {',
+      '      setStatus("synced:" + payload.items.length);',
+      '      resolve(document.getElementById("status").textContent);',
+      '    }, 25);',
+      '  });',
+      '  saveLastSync(payload.syncId);',
+      '  return {synced: true, status: delayedStatus, count: document.querySelectorAll("#task-list li").length, syncId: payload.syncId};',
+      '}',
+    ].join('\n'),
+    'src/storage.js': [
+      'export function loadToken() {',
+      '  return sessionStorage.getItem("auth_token") || "anon";',
+      '}',
+      'export function saveLastSync(syncId) {',
+      '  localStorage.setItem("last_sync_id", String(syncId));',
+      '}',
+    ].join('\n'),
+    'src/api.js': [
+      'export async function syncRemoteTasks(userId, token, tag) {',
+      '  const res = await fetch("https://tasks.example.test/api/sync?user=" + encodeURIComponent(userId) + "&tag=" + encodeURIComponent(tag), {',
+      '    method: "GET",',
+      '    headers: {"x-auth": token},',
+      '  });',
+      '  return await res.json();',
+      '}',
+    ].join('\n'),
+    'src/dom.js': [
+      'export function setStatus(text) {',
+      '  document.getElementById("status").textContent = text;',
+      '}',
+      'export function renderTasks(items) {',
+      '  const list = document.getElementById("task-list");',
+      '  list.innerHTML = "";',
+      '  for (const item of items) {',
+      '    const li = document.createElement("li");',
+      '    li.className = "task";',
+      '    li.dataset.id = item.id;',
+      '    li.textContent = item.title;',
+      '    list.appendChild(li);',
+      '  }',
+      '}',
+    ].join('\n'),
+    'src/distractor.js': [
+      'export function unusedExportReport(userId) {',
+      '  alert("Exporting " + userId);',
+      '  return {exported: true};',
+      '}',
+    ].join('\n'),
+  };
+
+  const makeCombinedTask = (id, confirmed, syncId) => ({
+    id,
+    family: 'mf-browser-workspace',
+    environment: 'browser',
+    executionMode: 'native',
+    files,
+    entryFile: 'src/app.js',
+    entry: 'run',
+    initialLoadedFiles: ['src/app.js'],
+    initialHtml,
+    initialUrl: 'https://tasks.example.test/board',
+    args: ['ada', false],
+    features: ['multi-file', 'code-load', 'frontend', 'browser-dom'],
+    fixture: {
+      calls: [
+        {operation: 'browser.storageGet', arguments: ['session', 'auth_token'], result: 'tok-42'},
+        {operation: 'browser.confirm', arguments: ['Sync tasks for ada?'], result: confirmed},
+        ...(confirmed ? [
+          {operation: 'browser.prompt', arguments: ['Tag filter:', 'all'], result: 'urgent'},
+          {
+            operation: 'http.request',
+            arguments: ['https://tasks.example.test/api/sync?user=ada&tag=urgent', 'GET', {'x-auth': 'tok-42'}, null],
+            status: 'fulfilled',
+            result: {
+              status: 200,
+              statusText: 'OK',
+              url: 'https://tasks.example.test/api/sync?user=ada&tag=urgent',
+              headers: {'content-type': 'application/json'},
+              body: JSON.stringify({syncId, items: [{id: 't1', title: 'Ship 65K'}, {id: 't2', title: 'Audit traces'}]}),
+            },
+          },
+          {operation: 'browser.storageSet', arguments: ['local', 'last_sync_id', syncId], result: null},
+        ] : []),
+      ],
+    },
+  });
+
+  const left = await exportTinkerExample(makeCombinedTask('mf-browser-yes', true, 'SYNC-101'), {traceFormat: 'compact', reasoningChannel: 'thinking'});
+  const right = await exportTinkerExample(makeCombinedTask('mf-browser-no', false, 'SYNC-202'), {traceFormat: 'compact', reasoningChannel: 'thinking'});
+
+  assert.equal(left.metadata.traceAudit.replayVerified, true);
+  assert.equal(right.metadata.traceAudit.replayVerified, true);
+  assert(left.metadata.codeLoadCalls >= 3, 'Expected multi-file browser teacher to load storage, api, and dom modules');
+  assert(right.metadata.codeLoadCalls >= 2, 'Expected cancelled branch to load storage and dom modules');
+
+  // Verify tool declarations are identical across branches, include code.load + exact browser tools (NO storageRemove/storageClear!)
+  const leftTools = JSON.parse(left.messages.find(m => m.role === 'tool_declare').content).map(t => t.function.name);
+  const rightTools = JSON.parse(right.messages.find(m => m.role === 'tool_declare').content).map(t => t.function.name);
+  assert.deepEqual(leftTools, rightTools);
+  assert.deepEqual(leftTools, [
+    'browser.alert',
+    'browser.confirm',
+    'browser.prompt',
+    'browser.storageGet',
+    'browser.storageSet',
+    'code.load',
+    'http.request',
+  ]);
+
+  // Verify dead distractor.js was NEVER loaded in either branch
+  const leftLoads = left.messages
+    .filter(m => m.role === 'assistant' && m.tool_calls?.[0]?.function?.name === 'code.load')
+    .flatMap(m => JSON.parse(m.tool_calls[0].function.arguments).arguments);
+  assert.doesNotMatch(JSON.stringify(leftLoads), /distractor\.js/);
+
+  // Verify prompt contains both repo manifest + initial URL/DOM
+  const userPrompt = left.messages.find(m => m.role === 'user').content;
+  assert.match(userPrompt, /Repository manifest \(5 files\):/);
+  assert.match(userPrompt, /Initial URL: https:\/\/tasks\.example\.test\/board/);
+  assert.match(userPrompt, /Initial DOM:\n```html/);
+
+  // Verify causal zero-future-leakage across diverging confirm() observation
+  const pairAudit = auditCausalPrefixPair(left, right);
+  assert.equal(pairAudit.passed, true);
+  assert.equal(pairAudit.testedDivergence, true);
+  assert.doesNotMatch(JSON.stringify(left.messages.slice(0, pairAudit.identicalPrefixMessages)), /SYNC-101|SYNC-202|urgent|Ship 65K/);
+
+  const supAudit = await auditTinkerSupervision([left, right], {formats: ['compact'], samplePerFeature: 10});
+  assert.equal(supAudit.valid, true);
+  assert.equal(supAudit.allReplayed, true);
+  assert.equal(supAudit.causalDivergencesChecked, 1);
+
+  // Verify final outputs
+  const leftComp = parseStudentAction(left.messages.at(-1));
+  assert.deepEqual(leftComp.value, {synced: true, status: 'synced:2', count: 2, syncId: 'SYNC-101'});
+  const rightComp = parseStudentAction(right.messages.at(-1));
+  assert.deepEqual(rightComp.value, {synced: false, status: 'cancelled', count: 1});
+
+  // Live session grading: student batches all code.load up-front (different from teacher's causal order)
+  // and executes exact external browser.* + http.request effects -> MUST SUCCEED
+  const preparedLeft = await prepareTinkerTask(left.task, {traceFormat: 'compact'});
+  const session = createTinkerSession(preparedLeft);
+  const sLoad = await session.step(callTool('code.load', [
+    {path: 'src/storage.js'},
+    {path: 'src/api.js'},
+    {path: 'src/dom.js'},
+  ], 'cl1'), 30);
+  assert.equal(sLoad.done, false);
+  assert.equal(JSON.parse(sLoad.messages[0].content).value.length, 3);
+  assert.equal((await session.step(callTool('browser.storageGet', ['session', 'auth_token'], 'b1'), 40)).done, false);
+  assert.equal((await session.step(callTool('browser.confirm', ['Sync tasks for ada?'], 'b2'), 50)).done, false);
+  assert.equal((await session.step(callTool('browser.prompt', ['Tag filter:', 'all'], 'b3'), 60)).done, false);
+  assert.equal((await session.step(callTool('http.request', ['https://tasks.example.test/api/sync?user=ada&tag=urgent', 'GET', {'x-auth': 'tok-42'}, null], 'h1'), 80)).done, false);
+  assert.equal((await session.step(callTool('browser.storageSet', ['local', 'last_sync_id', 'SYNC-101'], 'b4'), 90)).done, false);
+  const sDone = await session.step(complete({synced: true, status: 'synced:2', count: 2, syncId: 'SYNC-101'}, ['ada', false]), 120);
+  assert.equal(sDone.done, true);
+  assert.equal(sDone.grade.success, true);
+  assert.equal(sDone.grade.codeLoadCalls, 1);
+  assert.equal(sDone.grade.externalCalls, 5);
+  session.close();
+
+  // Wrong external browser effect fails immediately even after valid code.load
+  const badSession = createTinkerSession(preparedLeft);
+  await badSession.step(callTool('code.load', [{path: 'src/storage.js'}], 'clx'), 20);
+  const badRes = await badSession.step(callTool('browser.storageGet', ['local', 'auth_token'], 'bx'), 30);
+  assert.equal(badRes.done, true);
+  assert.equal(badRes.grade.success, false);
+  assert.equal(badRes.grade.failureCategory, 'incorrect-external-request');
+  badSession.close();
+});
+

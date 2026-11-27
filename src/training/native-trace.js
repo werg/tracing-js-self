@@ -510,24 +510,20 @@ export function createNativeTraceCollector({
       buckets.push(newBucket());
     },
     finalize() {
-      let turns = buckets.map(materialize);
-      let total = turns.reduce((sum, turn) => sum + turn.length, 0);
-      if (total > maxTotalLines) {
-        const nonEmpty = turns.filter(turn => turn.length > 0).length || 1;
-        const perTurnCap = Math.max(3, Math.floor(maxTotalLines / nonEmpty));
-        turns = turns.map(turn => compactArrayHeadTail(turn, perTurnCap));
-        total = turns.reduce((sum, turn) => sum + turn.length, 0);
-        if (total > maxTotalLines) {
-          let remaining = maxTotalLines;
-          turns = turns.map(turn => {
-            if (remaining <= 0) return [];
-            const kept = compactArrayHeadTail(turn, remaining);
-            remaining -= kept.length;
-            return kept;
-          });
+      // Strictly causal prefix-only budget enforcement: earlier turns MUST NEVER
+      // depend on future turn count or future line volume (zero future leakage).
+      let remaining = maxTotalLines;
+      return buckets.map(bucket => {
+        if (remaining <= 0) return [];
+        const lines = materialize(bucket);
+        if (lines.length <= remaining) {
+          remaining -= lines.length;
+          return lines;
         }
-      }
-      return turns;
+        const kept = compactArrayHeadTail(lines, remaining);
+        remaining -= kept.length;
+        return kept;
+      });
     },
   };
 }

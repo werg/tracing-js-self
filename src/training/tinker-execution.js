@@ -26,7 +26,7 @@ import {
   scanPublicSourceNodeIoTools,
 } from './tinker-node-io.js';
 import {normalizeCodebaseSpec, codebaseSourceHash, renderRepoManifest,
-  serveCodeLoad, codeLoadResultBytes} from './tinker-codebase.js';
+  serveCodeLoad, codeLoadResultBytes, transpileSingleModuleToCjs} from './tinker-codebase.js';
 import {BROWSER_TOOL_DESCRIPTIONS, DEFAULT_BROWSER_HTML, DEFAULT_BROWSER_URL, scanPublicSourceBrowserTools} from './tinker-browser-dom.js';
 
 export const TINKER_EXECUTION_SCHEMA = 'readable-js-execution/1';
@@ -452,6 +452,30 @@ function privateOperation(prepared, operation, args) {
     {operation, arguments: args};
 }
 
+const scanUnitsCache = new WeakMap();
+
+function publicScanUnits(prepared) {
+  if (!prepared.files) return [prepared.source];
+  const cached = scanUnitsCache.get(prepared.files);
+  if (cached) return cached;
+  const units = [];
+  for (const relPath of Object.keys(prepared.files).sort()) {
+    if (relPath.toLowerCase().endsWith('.json')) continue;
+    const raw = prepared.files[relPath];
+    if (/\.(?:ts|tsx|mts|cts)$/i.test(relPath)) {
+      try {
+        units.push(transpileSingleModuleToCjs(raw, relPath));
+        continue;
+      } catch {
+        // Fall through to raw source if transpilation fails during scanning.
+      }
+    }
+    units.push(raw);
+  }
+  scanUnitsCache.set(prepared.files, units);
+  return units;
+}
+
 function toolDeclaration(operation, prepared) {
   if (operation === 'code.load') {
     return {
@@ -476,8 +500,7 @@ function toolDeclaration(operation, prepared) {
   const nodeIoSpec = own(NODE_IO_OPERATIONS, operation) ? NODE_IO_OPERATIONS[operation] : null;
   const spec = own(HOST_OPERATIONS, operation) ? HOST_OPERATIONS[operation] : null;
   const arity = spec ? spec.arity : null;
-  const scanSource = prepared.files ? Object.values(prepared.files).join('\n') : prepared.source;
-  const fetchHint = operation === 'http.request' && (sourceUsesGlobalFetch(scanSource) || prepared.environment === 'browser')
+  const fetchHint = operation === 'http.request' && (prepared.environment === 'browser' || publicScanUnits(prepared).some(sourceUsesGlobalFetch))
     ? 'Invoke JS external operation http.request (promise, 4 arguments: [url, method, headersObject, bodyOrNull]).'
     : null;
   const browserHint = own(BROWSER_TOOL_DESCRIPTIONS, operation) ? BROWSER_TOOL_DESCRIPTIONS[operation] : null;
@@ -506,22 +529,25 @@ function toolDeclaration(operation, prepared) {
 function initialMessages(prepared) {
   // Derive available tools only from public source/bindings, never the private
   // expected call inventory (which could reveal which branch will execute).
-  const scanSource = prepared.files ? Object.values(prepared.files).join('\n') : prepared.source;
+  const scanUnits = publicScanUnits(prepared);
   const names = new Set(prepared.nativeBindings.map(binding => binding.name));
   if (prepared.files) names.add('code.load');
-  for (const match of scanSource.matchAll(/\bhost\.([A-Za-z_$][\w$]*)/g)) {
-    const operation = HOST_METHODS[match[1]] ?? 'demo.' + match[1];
-    if (own(HOST_OPERATIONS, operation)) names.add(operation);
+  let usesMathRandom = false;
+  for (const unit of scanUnits) {
+    for (const match of unit.matchAll(/\bhost\.([A-Za-z_$][\w$]*)/g)) {
+      const operation = HOST_METHODS[match[1]] ?? 'demo.' + match[1];
+      if (own(HOST_OPERATIONS, operation)) names.add(operation);
+    }
+    if (/\bDate\.now\b/.test(unit)) names.add('platform.dateNow');
+    for (const match of unit.matchAll(/\bconsole\.(log|info|warn|error)\b/g)) names.add('platform.console.' + match[1]);
+    if (/\bMath\.random\b/.test(unit)) usesMathRandom = true;
+    if (sourceUsesGlobalFetch(unit)) names.add('http.request');
+    for (const op of scanPublicSourceNodeIoTools(unit)) names.add(op);
+    if (prepared.environment === 'browser') {
+      for (const op of scanPublicSourceBrowserTools(unit)) names.add(op);
+    }
   }
-  if (/\bDate\.now\b/.test(scanSource)) names.add('platform.dateNow');
-  for (const match of scanSource.matchAll(/\bconsole\.(log|info|warn|error)\b/g)) names.add('platform.console.' + match[1]);
-  const usesMathRandom = /\bMath\.random\b/.test(scanSource);
   if (usesMathRandom && prepared.randomMode === 'tool') names.add('platform.random');
-  if (sourceUsesGlobalFetch(scanSource)) names.add('http.request');
-  for (const op of scanPublicSourceNodeIoTools(scanSource)) names.add(op);
-  if (prepared.environment === 'browser') {
-    for (const op of scanPublicSourceBrowserTools(scanSource)) names.add(op);
-  }
   const operations = [...names].sort();
   let parts;
   if (prepared.files) {
