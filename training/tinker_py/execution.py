@@ -17,6 +17,15 @@ import sys
 import tempfile
 from typing import Any
 
+from .codebase import (
+    CODE_LOAD_OPERATION,
+    CODE_LOAD_TOOL_DESCRIPTION,
+    is_multifile_task,
+    normalize_codebase_files,
+    normalized_multifile_source_hash,
+    render_repo_manifest,
+    serve_code_load,
+)
 from .codec import decode_readable, describe_graph, encode_readable, realize_graph
 
 TINKER_PY_EXECUTION_SCHEMA = "readable-py-execution/1"
@@ -88,6 +97,13 @@ SYSTEM_PROMPT = """Execute the supplied Python program accurately.
   {"type":"complete","kind":"return"|"throw","arguments":[final input args],"value":resultOrError}
 - Final "arguments" must reflect all input mutations and aliases. Standard exceptions use {"name":"ValueError","message":"..."}.
 - Special Python values: {"$py":"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$py":"tuple","items":[...]}, {"$py":"set","items":[...]}, {"$py":"frozenset","items":[...]}, {"$py":"bytes","b64":"..."}, {"$py":"complex","real":...,"imag":...}, {"$py":"decimal","value":"..."}, {"$py":"datetime","iso":"..."}, {"$py":"date","iso":"..."}, {"$py":"timedelta","days":...,"seconds":...,"microseconds":...}, {"$py":"path","value":"..."}, {"$py":"enum","class":"...","name":"...","value":...}, {"$py":"object","class":"...","attrs":{...}}, {"$py":"dict","entries":[[k,v],...]} for non-string or $py-keyed dicts, {"$py":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the arguments array for tool calls)."""
+
+MULTIFILE_SYSTEM_PROMPT = (
+    SYSTEM_PROMPT
+    + '\n- Multi-file repository mode: only the entry file is shown initially. Call code.load with {"arguments":[{"path":"..."}]} '
+    '(whole file for small files) or {"arguments":[{"path":"...","symbol":"..."}]} (symbol snippet for large files) '
+    'or {"arguments":[{"path":"...","start_line":N,"end_line":M}]} whenever you need code from another file; you may batch multiple requests.'
+)
 
 
 def _demand(condition: bool, message: str) -> None:
@@ -537,6 +553,24 @@ def _scan_public_source_tools(source: str, random_mode: str, native_bindings: li
 
 
 def _tool_declaration(operation: str, native_bindings: list[dict[str, Any]]) -> dict[str, Any]:
+    if operation == CODE_LOAD_OPERATION:
+        return {
+            "type": "function",
+            "function": {
+                "name": CODE_LOAD_OPERATION,
+                "description": CODE_LOAD_TOOL_DESCRIPTION,
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "arguments": {
+                            "type": "array",
+                            "description": "One or more code.load request objects ({path, symbol?, start_line?, end_line?}).",
+                        }
+                    },
+                    "required": ["arguments"],
+                },
+            },
+        }
     binding = next((b for b in native_bindings if b["name"] == operation), None)
     spec = PY_HOST_OPERATIONS.get(operation)
     description = (
@@ -565,16 +599,57 @@ def _tool_declaration(operation: str, native_bindings: list[dict[str, Any]]) -> 
 
 def initial_messages(prepared: dict[str, Any]) -> list[dict[str, Any]]:
     """Build initial public messages (system, optional tool_declare, user)."""
-    operations, uses_random = _scan_public_source_tools(
-        prepared["source"],
-        prepared["randomMode"],
-        prepared["nativeBindings"],
-    )
-    parts = [
-        "Execute this Python program:",
-        "```python\n" + prepared["source"] + "\n```",
-        "Entry: " + prepared["entry"] + " with arguments " + _json_compact(encode_readable(prepared["args"])),
-    ]
+    if is_multifile_task(prepared):
+        files = prepared["files"]
+        entry_file = prepared["entryFile"]
+        loaded_files = prepared.get("initialLoadedFiles") or [entry_file]
+        op_set: set[str] = {CODE_LOAD_OPERATION}
+        uses_random = False
+        for src in files.values():
+            try:
+                file_ops, file_uses_random = _scan_public_source_tools(
+                    src,
+                    prepared["randomMode"],
+                    prepared["nativeBindings"],
+                )
+            except SyntaxError:
+                file_ops, file_uses_random = [], False
+            op_set.update(file_ops)
+            uses_random = uses_random or file_uses_random
+        operations = sorted(op_set)
+        manifest = render_repo_manifest(files, entry_file, loaded_files)
+        parts = [
+            "Execute this multi-file Python repository:",
+            manifest,
+            f"Loaded entry file ({entry_file}):",
+            "```python\n" + files[entry_file] + "\n```",
+        ]
+        for extra_path in loaded_files:
+            if extra_path != entry_file and extra_path in files:
+                parts.append(f"Loaded file ({extra_path}):")
+                parts.append("```python\n" + files[extra_path] + "\n```")
+        parts.append(
+            "Entry: "
+            + prepared["entry"]
+            + " in "
+            + entry_file
+            + " with arguments "
+            + _json_compact(encode_readable(prepared["args"]))
+        )
+        system_prompt = MULTIFILE_SYSTEM_PROMPT
+    else:
+        operations, uses_random = _scan_public_source_tools(
+            prepared["source"],
+            prepared["randomMode"],
+            prepared["nativeBindings"],
+        )
+        parts = [
+            "Execute this Python program:",
+            "```python\n" + prepared["source"] + "\n```",
+            "Entry: " + prepared["entry"] + " with arguments " + _json_compact(encode_readable(prepared["args"])),
+        ]
+        system_prompt = SYSTEM_PROMPT
+
     if uses_random:
         if prepared["randomMode"] == "tool":
             parts.append(
@@ -583,7 +658,7 @@ def initial_messages(prepared: dict[str, Any]) -> list[dict[str, Any]]:
         else:
             parts.append(f"random is seeded deterministically with random.seed({prepared['randomSeed']}).")
 
-    messages: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages: list[dict[str, Any]] = [{"role": "system", "content": system_prompt}]
     if operations:
         tools = [_tool_declaration(op, prepared["nativeBindings"]) for op in operations]
         messages.append({"role": "tool_declare", "content": _json_compact(tools)})
@@ -595,10 +670,26 @@ def normalize_python_task(input_task: dict[str, Any]) -> dict[str, Any]:
     _demand(isinstance(input_task, dict), "Task must be a dict")
     task_id = input_task.get("id")
     family = input_task.get("family")
-    source = input_task.get("source")
     _demand(isinstance(task_id, str) and 0 < len(task_id) <= 256, "Task id required")
     _demand(isinstance(family, str) and len(family) > 0, "Source family required")
-    _demand(isinstance(source, str) and 0 < len(source) <= 262144, "Bounded source required")
+
+    multifile = is_multifile_task(input_task)
+    norm_files: dict[str, str] | None = None
+    norm_entry_file: str | None = None
+    norm_initial_loaded: list[str] | None = None
+    if multifile:
+        entry_file_raw = input_task.get("entryFile")
+        _demand(isinstance(entry_file_raw, str) and len(entry_file_raw) > 0, "entryFile required for multi-file task")
+        norm_files, norm_entry_file, norm_initial_loaded = normalize_codebase_files(
+            input_task["files"],
+            entry_file_raw,
+            input_task.get("initialLoadedFiles"),
+        )
+        source = norm_files[norm_entry_file]
+        _demand(isinstance(source, str) and 0 < len(source) <= 262144, "Bounded entryFile source required")
+    else:
+        source = input_task.get("source")
+        _demand(isinstance(source, str) and 0 < len(source) <= 262144, "Bounded source required")
 
     entry = input_task.get("entry", "run")
     _demand(isinstance(entry, str) and entry.isidentifier(), "Entry must be a valid Python identifier")
@@ -665,7 +756,11 @@ def normalize_python_task(input_task: dict[str, Any]) -> dict[str, Any]:
         "Invalid teacher timeout",
     )
 
-    source_hash = normalized_py_source_hash(source)
+    if multifile:
+        assert norm_files is not None and norm_entry_file is not None and norm_initial_loaded is not None
+        source_hash = normalized_multifile_source_hash(norm_files, norm_entry_file)
+    else:
+        source_hash = normalized_py_source_hash(source)
 
     normalized_fixture_calls = [
         {
@@ -693,8 +788,14 @@ def normalize_python_task(input_task: dict[str, Any]) -> dict[str, Any]:
     }
     if random_mode != "seeded":
         canonical_task["randomMode"] = random_mode
+    if multifile:
+        assert norm_files is not None and norm_entry_file is not None and norm_initial_loaded is not None
+        canonical_task["files"] = norm_files
+        canonical_task["entryFile"] = norm_entry_file
+        if "initialLoadedFiles" in input_task or norm_initial_loaded != [norm_entry_file]:
+            canonical_task["initialLoadedFiles"] = norm_initial_loaded
 
-    return {
+    normalized_result: dict[str, Any] = {
         "id": task_id,
         "family": family,
         "sourceHash": source_hash,
@@ -709,10 +810,16 @@ def normalize_python_task(input_task: dict[str, Any]) -> dict[str, Any]:
         "timeoutMs": timeout_ms,
         "task": canonical_task,
     }
+    if multifile:
+        assert norm_files is not None and norm_entry_file is not None and norm_initial_loaded is not None
+        normalized_result["files"] = norm_files
+        normalized_result["entryFile"] = norm_entry_file
+        normalized_result["initialLoadedFiles"] = norm_initial_loaded
+    return normalized_result
 
 
 def _invoke_reference_worker(prepared: dict[str, Any], *, trace: bool) -> dict[str, Any]:
-    payload = {
+    payload: dict[str, Any] = {
         "source": prepared["source"],
         "entry": prepared["entry"],
         "args": prepared["task"]["args"],
@@ -724,6 +831,10 @@ def _invoke_reference_worker(prepared: dict[str, Any], *, trace: bool) -> dict[s
         "maxSteps": prepared["maxSteps"],
         "timeoutMs": prepared["timeoutMs"],
     }
+    if is_multifile_task(prepared):
+        payload["files"] = prepared["files"]
+        payload["entryFile"] = prepared["entryFile"]
+        payload["initialLoadedFiles"] = prepared.get("initialLoadedFiles")
     timeout_s = max(2.0, prepared["timeoutMs"] / 1000.0 + 3.0)
     with tempfile.TemporaryDirectory(prefix="py-ref-") as tmpdir:
         proc = subprocess.run(
@@ -913,6 +1024,15 @@ def _parse_tool_call(tc: Any) -> dict[str, Any]:
         args = raw_args
     elif isinstance(raw_args, dict) and len(raw_args) == 1 and isinstance(raw_args.get("arguments"), list):
         args = raw_args["arguments"]
+    elif (
+        fn["name"] == CODE_LOAD_OPERATION
+        and isinstance(raw_args, dict)
+        and len(raw_args) == 1
+        and isinstance(raw_args.get("arguments"), dict)
+    ):
+        args = [raw_args["arguments"]]
+    elif fn["name"] == CODE_LOAD_OPERATION and isinstance(raw_args, dict) and "path" in raw_args:
+        args = [raw_args]
     elif isinstance(raw_args, dict) and len(raw_args) == 0:
         args = []
     else:
@@ -972,6 +1092,20 @@ def parse_student_action(input_val: Any) -> dict[str, Any]:
     return _validate_action_object(action)
 
 
+def _external_effects_only(effects: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Filter out read-only `code.load` effects and renumber remaining external effect IDs."""
+    id_map: dict[int, int] = {}
+    out: list[dict[str, Any]] = []
+    for eff in effects:
+        if eff.get("operation") == CODE_LOAD_OPERATION:
+            continue
+        orig_id = eff["call"]
+        if orig_id not in id_map:
+            id_map[orig_id] = len(id_map)
+        out.append({**eff, "call": id_map[orig_id]})
+    return out
+
+
 class PythonExecutionSession:
     """Stateful live grading session for Python execution tasks."""
 
@@ -985,6 +1119,9 @@ class PythonExecutionSession:
         self._failure_category: str | None = "incomplete"
         self._generated_tokens = 0
         self._calls = 0
+        self._total_tool_calls = 0
+        self._code_load_calls = 0
+        self._code_load_bytes = 0
         self._turns = 0
         self._recorded_effects: list[dict[str, Any]] = []
         max_turns = prepared["task"].get("maxTurns", 256)
@@ -1012,6 +1149,8 @@ class PythonExecutionSession:
             "failureCategory": self._failure_category,
             "generatedTokens": self._generated_tokens,
             "externalCalls": self._calls,
+            "codeLoadCalls": self._code_load_calls,
+            "codeLoadBytes": self._code_load_bytes,
             "complete": self._completed,
         }
 
@@ -1062,7 +1201,7 @@ class PythonExecutionSession:
                 self._done = True
                 self._success = (
                     actual == expected_outcome_cmp
-                    and self._recorded_effects == self._prepared["effects"]
+                    and self._recorded_effects == _external_effects_only(self._prepared["effects"])
                 )
                 self._reason = "verified-complete-execution" if self._success else "outcome-mismatch"
                 self._failure_category = None
@@ -1095,6 +1234,16 @@ class PythonExecutionSession:
             for item in batch:
                 args = decode_readable(item["arguments"])
                 _demand(isinstance(args, list), "Call arguments must be a list")
+                if item["operation"] == CODE_LOAD_OPERATION:
+                    _demand(is_multifile_task(self._prepared), "code.load is only available on multi-file tasks")
+                    result_items = serve_code_load(self._prepared["files"], args)
+                    self._code_load_calls += 1
+                    self._total_tool_calls += 1
+                    tool_call_id = item.get("toolCallId") or f"call_{self._total_tool_calls}"
+                    obs = _observation(CODE_LOAD_OPERATION, "fulfilled", result_items, tool_call_id)
+                    self._code_load_bytes += len(obs["content"].encode("utf-8"))
+                    observations.append(obs)
+                    continue
                 if self._calls >= len(fixture_calls):
                     raise TypeError("Unexpected extra external call")
                 expected = fixture_calls[self._calls]
@@ -1120,7 +1269,8 @@ class PythonExecutionSession:
                     "result": describe_graph([value], allow_exceptions=True),
                 })
                 self._calls += 1
-                tool_call_id = item.get("toolCallId") or f"call_{self._calls}"
+                self._total_tool_calls += 1
+                tool_call_id = item.get("toolCallId") or f"call_{self._total_tool_calls}"
                 observations.append(_observation(item["operation"], status, value, tool_call_id))
             return {"messages": observations, "done": False}
         except Exception:
@@ -1197,7 +1347,8 @@ def audit_python_conversation(
                 index += 1
                 observation_bytes += len(obs["content"].encode("utf-8"))
             _demand(not step_res["done"] or index == len(messages), "Teacher conversation continues after completion")
-        _demand(session.grade()["success"], "Teacher conversation never completed")
+        final_grade = session.grade()
+        _demand(final_grade["success"], "Teacher conversation never completed")
         if fmt == "actions-only":
             _demand(narration_lines == 0, "Removed teacher narration remains in the input")
         return {
@@ -1208,6 +1359,8 @@ def audit_python_conversation(
             "reasoningChannel": channel,
             "messages": len(messages),
             "calls": calls,
+            "codeLoadCalls": final_grade["codeLoadCalls"],
+            "codeLoadBytes": final_grade["codeLoadBytes"],
             "narrationLines": narration_lines,
             "assistantBytes": assistant_bytes,
             "observationBytes": observation_bytes,
@@ -1256,6 +1409,12 @@ def export_python_example(
         "exceptionProfile": "declared-error/name-message/1",
         "optimizerSteps": 0,
     })
+    if is_multifile_task(prepared):
+        meta["multifile"] = True
+        meta["fileCount"] = len(prepared["files"])
+        meta["entryFile"] = prepared["entryFile"]
+        meta["codeLoadCalls"] = trace_audit["codeLoadCalls"]
+        meta["codeLoadBytes"] = trace_audit["codeLoadBytes"]
     return {
         "schema": TINKER_PY_EXECUTION_SCHEMA,
         "id": prepared["id"],
