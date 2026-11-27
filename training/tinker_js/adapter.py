@@ -688,8 +688,11 @@ class TinkerAdapter:
         temp = self.temperature if temperature is None else _finite(temperature, "temperature")
         if temp < 0:
             raise ValueError("temperature must be nonnegative")
+        # Reserve a small framing margin on large server windows (Tinker's 65536 tier caps at 65529).
+        headroom = 64 if self.max_context_tokens >= 1024 else 0
+        effective_limit = self.max_context_tokens - headroom
         # Reserve room for both the sampled thought and the appended target action tokens.
-        max_thought_budget = min(budget, self.max_context_tokens - len(thinking_prompt) - len(target_tokens))
+        max_thought_budget = min(budget, effective_limit - len(thinking_prompt) - len(target_tokens))
         if max_thought_budget <= 0:
             raise ContextOverflow(
                 f"Prompt ({len(thinking_prompt)}) + target ({len(target_tokens)}) exceeds context limit {self.max_context_tokens}"
@@ -1202,7 +1205,8 @@ class TinkerAdapter:
             raise ValueError("Renderer produced an empty generation prompt")
         budget = self.max_tokens if max_tokens is None else _positive_int(max_tokens, "max_tokens")
         if clamp_to_context:
-            remaining = self.max_context_tokens - len(prompt_tokens)
+            headroom = 64 if self.max_context_tokens >= 1024 else 0
+            remaining = (self.max_context_tokens - headroom) - len(prompt_tokens)
             if remaining <= 0:
                 self._budget(len(prompt_tokens), 1)
             budget = min(budget, remaining)
