@@ -4,7 +4,11 @@ import {mkdtempSync, mkdirSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {
+  MAX_CODEBASE_FILES,
+  MAX_CODEBASE_TOTAL_BYTES,
+  MAX_CODE_LOAD_BATCH,
   WHOLE_FILE_LOAD_MAX_BYTES,
+  normalizeCodebaseSpec,
   renderRepoManifest,
   serveCodeLoad,
 } from '../src/training/tinker-codebase.js';
@@ -16,6 +20,7 @@ import {
   prepareTinkerTask,
 } from '../src/training/tinker-execution.js';
 import {harvestMultiFileRepos} from '../tools/tinker-harvest-multifile-js.mjs';
+import {createNativeTraceCollector} from '../src/training/native-trace.js';
 
 const complete = (value, args = [], kind = 'return') => {
   const encoded = encodeReadable({arguments: args, value});
@@ -373,4 +378,62 @@ test('harvestMultiFileRepos harvests verified multi-file tasks with real distrac
   } finally {
     rmSync(tmp, {recursive: true, force: true});
   }
+});
+
+test('raised codebase caps accept up to 256 files, 4MB total, 64-item code.load batches, and keep 150-file manifest compact', () => {
+  assert.equal(MAX_CODEBASE_FILES, 256);
+  assert.equal(MAX_CODEBASE_TOTAL_BYTES, 4 * 1024 * 1024);
+  assert.equal(MAX_CODE_LOAD_BATCH, 64);
+
+  const files = {'src/index.js': 'export function run() { return 1; }\n'};
+  for (let i = 1; i < 150; i++) {
+    const padExports = Array.from({length: 14}, (_, j) =>
+      `export function helper_${i}_${j}(v) { return v + ${j}; }`).join('\n');
+    const padDefs = Array.from({length: 6}, (_, j) =>
+      `function internal_${i}_${j}(v) { return v - ${j}; }`).join('\n');
+    files[`src/modules/mod_${String(i).padStart(3, '0')}.js`] = padExports + '\n' + padDefs + '\n';
+  }
+  const spec = normalizeCodebaseSpec({files, entryFile: 'src/index.js'});
+  assert.equal(Object.keys(spec.files).length, 150);
+
+  const manifest = renderRepoManifest(spec.files, 'src/index.js');
+  const lines = manifest.split('\n');
+  assert.equal(lines.length, 151);
+  assert.match(lines[0], /Repository manifest \(150 files\):/);
+  // Must stay compact (~< 32K chars / < 10K tokens) even with 150 symbol-heavy files
+  assert(manifest.length < 30000, `Expected compact 150-file manifest (<30000 chars), got ${manifest.length}`);
+  assert.match(lines[2], /\(\+\d+ more\)/);
+
+  // Batch of 64 code.load requests succeeds without truncation
+  const reqs = Array.from({length: 64}, (_, i) => ({
+    path: `src/modules/mod_${String(i + 1).padStart(3, '0')}.js`,
+    symbol: `helper_${i + 1}_0`,
+  }));
+  const batchRes = serveCodeLoad(spec.files, reqs);
+  assert.equal(batchRes.length, 64);
+  assert.equal(batchRes[0].mode, 'symbol');
+  assert.equal(batchRes[63].mode, 'symbol');
+});
+
+test('createNativeTraceCollector total-line compaction is strictly causal (future turns never alter earlier turns)', () => {
+  const shortRun = createNativeTraceCollector({maxLinesPerTurn: 20, maxTotalLines: 30});
+  const longRun = createNativeTraceCollector({maxLinesPerTurn: 20, maxTotalLines: 30});
+
+  for (const collector of [shortRun, longRun]) {
+    for (let i = 0; i < 15; i++) collector.hooks.__traceWrite('a', i, 'i');
+    collector.nextTurn();
+    for (let i = 0; i < 10; i++) collector.hooks.__traceWrite('b', i, 'i');
+    collector.nextTurn();
+  }
+  // Short run ends with 2 lines; long run emits many future turns exceeding maxTotalLines
+  shortRun.hooks.__traceWrite('c', 1, '1');
+  for (let t = 0; t < 5; t++) {
+    for (let i = 0; i < 15; i++) longRun.hooks.__traceWrite('d_' + t, i, 'i');
+    longRun.nextTurn();
+  }
+
+  const shortTurns = shortRun.finalize();
+  const longTurns = longRun.finalize();
+  assert.deepEqual(shortTurns.slice(0, 2), longTurns.slice(0, 2));
+  assert(longTurns.reduce((s, t) => s + t.length, 0) <= 30);
 });

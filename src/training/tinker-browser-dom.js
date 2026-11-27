@@ -109,7 +109,11 @@ export function scanPublicSourceBrowserTools(source) {
       for (const st of stmts) {
         if (st.type === 'FunctionDeclaration' && st.id?.name) bound.add(st.id.name);
         else if (st.type === 'ClassDeclaration' && st.id?.name) bound.add(st.id.name);
-        else if (st.type === 'VariableDeclaration') {
+        else if (st.type === 'ImportDeclaration') {
+          for (const spec of st.specifiers ?? []) {
+            if (spec.local?.name) bound.add(spec.local.name);
+          }
+        } else if (st.type === 'VariableDeclaration') {
           if (st.kind !== 'var' || isFunctionScope) {
             for (const d of st.declarations ?? []) collectPatternNames(d.id, bound);
           }

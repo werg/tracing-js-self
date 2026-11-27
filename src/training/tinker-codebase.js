@@ -9,10 +9,10 @@ import ts from 'typescript';
 import {instrumentNativeTraceSource} from './native-trace.js';
 
 export const WHOLE_FILE_LOAD_MAX_BYTES = 3072;
-export const MAX_CODEBASE_FILES = 64;
-export const MAX_CODEBASE_TOTAL_BYTES = 1024 * 1024;
+export const MAX_CODEBASE_FILES = 256;
+export const MAX_CODEBASE_TOTAL_BYTES = 4 * 1024 * 1024;
 export const MAX_CODEBASE_FILE_BYTES = 262144;
-export const MAX_CODE_LOAD_BATCH = 32;
+export const MAX_CODE_LOAD_BATCH = 64;
 
 const MODULE_EXTENSIONS = Object.freeze(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts', '.json']);
 const TS_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
@@ -452,6 +452,25 @@ export function analyzeSourceFile(code, filePath = 'module.js') {
 export function renderRepoManifest(files, entryFile, initialLoadedFiles = [entryFile]) {
   const loaded = new Set(initialLoadedFiles);
   const paths = Object.keys(files).sort();
+  const isLargeRepo = paths.length > 64;
+  const isVeryLargeRepo = paths.length > 128;
+  const exportLimit = isVeryLargeRepo ? 6 : (isLargeRepo ? 8 : 12);
+  const defLimit = isVeryLargeRepo ? 3 : (isLargeRepo ? 4 : 8);
+  const maxPartChars = isVeryLargeRepo ? 72 : (isLargeRepo ? 96 : Infinity);
+  const fmtList = (list, limit) => {
+    if (!list.length) return '';
+    const kept = [];
+    let chars = 0;
+    for (let i = 0; i < list.length && kept.length < limit; i++) {
+      const item = list[i];
+      const nextChars = chars + (kept.length ? 2 : 0) + item.length;
+      if (kept.length > 0 && nextChars > maxPartChars) break;
+      kept.push(item);
+      chars = nextChars;
+    }
+    const remaining = list.length - kept.length;
+    return remaining > 0 ? kept.join(', ') + ` (+${remaining} more)` : kept.join(', ');
+  };
   const rows = [`Repository manifest (${paths.length} file${paths.length === 1 ? '' : 's'}):`];
   for (const relPath of paths) {
     const info = analyzeSourceFile(files[relPath], relPath);
@@ -462,12 +481,11 @@ export function renderRepoManifest(files, entryFile, initialLoadedFiles = [entry
       if (sym.exported) exportedNames.push(sym.name);
       else if (sym.kind === 'function' || sym.kind === 'class') defNames.push(sym.name);
     }
-    const fmtList = (list, limit) => list.length <= limit
-      ? list.join(', ')
-      : list.slice(0, limit).join(', ') + ` (+${list.length - limit} more)`;
     const summaryParts = [];
-    if (exportedNames.length) summaryParts.push('exports: ' + fmtList(exportedNames, 12));
-    if (defNames.length) summaryParts.push('defs: ' + fmtList(defNames, 8));
+    if (exportedNames.length) summaryParts.push('exports: ' + fmtList(exportedNames, exportLimit));
+    if (defNames.length && (!isVeryLargeRepo || exportedNames.length === 0)) {
+      summaryParts.push('defs: ' + fmtList(defNames, defLimit));
+    }
     const suffix = summaryParts.length ? ' — ' + summaryParts.join('; ') : '';
     rows.push(`- ${relPath}${tag} (${info.lines} lines, ${info.bytes} bytes)${suffix}`);
   }
@@ -858,6 +876,7 @@ export async function executeVirtualCodebaseInContext({
   traceMode = false,
   onCodeLoadEvent,
   setTraceActive,
+  onCallbackFailure = null,
   compiledCache = null,
 }) {
   const loadedFiles = new Set(initialLoadedFiles);
@@ -992,11 +1011,35 @@ export async function executeVirtualCodebaseInContext({
   let value = context.__result;
   let kind = context.__kind;
   if (kind === 'return') {
-    try {
-      value = await value;
-    } catch (error) {
-      kind = 'throw';
-      value = error;
+    if (value && typeof value.then === 'function' && typeof context.__browserHasPendingTimers === 'function') {
+      let settled = false;
+      const tracked = Promise.resolve(value).then(
+        res => { settled = true; return {ok: true, res}; },
+        err => { settled = true; return {ok: false, err}; },
+      );
+      let idleTicks = 0;
+      for (let steps = 0; steps < 2000 && !settled; steps++) {
+        await new Promise(resolve => setImmediate(resolve));
+        if (settled) break;
+        if (context.__browserHasPendingTimers()) {
+          idleTicks = 0;
+          try { context.__browserStepNextTimer(); } catch (error) {
+            if (typeof onCallbackFailure === 'function') onCallbackFailure(error);
+          }
+        } else if (++idleTicks >= 16) {
+          break;
+        }
+      }
+      const outcomeBox = await tracked;
+      if (outcomeBox.ok) value = outcomeBox.res;
+      else { kind = 'throw'; value = outcomeBox.err; }
+    } else {
+      try {
+        value = await value;
+      } catch (error) {
+        kind = 'throw';
+        value = error;
+      }
     }
   }
   return {kind, value};

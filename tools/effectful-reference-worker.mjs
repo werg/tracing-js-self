@@ -212,6 +212,7 @@ try{
         turnEvents.push({kind:'code.load',arguments:[req]});
       },
       setTraceActive(active){traceActive=Boolean(active);},
+      onCallbackFailure:failure,
     });
     value=execResult.value;
     kind=execResult.kind;
@@ -238,12 +239,14 @@ try{
           res=>{settled=true;return {ok:true,res};},
           err=>{settled=true;return {ok:false,err};}
         );
+        let idleTicks=0;
         for(let steps=0;steps<2000&&!settled;steps++){
           await new Promise(resolve=>setImmediate(resolve));
           if(settled)break;
           if(context.__browserHasPendingTimers&&context.__browserHasPendingTimers()){
+            idleTicks=0;
             try{context.__browserStepNextTimer();}catch(error){failure(error);}
-          }else{
+          }else if(++idleTicks>=16){
             break;
           }
         }
