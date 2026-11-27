@@ -18,6 +18,7 @@ import concurrent.futures
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -26,6 +27,12 @@ import sys
 import tempfile
 from typing import Any
 import warnings
+
+try:
+    import tiktoken as _tiktoken  # type: ignore[import-not-found]
+    _TIKTOKEN_ENC = _tiktoken.get_encoding("cl100k_base")
+except Exception:
+    _TIKTOKEN_ENC = None
 
 warnings.filterwarnings("ignore", category=SyntaxWarning)
 
@@ -210,7 +217,9 @@ FALLBACK_PROBES_BY_ARITY: dict[int, list[list[Any]]] = {
 }
 
 _MULTIFILE_PROBE_SCRIPT = r"""
+import asyncio
 import builtins
+import inspect
 import io
 import json
 import random
@@ -239,7 +248,7 @@ def _timeout(_sig, _frame):
 
 if hasattr(signal, "SIGALRM"):
     signal.signal(signal.SIGALRM, _timeout)
-    signal.setitimer(signal.ITIMER_REAL, 6.0)
+    signal.setitimer(signal.ITIMER_REAL, 10.0)
 
 real_stdout = sys.stdout
 try:
@@ -355,7 +364,7 @@ try:
         if rel is None:
             return None
         call_events[0] += 1
-        if call_events[0] > 20000:
+        if call_events[0] > 80000:
             raise RuntimeError("call event budget exceeded")
         if rel != entry_file:
             touched_non_entry.add(rel)
@@ -370,7 +379,14 @@ try:
             raise TypeError(f"Entry {entry!r} not callable")
         sys.settrace(_call_trace)
         try:
-            result = fn(*args)
+            if inspect.iscoroutinefunction(fn):
+                result = asyncio.run(fn(*args))
+            else:
+                raw_result = fn(*args)
+                if inspect.isawaitable(raw_result):
+                    result = asyncio.run(raw_result)
+                else:
+                    result = raw_result
         except Exception as exc:
             kind = "throw"
             result = encode_exception(exc)
@@ -707,7 +723,7 @@ def extract_unit_test_inputs(repo_dir: Path, test_files: list[Path]) -> dict[str
     return by_fn
 
 
-def _fn_arity_bounds(fn_node: ast.FunctionDef) -> tuple[int, int | None]:
+def _fn_arity_bounds(fn_node: ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[int, int | None]:
     args = fn_node.args
     pos_count = len(args.posonlyargs) + len(args.args)
     default_count = len(args.defaults)
@@ -789,8 +805,8 @@ def _discover_package_sets(
     *,
     min_files: int,
     max_files: int,
-    max_single_file_bytes: int = 60_000,
-    max_package_bytes: int = 220_000,
+    max_single_file_bytes: int = 150_000,
+    max_package_bytes: int = 2_000_000,
 ) -> list[dict[str, Any]]:
     """Discover candidate multi-file package layouts inside a repository."""
     source_files, _ = _walk_py_files(repo_dir)
@@ -943,7 +959,7 @@ def _select_subpackage_for_entry(
             p,
         )
     )
-    target_count = min(max_files, max(min_files, len(selected) + 5))
+    target_count = max_files
     for p in distractor_candidates:
         if len(selected) >= target_count:
             break
@@ -973,7 +989,7 @@ def _probe_multifile(files: dict[str, str], entry_file: str, entry: str, encoded
                 capture_output=True,
                 text=True,
                 cwd=tmpdir,
-                timeout=6.0,
+                timeout=11.0,
                 check=False,
             )
         out = proc.stdout.strip()
@@ -984,19 +1000,35 @@ def _probe_multifile(files: dict[str, str], entry_file: str, entry: str, encoded
         return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
 
 
-def _smart_probes_for_fn(fn_node: ast.FunctionDef, min_arity: int, max_arity: int | None) -> list[list[Any]]:
+def _smart_probes_for_fn(fn_node: ast.FunctionDef | ast.AsyncFunctionDef, min_arity: int, max_arity: int | None) -> list[list[Any]]:
     arg_names = [a.arg.lower() for a in [*fn_node.args.posonlyargs, *fn_node.args.args]]
     probes: list[list[Any]] = []
 
     def _guess_for_name(name: str) -> list[Any]:
         if any(k in name for k in ("url", "uri", "link", "href")):
-            return ["https://example.com/a/b?k=1"]
-        if any(k in name for k in ("text", "str", "msg", "line", "word", "name", "title", "slug", "html", "sql", "code", "src", "s")):
-            return ["hello world 123", "foo_bar-baz"]
-        if any(k in name for k in ("dict", "map", "cfg", "config", "obj", "data", "mapping", "kwargs")):
-            return [{"a": 1, "b": 2, "c": 3}]
-        if any(k in name for k in ("items", "vals", "values", "nums", "list", "seq", "arr", "tokens", "xs")):
-            return [[3, 1, 4, 1, 5], ["alpha", "beta", "gamma"]]
+            return ["https://example.com:8443/api/v2/items?sort=asc&tag=py#top"]
+        if any(k in name for k in ("sql", "query")):
+            return ["SELECT u.id, u.name FROM users u WHERE u.active = 1 ORDER BY u.id DESC"]
+        if any(k in name for k in ("html", "xml", "markup", "doc")):
+            return ["<div class='card'><h1>Hello</h1><p>World &amp; <b>Python</b></p></div>"]
+        if any(k in name for k in ("md", "markdown")):
+            return ["# Title\n\n- item **one**\n- item `two`\n\n> quote\n"]
+        if any(k in name for k in ("yaml", "yml")):
+            return ["service:\n  name: api\n  ports:\n    - 8080\n    - 8443\n  enabled: true\n"]
+        if any(k in name for k in ("toml",)):
+            return ['[project]\nname = "demo"\nversion = "1.2.3"\ntags = ["a", "b"]\n']
+        if any(k in name for k in ("json",)):
+            return ['{"service":"api","retries":3,"flags":[true,false]}']
+        if any(k in name for k in ("expr", "path", "pattern", "spec", "ver", "version", "req", "marker")):
+            return ["foo.bar[0].baz", ">=1.2.3,<2.0.0", "1.4.2.post1"]
+        if any(k in name for k in ("date", "time", "dt", "ts", "stamp", "cron")):
+            return ["2026-05-14T09:30:00Z", "*/15 9-17 * * 1-5"]
+        if any(k in name for k in ("text", "str", "msg", "line", "word", "name", "title", "slug", "code", "src", "s")):
+            return ["hello world 123", "foo_bar-baz", "def add(x, y):\n    return x + y\n"]
+        if any(k in name for k in ("dict", "map", "cfg", "config", "obj", "data", "mapping", "kwargs", "schema")):
+            return [{"a": 1, "b": {"nested": [2, 3]}, "c": "ok"}]
+        if any(k in name for k in ("items", "vals", "values", "nums", "list", "seq", "arr", "tokens", "xs", "rows")):
+            return [[3, 1, 4, 1, 5], ["alpha", "beta", "gamma"], [["name", "score"], ["alice", 95], ["bob", 88]]]
         if any(k in name for k in ("num", "count", "size", "limit", "index", "idx", "n", "x", "y", "k")):
             return [12, 5]
         return []
@@ -1018,6 +1050,18 @@ def _smart_probes_for_fn(fn_node: ast.FunctionDef, min_arity: int, max_arity: in
     return probes
 
 
+def _estimate_tokens(conv_chars: int, serialized_messages: str | None = None) -> tuple[int, int | None]:
+    """Conservative char/3.2 token estimate plus optional tiktoken cl100k_base exact count."""
+    est = int(math.ceil(conv_chars / 3.2))
+    tt: int | None = None
+    if _TIKTOKEN_ENC is not None and serialized_messages is not None:
+        try:
+            tt = len(_TIKTOKEN_ENC.encode(serialized_messages, disallowed_special=()))
+        except Exception:
+            tt = None
+    return est, tt
+
+
 def harvest_repo_multifile(
     repo_dir: Path,
     *,
@@ -1026,28 +1070,53 @@ def harvest_repo_multifile(
     min_files: int,
     max_files: int,
     min_code_loads: int,
+    min_loaded_files: int = 1,
+    max_single_file_bytes: int = 150_000,
+    max_package_bytes: int = 2_000_000,
+    max_probes_per_repo: int = 250,
+    id_prefix: str = "pymf",
     drop_probe_type_errors: bool = True,
 ) -> list[dict[str, Any]]:
     repo_name = _slug(repo_dir.name)
     _, test_files = _walk_py_files(repo_dir)
     unit_inputs = extract_unit_test_inputs(repo_dir, test_files)
-    bundles = _discover_package_sets(repo_dir, min_files=min_files, max_files=max_files)
+    bundles = _discover_package_sets(
+        repo_dir,
+        min_files=min_files,
+        max_files=max_files,
+        max_single_file_bytes=max_single_file_bytes,
+        max_package_bytes=max_package_bytes,
+    )
+    # Prefer the largest outermost package bundles first and bound redundant subpackage scanning.
+    bundles.sort(key=lambda b: -len(b["files"]))
+    bundles = bundles[:4]
 
     unit_candidates: list[dict[str, Any]] = []
     probe_candidates: list[dict[str, Any]] = []
-    repo_cap = max_per_repo * 3
+    repo_cap = max_per_repo * 4
     fn_probe_cap = max(max_per_fn * 2, max_per_fn + 2)
+    min_touched_non_entry = max(1, min_loaded_files - 1)
+    total_probes = 0
 
     for bundle in bundles:
-        if len(unit_candidates) >= repo_cap:
+        if len(unit_candidates) >= repo_cap or total_probes >= max_probes_per_repo:
             break
         pkg_name = _slug(bundle["pkgName"])
-        for entry_rel in sorted(bundle["files"].keys()):
-            if len(unit_candidates) >= repo_cap:
+        # Prioritize entry files that have outgoing intra-package imports and unit-test hits.
+        ordered_entries = sorted(
+            bundle["files"].keys(),
+            key=lambda rel: (
+                0 if any(
+                    isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef)) and s.name in unit_inputs
+                    for s in bundle["trees"][rel].body
+                ) else 1,
+                -len(bundle["edges"].get(rel, ())),
+                rel,
+            ),
+        )
+        for entry_rel in ordered_entries[:40]:
+            if len(unit_candidates) >= repo_cap or total_probes >= max_probes_per_repo:
                 break
-            if entry_rel.endswith("/__init__.py") or entry_rel == "__init__.py":
-                # Allow __init__.py only if it defines public functions directly
-                pass
             selected_files = _select_subpackage_for_entry(bundle, entry_rel)
             if selected_files is None:
                 continue
@@ -1057,31 +1126,33 @@ def harvest_repo_multifile(
 
             fn_nodes = [
                 s for s in tree.body
-                if isinstance(s, ast.FunctionDef) and not s.name.startswith("_")
+                if isinstance(s, (ast.FunctionDef, ast.AsyncFunctionDef)) and not s.name.startswith("_")
             ]
             # Prioritize functions that have unit-test inputs first, then limit per file to keep scanning fast.
             fn_nodes.sort(key=lambda s: (0 if s.name in unit_inputs else 1, s.lineno))
-            for stmt in fn_nodes[:25]:
-                if len(unit_candidates) >= repo_cap:
+            for stmt in fn_nodes[:18]:
+                if len(unit_candidates) >= repo_cap or total_probes >= max_probes_per_repo:
                     break
                 min_arity, max_arity = _fn_arity_bounds(stmt)
                 if min_arity > 4:
                     continue
 
                 probes: list[tuple[list[Any], bool, str | None]] = []
-                for u_entry in unit_inputs.get(stmt.name, []):
+                for u_entry in unit_inputs.get(stmt.name, [])[:8]:
                     arg_len = len(u_entry["args"])
                     if arg_len >= min_arity and (max_arity is None or arg_len <= max_arity):
                         probes.append((u_entry["args"], True, u_entry["file"]))
 
                 if len(probes) < max_per_fn and len(probe_candidates) < repo_cap:
-                    for raw_args in _smart_probes_for_fn(stmt, min_arity, max_arity):
+                    for raw_args in _smart_probes_for_fn(stmt, min_arity, max_arity)[:6]:
                         probes.append((encode_readable(raw_args), False, None))
 
                 kept_for_fn = 0
                 kept_unit_for_fn = 0
                 seen_sigs: set[str] = set()
                 for encoded_args, from_unit_test, test_file in probes:
+                    if total_probes >= max_probes_per_repo:
+                        break
                     if from_unit_test:
                         if kept_unit_for_fn >= fn_probe_cap or len(unit_candidates) >= repo_cap:
                             continue
@@ -1093,11 +1164,12 @@ def harvest_repo_multifile(
                         continue
                     seen_sigs.add(sig)
 
+                    total_probes += 1
                     probe = _probe_multifile(selected_files, entry_rel, stmt.name, encoded_args)
                     if not probe.get("ok"):
                         continue
                     touched = probe.get("touchedFiles") or []
-                    if len(touched) < min_code_loads:
+                    if len(touched) < min_touched_non_entry:
                         continue
                     if drop_probe_type_errors and not from_unit_test and probe.get("kind") == "throw":
                         val = (probe.get("result") or {}).get("value")
@@ -1118,7 +1190,7 @@ def harvest_repo_multifile(
                         features.append("effectful")
                     origin = "py-multifile-unit-test" if from_unit_test else "py-multifile-probe"
                     task: dict[str, Any] = {
-                        "id": f"pymf-{repo_name}-{mod_slug}-{stmt.name}-{kept_for_fn}",
+                        "id": f"{id_prefix}-{repo_name}-{mod_slug}-{stmt.name}-{kept_for_fn}",
                         "family": f"py-multifile:{repo_name}:{pkg_name}:{mod_slug}:{stmt.name}",
                         "language": "py",
                         "files": selected_files,
@@ -1160,8 +1232,11 @@ def _qualify_multifile_candidate(
     cand: dict[str, Any],
     *,
     min_code_loads: int,
+    min_loaded_files: int,
     min_trace_lines: int,
-    max_conversation_chars: int,
+    min_episode_chars: int,
+    max_episode_chars: int,
+    max_estimated_tokens: int,
     drop_probe_type_errors: bool,
 ) -> dict[str, Any]:
     task = cand["task"]
@@ -1195,11 +1270,31 @@ def _qualify_multifile_candidate(
             for m in messages
             if m.get("role") == "assistant"
         )
-        conv_chars = len(_json_compact(messages))
-        if conv_chars > max_conversation_chars:
+        serialized_msgs = _json_compact(messages)
+        conv_chars = len(serialized_msgs)
+        est_tokens, tt_tokens = _estimate_tokens(conv_chars, serialized_msgs)
+        if min_episode_chars > 0 and conv_chars < min_episode_chars:
             return {
                 "status": "refused",
-                "reason": f"conversation-too-long ({conv_chars} chars)",
+                "reason": f"episode-too-short ({conv_chars} < {min_episode_chars} chars)",
+                "id": task["id"],
+                "repo": cand["repo"],
+                "origin": cand["origin"],
+                "family": task["family"],
+            }
+        if conv_chars > max_episode_chars:
+            return {
+                "status": "refused",
+                "reason": f"conversation-too-long ({conv_chars} > {max_episode_chars} chars)",
+                "id": task["id"],
+                "repo": cand["repo"],
+                "origin": cand["origin"],
+                "family": task["family"],
+            }
+        if max_estimated_tokens > 0 and est_tokens > max_estimated_tokens:
+            return {
+                "status": "refused",
+                "reason": f"estimated-tokens-too-high ({est_tokens} > {max_estimated_tokens})",
                 "id": task["id"],
                 "repo": cand["repo"],
                 "origin": cand["origin"],
@@ -1245,25 +1340,39 @@ def _qualify_multifile_candidate(
                             if isinstance(req, dict) and isinstance(req.get("path"), str):
                                 loaded_paths.add(req["path"])
 
+        if len(loaded_paths) < min_loaded_files:
+            return {
+                "status": "refused",
+                "reason": f"insufficient-loaded-files ({len(loaded_paths)} < {min_loaded_files})",
+                "id": task["id"],
+                "repo": cand["repo"],
+                "origin": cand["origin"],
+                "family": task["family"],
+            }
+
         distractor_files = sorted(p for p in exported["task"]["files"] if p not in loaded_paths)
+        meta_out: dict[str, Any] = {
+            **(task.get("metadata") or {}),
+            "sourceHash": exported["sourceHash"],
+            "fileCount": len(exported["task"]["files"]),
+            "loadedFileCount": len(loaded_paths),
+            "loadedFiles": sorted(loaded_paths),
+            "distractorFiles": distractor_files,
+            "distractorCount": len(distractor_files),
+            "codeLoadCalls": code_load_calls,
+            "codeLoadBytes": int(exported["metadata"].get("codeLoadBytes", 0)),
+            "externalCalls": len(exported["task"]["fixture"]["calls"]),
+            "traceChars": trace_chars,
+            "conversationChars": conv_chars,
+            "estimatedTokens": est_tokens,
+            "narrationLines": narration_lines,
+            "replayVerified": True,
+        }
+        if tt_tokens is not None:
+            meta_out["tiktokenTokens"] = tt_tokens
         enriched_task = {
             **exported["task"],
-            "metadata": {
-                **(task.get("metadata") or {}),
-                "sourceHash": exported["sourceHash"],
-                "fileCount": len(exported["task"]["files"]),
-                "loadedFileCount": len(loaded_paths),
-                "distractorFiles": distractor_files,
-                "distractorCount": len(distractor_files),
-                "codeLoadCalls": code_load_calls,
-                "codeLoadBytes": int(exported["metadata"].get("codeLoadBytes", 0)),
-                "externalCalls": len(exported["task"]["fixture"]["calls"]),
-                "traceChars": trace_chars,
-                "conversationChars": conv_chars,
-                "estimatedTokens": conv_chars // 4,
-                "narrationLines": narration_lines,
-                "replayVerified": True,
-            },
+            "metadata": meta_out,
         }
         return {
             "status": "admitted",
@@ -1315,14 +1424,42 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-per-repo", type=int, default=20, help="Max admitted tasks per repo.")
     parser.add_argument("--max-per-fn", type=int, default=3, help="Max admitted inputs per function.")
     parser.add_argument("--min-files", type=int, default=3, help="Minimum .py files per task package.")
-    parser.add_argument("--max-files", type=int, default=25, help="Maximum .py files per task package.")
+    parser.add_argument("--max-files", type=int, default=120, help="Maximum .py files per task package (up to 256).")
+    parser.add_argument("--max-single-file-bytes", type=int, default=150_000, help="Max single .py file size in bytes.")
+    parser.add_argument("--max-package-bytes", type=int, default=2_000_000, help="Max total package bytes per task.")
+    parser.add_argument("--max-probes-per-repo", type=int, default=250, help="Max subprocess probes per repository.")
     parser.add_argument("--min-code-loads", type=int, default=1, help="Minimum code.load calls required.")
+    parser.add_argument(
+        "--min-loaded-files",
+        type=int,
+        default=2,
+        help="Minimum distinct loaded files (including entryFile) required.",
+    )
     parser.add_argument("--min-trace-lines", type=int, default=2, help="Minimum compact trace lines required.")
     parser.add_argument(
-        "--max-conversation-chars",
+        "--min-episode-chars",
         type=int,
-        default=180_000,
-        help="Maximum total serialized conversation chars (default 180k, well within 65k tokens).",
+        default=0,
+        help="Minimum total serialized conversation chars required.",
+    )
+    parser.add_argument(
+        "--max-episode-chars",
+        "--max-conversation-chars",
+        dest="max_episode_chars",
+        type=int,
+        default=192_000,
+        help="Maximum total serialized conversation chars (default 192k, <= 60k tokens at chars/3.2).",
+    )
+    parser.add_argument(
+        "--max-estimated-tokens",
+        type=int,
+        default=60_000,
+        help="Strict upper cap on estimated conversation tokens (ceil(chars / 3.2), default 60000 for 65536 context).",
+    )
+    parser.add_argument(
+        "--id-prefix",
+        default="pymf",
+        help="Task ID prefix (default: pymf).",
     )
     parser.add_argument(
         "--drop-probe-type-errors",
@@ -1370,6 +1507,11 @@ def main(argv: list[str] | None = None) -> int:
             min_files=args.min_files,
             max_files=args.max_files,
             min_code_loads=args.min_code_loads,
+            min_loaded_files=args.min_loaded_files,
+            max_single_file_bytes=args.max_single_file_bytes,
+            max_package_bytes=args.max_package_bytes,
+            max_probes_per_repo=args.max_probes_per_repo,
+            id_prefix=args.id_prefix,
             drop_probe_type_errors=args.drop_probe_type_errors,
         )
 
@@ -1387,8 +1529,11 @@ def main(argv: list[str] | None = None) -> int:
         return _qualify_multifile_candidate(
             cand,
             min_code_loads=args.min_code_loads,
+            min_loaded_files=args.min_loaded_files,
             min_trace_lines=args.min_trace_lines,
-            max_conversation_chars=args.max_conversation_chars,
+            min_episode_chars=args.min_episode_chars,
+            max_episode_chars=args.max_episode_chars,
+            max_estimated_tokens=args.max_estimated_tokens,
             drop_probe_type_errors=args.drop_probe_type_errors,
         )
 
@@ -1400,7 +1545,13 @@ def main(argv: list[str] | None = None) -> int:
             with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as pool:
                 records = list(pool.map(_qualify, all_candidates))
 
-    records.sort(key=lambda r: 0 if r["origin"] == "py-multifile-unit-test" else 1)
+    records.sort(
+        key=lambda r: (
+            0 if r["origin"] == "py-multifile-unit-test" else 1,
+            -(r["task"]["metadata"]["loadedFileCount"] if r["status"] == "admitted" else 0),
+            -(r["task"]["metadata"]["conversationChars"] if r["status"] == "admitted" else 0),
+        )
+    )
 
     seen_dedup: set[tuple[str, str]] = set()
     repo_counts: dict[str, int] = {}
@@ -1447,6 +1598,7 @@ def main(argv: list[str] | None = None) -> int:
         "unitTestInputAdmitted": sum(1 for t in admitted if "unit-test-input" in (t.get("features") or [])),
         "withDistractorsAdmitted": sum(1 for t in admitted if t["metadata"]["distractorCount"] > 0),
         "codeLoadCalls": _stats([t["metadata"]["codeLoadCalls"] for t in admitted]),
+        "loadedFileCount": _stats([t["metadata"]["loadedFileCount"] for t in admitted]),
         "fileCount": _stats([t["metadata"]["fileCount"] for t in admitted]),
         "distractorCount": _stats([t["metadata"]["distractorCount"] for t in admitted]),
         "conversationChars": _stats([t["metadata"]["conversationChars"] for t in admitted]),

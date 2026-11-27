@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import copy
+from functools import lru_cache
 import hashlib
 import json
 from pathlib import Path
@@ -228,7 +229,27 @@ _PATH_IO_DIRECT_METHODS = frozenset({"read_text", "write_text", "read_bytes", "w
 _PATH_FS_METHODS = _PATH_IO_DIRECT_METHODS | frozenset({"exists", "is_file", "is_dir", "open"})
 
 
+@lru_cache(maxsize=4096)
+def _scan_public_source_tools_cached(source: str, random_mode: str) -> tuple[tuple[str, ...], bool]:
+    names, uses_random = _scan_public_source_tools_uncached(source, random_mode, ())
+    return tuple(names), uses_random
+
+
 def _scan_public_source_tools(source: str, random_mode: str, native_bindings: list[dict[str, Any]]) -> tuple[list[str], bool]:
+    """Derive available tool names STRICTLY from public source and bindings (NEVER fixture)."""
+    base_names, uses_random = _scan_public_source_tools_cached(source, random_mode)
+    if not native_bindings:
+        return list(base_names), uses_random
+    merged = set(base_names)
+    merged.update(b["name"] for b in native_bindings)
+    return sorted(merged), uses_random
+
+
+def _scan_public_source_tools_uncached(
+    source: str,
+    random_mode: str,
+    native_bindings: tuple[dict[str, Any], ...] | list[dict[str, Any]],
+) -> tuple[list[str], bool]:
     """Derive available tool names STRICTLY from public source and bindings (NEVER fixture)."""
     names: set[str] = {b["name"] for b in native_bindings}
     uses_random = False
