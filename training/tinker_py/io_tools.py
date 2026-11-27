@@ -102,7 +102,10 @@ def is_guest_caller(
                 break
             frame = frame.f_back
             hops += 1
-    return frame is not None and frame.f_code.co_filename == "<guest>"
+    if frame is None:
+        return False
+    fname = frame.f_code.co_filename
+    return fname == "<guest>" or fname.startswith("<guest:")
 
 
 def _normalize_path_arg(file: Any) -> str:
