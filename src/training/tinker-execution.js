@@ -27,6 +27,7 @@ import {
 } from './tinker-node-io.js';
 import {normalizeCodebaseSpec, codebaseSourceHash, renderRepoManifest,
   serveCodeLoad, codeLoadResultBytes} from './tinker-codebase.js';
+import {BROWSER_TOOL_DESCRIPTIONS, DEFAULT_BROWSER_HTML, DEFAULT_BROWSER_URL, scanPublicSourceBrowserTools} from './tinker-browser-dom.js';
 
 export const TINKER_EXECUTION_SCHEMA = 'readable-js-execution/1';
 export const TINKER_TRACE_FORMATS = Object.freeze(['full', 'compact', 'actions-only']);
@@ -314,9 +315,18 @@ function normalizeTask(input) {
   }
   const entry = input.entry ?? 'run';
   demand(/^[A-Za-z_$][\w$]*$/.test(entry), 'Entry must be an identifier');
-  const executionMode = input.executionMode ?? (hasFiles ? 'native' : 'owned');
+  const environment = input.environment ?? null;
+  demand(environment === null || environment === 'browser', 'environment must be omitted or "browser"');
+  const executionMode = input.executionMode ?? (hasFiles || environment === 'browser' ? 'native' : 'owned');
   demand(['owned', 'native'].includes(executionMode), 'executionMode must be owned or native');
   if (hasFiles) demand(executionMode === 'native', 'Multi-file tasks require executionMode: "native"');
+  demand(environment !== 'browser' || executionMode === 'native', 'Browser environment requires executionMode "native"');
+  const initialUrl = environment === 'browser' ? (input.initialUrl ?? DEFAULT_BROWSER_URL) : undefined;
+  const initialHtml = environment === 'browser' ? (input.initialHtml ?? DEFAULT_BROWSER_HTML) : undefined;
+  if (environment === 'browser') {
+    demand(typeof initialUrl === 'string' && initialUrl.length > 0 && initialUrl.length <= 4096, 'Invalid browser initialUrl');
+    demand(typeof initialHtml === 'string' && initialHtml.length <= 131072, 'Invalid browser initialHtml');
+  }
   const args = input.inputGraph
     ? (executionMode === 'native' ? realizeGraph(input.inputGraph) : decodeOwnedGraph(JSON.stringify(input.inputGraph)))
     : decodeReadable(input.args ?? []);
@@ -387,12 +397,13 @@ function normalizeTask(input) {
   demand(Number.isSafeInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 60000, 'Invalid teacher timeout');
   const task = {...clone(input), ...(hasFiles ? {source, files: codebase.files, entryFile: codebase.entryFile,
     initialLoadedFiles: codebase.initialLoadedFiles} : {}), entry, language, ...(executionMode !== 'owned' ? {executionMode} : {}),
+    ...(environment ? {environment, initialUrl, initialHtml} : {}),
     ...(randomMode !== 'seeded' ? {randomMode} : {}), randomSeed, nativeBindings, args: encodeReadable(args), freshRandomCalls: 0,
     fixture: {calls: decodedCalls.map(call => ({operation: call.operation, arguments: encodeReadable(call.arguments),
       status: call.status ?? 'fulfilled', result: encodeReadable(call.result)})), settlementOrder: fixture.settlementOrder}, maxSteps, timeoutMs};
   return {id: input.id, family: input.family, sourceHash, source, executableSource, entry, args, fixture, nativeBindings,
     ...(hasFiles ? {files: codebase.files, entryFile: codebase.entryFile, initialLoadedFiles: codebase.initialLoadedFiles} : {}),
-    executionMode, randomMode, randomSeed, maxSteps, timeoutMs, task};
+    environment, initialUrl, initialHtml, executionMode, randomMode, randomSeed, maxSteps, timeoutMs, task};
 }
 
 function publicOperation(prepared, operation, args) {
@@ -435,10 +446,11 @@ function toolDeclaration(operation, prepared) {
   const spec = own(HOST_OPERATIONS, operation) ? HOST_OPERATIONS[operation] : null;
   const arity = spec ? spec.arity : null;
   const scanSource = prepared.files ? Object.values(prepared.files).join('\n') : prepared.source;
-  const fetchHint = operation === 'http.request' && sourceUsesGlobalFetch(scanSource)
+  const fetchHint = operation === 'http.request' && (sourceUsesGlobalFetch(scanSource) || prepared.environment === 'browser')
     ? 'Invoke JS external operation http.request (promise, 4 arguments: [url, method, headersObject, bodyOrNull]).'
     : null;
-  const description = binding?.description ?? fetchHint ?? nodeIoSpec?.description ?? (spec
+  const browserHint = own(BROWSER_TOOL_DESCRIPTIONS, operation) ? BROWSER_TOOL_DESCRIPTIONS[operation] : null;
+  const description = binding?.description ?? fetchHint ?? browserHint ?? nodeIoSpec?.description ?? (spec
     ? `Invoke JS external operation ${operation} (${spec.kind}, ${arity} argument${arity === 1 ? '' : 's'}).`
     : `Invoke JS external operation ${operation}.`);
   return {
@@ -476,6 +488,9 @@ function initialMessages(prepared) {
   if (usesMathRandom && prepared.randomMode === 'tool') names.add('platform.random');
   if (sourceUsesGlobalFetch(scanSource)) names.add('http.request');
   for (const op of scanPublicSourceNodeIoTools(scanSource)) names.add(op);
+  if (prepared.environment === 'browser') {
+    for (const op of scanPublicSourceBrowserTools(scanSource)) names.add(op);
+  }
   const operations = [...names].sort();
   let parts;
   if (prepared.files) {
@@ -494,6 +509,10 @@ function initialMessages(prepared) {
       '```javascript\n' + prepared.source + '\n```',
       'Entry: ' + prepared.entry + ' with arguments ' + JSON.stringify(encodeReadable(prepared.args)),
     ];
+  }
+  if (prepared.environment === 'browser') {
+    parts.push('Initial URL: ' + prepared.initialUrl);
+    parts.push('Initial DOM:\n```html\n' + prepared.initialHtml + '\n```');
   }
   if (usesMathRandom) {
     if (prepared.randomMode === 'tool') {
@@ -528,7 +547,8 @@ export async function prepareTinkerTask(input, options = {}) {
         initialLoadedFiles: prepared.initialLoadedFiles, nativeBindings: prepared.nativeBindings} : {}),
       inputGraph: describeGraph(prepared.args), fixture: prepared.fixture,
       randomSeed: prepared.randomMode === 'tool' ? null : prepared.randomSeed,
-      randomMode: prepared.randomMode, executionMode: 'native'};
+      randomMode: prepared.randomMode, executionMode: 'native',
+      ...(prepared.environment ? {environment: prepared.environment, initialHtml: prepared.initialHtml, initialUrl: prepared.initialUrl} : {})};
     let reference, traceTurns = null;
     if (format !== 'actions-only') {
       try {
