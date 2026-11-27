@@ -2545,6 +2545,44 @@ def test_pipelines():
             comp_async = json.loads(assistant_visible_text(exp_async["messages"][-1]).split("```json\n", 1)[1].split("\n```", 1)[0])
             self.assertEqual(comp_async["value"], {"tag": "live-secret-42", "total": 15})
 
+    def test_system_prompt_only_mentions_declared_tools(self) -> None:
+        pure_task = {
+            "id": "py-pure-sys-prompt",
+            "family": "py-pure-sys-prompt",
+            "language": "py",
+            "source": "def run(x, y):\n    return x * y + 1\n",
+            "entry": "run",
+            "args": [3, 4],
+        }
+        pure_exp = export_python_example(pure_task, trace_format="compact")
+        pure_sys = pure_exp["messages"][0]["content"]
+        self.assertIn("Never invoke undeclared tools", pure_sys)
+        for forbidden in ("shell.exec", "fs.readText", "env.get", "http.request", "code.load", "platform.log"):
+            self.assertNotIn(forbidden, pure_sys)
+        self.assertFalse(any(m["role"] == "tool_declare" for m in pure_exp["messages"]))
+
+        io_task = {
+            "id": "py-io-sys-prompt",
+            "family": "py-io-sys-prompt",
+            "language": "py",
+            "source": "import os, subprocess\ndef run():\n    return os.getenv('K'), subprocess.run(['echo', 'hi'], capture_output=True, text=True).stdout\n",
+            "entry": "run",
+            "args": [],
+            "fixture": {
+                "calls": [
+                    {"operation": "env.get", "arguments": ["K"], "status": "fulfilled", "result": "v"},
+                    {"operation": "shell.exec", "arguments": [{"args": ["echo", "hi"], "shell": False}], "status": "fulfilled", "result": {"stdout": "hi\n", "stderr": "", "returncode": 0}},
+                ]
+            },
+        }
+        io_exp = export_python_example(io_task, trace_format="compact")
+        io_sys = io_exp["messages"][0]["content"]
+        self.assertIn("env.get", io_sys)
+        self.assertIn("shell.exec", io_sys)
+        self.assertNotIn("http.request", io_sys)
+        self.assertNotIn("fs.readText", io_sys)
+        self.assertNotIn("code.load", io_sys)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -980,4 +980,28 @@ test('native V8 intercepts fs, process.env, child_process, crypto random/UUID, a
     uuid: '33333333-3333-4333-8333-333333333333',
     errName: 'Error:exit 1',
   });
+  const tsSys = tsNodeIo.messages[0].content;
+  assert.match(tsSys, /shell\.exec/);
+  assert.match(tsSys, /fs\.readText/);
+  assert.match(tsSys, /platform\.uuid/);
+  assert.doesNotMatch(tsSys, /http\.request/);
+  assert.doesNotMatch(tsSys, /env\.get/);
+});
+
+test('system prompt omits undeclared I/O tools like shell.exec on pure JS tasks', async () => {
+  const pure = await exportTinkerExample({
+    id: 'pure-sys-prompt',
+    family: 'pure-sys-prompt',
+    source: 'function run(a, b) { return a + b; }',
+    entry: 'run',
+    args: [2, 3],
+  });
+  const sys = pure.messages[0].content;
+  assert.match(sys, /Never invoke undeclared tools/);
+  assert.doesNotMatch(sys, /shell\.exec/);
+  assert.doesNotMatch(sys, /fs\.readText/);
+  assert.doesNotMatch(sys, /env\.get/);
+  assert.doesNotMatch(sys, /http\.request/);
+  assert.doesNotMatch(sys, /code\.load/);
+  assert.equal(pure.messages.some(m => m.role === 'tool_declare'), false);
 });

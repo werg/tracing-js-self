@@ -89,21 +89,59 @@ PY_HOST_OPERATIONS: dict[str, dict[str, Any]] = {
     "kv_set": {"arity": 2, "description": "Invoke Python external operation kv_set (2 arguments)."},
 }
 
-SYSTEM_PROMPT = """Execute the supplied Python program accurately.
-- For every external read, write, env lookup, log, subprocess, clock, print, random, uuid, secrets, HTTP, or host call, invoke the declared tool with {"arguments":[...]} in exact execution order; never invent observations.
-- Filesystem calls (open/Path/os.listdir/os.path) map to fs.readText, fs.readBytes, fs.writeText, fs.writeBytes, fs.exists, fs.isFile, fs.isDir, fs.listdir; env (os.getenv/os.environ) maps to env.get; logging maps to platform.log; subprocess.run/check_output maps to shell.exec; datetime.now/utcnow/today maps to platform.time; uuid.uuid4 maps to platform.uuid; secrets maps to platform.secrets.
-- HTTP calls (urllib.request.urlopen, requests.get/post/request/Session) invoke http.request with {"arguments":[{"method":"GET"|...,"url":str,"headers"?:{...},"body"?:str|bytes}]} (omit empty "headers" and None "body").
+SYSTEM_PROMPT = """Execute the supplied Python program directly and accurately.
+- Never invoke undeclared tools or attempt to run the program via an external shell or interpreter.
 - When execution finishes, end with one JSON completion in a ```json code fence (or bare JSON):
   {"type":"complete","kind":"return"|"throw","arguments":[final input args],"value":resultOrError}
 - Final "arguments" must reflect all input mutations and aliases. Standard exceptions use {"name":"ValueError","message":"..."}.
 - Special Python values: {"$py":"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$py":"tuple","items":[...]}, {"$py":"set","items":[...]}, {"$py":"frozenset","items":[...]}, {"$py":"bytes","b64":"..."}, {"$py":"complex","real":...,"imag":...}, {"$py":"decimal","value":"..."}, {"$py":"datetime","iso":"..."}, {"$py":"date","iso":"..."}, {"$py":"timedelta","days":...,"seconds":...,"microseconds":...}, {"$py":"path","value":"..."}, {"$py":"enum","class":"...","name":"...","value":...}, {"$py":"object","class":"...","attrs":{...}}, {"$py":"dict","entries":[[k,v],...]} for non-string or $py-keyed dicts, {"$py":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the arguments array for tool calls)."""
 
-MULTIFILE_SYSTEM_PROMPT = (
-    SYSTEM_PROMPT
-    + '\n- Multi-file repository mode: only the entry file is shown initially. Call code.load with {"arguments":[{"path":"..."}]} '
-    '(whole file for small files) or {"arguments":[{"path":"...","symbol":"..."}]} (symbol snippet for large files) '
-    'or {"arguments":[{"path":"...","start_line":N,"end_line":M}]} whenever you need code from another file; you may batch multiple requests.'
-)
+
+def _build_system_prompt(operations: list[str], *, multifile: bool = False) -> str:
+    extra: list[str] = []
+    if operations:
+        extra.append(
+            '- Only invoke tools explicitly declared in tool_declare with {"arguments":[...]} in exact execution order '
+            "for external calls made by the program; never invent observations."
+        )
+    io_hints: list[str] = []
+    if any(op.startswith("fs.") for op in operations):
+        io_hints.append(
+            "filesystem calls (open/Path/os.listdir/os.path) map to "
+            "fs.readText/fs.readBytes/fs.writeText/fs.writeBytes/fs.exists/fs.isFile/fs.isDir/fs.listdir"
+        )
+    if "env.get" in operations:
+        io_hints.append("env (os.getenv/os.environ) maps to env.get")
+    if "platform.log" in operations:
+        io_hints.append("logging maps to platform.log")
+    if "shell.exec" in operations:
+        io_hints.append("subprocess.run/check_output maps to shell.exec")
+    if "platform.time" in operations:
+        io_hints.append("datetime.now/utcnow/today maps to platform.time")
+    if "platform.uuid" in operations:
+        io_hints.append("uuid.uuid4 maps to platform.uuid")
+    if "platform.secrets" in operations:
+        io_hints.append("secrets maps to platform.secrets")
+    if io_hints:
+        extra.append("- Declared I/O mappings: " + "; ".join(io_hints) + ".")
+    if "http.request" in operations:
+        extra.append(
+            '- HTTP calls (urllib.request.urlopen, requests.get/post/request/Session) invoke http.request with '
+            '{"arguments":[{"method":"GET"|...,"url":str,"headers"?:{...},"body"?:str|bytes}]} '
+            '(omit empty "headers" and None "body").'
+        )
+    if multifile or CODE_LOAD_OPERATION in operations:
+        extra.append(
+            '- Multi-file repository mode: only the entry file is shown initially. Call code.load with '
+            '{"arguments":[{"path":"..."}]} (whole file for small files) or '
+            '{"arguments":[{"path":"...","symbol":"..."}]} (symbol snippet for large files) or '
+            '{"arguments":[{"path":"...","start_line":N,"end_line":M}]} whenever you need code from another file; '
+            "you may batch multiple requests."
+        )
+    return SYSTEM_PROMPT + ("\n" + "\n".join(extra) if extra else "")
+
+
+MULTIFILE_SYSTEM_PROMPT = _build_system_prompt([CODE_LOAD_OPERATION], multifile=True)
 
 
 def _demand(condition: bool, message: str) -> None:
@@ -636,7 +674,7 @@ def initial_messages(prepared: dict[str, Any]) -> list[dict[str, Any]]:
             + " with arguments "
             + _json_compact(encode_readable(prepared["args"]))
         )
-        system_prompt = MULTIFILE_SYSTEM_PROMPT
+        system_prompt = _build_system_prompt(operations, multifile=True)
     else:
         operations, uses_random = _scan_public_source_tools(
             prepared["source"],
@@ -648,7 +686,7 @@ def initial_messages(prepared: dict[str, Any]) -> list[dict[str, Any]]:
             "```python\n" + prepared["source"] + "\n```",
             "Entry: " + prepared["entry"] + " with arguments " + _json_compact(encode_readable(prepared["args"])),
         ]
-        system_prompt = SYSTEM_PROMPT
+        system_prompt = _build_system_prompt(operations, multifile=False)
 
     if uses_random:
         if prepared["randomMode"] == "tool":

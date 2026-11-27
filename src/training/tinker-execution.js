@@ -295,14 +295,45 @@ export function normalizedSourceHash(source) {
   return hash(clean(ast));
 }
 
-const SYSTEM = `Execute the supplied JavaScript program accurately.
-- For every external read, write, clock, console, or host/native call, invoke the declared tool with {"arguments":[...]} in exact execution order; never invent observations.
-- For fetch(url, init), invoke http.request with {"arguments":[url, method, headersObject, bodyOrNull]}.
-- Node I/O calls: fs read/write/exists/readdir/stat invoke fs.readText/fs.readBytes/fs.writeText/fs.exists/fs.readdir/fs.stat; process.env[k] invokes env.get([k]); execFileSync/execSync invoke shell.exec([{"command":...,"args":[...]}]); crypto.randomUUID()/randomBytes(n) invoke platform.uuid([])/platform.randomBytes([n]).
+const SYSTEM = `Execute the supplied JavaScript program directly and accurately.
+- Never invoke undeclared tools or attempt to run the program via an external shell or interpreter.
 - When execution finishes, end with one JSON completion in a \`\`\`json code fence (or bare JSON):
   {"type":"complete","kind":"return"|"throw","arguments":[final input args],"value":resultOrError}
 - Final "arguments" must reflect all input mutations and aliases. Error throws/values use {"name":"ErrorName","message":"..."}.
 - Special JS values: {"$js":"undefined"|"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$js":"bigint","value":"123"}, {"$js":"date","ms":1700000000000}, {"$js":"regexp","source":"abc","flags":"gi"}, {"$js":"map","entries":[[k,v],...]}, {"$js":"set","items":[...]}, {"$js":"typedarray","type":"Uint8Array","b64":"..."}, {"$js":"instance","class":"Name","props":{...}}, {"$js":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the arguments array for tool calls), {"$js":"array","length":3,"entries":{"1":2}} for sparse arrays, {"$js":"object","nullPrototype":true,"entries":{...}} for null-prototype or $js-keyed objects.`;
+
+function buildSystemPrompt(operations, prepared) {
+  const extra = [];
+  if (operations.length) {
+    extra.push('- Only invoke tools explicitly declared in tool_declare with {"arguments":[...]} in exact execution order for external calls made by the program; never invent observations.');
+  }
+  if (operations.includes('http.request')) {
+    extra.push('- For fetch(url, init), invoke http.request with {"arguments":[url, method, headersObject, bodyOrNull]}.');
+  }
+  const nodeHints = [];
+  if (operations.some(op => op.startsWith('fs.'))) {
+    nodeHints.push('fs read/write/exists/readdir/stat invoke fs.readText/fs.readBytes/fs.writeText/fs.exists/fs.readdir/fs.stat');
+  }
+  if (operations.includes('env.get')) {
+    nodeHints.push('process.env[k] invokes env.get([k])');
+  }
+  if (operations.includes('shell.exec')) {
+    nodeHints.push('execFileSync/execSync invoke shell.exec([{"command":...,"args":[...]}])');
+  }
+  if (operations.includes('platform.uuid') || operations.includes('platform.randomBytes')) {
+    nodeHints.push('crypto.randomUUID()/randomBytes(n) invoke platform.uuid([])/platform.randomBytes([n])');
+  }
+  if (nodeHints.length) {
+    extra.push('- Node I/O calls: ' + nodeHints.join('; ') + '.');
+  }
+  if (operations.some(op => op.startsWith('browser.'))) {
+    extra.push('- Browser I/O calls (localStorage/sessionStorage/alert/confirm/prompt) invoke the declared browser.* tools in execution order.');
+  }
+  if (prepared.files || operations.includes('code.load')) {
+    extra.push('- For unloaded repository files, invoke code.load with {"arguments":[...]} on demand (whole file for small files, symbol snippet or line range for large files; you may batch multiple requests).');
+  }
+  return extra.length ? SYSTEM + '\n' + extra.join('\n') : SYSTEM;
+}
 
 function normalizeTask(input) {
   demand(plain(input), 'Task must be an object');
@@ -522,9 +553,7 @@ function initialMessages(prepared) {
         ' with state=(Math.imul(state,1664525)+1013904223)>>>0; return state/4294967296.');
     }
   }
-  const systemPrompt = prepared.files
-    ? SYSTEM + '\n- For unloaded repository files, invoke code.load with {"arguments":[...]} on demand (whole file for small files, symbol snippet or line range for large files; you may batch multiple requests).'
-    : SYSTEM;
+  const systemPrompt = buildSystemPrompt(operations, prepared);
   const messages = [{role: 'system', content: systemPrompt}];
   if (operations.length) {
     const tools = operations.map(op => toolDeclaration(op, prepared));
