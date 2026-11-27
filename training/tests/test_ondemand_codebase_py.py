@@ -13,6 +13,9 @@ import unittest
 
 from tinker_py.codebase import (
     CODE_LOAD_OPERATION,
+    MAX_CODEBASE_FILES,
+    MAX_CODEBASE_TOTAL_BYTES,
+    MAX_CODE_LOAD_RESPONSE_BYTES,
     WHOLE_FILE_THRESHOLD_BYTES,
     index_file_symbols,
     render_repo_manifest,
@@ -174,6 +177,39 @@ class CodebaseIndexAndServerTests(unittest.TestCase):
         self.assertEqual(len(capped), 1)
         self.assertTrue(capped[0].get("truncated"))
         self.assertLessEqual(capped[0]["bytes"], 360)
+
+    def test_large_repo_150_file_manifest_stays_compact_and_scaled_limits(self) -> None:
+        self.assertGreaterEqual(MAX_CODEBASE_FILES, 256)
+        self.assertGreaterEqual(MAX_CODEBASE_TOTAL_BYTES, 4_000_000)
+        self.assertGreaterEqual(MAX_CODE_LOAD_RESPONSE_BYTES, 64_000)
+
+        files: dict[str, str] = {
+            "bigpkg/main.py": "def run(x):\n    return x + 1\n",
+        }
+        for i in range(1, 150):
+            sub = f"sub_{i // 15:02d}"
+            path = f"bigpkg/{sub}/module_{i:03d}.py"
+            consts = "\n".join(f"CONST_{i}_{c} = {c}" for c in range(10))
+            defs = "\n".join(
+                f"class Service_{i}_{k}:\n    pass\n\ndef compute_value_{i}_{k}(a, b):\n    return a + b\n"
+                for k in range(5)
+            )
+            files[path] = f"{consts}\n\n{defs}"
+
+        manifest = render_repo_manifest(files, "bigpkg/main.py")
+        lines = manifest.splitlines()
+        # Header + 150 file entries.
+        self.assertEqual(len(lines), 151)
+        # Manifest stays crisp (< 10K tokens even under conservative chars / 3.2).
+        self.assertLess(len(manifest) / 3.2, 10_000)
+        # Entry file is first and tagged [loaded].
+        self.assertTrue(lines[1].startswith("- bigpkg/main.py "))
+        self.assertIn("[loaded]", lines[1])
+        # For large repos, classes/functions are prioritized ahead of constants.
+        sample_line = next(ln for ln in lines if "bigpkg/sub_00/module_001.py" in ln)
+        self.assertIn("Service_1_0", sample_line)
+        self.assertIn("compute_value_1_0", sample_line)
+        self.assertNotIn("CONST_1_0", sample_line)
 
 
 class MultiFileExecutionAndCausalSynthesisTests(unittest.TestCase):
@@ -683,6 +719,95 @@ class MultiFileHarvesterTests(unittest.TestCase):
                 # Re-verify exported conversation independently.
                 re_exp = export_python_example(row, trace_format="compact")
                 self.assertTrue(re_exp["metadata"]["traceAudit"]["replayVerified"])
+
+            # Verify new 65K harvester filters (--min-loaded-files, --min-episode-chars, --id-prefix).
+            out_filtered = root / "out_filtered"
+            proc_f = subprocess.run(
+                [
+                    sys.executable,
+                    str(HARVESTER_SCRIPT),
+                    "--local-repos",
+                    str(repos_dir),
+                    "--output-dir",
+                    str(out_filtered),
+                    "--min-loaded-files",
+                    "3",
+                    "--min-episode-chars",
+                    "1000",
+                    "--max-episode-chars",
+                    "192000",
+                    "--max-estimated-tokens",
+                    "60000",
+                    "--id-prefix",
+                    "lc65k-test",
+                    "--jobs",
+                    "1",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            self.assertEqual(proc_f.returncode, 0, f"Filtered harvester failed: {proc_f.stderr}\n{proc_f.stdout}")
+            rows_f = [
+                json.loads(line)
+                for line in (out_filtered / "harvested.jsonl").read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+            self.assertGreaterEqual(len(rows_f), 2)
+            for row in rows_f:
+                self.assertTrue(row["id"].startswith("lc65k-test-"))
+                self.assertGreaterEqual(row["metadata"]["loadedFileCount"], 3)
+                self.assertLessEqual(row["metadata"]["estimatedTokens"], 60_000)
+
+            # High min-episode-chars cleanly filters out small tasks without error.
+            out_empty = root / "out_empty"
+            proc_e = subprocess.run(
+                [
+                    sys.executable,
+                    str(HARVESTER_SCRIPT),
+                    "--local-repos",
+                    str(repos_dir),
+                    "--output-dir",
+                    str(out_empty),
+                    "--min-episode-chars",
+                    "150000",
+                    "--jobs",
+                    "1",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
+            )
+            self.assertEqual(proc_e.returncode, 0)
+            census_e = json.loads((out_empty / "census.json").read_text(encoding="utf-8"))
+            self.assertEqual(census_e["admittedUnique"], 0)
+
+    def test_65k_multifile_builder_catalog_and_replay_smoke(self) -> None:
+        import importlib.util
+
+        builder_path = REPO_ROOT / "tools" / "tinker-build-multifile-py-65k.py"
+        spec = importlib.util.spec_from_file_location("tinker_build_multifile_py_65k", builder_path)
+        assert spec is not None and spec.loader is not None
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        tasks = mod.build_all_tasks()
+        self.assertGreaterEqual(len(tasks), 30)
+        ids = [t["id"] for t in tasks]
+        self.assertEqual(len(ids), len(set(ids)))
+        for t in tasks:
+            self.assertTrue(t["id"].startswith("lc65k-py-"))
+            self.assertGreaterEqual(len(t["files"]), 20)
+            self.assertGreater(len(t["fixture"]["calls"]), 0)
+
+        # Replay-verify a representative effectful multi-file task end-to-end.
+        sample = tasks[0]
+        exported = export_python_example(sample, trace_format="compact", reasoning_channel="thinking")
+        self.assertTrue(exported["metadata"]["traceAudit"]["replayVerified"])
+        self.assertGreaterEqual(exported["metadata"]["codeLoadCalls"], 3)
+        self.assertGreater(exported["metadata"]["externalCalls"], 0)
 
 
 if __name__ == "__main__":

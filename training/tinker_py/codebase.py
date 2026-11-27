@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import ast
 from dataclasses import dataclass
+from functools import lru_cache
 import hashlib
 import importlib.abc
 import importlib.machinery
@@ -32,9 +33,9 @@ from .tracer import (
 
 CODE_LOAD_OPERATION = "code.load"
 WHOLE_FILE_THRESHOLD_BYTES = 3072
-MAX_CODE_LOAD_RESPONSE_BYTES = 48_000
+MAX_CODE_LOAD_RESPONSE_BYTES = 64_000
 MAX_CODEBASE_FILES = 256
-MAX_CODEBASE_TOTAL_BYTES = 2_000_000
+MAX_CODEBASE_TOTAL_BYTES = 4_000_000
 GUEST_FILENAME_PREFIX = "<guest:"
 
 CODE_LOAD_TOOL_DESCRIPTION = (
@@ -136,16 +137,21 @@ def normalize_codebase_files(
     return norm_files, norm_entry, norm_initial
 
 
+@lru_cache(maxsize=4096)
+def _ast_normalized_file_digest(src: str) -> str:
+    try:
+        digest_input = ast.dump(ast.parse(src), include_attributes=False)
+    except SyntaxError:
+        digest_input = src
+    return hashlib.sha256(digest_input.encode("utf-8")).hexdigest()
+
+
 def normalized_multifile_source_hash(files: dict[str, str], entry_file: str) -> str:
     """AST-normalized SHA-256 hash across all repository files + entryFile."""
-    parts: list[list[str]] = []
-    for rel_path in sorted(files.keys()):
-        src = files[rel_path]
-        try:
-            digest_input = ast.dump(ast.parse(src), include_attributes=False)
-        except SyntaxError:
-            digest_input = src
-        parts.append([rel_path, hashlib.sha256(digest_input.encode("utf-8")).hexdigest()])
+    parts: list[list[str]] = [
+        [rel_path, _ast_normalized_file_digest(files[rel_path])]
+        for rel_path in sorted(files.keys())
+    ]
     payload = _json_compact({"entryFile": entry_file, "files": parts})
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
@@ -205,6 +211,7 @@ def _is_simple_constant_expr(node: ast.AST | None, depth: int = 0) -> bool:
     return False
 
 
+@lru_cache(maxsize=4096)
 def index_file_symbols(source: str, path: str = "") -> FileIndex:
     """AST-index top-level functions, classes, constants, and imports for a Python file."""
     src_bytes = len(source.encode("utf-8"))
@@ -310,12 +317,41 @@ def render_repo_manifest(
     entry_file: str,
     initial_loaded_files: list[str] | None = None,
     *,
-    max_symbols_per_file: int = 12,
+    max_symbols_per_file: int | None = None,
+    max_symbol_chars_per_file: int | None = None,
 ) -> str:
-    """Render a deterministic compact repository manifest for the initial user prompt."""
+    """Render a deterministic compact repository manifest for the initial user prompt.
+
+    Adapts per-file symbol density for larger repositories (50-256 files) so a
+    150-file manifest stays crisp (< 10K tokens) while still listing every file's
+    path, size/lines, and top-level classes/functions.
+    """
     norm_entry = normalize_rel_path(entry_file)
     loaded_set = set(initial_loaded_files) if initial_loaded_files is not None else {norm_entry}
     ordered_paths = [norm_entry] + sorted(p for p in files.keys() if p != norm_entry)
+    file_count = len(ordered_paths)
+
+    if max_symbols_per_file is None:
+        if file_count <= 40:
+            sym_limit = 12
+        elif file_count <= 100:
+            sym_limit = 8
+        else:
+            sym_limit = 6
+    else:
+        sym_limit = max(0, max_symbols_per_file)
+
+    if max_symbol_chars_per_file is None:
+        if file_count <= 40:
+            char_limit = 0  # Unlimited for small repos (preserves exact behavior).
+        elif file_count <= 100:
+            char_limit = 140
+        else:
+            char_limit = 96
+    else:
+        char_limit = max(0, max_symbol_chars_per_file)
+
+    large_repo = file_count > 40
 
     lines = [
         "Repository files (call `code.load` on demand; load small files whole to save round-trips, "
@@ -327,17 +363,57 @@ def render_repo_manifest(
         size_kb = idx.bytes / 1024.0
         loaded_tag = " [loaded]" if path in loaded_set else ""
         # Prioritize functions/classes/constants; hide dunder-only assigns like __all__.
-        display_syms = [
-            s.name
-            for s in idx.symbols
-            if s.kind in ("function", "async_function", "class", "constant") and not s.name.startswith("__")
-        ]
+        if large_repo:
+            # For large repos, surface classes and functions ahead of constants so tight budgets keep call targets.
+            callables = [
+                s.name
+                for s in idx.symbols
+                if s.kind in ("class", "function", "async_function") and not s.name.startswith("_")
+            ]
+            private_callables = [
+                s.name
+                for s in idx.symbols
+                if s.kind in ("class", "function", "async_function")
+                and s.name.startswith("_")
+                and not s.name.startswith("__")
+            ]
+            constants = [
+                s.name
+                for s in idx.symbols
+                if s.kind == "constant" and not s.name.startswith("__")
+            ]
+            display_syms = [*callables, *private_callables, *constants]
+        else:
+            display_syms = [
+                s.name
+                for s in idx.symbols
+                if s.kind in ("function", "async_function", "class", "constant") and not s.name.startswith("__")
+            ]
         if not display_syms:
             display_syms = [s.name for s in idx.symbols if not s.name.startswith("__")]
-        if len(display_syms) > max_symbols_per_file:
-            shown = [*display_syms[:max_symbols_per_file], "..."]
+
+        truncated = False
+        if len(display_syms) > sym_limit:
+            shown = display_syms[:sym_limit]
+            truncated = True
         else:
-            shown = display_syms
+            shown = list(display_syms)
+
+        if char_limit > 0 and shown:
+            bounded: list[str] = []
+            used = 0
+            for sym in shown:
+                add_len = len(sym) + (2 if bounded else 0)
+                if bounded and used + add_len > char_limit:
+                    truncated = True
+                    break
+                bounded.append(sym)
+                used += add_len
+            shown = bounded
+
+        if truncated and sym_limit > 0:
+            shown = [*shown, "..."]
+
         if shown:
             lines.append(f"- {path} ({size_kb:.1f} KB, {idx.lines} lines){loaded_tag}: {', '.join(shown)}")
         else:
