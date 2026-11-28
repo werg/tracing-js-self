@@ -1516,6 +1516,11 @@ def _commit_update(adapter: Any, output_dir: Path, state: dict, rng: random.Rand
     recovered = _finish_update_recovery(output_dir, pending)
     state.clear()
     state.update(recovered)
+    if not published and isinstance(saved, dict):
+        append_jsonl(output_dir / "recovery-checkpoints.jsonl", {
+            "name": name, "recovery_attempt": attempt_id,
+            "training_path": saved.get("training_path"), "sampler_path": saved.get("sampler_path"),
+        }, durable=True)
     prune_remote_checkpoints(adapter, state, output_dir)
 
 
@@ -1587,10 +1592,14 @@ def prune_remote_checkpoints(adapter: Any, state: dict, output_dir: Path) -> Non
                 if isinstance(val, str) and val.startswith("tinker://"):
                     keep.add(val)
     pruned = set(state.get("pruned_checkpoints", []))
-    ckpt_file = output_dir / "checkpoints.jsonl"
-    if not ckpt_file.exists():
+    entries = []
+    for fname in ("checkpoints.jsonl", "recovery-checkpoints.jsonl"):
+        p = output_dir / fname
+        if p.exists():
+            entries.extend(read_jsonl(p))
+    if not entries:
         return
-    for entry in read_jsonl(ckpt_file):
+    for entry in entries:
         for key in ("training_path", "sampler_path"):
             path = entry.get(key)
             if isinstance(path, str) and path.startswith("tinker://") and path not in keep and path not in pruned:
@@ -1598,6 +1607,8 @@ def prune_remote_checkpoints(adapter: Any, state: dict, output_dir: Path) -> Non
                     pruned.add(path)
     if pruned != set(state.get("pruned_checkpoints", [])):
         state["pruned_checkpoints"] = sorted(pruned)
+        if (output_dir / "state.json").exists():
+            atomic_json(output_dir / "state.json", state)
 
 
 def save_checkpoint(adapter: Any, output_dir: Path, state: dict, rng: random.Random, name: str,
