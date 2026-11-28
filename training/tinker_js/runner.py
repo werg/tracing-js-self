@@ -118,6 +118,7 @@ DEFAULTS: dict[str, Any] = {
     "bridge_timeout_seconds": 60,
     "skip_failed_exports": True,
     "tolerate_rollout_errors": False,
+    "skip_baseline_eval": False,
 }
 
 
@@ -1554,9 +1555,10 @@ def load_state(output_dir: Path, config: dict, manifest: dict, resume: bool) -> 
              "training_path": None, "sampler_path": None, "evaluations": [], "backend": "tinker"}
     if config.get("initial_sft_checkpoint"):
         initial = config["initial_sft_checkpoint"]
+        initial_phase = "created" if config.get("sft_epochs", 0) > 0 else "sft_done"
         state.update(training_path=initial["training_path"], sampler_path=initial["sampler_path"],
                      sft_training_path=initial["training_path"], sft_sampler_path=initial["sampler_path"],
-                     phase="sft_done", initial_sft_checkpoint=copy.deepcopy(initial))
+                     phase=initial_phase, initial_sft_checkpoint=copy.deepcopy(initial))
     state["optimizer_lineage"] = _optimizer_lineage(state)
     save_state(output_dir, state, rng)
     return state, rng
@@ -2663,7 +2665,7 @@ def main(argv: list[str] | None = None) -> int:
             atomic_json(output_dir / "config.json", config)
             if args.command == "run":
                 resume_validation(bridge, adapter, rows, config, output_dir, state, rng)
-                if "baseline-validation" not in state["evaluations"]:
+                if not config.get("skip_baseline_eval") and "baseline-validation" not in state["evaluations"]:
                     record_validation(bridge, adapter, rows, config, output_dir, state, rng, "baseline", None, None)
                     state["evaluations"].append("baseline-validation")
                     save_state(output_dir, state, rng)
