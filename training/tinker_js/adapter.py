@@ -711,7 +711,7 @@ class TinkerAdapter:
         response = self._retry_idempotent(
             lambda: client.sample(sdk.types.ModelInput.from_ints(thinking_prompt), num_samples=1, sampling_params=params),
             "thinking block sampling",
-            attempts=2,
+            attempts=4,
         )
         if not response.sequences:
             raise AdapterError("Tinker returned no sampled sequences for thinking block")

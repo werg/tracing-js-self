@@ -26,7 +26,7 @@ import threading
 import time
 from typing import Any
 
-from .adapter import ContextOverflow
+from .adapter import AdapterError, ContextOverflow
 from .learning import (DIFFICULTY_SAMPLING_DEFAULTS, choose_validation_checkpoint, compression_coefficient,
                        curriculum_pick, difficulty_pick, execution_advantages, external_prefix_shaping_reward,
                        likelihood_advantages, pick_turn_target, sft_epoch_rows, task_metadata,
@@ -1190,10 +1190,15 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
     infra_error_count = 0
     max_tolerated_errors = max(5, int(0.10 * total_jobs))
 
-    def _infra_failure_eval_record(row: dict, repeat: int, error: RolloutError) -> dict:
+    def _infra_failure_eval_record(row: dict, repeat: int, error: Exception) -> dict:
         lang = row.get("language") or (row.get("task") or {}).get("language")
         extra_lang = {"language": lang} if lang else {}
-        rec = copy.deepcopy(error.record)
+        base_rec = getattr(error, "record", None)
+        rec = copy.deepcopy(base_rec) if isinstance(base_rec, dict) else {
+            "task_id": row["id"],
+            "infrastructure_error": {"type": type(error).__name__, "message": str(error)},
+            "samples": [], "messages": [], "generated_tokens": 0,
+        }
         gen_toks = int(rec.get("generated_tokens") or 0)
         rec.update(
             task_id=row["id"], family=row["family"], source_hash=row["sourceHash"],
@@ -1216,9 +1221,12 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         for row, repeat, seed in pending_jobs:
             try:
                 _record_eval_result(_run_eval_job(row, repeat, seed))
-            except RolloutError as error:
+            except (RolloutError, AdapterError) as error:
+                err_rec = getattr(error, "record", None)
+                err_payload = err_rec if isinstance(err_rec, dict) else {
+                    "task_id": row["id"], "error": {"type": type(error).__name__, "message": str(error)}}
                 append_jsonl(output_dir / "infrastructure-errors.jsonl", {
-                    **error.record, "phase": "evaluation", "stage": stage, "split": split,
+                    **err_payload, "phase": "evaluation", "stage": stage, "split": split,
                     "repeat": repeat, "configuration_hash": config_fingerprint(config),
                     "sampling_checkpoint": checkpoint})
                 infra_error_count += 1
@@ -1235,9 +1243,12 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                     row, repeat = futures[future]
                     try:
                         record = future.result()
-                    except RolloutError as error:
+                    except (RolloutError, AdapterError) as error:
+                        err_rec = getattr(error, "record", None)
+                        err_payload = err_rec if isinstance(err_rec, dict) else {
+                            "task_id": row["id"], "error": {"type": type(error).__name__, "message": str(error)}}
                         append_jsonl(output_dir / "infrastructure-errors.jsonl", {
-                            **error.record, "phase": "evaluation", "stage": stage, "split": split,
+                            **err_payload, "phase": "evaluation", "stage": stage, "split": split,
                             "repeat": repeat, "configuration_hash": config_fingerprint(config),
                             "sampling_checkpoint": checkpoint})
                         infra_error_count += 1
@@ -1943,7 +1954,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         tolerate_rl_errors = bool(config.get("tolerate_rollout_errors", False))
         rl_step_infra_errors = 0
 
-        def _infra_failure_rl_record(row: dict, seed: int, group_mode: str, error: RolloutError) -> dict:
+        def _infra_failure_rl_record(row: dict, seed: int, group_mode: str, error: Exception) -> dict:
             lang = row.get("language") or (row.get("task") or {}).get("language")
             extra_lang = {"language": lang} if lang else {}
             return {
@@ -1967,9 +1978,12 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             for row, _curriculum_selection, seed, turn_target, group_mode, rollout_temp in pending_plan:
                 try:
                     record = _run_rl_rollout(row, seed, turn_target, group_mode, rollout_temp)
-                except RolloutError as error:
+                except (RolloutError, AdapterError) as error:
+                    err_rec = getattr(error, "record", None)
+                    err_payload = err_rec if isinstance(err_rec, dict) else {
+                        "task_id": row["id"], "error": {"type": type(error).__name__, "message": str(error)}}
                     append_jsonl(output_dir / "infrastructure-errors.jsonl", {
-                        **error.record, "phase": "rl", "step": step + 1,
+                        **err_payload, "phase": "rl", "step": step + 1,
                         "group_context": group_context, "configuration_hash": config_fingerprint(config)})
                     rl_step_infra_errors += 1
                     if not tolerate_rl_errors or rl_step_infra_errors >= len(pending_plan):
@@ -1988,10 +2002,13 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                         idx = futures[future]
                         try:
                             ordered_results[idx] = future.result()
-                        except RolloutError as error:
+                        except (RolloutError, AdapterError) as error:
                             row_i, _c_i, seed_i, _tt_i, mode_i, _temp_i = pending_plan[idx]
+                            err_rec = getattr(error, "record", None)
+                            err_payload = err_rec if isinstance(err_rec, dict) else {
+                                "task_id": row_i["id"], "error": {"type": type(error).__name__, "message": str(error)}}
                             append_jsonl(output_dir / "infrastructure-errors.jsonl", {
-                                **error.record, "phase": "rl", "step": step + 1,
+                                **err_payload, "phase": "rl", "step": step + 1,
                                 "group_context": group_context, "configuration_hash": config_fingerprint(config)})
                             rl_step_infra_errors += 1
                             if not tolerate_rl_errors or rl_step_infra_errors >= len(pending_plan):
