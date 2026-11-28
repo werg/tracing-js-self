@@ -738,3 +738,202 @@ test('combined multi-file + browser DOM app supports on-demand code.load, DOM/ev
   badSession.close();
 });
 
+test('FormData (including new FormData(formEl)), DOMParser, requestAnimationFrame/cancelAnimationFrame, queueMicrotask, Observers, getBoundingClientRect, and getComputedStyle', async () => {
+  const initialHtml = `<!DOCTYPE html>
+<html>
+<head><title>Expanded DOM</title></head>
+<body>
+  <form id="profile-form">
+    <input name="username" value="ada" />
+    <input name="ignored_disabled" value="nope" disabled />
+    <input type="checkbox" name="newsletter" value="yes" checked />
+    <input type="checkbox" name="unchecked_opt" value="no" />
+    <input type="radio" name="plan" value="free" />
+    <input type="radio" name="plan" value="pro" checked />
+    <select name="role">
+      <option value="viewer">Viewer</option>
+      <option value="admin" selected>Admin</option>
+    </select>
+    <select name="tags" multiple>
+      <option value="js" selected>JS</option>
+      <option value="py" selected>PY</option>
+      <option value="rs">RS</option>
+    </select>
+    <textarea name="bio">Hello DOM</textarea>
+    <button type="submit" name="btn" value="send">Send</button>
+  </form>
+  <div id="box" style="left: 10px; top: 20px; width: 120px; height: 45px; color: crimson; --accent-color: teal">
+    <span id="txt">start</span>
+  </div>
+  <div id="hidden-box" hidden>secret</div>
+</body>
+</html>`;
+
+  const source = `async function run() {
+    // 1. FormData from HTMLFormElement + mutation API
+    const form = document.getElementById('profile-form');
+    const fd = new FormData(form);
+    const fromForm = Array.from(fd.entries());
+    fd.append('tags', 'ts');
+    fd.set('username', 'grace');
+    const allTags = fd.getAll('tags');
+    const hasBio = fd.has('bio');
+    fd.delete('newsletter');
+    const forEachPairs = [];
+    fd.forEach((v, k) => forEachPairs.push(k + '=' + v));
+
+    // 2. DOMParser returning a real virtual Document
+    const parsedDoc = new DOMParser().parseFromString(
+      '<!DOCTYPE html><html><head><title>Parsed</title></head><body><section class="card"><p data-k="1">One</p><p data-k="2">Two</p></section></body></html>',
+      'text/html',
+    );
+    const parsedSummary = {
+      isDoc: parsedDoc instanceof Document,
+      title: parsedDoc.title,
+      items: parsedDoc.querySelectorAll('section.card p').map(el => el.dataset.k + ':' + el.textContent),
+    };
+
+    // 3. requestAnimationFrame / cancelAnimationFrame (+16ms frames) & queueMicrotask
+    const rafLog = [];
+    const cancelledRaf = requestAnimationFrame(() => rafLog.push('cancelled'));
+    cancelAnimationFrame(cancelledRaf);
+    requestAnimationFrame(ts1 => {
+      rafLog.push('f1:' + ts1);
+      requestAnimationFrame(ts2 => rafLog.push('f2:' + ts2));
+    });
+    const microLog = [];
+    queueMicrotask(() => microLog.push('m1'));
+    queueMicrotask(() => microLog.push('m2'));
+    await window.__flushTimersAsync(40);
+
+    // 4. MutationObserver (attributes, childList, characterData, takeRecords, disconnect)
+    const box = document.getElementById('box');
+    const txtSpan = document.getElementById('txt');
+    const mutEvents = [];
+    const mo = new MutationObserver(records => {
+      for (const r of records) {
+        mutEvents.push({
+          type: r.type,
+          targetId: r.target.id || r.target.nodeName,
+          attr: r.attributeName,
+          oldValue: r.oldValue,
+          added: r.addedNodes.length,
+          removed: r.removedNodes.length,
+        });
+      }
+    });
+    mo.observe(box, {
+      attributes: true,
+      attributeOldValue: true,
+      attributeFilter: ['data-state'],
+      childList: true,
+      characterData: true,
+      characterDataOldValue: true,
+      subtree: true,
+    });
+    box.setAttribute('data-state', 'ready');
+    box.setAttribute('data-ignored', 'x'); // filtered out
+    const child = document.createElement('em');
+    child.textContent = 'added';
+    box.appendChild(child);
+    txtSpan.firstChild.data = 'updated';
+    await Promise.resolve();
+    mo.disconnect();
+    box.setAttribute('data-state', 'after-disconnect');
+    await Promise.resolve();
+
+    // 5. ResizeObserver & IntersectionObserver
+    const resizeSizes = [];
+    const ro = new ResizeObserver(entries => {
+      for (const e of entries) resizeSizes.push([e.contentRect.width, e.contentRect.height]);
+    });
+    ro.observe(box);
+    const interEvents = [];
+    const io = new IntersectionObserver(entries => {
+      for (const e of entries) interEvents.push([e.target.id, e.isIntersecting, e.intersectionRatio]);
+    });
+    io.observe(box);
+    io.observe(document.getElementById('hidden-box'));
+    await Promise.resolve();
+    ro.disconnect();
+    io.disconnect();
+
+    // 6. getBoundingClientRect & window.getComputedStyle
+    const rect = box.getBoundingClientRect();
+    const cs = window.getComputedStyle(box);
+    const hiddenCs = window.getComputedStyle(document.getElementById('hidden-box'));
+
+    return {
+      fromForm,
+      allTags,
+      hasBio,
+      userAfterSet: fd.get('username'),
+      hasNewsletterAfterDelete: fd.has('newsletter'),
+      forEachCount: forEachPairs.length,
+      parsedSummary,
+      rafLog,
+      microLog,
+      perfNow: performance.now(),
+      mutEvents,
+      resizeSizes,
+      interEvents,
+      rect: rect.toJSON(),
+      computed: {
+        display: cs.display,
+        color: cs.getPropertyValue('color'),
+        accent: cs.getPropertyValue('--accent-color'),
+        hiddenDisplay: hiddenCs.display,
+      },
+    };
+  }`;
+
+  const exported = await exportTinkerExample(browserTask(source, {
+    id: 'dom-expansion-suite',
+    initialHtml,
+  }), {traceFormat: 'compact'});
+
+  assert.equal(exported.metadata.traceAudit.replayVerified, true);
+  assert.equal(exported.messages.some(m => m.role === 'tool_declare'), false);
+  const comp = parseStudentAction(exported.messages.at(-1));
+  assert.equal(comp.kind, 'return');
+  assert.deepEqual(comp.value, {
+    fromForm: [
+      ['username', 'ada'],
+      ['newsletter', 'yes'],
+      ['plan', 'pro'],
+      ['role', 'admin'],
+      ['tags', 'js'],
+      ['tags', 'py'],
+      ['bio', 'Hello DOM'],
+    ],
+    allTags: ['js', 'py', 'ts'],
+    hasBio: true,
+    userAfterSet: 'grace',
+    hasNewsletterAfterDelete: false,
+    forEachCount: 7,
+    parsedSummary: {
+      isDoc: true,
+      title: 'Parsed',
+      items: ['1:One', '2:Two'],
+    },
+    rafLog: ['f1:16', 'f2:32'],
+    microLog: ['m1', 'm2'],
+    perfNow: 40,
+    mutEvents: [
+      {type: 'attributes', targetId: 'box', attr: 'data-state', oldValue: null, added: 0, removed: 0},
+      {type: 'childList', targetId: 'box', attr: null, oldValue: null, added: 1, removed: 0},
+      {type: 'characterData', targetId: '#text', attr: null, oldValue: 'start', added: 0, removed: 0},
+    ],
+    resizeSizes: [[120, 45]],
+    interEvents: [['box', true, 1], ['hidden-box', false, 0]],
+    rect: {x: 10, y: 20, width: 120, height: 45, top: 20, left: 10, right: 130, bottom: 65},
+    computed: {
+      display: 'block',
+      color: 'crimson',
+      accent: 'teal',
+      hiddenDisplay: 'none',
+    },
+  });
+});
+
+

@@ -3,6 +3,8 @@
 // before accepting hostile sources; node:vm alone is not a security boundary.
 import vm from 'node:vm';
 import {readFileSync} from 'node:fs';
+import {posix as pathPosix} from 'node:path';
+import ts from 'typescript';
 import {createFixtureBroker} from '../src/training/fixture-broker.js';
 import {HOST_METHODS,hostOperation} from '../src/host/operations.js';
 import {decodeOwnedGraph} from '../src/host/graph-codec.js';
@@ -17,11 +19,121 @@ import {normalizeFetchRequest,VM_FETCH_RUNTIME_SCRIPT} from '../src/training/tin
 import {
   createNativeFixtureBroker,
   createReplayNodeIoBridge,
+  NODE_BUILTIN_EXTERNALS,
   resolveOperationSpec,
   VM_NODE_IO_RUNTIME_SCRIPT,
+  WORKSPACE_CWD,
 } from '../src/training/tinker-node-io.js';
 import {executeVirtualCodebaseInContext} from '../src/training/tinker-codebase.js';
 import {VM_BROWSER_DOM_RUNTIME_SCRIPT,DEFAULT_BROWSER_HTML,DEFAULT_BROWSER_URL} from '../src/training/tinker-browser-dom.js';
+
+const NODE_BUILTIN_SET = new Set(NODE_BUILTIN_EXTERNALS);
+
+function preprocessWorkerModuleSource(code, relPath, {rewriteBuiltinImports = false} = {}) {
+  if (typeof code !== 'string' || !code) return code;
+  const hasMeta = code.includes('import.meta');
+  const mightHaveBuiltin = rewriteBuiltinImports && (code.includes('import') || code.includes('require'));
+  if (!hasMeta && !mightHaveBuiltin) return code;
+
+  const cleanRel = String(relPath || 'index.js').replaceAll('\\', '/').replace(/^\/+/, '');
+  const absFilename = pathPosix.join(WORKSPACE_CWD, cleanRel);
+  const absDirname = pathPosix.dirname(absFilename);
+  const metaUrl = 'file://' + absFilename;
+  const scriptKind = cleanRel.endsWith('.tsx')
+    ? ts.ScriptKind.TSX
+    : /\.(?:ts|mts|cts)$/i.test(cleanRel)
+      ? ts.ScriptKind.TS
+      : ts.ScriptKind.JS;
+
+  let sf;
+  try {
+    sf = ts.createSourceFile(cleanRel, code, ts.ScriptTarget.Latest, true, scriptKind);
+  } catch {
+    return code;
+  }
+
+  const edits = [];
+  function visit(node) {
+    if (hasMeta && ts.isPropertyAccessExpression(node) &&
+        ts.isMetaProperty(node.expression) &&
+        node.expression.keywordToken === ts.SyntaxKind.ImportKeyword &&
+        node.expression.name.text === 'meta') {
+      const prop = node.name.text;
+      if (prop === 'url') {
+        edits.push({start: node.getStart(sf), end: node.getEnd(), text: JSON.stringify(metaUrl)});
+        return;
+      }
+      if (prop === 'filename') {
+        edits.push({start: node.getStart(sf), end: node.getEnd(), text: JSON.stringify(absFilename)});
+        return;
+      }
+      if (prop === 'dirname') {
+        edits.push({start: node.getStart(sf), end: node.getEnd(), text: JSON.stringify(absDirname)});
+        return;
+      }
+    }
+    if (hasMeta && ts.isMetaProperty(node) &&
+        node.keywordToken === ts.SyntaxKind.ImportKeyword &&
+        node.name.text === 'meta') {
+      edits.push({
+        start: node.getStart(sf),
+        end: node.getEnd(),
+        text: `({url:${JSON.stringify(metaUrl)},filename:${JSON.stringify(absFilename)},dirname:${JSON.stringify(absDirname)}})`,
+      });
+      return;
+    }
+    if (rewriteBuiltinImports && ts.isImportDeclaration(node) &&
+        ts.isStringLiteral(node.moduleSpecifier) &&
+        NODE_BUILTIN_SET.has(node.moduleSpecifier.text)) {
+      const spec = node.moduleSpecifier.text;
+      const clause = node.importClause;
+      if (!clause || clause.isTypeOnly) {
+        edits.push({start: node.getStart(sf), end: node.getEnd(), text: ''});
+        return;
+      }
+      const reqExpr = `globalThis.require(${JSON.stringify(spec)})`;
+      const parts = [];
+      if (clause.name) {
+        parts.push(`const ${clause.name.text} = ${reqExpr};`);
+      }
+      if (clause.namedBindings) {
+        if (ts.isNamespaceImport(clause.namedBindings)) {
+          parts.push(`const ${clause.namedBindings.name.text} = ${reqExpr};`);
+        } else if (ts.isNamedImports(clause.namedBindings)) {
+          const items = clause.namedBindings.elements
+            .filter(el => !el.isTypeOnly)
+            .map(el => el.propertyName ? `${el.propertyName.text}: ${el.name.text}` : el.name.text);
+          if (items.length) {
+            parts.push(`const {${items.join(', ')}} = ${reqExpr};`);
+          }
+        }
+      }
+      edits.push({start: node.getStart(sf), end: node.getEnd(), text: parts.join(' ')});
+      return;
+    }
+    if (rewriteBuiltinImports && ts.isCallExpression(node) &&
+        ts.isIdentifier(node.expression) && node.expression.text === 'require' &&
+        node.arguments.length === 1 && ts.isStringLiteral(node.arguments[0]) &&
+        NODE_BUILTIN_SET.has(node.arguments[0].text)) {
+      edits.push({
+        start: node.expression.getStart(sf),
+        end: node.expression.getEnd(),
+        text: 'globalThis.require',
+      });
+      return;
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(sf);
+
+  if (!edits.length) return code;
+  edits.sort((a, b) => b.start - a.start);
+  let out = code;
+  for (const edit of edits) {
+    out = out.slice(0, edit.start) + edit.text + out.slice(edit.end);
+  }
+  return out;
+}
 
 let mode='original',phase='input';
 try{
@@ -198,9 +310,13 @@ try{
   let value,kind;
   if(isMultiFile){
     phase='execute';
+    const workerFiles=isNative?Object.fromEntries(Object.entries(input.files).map(([relPath,content])=>[
+      relPath,
+      relPath.toLowerCase().endsWith('.json')?content:preprocessWorkerModuleSource(content,relPath,{rewriteBuiltinImports:true}),
+    ])):input.files;
     const execResult=await executeVirtualCodebaseInContext({
       context,
-      files:input.files,
+      files:workerFiles,
       entryFile:input.entryFile,
       entry:input.entry,
       initialLoadedFiles:input.initialLoadedFiles??[input.entryFile],
@@ -218,11 +334,12 @@ try{
     kind=execResult.kind;
   }else{
     phase='instrumentation';
-    const source=mode==='operations'?instrumentOperationSource(input.source):
-      mode==='branches'?instrumentBranchSource(input.source):
-      mode==='completions'?instrumentCompletionSource(input.source):
-      mode==='trace'?instrumentNativeTraceSource(input.source,{entryName:input.entry,sourceLength:input.traceSourceLength}).source:
-      input.source;
+    const rawSource=isNative?preprocessWorkerModuleSource(input.source,input.entryFile??'index.js',{rewriteBuiltinImports:false}):input.source;
+    const source=mode==='operations'?instrumentOperationSource(rawSource):
+      mode==='branches'?instrumentBranchSource(rawSource):
+      mode==='completions'?instrumentCompletionSource(rawSource):
+      mode==='trace'?instrumentNativeTraceSource(rawSource,{entryName:input.entry,sourceLength:input.traceSourceLength}).source:
+      rawSource;
     phase='compile';
     // Catch only guest invocation throws *inside* the reference realm. Script
     // compilation and vm deadline failures still escape as verifier failures.
