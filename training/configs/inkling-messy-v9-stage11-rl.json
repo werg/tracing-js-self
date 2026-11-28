@@ -20,7 +20,7 @@
   "reference_kl_coef": 0.04,
   "reference_kl_clip": 20.0,
   "lora_rank": 32,
-  "dataset": "runs/messy-v8-stage10/stage10-oss-merged.jsonl",
+  "dataset": "runs/messy-v9-stage11/stage11-oss-merged.jsonl",
   "output_dir": "runs/inkling-messy-v9-stage11-rl",
   "skip_failed_exports": true,
   "tolerate_rollout_errors": true,
