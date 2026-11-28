@@ -9,10 +9,65 @@ import ts from 'typescript';
 import {instrumentNativeTraceSource} from './native-trace.js';
 
 export const WHOLE_FILE_LOAD_MAX_BYTES = 3072;
-export const MAX_CODEBASE_FILES = 256;
-export const MAX_CODEBASE_TOTAL_BYTES = 4 * 1024 * 1024;
-export const MAX_CODEBASE_FILE_BYTES = 262144;
+export const MAX_CODEBASE_FILES = 2048;
+export const MAX_CODEBASE_TOTAL_BYTES = 32 * 1024 * 1024;
+export const MAX_CODEBASE_FILE_BYTES = 524288;
 export const MAX_CODE_LOAD_BATCH = 64;
+export const MAX_CODE_LOAD_RESPONSE_BYTES = 64_000;
+export const MAX_CODE_SEARCH_RESPONSE_BYTES = 32_000;
+export const MAX_CODE_LIST_RESPONSE_BYTES = 32_000;
+export const ADAPTIVE_MANIFEST_FILE_THRESHOLD = 120;
+export const CODE_LOAD_OPERATION = 'code.load';
+export const CODE_SEARCH_OPERATION = 'code.search';
+export const CODE_LIST_OPERATION = 'code.list';
+
+export const CODE_SEARCH_TOOL_SPEC = Object.freeze({
+  type: 'function',
+  function: {
+    name: CODE_SEARCH_OPERATION,
+    description:
+      'Search source code across repository files deterministically (sorted by path, then 1-based line number). ' +
+      'Pass {"arguments":[{query, pathPrefix?, glob?, isRegex?, caseSensitive?, maxResults?, contextLines?}]} ' +
+      '(default isRegex=false, caseSensitive=false, maxResults=30 max 100, contextLines=0 max 5). ' +
+      'Returns {query, totalMatches, truncated, matches: [{path, line, text, contextBefore?, contextAfter?}]} capped at 32 KB.',
+    parameters: {
+      type: 'object',
+      properties: {
+        arguments: {
+          type: 'array',
+          description:
+            'Single-element array containing a code.search request object ' +
+            '({query, pathPrefix?, glob?, isRegex?, caseSensitive?, maxResults?, contextLines?}).',
+        },
+      },
+      required: ['arguments'],
+    },
+  },
+});
+
+export const CODE_LIST_TOOL_SPEC = Object.freeze({
+  type: 'function',
+  function: {
+    name: CODE_LIST_OPERATION,
+    description:
+      'List and paginate repository files and directory summaries deterministically. ' +
+      'Pass {"arguments":[{prefix?, glob?, includeSymbols?, maxEntries?, offset?}]} (or {"arguments":[]} for defaults; ' +
+      'maxEntries defaults to 100, max 250). ' +
+      'Returns {totalFiles, returned, truncated, directories: [{path, fileCount, totalBytes}], files: [{path, bytes, lines, symbols?}]} capped at 32 KB.',
+    parameters: {
+      type: 'object',
+      properties: {
+        arguments: {
+          type: 'array',
+          description:
+            'Optional single-element array containing a code.list request object ' +
+            '({prefix?, glob?, includeSymbols?, maxEntries?, offset?}).',
+        },
+      },
+      required: ['arguments'],
+    },
+  },
+});
 
 const MODULE_EXTENSIONS = Object.freeze(['.js', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts', '.json']);
 const TS_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
@@ -448,15 +503,12 @@ export function analyzeSourceFile(code, filePath = 'module.js') {
   };
 }
 
-/** Render a concise deterministic manifest of all files in the virtual codebase. */
-export function renderRepoManifest(files, entryFile, initialLoadedFiles = [entryFile]) {
-  const loaded = new Set(initialLoadedFiles);
-  const paths = Object.keys(files).sort();
-  const isLargeRepo = paths.length > 64;
-  const isVeryLargeRepo = paths.length > 128;
-  const exportLimit = isVeryLargeRepo ? 6 : (isLargeRepo ? 8 : 12);
-  const defLimit = isVeryLargeRepo ? 3 : (isLargeRepo ? 4 : 8);
-  const maxPartChars = isVeryLargeRepo ? 72 : (isLargeRepo ? 96 : Infinity);
+function formatByteSize(bytes) {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / 1024).toFixed(1)} KB`;
+}
+
+function renderManifestFileRow(relPath, content, loaded, {exportLimit, defLimit, maxPartChars, omitDefsWhenExports}) {
   const fmtList = (list, limit) => {
     if (!list.length) return '';
     const kept = [];
@@ -471,23 +523,174 @@ export function renderRepoManifest(files, entryFile, initialLoadedFiles = [entry
     const remaining = list.length - kept.length;
     return remaining > 0 ? kept.join(', ') + ` (+${remaining} more)` : kept.join(', ');
   };
+  const info = analyzeSourceFile(content, relPath);
+  const tag = loaded.has(relPath) ? ' [loaded]' : '';
+  const exportedNames = [];
+  const defNames = [];
+  for (const sym of info.symbols.values()) {
+    if (sym.exported) exportedNames.push(sym.name);
+    else if (sym.kind === 'function' || sym.kind === 'class') defNames.push(sym.name);
+  }
+  const summaryParts = [];
+  if (exportedNames.length) summaryParts.push('exports: ' + fmtList(exportedNames, exportLimit));
+  if (defNames.length && (!omitDefsWhenExports || exportedNames.length === 0)) {
+    summaryParts.push('defs: ' + fmtList(defNames, defLimit));
+  }
+  const suffix = summaryParts.length ? ' — ' + summaryParts.join('; ') : '';
+  return `- ${relPath}${tag} (${info.lines} lines, ${info.bytes} bytes)${suffix}`;
+}
+
+function truncateDirDepth(dirKey, maxDepth) {
+  if (dirKey === '.') return '.';
+  const parts = dirKey.split('/');
+  if (parts.length <= maxDepth) return dirKey;
+  return parts.slice(0, maxDepth).join('/');
+}
+
+function renderAdaptiveDirectoryManifest(files, paths, entryFile, loaded) {
+  const MAX_NEIGHBORHOOD_FILES = 30;
+  const MAX_SUMMARY_DIRS = 60;
+  const MAX_MANIFEST_CHARS = 11_500;
+
+  let normEntry = entryFile;
+  try {
+    normEntry = normalizeRepoPath(entryFile);
+  } catch {
+    normEntry = entryFile;
+  }
+
+  let totalBytes = 0;
+  const fileBytes = new Map();
+  for (const p of paths) {
+    const b = Buffer.byteLength(files[p], 'utf8');
+    fileBytes.set(p, b);
+    totalBytes += b;
+  }
+
+  const entryDir = pathPosix.dirname(normEntry);
+  const neighborhood = [];
+  const neighborhoodSet = new Set();
+  const addNeighbor = p => {
+    if (neighborhood.length >= MAX_NEIGHBORHOOD_FILES) return;
+    if (!own(files, p) || neighborhoodSet.has(p)) return;
+    neighborhoodSet.add(p);
+    neighborhood.push(p);
+  };
+
+  addNeighbor(normEntry);
+  for (const p of [...loaded].sort()) addNeighbor(p);
+  for (const p of paths) {
+    if (neighborhood.length >= MAX_NEIGHBORHOOD_FILES) break;
+    if (pathPosix.dirname(p) === entryDir) addNeighbor(p);
+  }
+
+  const neighborhoodDirs = new Set(neighborhood.map(p => pathPosix.dirname(p)));
+  const otherPaths = paths.filter(p => !neighborhoodSet.has(p));
+
+  const groupDirs = maxDepth => {
+    const groups = new Map();
+    for (const p of otherPaths) {
+      const rawDir = pathPosix.dirname(p);
+      const key = maxDepth > 0 ? truncateDirDepth(rawDir, maxDepth) : rawDir;
+      let rec = groups.get(key);
+      if (!rec) {
+        rec = {files: [], totalBytes: 0};
+        groups.set(key, rec);
+      }
+      rec.files.push(p);
+      rec.totalBytes += fileBytes.get(p) ?? 0;
+    }
+    return groups;
+  };
+
+  let dirGroups = groupDirs(0);
+  if (dirGroups.size > MAX_SUMMARY_DIRS) {
+    for (const depth of [3, 2, 1]) {
+      const rolled = groupDirs(depth);
+      dirGroups = rolled;
+      if (dirGroups.size <= MAX_SUMMARY_DIRS) break;
+    }
+  }
+  const sortedDirs = [...dirGroups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+  const rows = [
+    `Repository manifest (${paths.length} files, ${formatByteSize(totalBytes)}; adaptive directory summary):`,
+    'Hint: use `code.list` to browse directories/files, `code.search` to locate symbols/text, and `code.load` to read files/symbols/line ranges.',
+    `Entry & neighborhood (${neighborhood.length} file${neighborhood.length === 1 ? '' : 's'}):`,
+  ];
+  for (const relPath of neighborhood) {
+    rows.push(renderManifestFileRow(relPath, files[relPath], loaded, {
+      exportLimit: 6,
+      defLimit: 3,
+      maxPartChars: 72,
+      omitDefsWhenExports: true,
+    }));
+  }
+
+  if (otherPaths.length > 0) {
+    rows.push(`Directories (${otherPaths.length} other file${otherPaths.length === 1 ? '' : 's'} across ${sortedDirs.length} director${sortedDirs.length === 1 ? 'y' : 'ies'}):`);
+    let usedChars = rows.reduce((sum, r) => sum + r.length + 1, 0);
+    let shownDirs = 0;
+    for (let i = 0; i < sortedDirs.length; i++) {
+      const [dirKey, rec] = sortedDirs[i];
+      const displayDir = dirKey === '.' ? './' : `${dirKey}/`;
+      const prefixStrip = dirKey === '.' ? '' : `${dirKey}/`;
+      const samples = [];
+      let sampleChars = 0;
+      for (const fp of rec.files) {
+        if (samples.length >= 3) break;
+        let label = prefixStrip && fp.startsWith(prefixStrip) ? fp.slice(prefixStrip.length) : fp;
+        if (label.length > 28) label = pathPosix.basename(fp);
+        const nextChars = sampleChars + (samples.length ? 2 : 0) + label.length;
+        if (samples.length > 0 && nextChars > 60) break;
+        samples.push(label);
+        sampleChars = nextChars;
+      }
+      const n = rec.files.length;
+      const countLabel = neighborhoodDirs.has(dirKey)
+        ? `${n} more file${n === 1 ? '' : 's'}`
+        : `${n} file${n === 1 ? '' : 's'}`;
+      const row = `- ${displayDir} (${countLabel}, ${(rec.totalBytes / 1024).toFixed(1)} KB, sample: ${samples.join(', ')})`;
+      const reserve = (i < sortedDirs.length - 1) ? 140 : 0;
+      if (shownDirs >= MAX_SUMMARY_DIRS || (usedChars + row.length + 1 + reserve > MAX_MANIFEST_CHARS)) {
+        let remFiles = 0;
+        let remBytes = 0;
+        for (let j = i; j < sortedDirs.length; j++) {
+          remFiles += sortedDirs[j][1].files.length;
+          remBytes += sortedDirs[j][1].totalBytes;
+        }
+        const remDirs = sortedDirs.length - i;
+        rows.push(`- ... (+${remDirs} more director${remDirs === 1 ? 'y' : 'ies'}, ${remFiles} files, ${(remBytes / 1024).toFixed(1)} KB; use code.list to explore)`);
+        break;
+      }
+      rows.push(row);
+      usedChars += row.length + 1;
+      shownDirs += 1;
+    }
+  }
+  return rows.join('\n');
+}
+
+/** Render a concise deterministic manifest of all files in the virtual codebase.
+ * For > 120 files, automatically switches to a compact hierarchical directory-summary
+ * + entry-file neighborhood manifest (< 12 KB even for 2,048-file repos). */
+export function renderRepoManifest(files, entryFile, initialLoadedFiles = [entryFile]) {
+  const loaded = new Set(initialLoadedFiles);
+  const paths = Object.keys(files).sort();
+  if (paths.length > ADAPTIVE_MANIFEST_FILE_THRESHOLD) {
+    return renderAdaptiveDirectoryManifest(files, paths, entryFile, loaded);
+  }
+  const isLargeRepo = paths.length > 64;
+  const isVeryLargeRepo = paths.length > 128;
+  const opts = {
+    exportLimit: isVeryLargeRepo ? 6 : (isLargeRepo ? 8 : 12),
+    defLimit: isVeryLargeRepo ? 3 : (isLargeRepo ? 4 : 8),
+    maxPartChars: isVeryLargeRepo ? 72 : (isLargeRepo ? 96 : Infinity),
+    omitDefsWhenExports: isVeryLargeRepo,
+  };
   const rows = [`Repository manifest (${paths.length} file${paths.length === 1 ? '' : 's'}):`];
   for (const relPath of paths) {
-    const info = analyzeSourceFile(files[relPath], relPath);
-    const tag = loaded.has(relPath) ? ' [loaded]' : '';
-    const exportedNames = [];
-    const defNames = [];
-    for (const sym of info.symbols.values()) {
-      if (sym.exported) exportedNames.push(sym.name);
-      else if (sym.kind === 'function' || sym.kind === 'class') defNames.push(sym.name);
-    }
-    const summaryParts = [];
-    if (exportedNames.length) summaryParts.push('exports: ' + fmtList(exportedNames, exportLimit));
-    if (defNames.length && (!isVeryLargeRepo || exportedNames.length === 0)) {
-      summaryParts.push('defs: ' + fmtList(defNames, defLimit));
-    }
-    const suffix = summaryParts.length ? ' — ' + summaryParts.join('; ') : '';
-    rows.push(`- ${relPath}${tag} (${info.lines} lines, ${info.bytes} bytes)${suffix}`);
+    rows.push(renderManifestFileRow(relPath, files[relPath], loaded, opts));
   }
   return rows.join('\n');
 }
@@ -630,6 +833,346 @@ export function serveCodeLoad(files, requests) {
 export function codeLoadResultBytes(items) {
   if (!Array.isArray(items)) return 0;
   return items.reduce((sum, item) => sum + (Number.isFinite(item?.bytes) ? item.bytes : 0), 0);
+}
+
+function normalizePathFilterPrefix(rawPrefix) {
+  if (rawPrefix === undefined || rawPrefix === null || rawPrefix === '') return '';
+  if (typeof rawPrefix !== 'string' || rawPrefix.includes('\0')) return null;
+  let cleaned = rawPrefix.replaceAll('\\', '/').trim();
+  while (cleaned.startsWith('./')) cleaned = cleaned.slice(2);
+  cleaned = cleaned.replace(/^\/+/, '').replace(/\/+/g, '/');
+  if (cleaned === '.' || cleaned === '') return '';
+  if (cleaned === '..' || cleaned.startsWith('../') || cleaned.includes('/../') || cleaned.endsWith('/..')) {
+    return null;
+  }
+  return cleaned;
+}
+
+function compileGlobMatcher(rawGlob) {
+  if (rawGlob === undefined || rawGlob === null || rawGlob === '') return {matcher: null, error: null};
+  if (typeof rawGlob !== 'string' || rawGlob.length > 256 || rawGlob.includes('\0')) {
+    return {matcher: null, error: 'Invalid glob pattern'};
+  }
+  let pattern = rawGlob.replaceAll('\\', '/').trim();
+  while (pattern.startsWith('./')) pattern = pattern.slice(2);
+  pattern = pattern.replace(/^\/+/, '');
+  if (!pattern) return {matcher: null, error: null};
+  const matchBasenameOnly = !pattern.includes('/');
+  let re = '^';
+  let i = 0;
+  while (i < pattern.length) {
+    const ch = pattern[i];
+    if (ch === '*') {
+      if (pattern[i + 1] === '*') {
+        while (pattern[i + 1] === '*') i++;
+        if (pattern[i + 1] === '/') {
+          re += '(?:.*/)?';
+          i += 2;
+        } else {
+          re += '.*';
+          i += 1;
+        }
+      } else {
+        re += '[^/]*';
+        i += 1;
+      }
+    } else if (ch === '?') {
+      re += '[^/]';
+      i += 1;
+    } else if (ch === '{') {
+      const close = pattern.indexOf('}', i + 1);
+      if (close > i + 1) {
+        const alts = pattern.slice(i + 1, close).split(',').map(part =>
+          part.replace(/[.+^$|()\\[\]{}*?]/g, '\\$&'));
+        re += `(?:${alts.join('|')})`;
+        i = close + 1;
+      } else {
+        re += '\\{';
+        i += 1;
+      }
+    } else if (ch === '[') {
+      const close = pattern.indexOf(']', i + 1);
+      if (close > i + 1) {
+        let inner = pattern.slice(i + 1, close);
+        if (inner.startsWith('!') || inner.startsWith('^')) inner = '^' + inner.slice(1);
+        re += `[${inner.replaceAll('\\', '\\\\')}]`;
+        i = close + 1;
+      } else {
+        re += '\\[';
+        i += 1;
+      }
+    } else if ('.+^$|()\\{}'.includes(ch) || ch === ']') {
+      re += '\\' + ch;
+      i += 1;
+    } else {
+      re += ch;
+      i += 1;
+    }
+  }
+  re += '$';
+  try {
+    const regex = new RegExp(re);
+    return {
+      matcher: relPath => regex.test(matchBasenameOnly ? pathPosix.basename(relPath) : relPath),
+      error: null,
+    };
+  } catch (err) {
+    return {matcher: null, error: 'Invalid glob pattern: ' + (err?.message ?? String(rawGlob))};
+  }
+}
+
+function unwrapSingleToolRequest(raw, {allowEmpty = false} = {}) {
+  if (raw === undefined || raw === null) return allowEmpty ? {} : null;
+  if (Array.isArray(raw)) {
+    let items = raw;
+    if (items.length === 1 && Array.isArray(items[0])) items = items[0];
+    if (items.length === 0) return allowEmpty ? {} : null;
+    const first = items[0];
+    if (first === undefined || first === null) return allowEmpty ? {} : null;
+    return plain(first) ? first : null;
+  }
+  return plain(raw) ? raw : null;
+}
+
+function clampInt(raw, fallback, minVal, maxVal) {
+  if (raw === undefined || raw === null) return fallback;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(minVal, Math.min(maxVal, Math.trunc(n)));
+}
+
+function truncateSearchLine(line, maxChars = 400) {
+  return line.length > maxChars ? line.slice(0, maxChars - 3) + '...' : line;
+}
+
+/** Deterministically search across all codebase files (literal substring or safe regex). */
+export function serveCodeSearch(files, request, {maxResponseBytes = MAX_CODE_SEARCH_RESPONSE_BYTES} = {}) {
+  const req = unwrapSingleToolRequest(request, {allowEmpty: false});
+  if (!req) {
+    return {
+      query: '',
+      totalMatches: 0,
+      truncated: false,
+      matches: [],
+      error: 'Invalid code.search request: expected an object {query, ...} or single-element array',
+    };
+  }
+  const query = req.query;
+  if (typeof query !== 'string' || query.length === 0 || query.length > 500) {
+    return {
+      query: typeof query === 'string' ? query.slice(0, 100) : '',
+      totalMatches: 0,
+      truncated: false,
+      matches: [],
+      error: 'Invalid code.search request: query must be a non-empty string (<= 500 chars)',
+    };
+  }
+
+  const rawPrefix = req.pathPrefix ?? req.path_prefix;
+  const normPrefix = normalizePathFilterPrefix(rawPrefix);
+  if (normPrefix === null) {
+    return {query, totalMatches: 0, truncated: false, matches: [], error: 'Invalid pathPrefix: ' + String(rawPrefix)};
+  }
+
+  const {matcher: globMatcher, error: globError} = compileGlobMatcher(req.glob);
+  if (globError) {
+    return {query, totalMatches: 0, truncated: false, matches: [], error: globError};
+  }
+
+  const isRegex = Boolean(req.isRegex ?? req.is_regex ?? false);
+  const caseSensitive = Boolean(req.caseSensitive ?? req.case_sensitive ?? false);
+  const maxResults = clampInt(req.maxResults ?? req.max_results, 30, 1, 100);
+  const contextLines = clampInt(req.contextLines ?? req.context_lines, 0, 0, 5);
+
+  let lineRegex = null;
+  let precheckRegex = null;
+  const needle = caseSensitive ? query : query.toLowerCase();
+  if (isRegex) {
+    try {
+      lineRegex = new RegExp(query, caseSensitive ? '' : 'i');
+      precheckRegex = new RegExp(query, (caseSensitive ? '' : 'i') + 'm');
+    } catch (err) {
+      return {
+        query,
+        totalMatches: 0,
+        truncated: false,
+        matches: [],
+        error: 'Invalid regex: ' + (err?.message ?? String(err)),
+      };
+    }
+  }
+
+  const paths = Object.keys(files).sort();
+  const matches = [];
+  let totalMatches = 0;
+  let truncated = false;
+  let byteCapped = false;
+  const baseOverhead = Buffer.byteLength(
+    JSON.stringify({query, totalMatches: 999999, truncated: true, matches: []}),
+    'utf8',
+  );
+  let usedBytes = baseOverhead;
+
+  for (const relPath of paths) {
+    if (normPrefix && !relPath.startsWith(normPrefix)) continue;
+    if (globMatcher && !globMatcher(relPath)) continue;
+    const content = files[relPath];
+    if (typeof content !== 'string' || content.length === 0) continue;
+
+    if (isRegex) {
+      if (!precheckRegex.test(content)) continue;
+    } else if (caseSensitive) {
+      if (!content.includes(needle)) continue;
+    } else {
+      if (!content.toLowerCase().includes(needle)) continue;
+    }
+
+    const lines = content.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const lineText = lines[i];
+      const matched = isRegex
+        ? lineRegex.test(lineText)
+        : (caseSensitive ? lineText.includes(needle) : lineText.toLowerCase().includes(needle));
+      if (!matched) continue;
+
+      totalMatches += 1;
+      if (byteCapped || matches.length >= maxResults) {
+        truncated = true;
+        continue;
+      }
+
+      const item = {
+        path: relPath,
+        line: i + 1,
+        text: truncateSearchLine(lineText),
+      };
+      if (contextLines > 0) {
+        item.contextBefore = lines.slice(Math.max(0, i - contextLines), i).map(l => truncateSearchLine(l));
+        item.contextAfter = lines.slice(i + 1, Math.min(lines.length, i + 1 + contextLines)).map(l => truncateSearchLine(l));
+      }
+
+      const itemBytes = Buffer.byteLength(JSON.stringify(item), 'utf8') + (matches.length ? 1 : 0);
+      if (usedBytes + itemBytes > maxResponseBytes) {
+        byteCapped = true;
+        truncated = true;
+        continue;
+      }
+      matches.push(item);
+      usedBytes += itemBytes;
+    }
+  }
+
+  return {query, totalMatches, truncated, matches};
+}
+
+/** Deterministically list and paginate repository files and directory summaries. */
+export function serveCodeList(files, request = {}, {maxResponseBytes = MAX_CODE_LIST_RESPONSE_BYTES} = {}) {
+  const req = unwrapSingleToolRequest(request, {allowEmpty: true});
+  if (!req) {
+    return {
+      totalFiles: 0,
+      returned: 0,
+      truncated: false,
+      directories: [],
+      files: [],
+      error: 'Invalid code.list request: expected an optional object {prefix?, glob?, includeSymbols?, maxEntries?, offset?}',
+    };
+  }
+
+  const rawPrefix = req.prefix ?? req.pathPrefix ?? req.path_prefix;
+  const normPrefix = normalizePathFilterPrefix(rawPrefix);
+  if (normPrefix === null) {
+    return {
+      totalFiles: 0,
+      returned: 0,
+      truncated: false,
+      directories: [],
+      files: [],
+      error: 'Invalid prefix: ' + String(rawPrefix),
+    };
+  }
+
+  const {matcher: globMatcher, error: globError} = compileGlobMatcher(req.glob);
+  if (globError) {
+    return {totalFiles: 0, returned: 0, truncated: false, directories: [], files: [], error: globError};
+  }
+
+  const includeSymbols = Boolean(req.includeSymbols ?? req.include_symbols ?? false);
+  const maxEntries = clampInt(req.maxEntries ?? req.max_entries, 100, 1, 250);
+  const offset = clampInt(req.offset, 0, 0, MAX_CODEBASE_FILES);
+
+  const matchedPaths = [];
+  const dirMap = new Map();
+  const fileBytesMap = new Map();
+  for (const relPath of Object.keys(files).sort()) {
+    if (normPrefix && !relPath.startsWith(normPrefix)) continue;
+    if (globMatcher && !globMatcher(relPath)) continue;
+    matchedPaths.push(relPath);
+    const b = Buffer.byteLength(files[relPath], 'utf8');
+    fileBytesMap.set(relPath, b);
+    const dir = pathPosix.dirname(relPath);
+    let rec = dirMap.get(dir);
+    if (!rec) {
+      rec = {path: dir, fileCount: 0, totalBytes: 0};
+      dirMap.set(dir, rec);
+    }
+    rec.fileCount += 1;
+    rec.totalBytes += b;
+  }
+
+  const totalFiles = matchedPaths.length;
+  const allDirs = [...dirMap.values()].sort((a, b) => a.path.localeCompare(b.path));
+
+  const baseOverhead = Buffer.byteLength(
+    JSON.stringify({totalFiles: 999999, returned: 999999, truncated: true, directories: [], files: []}),
+    'utf8',
+  );
+  const maxDirBytes = Math.max(1024, Math.floor(maxResponseBytes * 0.4));
+  const directories = [];
+  let dirBytesUsed = 0;
+  let dirsTruncated = false;
+  for (const dirEntry of allDirs) {
+    const entryBytes = Buffer.byteLength(JSON.stringify(dirEntry), 'utf8') + (directories.length ? 1 : 0);
+    if (dirBytesUsed + entryBytes > maxDirBytes) {
+      dirsTruncated = true;
+      break;
+    }
+    directories.push(dirEntry);
+    dirBytesUsed += entryBytes;
+  }
+
+  let usedBytes = baseOverhead + dirBytesUsed;
+  const fileItems = [];
+  let filesByteTruncated = false;
+  const page = matchedPaths.slice(offset, offset + maxEntries);
+  for (const relPath of page) {
+    const content = files[relPath];
+    const bytes = fileBytesMap.get(relPath) ?? Buffer.byteLength(content, 'utf8');
+    const lines = content.length === 0 ? 0 : content.split(/\r?\n/).length;
+    const item = {path: relPath, bytes, lines};
+    if (includeSymbols) {
+      const info = analyzeSourceFile(content, relPath);
+      const syms = [];
+      for (const s of info.symbols.values()) {
+        if (s.exported) syms.push(s.name);
+      }
+      for (const s of info.symbols.values()) {
+        if (!s.exported && (s.kind === 'function' || s.kind === 'class')) syms.push(s.name);
+      }
+      item.symbols = syms.slice(0, 12);
+    }
+    const itemBytes = Buffer.byteLength(JSON.stringify(item), 'utf8') + (fileItems.length ? 1 : 0);
+    if (usedBytes + itemBytes > maxResponseBytes) {
+      filesByteTruncated = true;
+      break;
+    }
+    fileItems.push(item);
+    usedBytes += itemBytes;
+  }
+
+  const returned = fileItems.length;
+  const truncated = (offset + returned < totalFiles) || filesByteTruncated || dirsTruncated;
+  return {totalFiles, returned, truncated, directories, files: fileItems};
 }
 
 /** Resolve a relative module specifier against the in-memory `files` map. */

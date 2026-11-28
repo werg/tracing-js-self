@@ -32,10 +32,17 @@ from .tracer import (
 )
 
 CODE_LOAD_OPERATION = "code.load"
+CODE_SEARCH_OPERATION = "code.search"
+CODE_LIST_OPERATION = "code.list"
 WHOLE_FILE_THRESHOLD_BYTES = 3072
+MAX_CODE_LOAD_BATCH = 64
 MAX_CODE_LOAD_RESPONSE_BYTES = 64_000
-MAX_CODEBASE_FILES = 256
-MAX_CODEBASE_TOTAL_BYTES = 4_000_000
+MAX_CODE_SEARCH_RESPONSE_BYTES = 32_000
+MAX_CODE_LIST_RESPONSE_BYTES = 32_000
+MAX_CODEBASE_FILES = 2048
+MAX_CODEBASE_TOTAL_BYTES = 32 * 1024 * 1024
+MAX_CODEBASE_FILE_BYTES = 524288
+ADAPTIVE_MANIFEST_FILE_THRESHOLD = 120
 GUEST_FILENAME_PREFIX = "<guest:"
 
 CODE_LOAD_TOOL_DESCRIPTION = (
@@ -46,6 +53,64 @@ CODE_LOAD_TOOL_DESCRIPTION = (
     'or {"path": "pkg/parser.py", "start_line": 40, "end_line": 95} (bounded 1-based line range). '
     "Multiple requests may be batched in one call."
 )
+
+CODE_SEARCH_TOOL_DESCRIPTION = (
+    "Search source code across repository files deterministically (sorted by path, then 1-based line number). "
+    'Pass {"arguments": [{"query": "...", "pathPrefix": "...", "glob": "*.py", '
+    '"isRegex": false, "caseSensitive": false, "maxResults": 30, "contextLines": 0}]} '
+    "(maxResults up to 100, contextLines up to 5). "
+    "Returns {query, totalMatches, truncated, matches: [{path, line, text, contextBefore?, contextAfter?}]} capped at 32 KB."
+)
+
+CODE_LIST_TOOL_DESCRIPTION = (
+    "List and paginate repository files and directory summaries deterministically. "
+    'Pass {"arguments": [{"prefix": "...", "glob": "*.py", "includeSymbols": false, "maxEntries": 100, "offset": 0}]} '
+    '(or {"arguments": []} for defaults; maxEntries up to 250). '
+    "Returns {totalFiles, returned, truncated, directories: [{path, fileCount, totalBytes}], "
+    "files: [{path, bytes, lines, symbols?}]} capped at 32 KB."
+)
+
+CODE_SEARCH_TOOL_SPEC: dict[str, Any] = {
+    "type": "function",
+    "function": {
+        "name": CODE_SEARCH_OPERATION,
+        "description": CODE_SEARCH_TOOL_DESCRIPTION,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "arguments": {
+                    "type": "array",
+                    "description": (
+                        "Single-element array containing a code.search request object "
+                        "({query, pathPrefix?, glob?, isRegex?, caseSensitive?, maxResults?, contextLines?})."
+                    ),
+                }
+            },
+            "required": ["arguments"],
+        },
+    },
+}
+
+CODE_LIST_TOOL_SPEC: dict[str, Any] = {
+    "type": "function",
+    "function": {
+        "name": CODE_LIST_OPERATION,
+        "description": CODE_LIST_TOOL_DESCRIPTION,
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "arguments": {
+                    "type": "array",
+                    "description": (
+                        "Optional single-element array containing a code.list request object "
+                        "({prefix?, glob?, includeSymbols?, maxEntries?, offset?})."
+                    ),
+                }
+            },
+            "required": ["arguments"],
+        },
+    },
+}
 
 _CONST_NAME_RE = re.compile(r"^_?[A-Z][A-Z0-9_]*$")
 
@@ -109,7 +174,9 @@ def normalize_codebase_files(
         _demand(norm_path not in seen_paths, f"Duplicate normalized path: {norm_path!r}")
         _demand(isinstance(content, str), f"File content for {norm_path!r} must be a string")
         seen_paths.add(norm_path)
-        total_bytes += len(content.encode("utf-8"))
+        file_bytes = len(content.encode("utf-8"))
+        _demand(file_bytes <= MAX_CODEBASE_FILE_BYTES, f"File exceeds size limit: {norm_path!r}")
+        total_bytes += file_bytes
         _demand(total_bytes <= MAX_CODEBASE_TOTAL_BYTES, "Total codebase size exceeds limit")
         norm_entries.append((norm_path, content))
 
@@ -312,6 +379,220 @@ def resolve_enclosing_top_level_symbol(index: FileIndex, lineno: int) -> str | N
     return None
 
 
+def _posix_dirname(rel_path: str) -> str:
+    return rel_path.rsplit("/", 1)[0] if "/" in rel_path else "."
+
+
+def _posix_basename(rel_path: str) -> str:
+    return rel_path.rsplit("/", 1)[-1]
+
+
+def _format_byte_size(num_bytes: int) -> str:
+    if num_bytes >= 1024 * 1024:
+        return f"{num_bytes / (1024.0 * 1024.0):.1f} MB"
+    return f"{num_bytes / 1024.0:.1f} KB"
+
+
+def _truncate_dir_depth(dir_key: str, max_depth: int) -> str:
+    if dir_key == ".":
+        return "."
+    parts = dir_key.split("/")
+    if len(parts) <= max_depth:
+        return dir_key
+    return "/".join(parts[:max_depth])
+
+
+def _format_manifest_file_line(
+    path: str,
+    src: str,
+    loaded_set: set[str],
+    *,
+    large_repo: bool,
+    sym_limit: int,
+    char_limit: int,
+) -> str:
+    idx = index_file_symbols(src, path)
+    size_kb = idx.bytes / 1024.0
+    loaded_tag = " [loaded]" if path in loaded_set else ""
+    if large_repo:
+        callables = [
+            s.name
+            for s in idx.symbols
+            if s.kind in ("class", "function", "async_function") and not s.name.startswith("_")
+        ]
+        private_callables = [
+            s.name
+            for s in idx.symbols
+            if s.kind in ("class", "function", "async_function")
+            and s.name.startswith("_")
+            and not s.name.startswith("__")
+        ]
+        constants = [
+            s.name
+            for s in idx.symbols
+            if s.kind == "constant" and not s.name.startswith("__")
+        ]
+        display_syms = [*callables, *private_callables, *constants]
+    else:
+        display_syms = [
+            s.name
+            for s in idx.symbols
+            if s.kind in ("function", "async_function", "class", "constant") and not s.name.startswith("__")
+        ]
+    if not display_syms:
+        display_syms = [s.name for s in idx.symbols if not s.name.startswith("__")]
+
+    truncated = False
+    if len(display_syms) > sym_limit:
+        shown = display_syms[:sym_limit]
+        truncated = True
+    else:
+        shown = list(display_syms)
+
+    if char_limit > 0 and shown:
+        bounded: list[str] = []
+        used = 0
+        for sym in shown:
+            add_len = len(sym) + (2 if bounded else 0)
+            if bounded and used + add_len > char_limit:
+                truncated = True
+                break
+            bounded.append(sym)
+            used += add_len
+        shown = bounded
+
+    if truncated and sym_limit > 0:
+        shown = [*shown, "..."]
+
+    if shown:
+        return f"- {path} ({size_kb:.1f} KB, {idx.lines} lines){loaded_tag}: {', '.join(shown)}"
+    return f"- {path} ({size_kb:.1f} KB, {idx.lines} lines){loaded_tag}"
+
+
+def _render_adaptive_directory_manifest(
+    files: dict[str, str],
+    norm_entry: str,
+    loaded_set: set[str],
+    *,
+    sym_limit: int,
+    char_limit: int,
+) -> str:
+    max_neighborhood_files = 30
+    max_summary_dirs = 60
+    max_manifest_chars = 11_500
+
+    all_paths = sorted(files.keys())
+    file_bytes: dict[str, int] = {p: len(files[p].encode("utf-8")) for p in all_paths}
+    total_bytes = sum(file_bytes.values())
+
+    entry_dir = _posix_dirname(norm_entry)
+    neighborhood: list[str] = []
+    neighborhood_set: set[str] = set()
+
+    def _add_neighbor(p: str) -> None:
+        if len(neighborhood) >= max_neighborhood_files:
+            return
+        if p in files and p not in neighborhood_set:
+            neighborhood_set.add(p)
+            neighborhood.append(p)
+
+    _add_neighbor(norm_entry)
+    for p in sorted(loaded_set):
+        _add_neighbor(p)
+    for p in all_paths:
+        if len(neighborhood) >= max_neighborhood_files:
+            break
+        if _posix_dirname(p) == entry_dir:
+            _add_neighbor(p)
+
+    neighborhood_dirs = {_posix_dirname(p) for p in neighborhood}
+    other_paths = [p for p in all_paths if p not in neighborhood_set]
+
+    def _group_dirs(max_depth: int) -> dict[str, tuple[list[str], int]]:
+        groups: dict[str, tuple[list[str], int]] = {}
+        for p in other_paths:
+            raw_dir = _posix_dirname(p)
+            key = _truncate_dir_depth(raw_dir, max_depth) if max_depth > 0 else raw_dir
+            rec = groups.get(key)
+            if rec is None:
+                groups[key] = ([p], file_bytes[p])
+            else:
+                rec[0].append(p)
+                groups[key] = (rec[0], rec[1] + file_bytes[p])
+        return groups
+
+    dir_groups = _group_dirs(0)
+    if len(dir_groups) > max_summary_dirs:
+        for depth in (3, 2, 1):
+            dir_groups = _group_dirs(depth)
+            if len(dir_groups) <= max_summary_dirs:
+                break
+
+    sorted_dirs = sorted(dir_groups.items(), key=lambda kv: kv[0])
+
+    lines: list[str] = [
+        f"Repository manifest ({len(all_paths)} files, {_format_byte_size(total_bytes)}; adaptive directory summary):",
+        "Hint: use `code.list` to browse directories/files, `code.search` to locate symbols/text, and `code.load` to read files/symbols/line ranges.",
+        f"Entry & neighborhood ({len(neighborhood)} file{'' if len(neighborhood) == 1 else 's'}):",
+    ]
+    for p in neighborhood:
+        lines.append(
+            _format_manifest_file_line(
+                p,
+                files[p],
+                loaded_set,
+                large_repo=True,
+                sym_limit=sym_limit,
+                char_limit=char_limit,
+            )
+        )
+
+    if other_paths:
+        dir_word = "directory" if len(sorted_dirs) == 1 else "directories"
+        file_word = "file" if len(other_paths) == 1 else "files"
+        lines.append(f"Directories ({len(other_paths)} other {file_word} across {len(sorted_dirs)} {dir_word}):")
+        used_chars = sum(len(ln) + 1 for ln in lines)
+        shown_dirs = 0
+        for i, (dir_key, (dir_files, dir_bytes)) in enumerate(sorted_dirs):
+            display_dir = "./" if dir_key == "." else f"{dir_key}/"
+            prefix_strip = "" if dir_key == "." else f"{dir_key}/"
+            samples: list[str] = []
+            sample_chars = 0
+            for fp in dir_files:
+                if len(samples) >= 3:
+                    break
+                label = fp[len(prefix_strip) :] if prefix_strip and fp.startswith(prefix_strip) else fp
+                if len(label) > 28:
+                    label = _posix_basename(fp)
+                next_chars = sample_chars + (2 if samples else 0) + len(label)
+                if samples and next_chars > 60:
+                    break
+                samples.append(label)
+                sample_chars = next_chars
+            n = len(dir_files)
+            if dir_key in neighborhood_dirs:
+                count_label = f"{n} more file{'' if n == 1 else 's'}"
+            else:
+                count_label = f"{n} file{'' if n == 1 else 's'}"
+            row = f"- {display_dir} ({count_label}, {dir_bytes / 1024.0:.1f} KB, sample: {', '.join(samples)})"
+            reserve = 140 if i < len(sorted_dirs) - 1 else 0
+            if shown_dirs >= max_summary_dirs or (used_chars + len(row) + 1 + reserve > max_manifest_chars):
+                rem_dirs = len(sorted_dirs) - i
+                rem_files = sum(len(item[1][0]) for item in sorted_dirs[i:])
+                rem_bytes = sum(item[1][1] for item in sorted_dirs[i:])
+                rem_word = "directory" if rem_dirs == 1 else "directories"
+                lines.append(
+                    f"- ... (+{rem_dirs} more {rem_word}, {rem_files} files, "
+                    f"{rem_bytes / 1024.0:.1f} KB; use code.list to explore)"
+                )
+                break
+            lines.append(row)
+            used_chars += len(row) + 1
+            shown_dirs += 1
+
+    return "\n".join(lines)
+
+
 def render_repo_manifest(
     files: dict[str, str],
     entry_file: str,
@@ -322,9 +603,9 @@ def render_repo_manifest(
 ) -> str:
     """Render a deterministic compact repository manifest for the initial user prompt.
 
-    Adapts per-file symbol density for larger repositories (50-256 files) so a
-    150-file manifest stays crisp (< 10K tokens) while still listing every file's
-    path, size/lines, and top-level classes/functions.
+    For <= 120 files, lists every file's path, size/lines, and top-level symbols.
+    For > 120 files (up to 2,048 files), automatically switches to a compact
+    hierarchical directory-summary + entry-file neighborhood manifest (< 12 KB).
     """
     norm_entry = normalize_rel_path(entry_file)
     loaded_set = set(initial_loaded_files) if initial_loaded_files is not None else {norm_entry}
@@ -351,6 +632,15 @@ def render_repo_manifest(
     else:
         char_limit = max(0, max_symbol_chars_per_file)
 
+    if file_count > ADAPTIVE_MANIFEST_FILE_THRESHOLD:
+        return _render_adaptive_directory_manifest(
+            files,
+            norm_entry,
+            loaded_set,
+            sym_limit=sym_limit,
+            char_limit=char_limit,
+        )
+
     large_repo = file_count > 40
 
     lines = [
@@ -358,66 +648,16 @@ def render_repo_manifest(
         "or specific symbols from large files to save tokens):"
     ]
     for path in ordered_paths:
-        src = files[path]
-        idx = index_file_symbols(src, path)
-        size_kb = idx.bytes / 1024.0
-        loaded_tag = " [loaded]" if path in loaded_set else ""
-        # Prioritize functions/classes/constants; hide dunder-only assigns like __all__.
-        if large_repo:
-            # For large repos, surface classes and functions ahead of constants so tight budgets keep call targets.
-            callables = [
-                s.name
-                for s in idx.symbols
-                if s.kind in ("class", "function", "async_function") and not s.name.startswith("_")
-            ]
-            private_callables = [
-                s.name
-                for s in idx.symbols
-                if s.kind in ("class", "function", "async_function")
-                and s.name.startswith("_")
-                and not s.name.startswith("__")
-            ]
-            constants = [
-                s.name
-                for s in idx.symbols
-                if s.kind == "constant" and not s.name.startswith("__")
-            ]
-            display_syms = [*callables, *private_callables, *constants]
-        else:
-            display_syms = [
-                s.name
-                for s in idx.symbols
-                if s.kind in ("function", "async_function", "class", "constant") and not s.name.startswith("__")
-            ]
-        if not display_syms:
-            display_syms = [s.name for s in idx.symbols if not s.name.startswith("__")]
-
-        truncated = False
-        if len(display_syms) > sym_limit:
-            shown = display_syms[:sym_limit]
-            truncated = True
-        else:
-            shown = list(display_syms)
-
-        if char_limit > 0 and shown:
-            bounded: list[str] = []
-            used = 0
-            for sym in shown:
-                add_len = len(sym) + (2 if bounded else 0)
-                if bounded and used + add_len > char_limit:
-                    truncated = True
-                    break
-                bounded.append(sym)
-                used += add_len
-            shown = bounded
-
-        if truncated and sym_limit > 0:
-            shown = [*shown, "..."]
-
-        if shown:
-            lines.append(f"- {path} ({size_kb:.1f} KB, {idx.lines} lines){loaded_tag}: {', '.join(shown)}")
-        else:
-            lines.append(f"- {path} ({size_kb:.1f} KB, {idx.lines} lines){loaded_tag}")
+        lines.append(
+            _format_manifest_file_line(
+                path,
+                files[path],
+                loaded_set,
+                large_repo=large_repo,
+                sym_limit=sym_limit,
+                char_limit=char_limit,
+            )
+        )
     return "\n".join(lines)
 
 
@@ -508,6 +748,7 @@ def serve_code_load(
     req_list = _normalize_code_load_requests(requests)
     if not req_list:
         return [{"error": "empty code.load request list"}]
+    req_list = req_list[:MAX_CODE_LOAD_BATCH]
 
     index_cache: dict[str, FileIndex] = {}
 
@@ -662,6 +903,401 @@ def serve_code_load(
         results.append(item)
 
     return results
+
+
+def _normalize_filter_prefix(raw_prefix: Any) -> str | None:
+    if raw_prefix is None or raw_prefix == "":
+        return ""
+    if not isinstance(raw_prefix, str) or "\x00" in raw_prefix:
+        return None
+    cleaned = raw_prefix.replace("\\", "/").strip()
+    while cleaned.startswith("./"):
+        cleaned = cleaned[2:]
+    cleaned = re.sub(r"/+", "/", cleaned.lstrip("/"))
+    if cleaned in ("", "."):
+        return ""
+    if cleaned == ".." or cleaned.startswith("../") or "/../" in cleaned or cleaned.endswith("/.."):
+        return None
+    return cleaned
+
+
+def _compile_glob_matcher(raw_glob: Any) -> tuple[Callable[[str], bool] | None, str | None]:
+    if raw_glob is None or raw_glob == "":
+        return None, None
+    if not isinstance(raw_glob, str) or len(raw_glob) > 256 or "\x00" in raw_glob:
+        return None, "Invalid glob pattern"
+    pattern = raw_glob.replace("\\", "/").strip()
+    while pattern.startswith("./"):
+        pattern = pattern[2:]
+    pattern = pattern.lstrip("/")
+    if not pattern:
+        return None, None
+
+    match_basename_only = "/" not in pattern
+    parts: list[str] = ["^"]
+    i = 0
+    n = len(pattern)
+    while i < n:
+        ch = pattern[i]
+        if ch == "*":
+            if i + 1 < n and pattern[i + 1] == "*":
+                while i + 1 < n and pattern[i + 1] == "*":
+                    i += 1
+                if i + 1 < n and pattern[i + 1] == "/":
+                    parts.append("(?:.*/)?")
+                    i += 2
+                else:
+                    parts.append(".*")
+                    i += 1
+            else:
+                parts.append("[^/]*")
+                i += 1
+        elif ch == "?":
+            parts.append("[^/]")
+            i += 1
+        elif ch == "{":
+            close = pattern.find("}", i + 1)
+            if close > i + 1:
+                alts = [re.escape(part) for part in pattern[i + 1 : close].split(",")]
+                parts.append(f"(?:{'|'.join(alts)})")
+                i = close + 1
+            else:
+                parts.append(r"\{")
+                i += 1
+        elif ch == "[":
+            close = pattern.find("]", i + 1)
+            if close > i + 1:
+                inner = pattern[i + 1 : close]
+                if inner.startswith("!") or inner.startswith("^"):
+                    inner = "^" + inner[1:]
+                parts.append(f"[{inner.replace(chr(92), chr(92) * 2)}]")
+                i = close + 1
+            else:
+                parts.append(r"\[")
+                i += 1
+        else:
+            parts.append(re.escape(ch))
+            i += 1
+    parts.append("$")
+
+    try:
+        compiled = re.compile("".join(parts))
+    except re.error as exc:
+        return None, f"Invalid glob pattern: {exc}"
+
+    if match_basename_only:
+        return (lambda rel_path: compiled.match(_posix_basename(rel_path)) is not None), None
+    return (lambda rel_path: compiled.match(rel_path) is not None), None
+
+
+def _unwrap_single_tool_request(raw: Any, *, allow_empty: bool = False) -> dict[str, Any] | None:
+    if raw is None:
+        return {} if allow_empty else None
+    if isinstance(raw, dict):
+        return raw
+    if isinstance(raw, (list, tuple)):
+        items = list(raw)
+        if len(items) == 1 and isinstance(items[0], (list, tuple)):
+            items = list(items[0])
+        if len(items) == 0:
+            return {} if allow_empty else None
+        first = items[0]
+        if first is None:
+            return {} if allow_empty else None
+        return first if isinstance(first, dict) else None
+    return None
+
+
+def _clamp_int(raw: Any, fallback: int, min_val: int, max_val: int) -> int:
+    if raw is None or isinstance(raw, bool):
+        return fallback
+    try:
+        val = int(raw)
+    except (TypeError, ValueError):
+        return fallback
+    return max(min_val, min(max_val, val))
+
+
+def _truncate_search_line(line: str, max_chars: int = 400) -> str:
+    return line[: max_chars - 3] + "..." if len(line) > max_chars else line
+
+
+def serve_code_search(
+    files: dict[str, str],
+    request: Any,
+    *,
+    max_response_bytes: int = MAX_CODE_SEARCH_RESPONSE_BYTES,
+) -> dict[str, Any]:
+    """Deterministically search across all codebase files (literal substring or safe regex)."""
+    req = _unwrap_single_tool_request(request, allow_empty=False)
+    if req is None:
+        return {
+            "query": "",
+            "totalMatches": 0,
+            "truncated": False,
+            "matches": [],
+            "error": "Invalid code.search request: expected an object {query, ...} or single-element list",
+        }
+
+    query = req.get("query")
+    if not isinstance(query, str) or len(query) == 0 or len(query) > 500:
+        return {
+            "query": query[:100] if isinstance(query, str) else "",
+            "totalMatches": 0,
+            "truncated": False,
+            "matches": [],
+            "error": "Invalid code.search request: query must be a non-empty string (<= 500 chars)",
+        }
+
+    raw_prefix = req.get("pathPrefix") if "pathPrefix" in req else req.get("path_prefix")
+    norm_prefix = _normalize_filter_prefix(raw_prefix)
+    if norm_prefix is None:
+        return {
+            "query": query,
+            "totalMatches": 0,
+            "truncated": False,
+            "matches": [],
+            "error": f"Invalid pathPrefix: {raw_prefix!r}",
+        }
+
+    glob_matcher, glob_error = _compile_glob_matcher(req.get("glob"))
+    if glob_error is not None:
+        return {
+            "query": query,
+            "totalMatches": 0,
+            "truncated": False,
+            "matches": [],
+            "error": glob_error,
+        }
+
+    is_regex = bool(req.get("isRegex") if "isRegex" in req else req.get("is_regex", False))
+    case_sensitive = bool(
+        req.get("caseSensitive") if "caseSensitive" in req else req.get("case_sensitive", False)
+    )
+    raw_max_results = req.get("maxResults") if "maxResults" in req else req.get("max_results")
+    raw_context_lines = req.get("contextLines") if "contextLines" in req else req.get("context_lines")
+    max_results = _clamp_int(raw_max_results, 30, 1, 100)
+    context_lines = _clamp_int(raw_context_lines, 0, 0, 5)
+
+    line_regex: re.Pattern[str] | None = None
+    precheck_regex: re.Pattern[str] | None = None
+    needle = query if case_sensitive else query.lower()
+    if is_regex:
+        flags = 0 if case_sensitive else re.IGNORECASE
+        try:
+            line_regex = re.compile(query, flags)
+            precheck_regex = re.compile(query, flags | re.MULTILINE)
+        except re.error as exc:
+            return {
+                "query": query,
+                "totalMatches": 0,
+                "truncated": False,
+                "matches": [],
+                "error": f"Invalid regex: {exc}",
+            }
+
+    matches: list[dict[str, Any]] = []
+    total_matches = 0
+    truncated = False
+    byte_capped = False
+    base_overhead = len(
+        _json_compact({"query": query, "totalMatches": 999999, "truncated": True, "matches": []}).encode("utf-8")
+    )
+    used_bytes = base_overhead
+
+    for rel_path in sorted(files.keys()):
+        if norm_prefix and not rel_path.startswith(norm_prefix):
+            continue
+        if glob_matcher is not None and not glob_matcher(rel_path):
+            continue
+        content = files[rel_path]
+        if not isinstance(content, str) or not content:
+            continue
+
+        if is_regex:
+            assert precheck_regex is not None and line_regex is not None
+            if precheck_regex.search(content) is None:
+                continue
+        elif case_sensitive:
+            if needle not in content:
+                continue
+        else:
+            if needle not in content.lower():
+                continue
+
+        lines = content.splitlines()
+        num_lines = len(lines)
+        for i, line_text in enumerate(lines):
+            if is_regex:
+                assert line_regex is not None
+                matched = line_regex.search(line_text) is not None
+            elif case_sensitive:
+                matched = needle in line_text
+            else:
+                matched = needle in line_text.lower()
+            if not matched:
+                continue
+
+            total_matches += 1
+            if byte_capped or len(matches) >= max_results:
+                truncated = True
+                continue
+
+            item: dict[str, Any] = {
+                "path": rel_path,
+                "line": i + 1,
+                "text": _truncate_search_line(line_text),
+            }
+            if context_lines > 0:
+                item["contextBefore"] = [_truncate_search_line(l) for l in lines[max(0, i - context_lines) : i]]
+                item["contextAfter"] = [
+                    _truncate_search_line(l) for l in lines[i + 1 : min(num_lines, i + 1 + context_lines)]
+                ]
+
+            item_bytes = len(_json_compact(item).encode("utf-8")) + (1 if matches else 0)
+            if used_bytes + item_bytes > max_response_bytes:
+                byte_capped = True
+                truncated = True
+                continue
+            matches.append(item)
+            used_bytes += item_bytes
+
+    return {
+        "query": query,
+        "totalMatches": total_matches,
+        "truncated": truncated,
+        "matches": matches,
+    }
+
+
+def serve_code_list(
+    files: dict[str, str],
+    request: Any = None,
+    *,
+    max_response_bytes: int = MAX_CODE_LIST_RESPONSE_BYTES,
+) -> dict[str, Any]:
+    """Deterministically list and paginate repository files and directory summaries."""
+    req = _unwrap_single_tool_request(request, allow_empty=True)
+    if req is None:
+        return {
+            "totalFiles": 0,
+            "returned": 0,
+            "truncated": False,
+            "directories": [],
+            "files": [],
+            "error": "Invalid code.list request: expected an optional object {prefix?, glob?, includeSymbols?, maxEntries?, offset?}",
+        }
+
+    raw_prefix = (
+        req.get("prefix")
+        if "prefix" in req
+        else (req.get("pathPrefix") if "pathPrefix" in req else req.get("path_prefix"))
+    )
+    norm_prefix = _normalize_filter_prefix(raw_prefix)
+    if norm_prefix is None:
+        return {
+            "totalFiles": 0,
+            "returned": 0,
+            "truncated": False,
+            "directories": [],
+            "files": [],
+            "error": f"Invalid prefix: {raw_prefix!r}",
+        }
+
+    glob_matcher, glob_error = _compile_glob_matcher(req.get("glob"))
+    if glob_error is not None:
+        return {
+            "totalFiles": 0,
+            "returned": 0,
+            "truncated": False,
+            "directories": [],
+            "files": [],
+            "error": glob_error,
+        }
+
+    include_symbols = bool(
+        req.get("includeSymbols") if "includeSymbols" in req else req.get("include_symbols", False)
+    )
+    raw_max_entries = req.get("maxEntries") if "maxEntries" in req else req.get("max_entries")
+    max_entries = _clamp_int(raw_max_entries, 100, 1, 250)
+    offset = _clamp_int(req.get("offset"), 0, 0, MAX_CODEBASE_FILES)
+
+    matched_paths: list[str] = []
+    dir_stats: dict[str, list[int]] = {}
+    file_bytes_map: dict[str, int] = {}
+
+    for rel_path in sorted(files.keys()):
+        if norm_prefix and not rel_path.startswith(norm_prefix):
+            continue
+        if glob_matcher is not None and not glob_matcher(rel_path):
+            continue
+        matched_paths.append(rel_path)
+        b = len(files[rel_path].encode("utf-8"))
+        file_bytes_map[rel_path] = b
+        d = _posix_dirname(rel_path)
+        rec = dir_stats.get(d)
+        if rec is None:
+            dir_stats[d] = [1, b]
+        else:
+            rec[0] += 1
+            rec[1] += b
+
+    total_files = len(matched_paths)
+    all_dirs = [
+        {"path": d, "fileCount": counts[0], "totalBytes": counts[1]}
+        for d, counts in sorted(dir_stats.items(), key=lambda kv: kv[0])
+    ]
+
+    base_overhead = len(
+        _json_compact(
+            {"totalFiles": 999999, "returned": 999999, "truncated": True, "directories": [], "files": []}
+        ).encode("utf-8")
+    )
+    max_dir_bytes = max(1024, int(max_response_bytes * 0.4))
+    directories: list[dict[str, Any]] = []
+    dir_bytes_used = 0
+    dirs_truncated = False
+    for dir_entry in all_dirs:
+        entry_bytes = len(_json_compact(dir_entry).encode("utf-8")) + (1 if directories else 0)
+        if dir_bytes_used + entry_bytes > max_dir_bytes:
+            dirs_truncated = True
+            break
+        directories.append(dir_entry)
+        dir_bytes_used += entry_bytes
+
+    used_bytes = base_overhead + dir_bytes_used
+    file_items: list[dict[str, Any]] = []
+    files_byte_truncated = False
+    page = matched_paths[offset : offset + max_entries]
+    for rel_path in page:
+        content = files[rel_path]
+        b = file_bytes_map[rel_path]
+        line_count = len(content.splitlines())
+        item: dict[str, Any] = {"path": rel_path, "bytes": b, "lines": line_count}
+        if include_symbols:
+            idx = index_file_symbols(content, rel_path)
+            syms = [
+                s.name
+                for s in idx.symbols
+                if s.kind in ("class", "function", "async_function", "constant") and not s.name.startswith("__")
+            ]
+            item["symbols"] = syms[:12]
+        item_bytes = len(_json_compact(item).encode("utf-8")) + (1 if file_items else 0)
+        if used_bytes + item_bytes > max_response_bytes:
+            files_byte_truncated = True
+            break
+        file_items.append(item)
+        used_bytes += item_bytes
+
+    returned = len(file_items)
+    truncated = (offset + returned < total_files) or files_byte_truncated or dirs_truncated
+    return {
+        "totalFiles": total_files,
+        "returned": returned,
+        "truncated": truncated,
+        "directories": directories,
+        "files": file_items,
+    }
 
 
 # ---------------------------------------------------------------------------

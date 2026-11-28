@@ -4,13 +4,22 @@ import {mkdtempSync, mkdirSync, rmSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {
+  ADAPTIVE_MANIFEST_FILE_THRESHOLD,
+  CODE_LIST_TOOL_SPEC,
+  CODE_SEARCH_TOOL_SPEC,
   MAX_CODEBASE_FILES,
+  MAX_CODEBASE_FILE_BYTES,
   MAX_CODEBASE_TOTAL_BYTES,
+  MAX_CODE_LIST_RESPONSE_BYTES,
   MAX_CODE_LOAD_BATCH,
+  MAX_CODE_LOAD_RESPONSE_BYTES,
+  MAX_CODE_SEARCH_RESPONSE_BYTES,
   WHOLE_FILE_LOAD_MAX_BYTES,
   normalizeCodebaseSpec,
   renderRepoManifest,
+  serveCodeList,
   serveCodeLoad,
+  serveCodeSearch,
 } from '../src/training/tinker-codebase.js';
 import {
   assistantThinkingText,
@@ -380,13 +389,27 @@ test('harvestMultiFileRepos harvests verified multi-file tasks with real distrac
   }
 });
 
-test('raised codebase caps accept up to 256 files, 4MB total, 64-item code.load batches, and keep 150-file manifest compact', () => {
-  assert.equal(MAX_CODEBASE_FILES, 256);
-  assert.equal(MAX_CODEBASE_TOTAL_BYTES, 4 * 1024 * 1024);
+test('raised codebase caps accept up to 2048 files, 32MB total, 512KB per file, 64-item code.load batches, and preserve flat manifest <= 120 files', () => {
+  assert.equal(MAX_CODEBASE_FILES, 2048);
+  assert.equal(MAX_CODEBASE_TOTAL_BYTES, 32 * 1024 * 1024);
+  assert.equal(MAX_CODEBASE_FILE_BYTES, 524288);
   assert.equal(MAX_CODE_LOAD_BATCH, 64);
+  assert.equal(MAX_CODE_LOAD_RESPONSE_BYTES, 64_000);
+  assert.equal(MAX_CODE_SEARCH_RESPONSE_BYTES, 32_000);
+  assert.equal(MAX_CODE_LIST_RESPONSE_BYTES, 32_000);
+  assert.equal(ADAPTIVE_MANIFEST_FILE_THRESHOLD, 120);
 
+  // Tool specs follow OpenAI-style function schema with required: ['arguments']
+  assert.equal(CODE_SEARCH_TOOL_SPEC.type, 'function');
+  assert.equal(CODE_SEARCH_TOOL_SPEC.function.name, 'code.search');
+  assert.deepEqual(CODE_SEARCH_TOOL_SPEC.function.parameters.required, ['arguments']);
+  assert.equal(CODE_LIST_TOOL_SPEC.type, 'function');
+  assert.equal(CODE_LIST_TOOL_SPEC.function.name, 'code.list');
+  assert.deepEqual(CODE_LIST_TOOL_SPEC.function.parameters.required, ['arguments']);
+
+  // <= 120 files preserves exact flat manifest listing every file + symbols
   const files = {'src/index.js': 'export function run() { return 1; }\n'};
-  for (let i = 1; i < 150; i++) {
+  for (let i = 1; i < 120; i++) {
     const padExports = Array.from({length: 14}, (_, j) =>
       `export function helper_${i}_${j}(v) { return v + ${j}; }`).join('\n');
     const padDefs = Array.from({length: 6}, (_, j) =>
@@ -394,14 +417,13 @@ test('raised codebase caps accept up to 256 files, 4MB total, 64-item code.load 
     files[`src/modules/mod_${String(i).padStart(3, '0')}.js`] = padExports + '\n' + padDefs + '\n';
   }
   const spec = normalizeCodebaseSpec({files, entryFile: 'src/index.js'});
-  assert.equal(Object.keys(spec.files).length, 150);
+  assert.equal(Object.keys(spec.files).length, 120);
 
   const manifest = renderRepoManifest(spec.files, 'src/index.js');
   const lines = manifest.split('\n');
-  assert.equal(lines.length, 151);
-  assert.match(lines[0], /Repository manifest \(150 files\):/);
-  // Must stay compact (~< 32K chars / < 10K tokens) even with 150 symbol-heavy files
-  assert(manifest.length < 30000, `Expected compact 150-file manifest (<30000 chars), got ${manifest.length}`);
+  assert.equal(lines.length, 121);
+  assert.match(lines[0], /Repository manifest \(120 files\):/);
+  assert(manifest.length < 30000, `Expected compact 120-file manifest (<30000 chars), got ${manifest.length}`);
   assert.match(lines[2], /\(\+\d+ more\)/);
 
   // Batch of 64 code.load requests succeeds without truncation
@@ -413,6 +435,160 @@ test('raised codebase caps accept up to 256 files, 4MB total, 64-item code.load 
   assert.equal(batchRes.length, 64);
   assert.equal(batchRes[0].mode, 'symbol');
   assert.equal(batchRes[63].mode, 'symbol');
+
+  // Single file > 512KB is rejected cleanly
+  assert.throws(
+    () => normalizeCodebaseSpec({files: {'src/huge.js': 'a'.repeat(MAX_CODEBASE_FILE_BYTES + 1)}, entryFile: 'src/huge.js'}),
+    /size limit/i,
+  );
+  // > 2048 files is rejected cleanly
+  const tooMany = {};
+  for (let i = 0; i < MAX_CODEBASE_FILES + 1; i++) tooMany[`f_${i}.js`] = 'export const x = 1;\n';
+  assert.throws(
+    () => normalizeCodebaseSpec({files: tooMany, entryFile: 'f_0.js'}),
+    /2048/,
+  );
+});
+
+test('1000-file (>4MB) codebase: validation, adaptive directory-summary manifest, code.list, code.search, and code.load', () => {
+  const files = {
+    'src/index.ts': 'export function mainEntry(x: number): number { return x + 1; }\n',
+    'src/neighbor.ts': 'export function nearEntry(y: number): number { return y * 2; }\n',
+    'src/extra_loaded.ts': 'export const INITIAL_TAG = "loaded";\n',
+  };
+  const padLine = '// ' + 'x'.repeat(110);
+  const padBlock = Array.from({length: 38}, () => padLine).join('\n'); // ~4.3 KB per file => >4.3 MB across 1000 files
+  for (let i = 0; i < 997; i++) {
+    const pkgIdx = String(i % 20).padStart(2, '0');
+    const ext = i % 3 === 0 ? 'ts' : 'js';
+    const relPath = `src/pkg_${pkgIdx}/mod_${String(i).padStart(4, '0')}.${ext}`;
+    const needleLine = i === 420
+      ? 'export function verifyAuthToken(secret: string): string { return "TOKEN_NEEDLE_" + secret; }'
+      : (i === 777
+        ? 'export function refreshSessionToken(id: string): string { return "TOKEN_NEEDLE_ALT_" + id; }'
+        : `export function handler_${i}(v) { return v + ${i}; }`);
+    files[relPath] = [
+      `// Module ${i} in pkg_${pkgIdx}`,
+      `const MOD_ID = ${i};`,
+      needleLine,
+      padBlock,
+    ].join('\n');
+  }
+
+  const totalBytes = Object.values(files).reduce((sum, s) => sum + Buffer.byteLength(s, 'utf8'), 0);
+  assert.equal(Object.keys(files).length, 1000);
+  assert(totalBytes > 4 * 1024 * 1024, `Expected >4MB repo, got ${totalBytes} bytes`);
+
+  // 1. Validation passes cleanly
+  const spec = normalizeCodebaseSpec({
+    files,
+    entryFile: 'src/index.ts',
+    initialLoadedFiles: ['src/index.ts', 'src/extra_loaded.ts'],
+  });
+  assert.equal(Object.keys(spec.files).length, 1000);
+
+  // 2. Adaptive directory-summary manifest stays compact (< 12 KB) and deterministic
+  const manifest = renderRepoManifest(spec.files, spec.entryFile, spec.initialLoadedFiles);
+  assert(Buffer.byteLength(manifest, 'utf8') < 12_000, `Expected <12KB adaptive manifest, got ${manifest.length} chars`);
+  assert.match(manifest, /1000 files/);
+  assert.match(manifest, /code\.list/);
+  assert.match(manifest, /code\.search/);
+  assert.match(manifest, /code\.load/);
+  assert.match(manifest, /src\/index\.ts \[loaded\]/);
+  assert.match(manifest, /src\/extra_loaded\.ts \[loaded\]/);
+  assert.match(manifest, /src\/neighbor\.ts/);
+  assert.match(manifest, /src\/pkg_00\/ \(\d+ files, [\d.]+ KB, sample: /);
+  const reversed = Object.fromEntries(Object.entries(spec.files).reverse());
+  assert.equal(renderRepoManifest(reversed, spec.entryFile, spec.initialLoadedFiles), manifest);
+
+  // 2b. Even a 2,000-file repo with 200 deep directories stays < 12 KB via hierarchical rollup
+  const hugeFiles = {'app/entry.js': 'export function start() { return 1; }\n'};
+  for (let i = 0; i < 1999; i++) {
+    hugeFiles[`services/domain_${i % 40}/sub_${i % 5}/deep_${i % 3}/file_${String(i).padStart(4, '0')}.ts`] =
+      `export const V_${i} = ${i};\n`;
+  }
+  const hugeManifest = renderRepoManifest(hugeFiles, 'app/entry.js');
+  assert(Buffer.byteLength(hugeManifest, 'utf8') < 12_000, `Expected <12KB 2000-file manifest, got ${hugeManifest.length}`);
+  assert.match(hugeManifest, /2000 files/);
+
+  // 3. code.list: default empty args, pagination, prefix, glob, includeSymbols, byte cap
+  const listDefault = serveCodeList(spec.files, []);
+  assert.equal(listDefault.totalFiles, 1000);
+  assert.equal(listDefault.returned, 100);
+  assert.equal(listDefault.truncated, true);
+  assert(listDefault.directories.length >= 20);
+  assert.equal(listDefault.files[0].symbols, undefined);
+  assert(Buffer.byteLength(JSON.stringify(listDefault), 'utf8') <= MAX_CODE_LIST_RESPONSE_BYTES);
+
+  const listPage2 = serveCodeList(spec.files, [{offset: 100, maxEntries: 50}]);
+  assert.equal(listPage2.totalFiles, 1000);
+  assert.equal(listPage2.returned, 50);
+  assert.equal(listPage2.truncated, true);
+  assert.notEqual(listPage2.files[0].path, listDefault.files[0].path);
+
+  // Prefix + glob + includeSymbols
+  const listFiltered = serveCodeList(spec.files, [{prefix: 'src/pkg_00/', glob: '*.ts', includeSymbols: true}]);
+  assert(listFiltered.totalFiles > 0 && listFiltered.totalFiles < 50);
+  assert.equal(listFiltered.returned, listFiltered.totalFiles);
+  assert.equal(listFiltered.truncated, false);
+  assert(listFiltered.files.every(f => f.path.startsWith('src/pkg_00/') && f.path.endsWith('.ts')));
+  assert(Array.isArray(listFiltered.files[0].symbols) && listFiltered.files[0].symbols.length >= 1);
+
+  // Nested path glob (**/*.ts)
+  const listDeepGlob = serveCodeList(spec.files, {glob: 'src/pkg_00/**/*.ts'});
+  assert.equal(listDeepGlob.totalFiles, listFiltered.totalFiles);
+
+  // 4. code.search: literal (object & 1-element array), case sensitivity, regex with context, invalid regex
+  const litSearch = serveCodeSearch(spec.files, [{query: 'token_needle_'}]);
+  assert.equal(litSearch.error, undefined);
+  assert.equal(litSearch.totalMatches, 2);
+  assert.equal(litSearch.truncated, false);
+  assert.equal(litSearch.matches.length, 2);
+  assert.equal(litSearch.matches[0].path, 'src/pkg_00/mod_0420.ts');
+  assert.equal(litSearch.matches[0].line, 3);
+  assert.equal(litSearch.matches[0].contextBefore, undefined);
+  assert.equal(litSearch.matches[1].path, 'src/pkg_17/mod_0777.ts');
+
+  const caseSensMiss = serveCodeSearch(spec.files, {query: 'token_needle_', caseSensitive: true});
+  assert.equal(caseSensMiss.totalMatches, 0);
+  const caseSensHit = serveCodeSearch(spec.files, {query: 'TOKEN_NEEDLE_', caseSensitive: true});
+  assert.equal(caseSensHit.totalMatches, 2);
+
+  // Regex + pathPrefix + glob + contextLines
+  const regexSearch = serveCodeSearch(spec.files, [{
+    query: 'function\\s+(verify|refresh)\\w+Token',
+    isRegex: true,
+    pathPrefix: 'src/pkg_00/',
+    glob: '*.ts',
+    contextLines: 2,
+  }]);
+  assert.equal(regexSearch.error, undefined);
+  assert.equal(regexSearch.totalMatches, 1);
+  assert.equal(regexSearch.matches[0].path, 'src/pkg_00/mod_0420.ts');
+  assert.equal(regexSearch.matches[0].line, 3);
+  assert.deepEqual(regexSearch.matches[0].contextBefore, ['// Module 420 in pkg_00', 'const MOD_ID = 420;']);
+  assert.equal(regexSearch.matches[0].contextAfter.length, 2);
+
+  // Invalid regex returns structured error without throwing
+  const badRegex = serveCodeSearch(spec.files, [{query: '([unclosed', isRegex: true}]);
+  assert.equal(badRegex.totalMatches, 0);
+  assert.deepEqual(badRegex.matches, []);
+  assert.match(badRegex.error, /Invalid regex/i);
+
+  // Truncation & 32KB cap on broad search
+  const broadSearch = serveCodeSearch(spec.files, {query: 'MOD_ID', maxResults: 500});
+  assert.equal(broadSearch.totalMatches, 997);
+  assert.equal(broadSearch.truncated, true);
+  assert(broadSearch.matches.length <= 100);
+  assert(Buffer.byteLength(JSON.stringify(broadSearch), 'utf8') <= MAX_CODE_SEARCH_RESPONSE_BYTES);
+
+  // 5. code.load loads the file/symbol discovered via code.search cleanly
+  const foundPath = regexSearch.matches[0].path;
+  const loaded = serveCodeLoad(spec.files, [{path: foundPath, symbol: 'verifyAuthToken'}]);
+  assert.equal(loaded.length, 1);
+  assert.equal(loaded[0].mode, 'symbol');
+  assert.equal(loaded[0].path, foundPath);
+  assert.match(loaded[0].content, /TOKEN_NEEDLE_/);
 });
 
 test('createNativeTraceCollector total-line compaction is strictly causal (future turns never alter earlier turns)', () => {

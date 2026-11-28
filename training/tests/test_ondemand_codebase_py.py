@@ -12,14 +12,24 @@ import tempfile
 import unittest
 
 from tinker_py.codebase import (
+    ADAPTIVE_MANIFEST_FILE_THRESHOLD,
+    CODE_LIST_TOOL_SPEC,
     CODE_LOAD_OPERATION,
+    CODE_SEARCH_TOOL_SPEC,
     MAX_CODEBASE_FILES,
+    MAX_CODEBASE_FILE_BYTES,
     MAX_CODEBASE_TOTAL_BYTES,
+    MAX_CODE_LIST_RESPONSE_BYTES,
+    MAX_CODE_LOAD_BATCH,
     MAX_CODE_LOAD_RESPONSE_BYTES,
+    MAX_CODE_SEARCH_RESPONSE_BYTES,
     WHOLE_FILE_THRESHOLD_BYTES,
     index_file_symbols,
+    normalize_codebase_files,
     render_repo_manifest,
+    serve_code_list,
     serve_code_load,
+    serve_code_search,
 )
 from tinker_py.execution import (
     audit_python_conversation,
@@ -178,15 +188,29 @@ class CodebaseIndexAndServerTests(unittest.TestCase):
         self.assertTrue(capped[0].get("truncated"))
         self.assertLessEqual(capped[0]["bytes"], 360)
 
-    def test_large_repo_150_file_manifest_stays_compact_and_scaled_limits(self) -> None:
-        self.assertGreaterEqual(MAX_CODEBASE_FILES, 256)
-        self.assertGreaterEqual(MAX_CODEBASE_TOTAL_BYTES, 4_000_000)
-        self.assertGreaterEqual(MAX_CODE_LOAD_RESPONSE_BYTES, 64_000)
+    def test_large_repo_120_file_flat_manifest_and_scaled_limits(self) -> None:
+        self.assertEqual(MAX_CODEBASE_FILES, 2048)
+        self.assertEqual(MAX_CODEBASE_TOTAL_BYTES, 32 * 1024 * 1024)
+        self.assertEqual(MAX_CODEBASE_FILE_BYTES, 524288)
+        self.assertEqual(MAX_CODE_LOAD_BATCH, 64)
+        self.assertEqual(MAX_CODE_LOAD_RESPONSE_BYTES, 64_000)
+        self.assertEqual(MAX_CODE_SEARCH_RESPONSE_BYTES, 32_000)
+        self.assertEqual(MAX_CODE_LIST_RESPONSE_BYTES, 32_000)
+        self.assertEqual(ADAPTIVE_MANIFEST_FILE_THRESHOLD, 120)
 
+        # Tool specs follow OpenAI-style function schema with required: ["arguments"].
+        self.assertEqual(CODE_SEARCH_TOOL_SPEC["type"], "function")
+        self.assertEqual(CODE_SEARCH_TOOL_SPEC["function"]["name"], "code.search")
+        self.assertEqual(CODE_SEARCH_TOOL_SPEC["function"]["parameters"]["required"], ["arguments"])
+        self.assertEqual(CODE_LIST_TOOL_SPEC["type"], "function")
+        self.assertEqual(CODE_LIST_TOOL_SPEC["function"]["name"], "code.list")
+        self.assertEqual(CODE_LIST_TOOL_SPEC["function"]["parameters"]["required"], ["arguments"])
+
+        # <= 120 files preserves the full flat manifest with callable prioritization.
         files: dict[str, str] = {
             "bigpkg/main.py": "def run(x):\n    return x + 1\n",
         }
-        for i in range(1, 150):
+        for i in range(1, 120):
             sub = f"sub_{i // 15:02d}"
             path = f"bigpkg/{sub}/module_{i:03d}.py"
             consts = "\n".join(f"CONST_{i}_{c} = {c}" for c in range(10))
@@ -198,8 +222,8 @@ class CodebaseIndexAndServerTests(unittest.TestCase):
 
         manifest = render_repo_manifest(files, "bigpkg/main.py")
         lines = manifest.splitlines()
-        # Header + 150 file entries.
-        self.assertEqual(len(lines), 151)
+        # Header + 120 file entries.
+        self.assertEqual(len(lines), 121)
         # Manifest stays crisp (< 10K tokens even under conservative chars / 3.2).
         self.assertLess(len(manifest) / 3.2, 10_000)
         # Entry file is first and tagged [loaded].
@@ -210,6 +234,147 @@ class CodebaseIndexAndServerTests(unittest.TestCase):
         self.assertIn("Service_1_0", sample_line)
         self.assertIn("compute_value_1_0", sample_line)
         self.assertNotIn("CONST_1_0", sample_line)
+
+        # Single file > 512 KB is rejected cleanly.
+        with self.assertRaises(TypeError):
+            normalize_codebase_files({"pkg/huge.py": "x" * (MAX_CODEBASE_FILE_BYTES + 1)}, "pkg/huge.py")
+
+    def test_1000_file_4mb_codebase_adaptive_manifest_list_search_and_load(self) -> None:
+        files: dict[str, str] = {
+            "app/main.py": "def main_entry(x):\n    return x + 1\n",
+            "app/neighbor.py": "def near_helper(y):\n    return y * 2\n",
+            "app/preloaded.py": "PRELOADED_TAG = 'ok'\n",
+        }
+        pad_line = "# " + ("p" * 110)
+        pad_block = "\n".join(pad_line for _ in range(38))  # ~4.3 KB per file => >4.3 MB across 1000 files
+        for i in range(997):
+            sub = f"pkg_{i % 20:02d}"
+            ext = "py" if i % 4 != 0 else "txt"
+            rel_path = f"app/{sub}/mod_{i:04d}.{ext}"
+            if i == 420:
+                body_line = "def verify_auth_token(secret):\n    return 'TOKEN_NEEDLE_' + secret"
+            elif i == 777:
+                body_line = "def refresh_session_token(uid):\n    return 'TOKEN_NEEDLE_ALT_' + uid"
+            else:
+                body_line = f"def handler_{i}(v):\n    return v + {i}"
+            files[rel_path] = f"# Module {i} in {sub}\nMOD_ID = {i}\n{body_line}\n{pad_block}\n"
+
+        total_bytes = sum(len(s.encode("utf-8")) for s in files.values())
+        self.assertEqual(len(files), 1000)
+        self.assertGreater(total_bytes, 4 * 1024 * 1024)
+
+        # 1. Validation passes cleanly on 1,000-file >4MB repo.
+        norm_files, norm_entry, norm_init = normalize_codebase_files(
+            files, "app/main.py", ["app/main.py", "app/preloaded.py"]
+        )
+        self.assertEqual(len(norm_files), 1000)
+        self.assertEqual(norm_entry, "app/main.py")
+        self.assertEqual(norm_init, ["app/main.py", "app/preloaded.py"])
+
+        # 2. Adaptive directory-summary manifest stays compact (< 12 KB) and deterministic.
+        manifest = render_repo_manifest(norm_files, norm_entry, norm_init)
+        self.assertLess(len(manifest.encode("utf-8")), 12_000)
+        self.assertIn("1000 files", manifest)
+        self.assertIn("code.list", manifest)
+        self.assertIn("code.search", manifest)
+        self.assertIn("code.load", manifest)
+        self.assertIn("app/main.py", manifest)
+        self.assertIn("[loaded]", manifest)
+        self.assertIn("app/preloaded.py", manifest)
+        self.assertIn("app/neighbor.py", manifest)
+        self.assertRegex(manifest, r"app/pkg_00/ \(\d+ files, [\d.]+ KB, sample: ")
+        reversed_files = dict(reversed(list(norm_files.items())))
+        self.assertEqual(render_repo_manifest(reversed_files, norm_entry, norm_init), manifest)
+
+        # 2b. Even a 2,000-file repo with 200 deep directories stays < 12 KB via hierarchical rollup.
+        huge_files: dict[str, str] = {"root/entry.py": "def start():\n    return 1\n"}
+        for i in range(1999):
+            huge_files[f"svc/dom_{i % 40}/sub_{i % 5}/deep_{i % 3}/m_{i:04d}.py"] = f"VAL_{i} = {i}\n"
+        huge_manifest = render_repo_manifest(huge_files, "root/entry.py")
+        self.assertLess(len(huge_manifest.encode("utf-8")), 12_000)
+        self.assertIn("2000 files", huge_manifest)
+
+        # 3. code.list: default empty args, pagination, prefix, glob, includeSymbols, byte cap.
+        list_default = serve_code_list(norm_files, [])
+        self.assertEqual(list_default["totalFiles"], 1000)
+        self.assertEqual(list_default["returned"], 100)
+        self.assertTrue(list_default["truncated"])
+        self.assertGreaterEqual(len(list_default["directories"]), 20)
+        self.assertNotIn("symbols", list_default["files"][0])
+        self.assertLessEqual(len(json.dumps(list_default).encode("utf-8")), MAX_CODE_LIST_RESPONSE_BYTES)
+
+        list_page2 = serve_code_list(norm_files, [{"offset": 100, "maxEntries": 50}])
+        self.assertEqual(list_page2["totalFiles"], 1000)
+        self.assertEqual(list_page2["returned"], 50)
+        self.assertTrue(list_page2["truncated"])
+        self.assertNotEqual(list_page2["files"][0]["path"], list_default["files"][0]["path"])
+
+        list_filtered = serve_code_list(
+            norm_files, [{"prefix": "app/pkg_01/", "glob": "*.py", "includeSymbols": True}]
+        )
+        self.assertGreater(list_filtered["totalFiles"], 0)
+        self.assertEqual(list_filtered["returned"], list_filtered["totalFiles"])
+        self.assertFalse(list_filtered["truncated"])
+        self.assertTrue(
+            all(f["path"].startswith("app/pkg_01/") and f["path"].endswith(".py") for f in list_filtered["files"])
+        )
+        self.assertIn("symbols", list_filtered["files"][0])
+        self.assertGreaterEqual(len(list_filtered["files"][0]["symbols"]), 1)
+
+        list_deep_glob = serve_code_list(norm_files, {"glob": "app/pkg_01/**/*.py"})
+        self.assertEqual(list_deep_glob["totalFiles"], list_filtered["totalFiles"])
+
+        # 4. code.search: literal (array & dict), case sensitivity, regex with context, invalid regex.
+        lit = serve_code_search(norm_files, [{"query": "token_needle_"}])
+        self.assertNotIn("error", lit)
+        self.assertEqual(lit["totalMatches"], 2)
+        self.assertFalse(lit["truncated"])
+        self.assertEqual(len(lit["matches"]), 2)
+        self.assertEqual(lit["matches"][0]["path"], "app/pkg_00/mod_0420.txt")
+        self.assertEqual(lit["matches"][0]["line"], 4)
+        self.assertNotIn("contextBefore", lit["matches"][0])
+        self.assertEqual(lit["matches"][1]["path"], "app/pkg_17/mod_0777.py")
+
+        self.assertEqual(serve_code_search(norm_files, {"query": "token_needle_", "caseSensitive": True})["totalMatches"], 0)
+        self.assertEqual(serve_code_search(norm_files, {"query": "TOKEN_NEEDLE_", "caseSensitive": True})["totalMatches"], 2)
+
+        rx = serve_code_search(
+            norm_files,
+            [
+                {
+                    "query": r"def\s+(verify|refresh)\w+_token",
+                    "isRegex": True,
+                    "pathPrefix": "app/pkg_17/",
+                    "glob": "*.py",
+                    "contextLines": 2,
+                }
+            ],
+        )
+        self.assertNotIn("error", rx)
+        self.assertEqual(rx["totalMatches"], 1)
+        self.assertEqual(rx["matches"][0]["path"], "app/pkg_17/mod_0777.py")
+        self.assertEqual(rx["matches"][0]["line"], 3)
+        self.assertEqual(rx["matches"][0]["contextBefore"], ["# Module 777 in pkg_17", "MOD_ID = 777"])
+        self.assertEqual(len(rx["matches"][0]["contextAfter"]), 2)
+
+        bad_rx = serve_code_search(norm_files, [{"query": "([unclosed", "isRegex": True}])
+        self.assertEqual(bad_rx["totalMatches"], 0)
+        self.assertEqual(bad_rx["matches"], [])
+        self.assertIn("Invalid regex", bad_rx["error"])
+
+        broad = serve_code_search(norm_files, {"query": "MOD_ID", "maxResults": 500})
+        self.assertEqual(broad["totalMatches"], 997)
+        self.assertTrue(broad["truncated"])
+        self.assertLessEqual(len(broad["matches"]), 100)
+        self.assertLessEqual(len(json.dumps(broad).encode("utf-8")), MAX_CODE_SEARCH_RESPONSE_BYTES)
+
+        # 5. code.load loads the symbol discovered via code.search cleanly.
+        found_path = rx["matches"][0]["path"]
+        loaded = serve_code_load(norm_files, [{"path": found_path, "symbol": "refresh_session_token"}])
+        self.assertEqual(len(loaded), 1)
+        self.assertEqual(loaded[0]["mode"], "symbol")
+        self.assertEqual(loaded[0]["path"], found_path)
+        self.assertIn("TOKEN_NEEDLE_ALT_", loaded[0]["content"])
 
 
 class MultiFileExecutionAndCausalSynthesisTests(unittest.TestCase):
