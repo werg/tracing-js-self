@@ -1098,6 +1098,50 @@ function expectedFixtureCallIsRead(call, isNative) {
   return false;
 }
 
+function normalizeHttpHeadersArg(value) {
+  if (value === null || value === undefined || value === '') return {};
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return {};
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  }
+  if (typeof value === 'object' && !Array.isArray(value)) return value;
+  return value;
+}
+
+function normalizeHttpBodyArg(value) {
+  return value === undefined || value === null ? '' : value;
+}
+
+function expectedArgumentsMatch(operation, callArgs, encodedArgs, candidate, isNative) {
+  if (isDeepStrictEqual(encodedArgs, candidate.argumentGraph)) return true;
+  if ((operation === 'http.request' || operation === 'browser.fetch') && Array.isArray(callArgs) && callArgs.length === 4) {
+    const expectedArgs = candidate.arguments !== undefined
+      ? candidate.arguments
+      : (isNative ? realizeGraph(candidate.argumentGraph) : decodeOwnedGraph(JSON.stringify(candidate.argumentGraph)));
+    if (!Array.isArray(expectedArgs) || expectedArgs.length !== 4) return false;
+    if (!isDeepStrictEqual(callArgs[0], expectedArgs[0])) return false;
+    const actualMethod = typeof callArgs[1] === 'string' ? callArgs[1].trim().toUpperCase() : callArgs[1];
+    const expectedMethod = typeof expectedArgs[1] === 'string' ? expectedArgs[1].trim().toUpperCase() : expectedArgs[1];
+    if (!isDeepStrictEqual(actualMethod, expectedMethod)) return false;
+    const actualHeaders = normalizeHttpHeadersArg(callArgs[2]);
+    const expectedHeaders = normalizeHttpHeadersArg(expectedArgs[2]);
+    if (!isDeepStrictEqual(actualHeaders, expectedHeaders)) return false;
+    const actualBody = normalizeHttpBodyArg(callArgs[3]);
+    const expectedBody = normalizeHttpBodyArg(expectedArgs[3]);
+    return isDeepStrictEqual(actualBody, expectedBody);
+  }
+  return false;
+}
+
 /** Live student state has no teacher trace continuation. A rejected request
  * ends the rollout without disclosing the expected next operation or result.
  * Independent pure reads within the current causal epoch (before the next barrier)
@@ -1142,14 +1186,14 @@ export function createTinkerSession(prepared) {
       for (let idx = epochStart; idx < epochEnd; idx++) {
         if (consumed[idx]) continue;
         const candidate = expectedCalls[idx];
-        if (candidate.operation === operation && isDeepStrictEqual(encodedArgs, candidate.argumentGraph)) {
+        if (candidate.operation === operation && expectedArgumentsMatch(operation, callArgs, encodedArgs, candidate, isNative)) {
           return idx;
         }
       }
       return -1;
     }
     const barrier = expectedCalls[epochStart];
-    if (barrier.operation === operation && isDeepStrictEqual(encodedArgs, barrier.argumentGraph)) {
+    if (barrier.operation === operation && expectedArgumentsMatch(operation, callArgs, encodedArgs, barrier, isNative)) {
       return epochStart;
     }
     return -1;
@@ -1223,7 +1267,7 @@ export function createTinkerSession(prepared) {
           const encodedResult = isNative ? describeGraph([value]) : encodeNativeGraph([value]);
           consumed[matchedIdx] = true;
           while (epochStart < expectedExternalCalls && consumed[epochStart]) epochStart++;
-          recordedDispatches[matchedIdx] = {kind: 'dispatch', call: matchedIdx, operation: request.operation, arguments: encodedArgs};
+          recordedDispatches[matchedIdx] = {kind: 'dispatch', call: matchedIdx, operation: request.operation, arguments: expected.argumentGraph};
           recordedSettlements[matchedIdx] = {kind: 'settlement', call: matchedIdx, status, result: encodedResult};
           calls++;
           const toolCallId = item.toolCallId ?? ('call_' + calls);

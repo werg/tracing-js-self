@@ -1417,3 +1417,39 @@ test('causal-epoch grading allows commutative read reordering while strictly enf
   assert.equal(oFin.done, true);
   assert.equal(oFin.grade.success, true);
 });
+
+test('http.request argument matching canonicalizes JSON-stringified headers vs plain objects and empty body null vs ""', async () => {
+  const tc = (name, args, id) => ({
+    role: 'assistant',
+    content: '',
+    tool_calls: [{id, type: 'function', function: {name, arguments: JSON.stringify({arguments: args})}}],
+  });
+  const httpTask = await prepareTinkerTask({
+    id: 'http-header-canon-test',
+    family: 'http-header-canon-test',
+    executionMode: 'native',
+    source: 'async function run() { const r = await host.httpRequest("https://c.test/x", "GET", JSON.stringify({"x-lane": "canary"}), ""); return r; }',
+    entry: 'run',
+    args: [],
+    fixture: {
+      calls: [
+        {operation: 'http.request', arguments: ['https://c.test/x', 'GET', '{"x-lane":"canary"}', ''], status: 'fulfilled', result: 'ok-200'},
+      ],
+    },
+  });
+
+  // Object headers + null body match JSON-stringified headers + "" body
+  const sObj = createTinkerSession(httpTask);
+  const r1 = await sObj.step(tc('http.request', ['https://c.test/x', 'GET', {'x-lane': 'canary'}, null], 'h1'), 10);
+  assert.equal(r1.done, false);
+  const fin = await sObj.step(complete('ok-200', []), 20);
+  assert.equal(fin.done, true);
+  assert.equal(fin.grade.success, true);
+
+  // Wrong header value still strictly fails
+  const sWrong = createTinkerSession(httpTask);
+  const bad = await sWrong.step(tc('http.request', ['https://c.test/x', 'GET', {'x-lane': 'primary'}, null], 'h2'), 10);
+  assert.equal(bad.done, true);
+  assert.equal(bad.grade.success, false);
+  assert.equal(bad.grade.failureCategory, 'incorrect-external-request');
+});
