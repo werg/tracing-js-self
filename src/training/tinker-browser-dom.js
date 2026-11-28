@@ -891,6 +891,24 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
     return true;
   }
 
+  // ==================== Mutation Observer Registry ====================
+  const activeMutationObservers = new Set();
+
+  function scheduleMicrotaskDeterministic(fn) {
+    if (typeof globalThis.queueMicrotask === 'function') {
+      globalThis.queueMicrotask(fn);
+    } else {
+      Promise.resolve().then(fn);
+    }
+  }
+
+  function notifyMutation(record) {
+    if (activeMutationObservers.size === 0) return;
+    for (const observer of activeMutationObservers) {
+      observer._enqueueIfMatched(record);
+    }
+  }
+
   // ==================== DOM Classes ====================
   class Node extends EventTarget {
     constructor(nodeType, nodeName, ownerDocument = null) {
@@ -971,19 +989,45 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
       }
       newNode.parentNode = this;
       if (doc) setOwnerDoc(newNode, doc);
+      let insertIdx;
       if (refNode === null || refNode === undefined) {
+        insertIdx = this._childNodes.length;
         this._childNodes.push(newNode);
       } else {
-        const idx = this._childNodes.indexOf(refNode);
-        this._childNodes.splice(idx, 0, newNode);
+        insertIdx = this._childNodes.indexOf(refNode);
+        this._childNodes.splice(insertIdx, 0, newNode);
       }
+      notifyMutation({
+        type: 'childList',
+        target: this,
+        addedNodes: [newNode],
+        removedNodes: [],
+        previousSibling: insertIdx > 0 ? this._childNodes[insertIdx - 1] : null,
+        nextSibling: insertIdx + 1 < this._childNodes.length ? this._childNodes[insertIdx + 1] : null,
+        attributeName: null,
+        attributeNamespace: null,
+        oldValue: null,
+      });
       return newNode;
     }
     removeChild(child) {
       const idx = this._childNodes.indexOf(child);
       if (idx < 0) throw new Error('NotFoundError: Node is not a child of this node');
+      const prevSib = idx > 0 ? this._childNodes[idx - 1] : null;
+      const nextSib = idx + 1 < this._childNodes.length ? this._childNodes[idx + 1] : null;
       this._childNodes.splice(idx, 1);
       child.parentNode = null;
+      notifyMutation({
+        type: 'childList',
+        target: this,
+        addedNodes: [],
+        removedNodes: [child],
+        previousSibling: prevSib,
+        nextSibling: nextSib,
+        attributeName: null,
+        attributeNamespace: null,
+        oldValue: null,
+      });
       return child;
     }
     replaceChild(newChild, oldChild) {
@@ -1008,15 +1052,45 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
     }
     set textContent(val) {
       if (this.nodeType === 3 || this.nodeType === 8) {
+        const oldValue = this._data;
         this._data = val === null || val === undefined ? '' : String(val);
+        notifyMutation({
+          type: 'characterData',
+          target: this,
+          addedNodes: [],
+          removedNodes: [],
+          previousSibling: null,
+          nextSibling: null,
+          attributeName: null,
+          attributeNamespace: null,
+          oldValue,
+        });
         return;
       }
-      for (const ch of this._childNodes) ch.parentNode = null;
+      const removed = this._childNodes.slice();
+      for (const ch of removed) ch.parentNode = null;
       this._childNodes.length = 0;
       const text = val === null || val === undefined ? '' : String(val);
+      const added = [];
       if (text.length > 0) {
         const doc = this.nodeType === 9 ? this : this.ownerDocument;
-        this.appendChild(new Text(text, doc));
+        const textNode = new Text(text, doc);
+        textNode.parentNode = this;
+        this._childNodes.push(textNode);
+        added.push(textNode);
+      }
+      if (removed.length || added.length) {
+        notifyMutation({
+          type: 'childList',
+          target: this,
+          addedNodes: added,
+          removedNodes: removed,
+          previousSibling: null,
+          nextSibling: null,
+          attributeName: null,
+          attributeNamespace: null,
+          oldValue: null,
+        });
       }
     }
     cloneNode(deep = false) {
@@ -1049,9 +1123,23 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
       this._data = String(data);
     }
     get data() { return this._data; }
-    set data(v) { this._data = String(v); }
+    set data(v) {
+      const oldValue = this._data;
+      this._data = String(v);
+      notifyMutation({
+        type: 'characterData',
+        target: this,
+        addedNodes: [],
+        removedNodes: [],
+        previousSibling: null,
+        nextSibling: null,
+        attributeName: null,
+        attributeNamespace: null,
+        oldValue,
+      });
+    }
     get nodeValue() { return this._data; }
-    set nodeValue(v) { this._data = v === null || v === undefined ? '' : String(v); }
+    set nodeValue(v) { this.data = v === null || v === undefined ? '' : String(v); }
     get length() { return this._data.length; }
     cloneNode() { return new Text(this._data, this.ownerDocument); }
   }
@@ -1062,9 +1150,23 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
       this._data = String(data);
     }
     get data() { return this._data; }
-    set data(v) { this._data = String(v); }
+    set data(v) {
+      const oldValue = this._data;
+      this._data = String(v);
+      notifyMutation({
+        type: 'characterData',
+        target: this,
+        addedNodes: [],
+        removedNodes: [],
+        previousSibling: null,
+        nextSibling: null,
+        attributeName: null,
+        attributeNamespace: null,
+        oldValue,
+      });
+    }
     get nodeValue() { return this._data; }
-    set nodeValue(v) { this._data = v === null || v === undefined ? '' : String(v); }
+    set nodeValue(v) { this.data = v === null || v === undefined ? '' : String(v); }
     cloneNode() { return new Comment(this._data, this.ownerDocument); }
   }
 
@@ -1139,31 +1241,37 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
     [Symbol.iterator]() { return this._tokens()[Symbol.iterator](); }
   }
 
+  function normalizeStyleKey(prop) {
+    const raw = String(prop).trim();
+    if (raw.startsWith('--')) return raw;
+    return kebabToCamel(raw.toLowerCase());
+  }
+
   function createStyleObject() {
     const obj = {};
     Object.defineProperties(obj, {
       setProperty: {
         enumerable: false,
         value(prop, val) {
-          const camel = kebabToCamel(String(prop).toLowerCase());
-          if (val === null || val === undefined || val === '') delete this[camel];
-          else this[camel] = String(val);
+          const key = normalizeStyleKey(prop);
+          if (val === null || val === undefined || val === '') delete this[key];
+          else this[key] = String(val);
         },
       },
       removeProperty: {
         enumerable: false,
         value(prop) {
-          const camel = kebabToCamel(String(prop).toLowerCase());
-          const prev = this[camel] ?? '';
-          delete this[camel];
+          const key = normalizeStyleKey(prop);
+          const prev = this[key] ?? '';
+          delete this[key];
           return prev;
         },
       },
       getPropertyValue: {
         enumerable: false,
         value(prop) {
-          const camel = kebabToCamel(String(prop).toLowerCase());
-          return this[camel] ?? '';
+          const key = normalizeStyleKey(prop);
+          return this[key] ?? '';
         },
       },
       cssText: {
@@ -1172,7 +1280,8 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
           const parts = [];
           for (const [k, v] of Object.entries(this)) {
             if (v !== undefined && v !== null && v !== '') {
-              parts.push(camelToKebab(k) + ': ' + String(v));
+              const name = k.startsWith('--') ? k : camelToKebab(k);
+              parts.push(name + ': ' + String(v));
             }
           }
           return parts.join('; ');
@@ -1191,9 +1300,9 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
     for (const part of String(text).split(';')) {
       const colon = part.indexOf(':');
       if (colon < 0) continue;
-      const prop = part.slice(0, colon).trim().toLowerCase();
+      const rawProp = part.slice(0, colon).trim();
       const val = part.slice(colon + 1).trim();
-      if (prop && val) styleObj[kebabToCamel(prop)] = val;
+      if (rawProp && val) styleObj[normalizeStyleKey(rawProp)] = val;
     }
   }
 
@@ -1262,9 +1371,42 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
       for (const n of coerceToNodes(nodes, doc)) this.insertBefore(n, first);
     }
     replaceChildren(...nodes) {
-      for (const ch of this._childNodes) ch.parentNode = null;
+      const removed = this._childNodes.slice();
+      for (const ch of removed) ch.parentNode = null;
       this._childNodes.length = 0;
-      this.append(...nodes);
+      const doc = this.nodeType === 9 ? this : this.ownerDocument;
+      const coerced = coerceToNodes(nodes, doc);
+      const added = [];
+      for (const n of coerced) {
+        if (n.nodeType === 11) {
+          for (const fc of n._childNodes.slice()) {
+            fc.parentNode = this;
+            if (doc) setOwnerDoc(fc, doc);
+            this._childNodes.push(fc);
+            added.push(fc);
+          }
+          n._childNodes.length = 0;
+        } else {
+          if (n.parentNode) n.parentNode.removeChild(n);
+          n.parentNode = this;
+          if (doc) setOwnerDoc(n, doc);
+          this._childNodes.push(n);
+          added.push(n);
+        }
+      }
+      if (removed.length || added.length) {
+        notifyMutation({
+          type: 'childList',
+          target: this,
+          addedNodes: added,
+          removedNodes: removed,
+          previousSibling: null,
+          nextSibling: null,
+          attributeName: null,
+          attributeNamespace: null,
+          oldValue: null,
+        });
+      }
     }
     getElementById(id) {
       const target = String(id);
@@ -1389,6 +1531,7 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
     setAttribute(name, value) {
       const k = String(name).toLowerCase();
       const v = String(value);
+      const oldValue = this.getAttribute(k);
       this._attrs.set(k, v);
       if (k === 'style') {
         this._style.cssText = v;
@@ -1399,9 +1542,22 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
       } else if (k === 'selected' && !this._dirtySelected) {
         this._selected = true;
       }
+      notifyMutation({
+        type: 'attributes',
+        target: this,
+        addedNodes: [],
+        removedNodes: [],
+        previousSibling: null,
+        nextSibling: null,
+        attributeName: k,
+        attributeNamespace: null,
+        oldValue,
+      });
     }
     removeAttribute(name) {
       const k = String(name).toLowerCase();
+      const had = this.hasAttribute(k);
+      const oldValue = had ? this.getAttribute(k) : null;
       this._attrs.delete(k);
       if (k === 'style') {
         for (const prop of Object.keys(this._style)) delete this._style[prop];
@@ -1409,6 +1565,19 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
         this._checked = false;
       } else if (k === 'selected' && !this._dirtySelected) {
         this._selected = false;
+      }
+      if (had) {
+        notifyMutation({
+          type: 'attributes',
+          target: this,
+          addedNodes: [],
+          removedNodes: [],
+          previousSibling: null,
+          nextSibling: null,
+          attributeName: k,
+          attributeNamespace: null,
+          oldValue,
+        });
       }
     }
     hasAttribute(name) {
@@ -1530,10 +1699,30 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
       return serializeChildren(this);
     }
     set innerHTML(html) {
-      for (const ch of this._childNodes) ch.parentNode = null;
+      const removed = this._childNodes.slice();
+      for (const ch of removed) ch.parentNode = null;
       this._childNodes.length = 0;
       const frag = parseHtmlFragment(String(html ?? ''), this.ownerDocument);
-      this.appendChild(frag);
+      const added = frag._childNodes.slice();
+      frag._childNodes.length = 0;
+      for (const ch of added) {
+        ch.parentNode = this;
+        if (this.ownerDocument) setOwnerDoc(ch, this.ownerDocument);
+        this._childNodes.push(ch);
+      }
+      if (removed.length || added.length) {
+        notifyMutation({
+          type: 'childList',
+          target: this,
+          addedNodes: added,
+          removedNodes: removed,
+          previousSibling: null,
+          nextSibling: null,
+          attributeName: null,
+          attributeNamespace: null,
+          oldValue: null,
+        });
+      }
     }
     get outerHTML() {
       return serializeNode(this);
@@ -1644,6 +1833,35 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
     }
     submit() {
       this.requestSubmit(null);
+    }
+    getBoundingClientRect() {
+      const parsePx = v => {
+        if (typeof v !== 'string' || !v) return 0;
+        const m = /^(-?\\d+(?:\\.\\d+)?)px$/i.exec(v.trim());
+        return m ? Number(m[1]) : 0;
+      };
+      const x = parsePx(this._style.left);
+      const y = parsePx(this._style.top);
+      const width = parsePx(this._style.width);
+      const height = parsePx(this._style.height);
+      const right = x + width;
+      const bottom = y + height;
+      return {
+        x,
+        y,
+        width,
+        height,
+        top: y,
+        left: x,
+        right,
+        bottom,
+        toJSON() {
+          return {x, y, width, height, top: y, left: x, right, bottom};
+        },
+      };
+    }
+    getClientRects() {
+      return [this.getBoundingClientRect()];
     }
     cloneNode(deep = false) {
       const copy = new HTMLElement(this.localName, this.ownerDocument);
@@ -1924,9 +2142,343 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
   }
 
   class DOMParser {
-    parseFromString(str, _type = 'text/html') {
+    parseFromString(str, type = 'text/html') {
+      const mime = String(type || 'text/html').toLowerCase().trim();
+      if (mime === 'text/xml' || mime === 'application/xml' || mime === 'application/xhtml+xml' || mime === 'image/svg+xml') {
+        const doc = new Document();
+        const frag = parseHtmlFragment(String(str ?? ''), doc);
+        for (const ch of frag._childNodes.slice()) {
+          if (ch.nodeType === 1) {
+            doc.appendChild(ch);
+            break;
+          }
+        }
+        return doc;
+      }
       return parseHtmlDocument(str);
     }
+  }
+
+  // ==================== FormData ====================
+  function isInDisabledFieldset(el, stopAt) {
+    let cur = el.parentElement;
+    while (cur && cur !== stopAt) {
+      if (cur.localName === 'fieldset' && cur.disabled) {
+        const firstLegend = cur.children.find(c => c.localName === 'legend');
+        if (!firstLegend || !firstLegend.contains(el)) return true;
+      }
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+
+  class FormData {
+    constructor(formElement) {
+      this._entries = [];
+      if (formElement !== undefined && formElement !== null) {
+        if (!(formElement instanceof Element)) {
+          throw new TypeError('FormData argument must be an HTMLFormElement');
+        }
+        walkElements(formElement, el => {
+          const tag = el.localName;
+          if (tag !== 'input' && tag !== 'select' && tag !== 'textarea') return;
+          if (el.disabled || !el.name || isInDisabledFieldset(el, formElement)) return;
+          if (tag === 'input') {
+            const t = el.type;
+            if (t === 'submit' || t === 'button' || t === 'reset' || t === 'image') return;
+            if (t === 'checkbox' || t === 'radio') {
+              if (!el.checked) return;
+              const val = (el._dirtyValue || el.hasAttribute('value')) ? el.value : 'on';
+              this._entries.push([el.name, val]);
+              return;
+            }
+            this._entries.push([el.name, el.value]);
+          } else if (tag === 'textarea') {
+            this._entries.push([el.name, el.value]);
+          } else if (tag === 'select') {
+            const opts = el.querySelectorAll('option');
+            if (el.hasAttribute('multiple')) {
+              for (const opt of opts) {
+                if (opt.selected && !opt.disabled) {
+                  this._entries.push([el.name, opt.value]);
+                }
+              }
+            } else {
+              const selected = opts.find(o => o.selected && !o.disabled) || opts.find(o => !o.disabled);
+              if (selected) this._entries.push([el.name, selected.value]);
+            }
+          }
+        });
+      }
+    }
+    append(name, value) {
+      this._entries.push([String(name), String(value)]);
+    }
+    set(name, value) {
+      const k = String(name);
+      const v = String(value);
+      let replaced = false;
+      const next = [];
+      for (const entry of this._entries) {
+        if (entry[0] === k) {
+          if (!replaced) {
+            next.push([k, v]);
+            replaced = true;
+          }
+        } else {
+          next.push(entry);
+        }
+      }
+      if (!replaced) next.push([k, v]);
+      this._entries = next;
+    }
+    get(name) {
+      const k = String(name);
+      for (const entry of this._entries) {
+        if (entry[0] === k) return entry[1];
+      }
+      return null;
+    }
+    getAll(name) {
+      const k = String(name);
+      const out = [];
+      for (const entry of this._entries) {
+        if (entry[0] === k) out.push(entry[1]);
+      }
+      return out;
+    }
+    has(name) {
+      const k = String(name);
+      return this._entries.some(entry => entry[0] === k);
+    }
+    delete(name) {
+      const k = String(name);
+      this._entries = this._entries.filter(entry => entry[0] !== k);
+    }
+    entries() {
+      return this._entries.map(e => [e[0], e[1]])[Symbol.iterator]();
+    }
+    keys() {
+      return this._entries.map(e => e[0])[Symbol.iterator]();
+    }
+    values() {
+      return this._entries.map(e => e[1])[Symbol.iterator]();
+    }
+    forEach(cb, thisArg) {
+      for (const [k, v] of this._entries.slice()) {
+        cb.call(thisArg, v, k, this);
+      }
+    }
+    [Symbol.iterator]() {
+      return this.entries();
+    }
+  }
+
+  // ==================== Observers (MutationObserver, ResizeObserver, IntersectionObserver) ====================
+  class MutationObserver {
+    constructor(callback) {
+      if (typeof callback !== 'function') {
+        throw new TypeError('MutationObserver callback must be a function');
+      }
+      this._callback = callback;
+      this._registrations = [];
+      this._records = [];
+      this._scheduled = false;
+    }
+    observe(target, options = {}) {
+      if (!(target instanceof Node)) {
+        throw new TypeError('MutationObserver.observe target must be a Node');
+      }
+      const opts = options && typeof options === 'object' ? options : {};
+      const attributes = opts.attributes !== undefined
+        ? Boolean(opts.attributes)
+        : Boolean(opts.attributeOldValue || opts.attributeFilter);
+      const characterData = opts.characterData !== undefined
+        ? Boolean(opts.characterData)
+        : Boolean(opts.characterDataOldValue);
+      const childList = Boolean(opts.childList);
+      if (!attributes && !characterData && !childList) {
+        throw new TypeError('MutationObserver.observe requires at least one of childList, attributes, or characterData');
+      }
+      const normalized = {
+        childList,
+        attributes,
+        characterData,
+        subtree: Boolean(opts.subtree),
+        attributeOldValue: Boolean(opts.attributeOldValue),
+        characterDataOldValue: Boolean(opts.characterDataOldValue),
+        attributeFilter: Array.isArray(opts.attributeFilter)
+          ? opts.attributeFilter.map(a => String(a).toLowerCase())
+          : null,
+      };
+      const existing = this._registrations.find(r => r.target === target);
+      if (existing) existing.options = normalized;
+      else this._registrations.push({target, options: normalized});
+      activeMutationObservers.add(this);
+    }
+    disconnect() {
+      this._registrations.length = 0;
+      this._records.length = 0;
+      this._scheduled = false;
+      activeMutationObservers.delete(this);
+    }
+    takeRecords() {
+      const out = this._records.slice();
+      this._records.length = 0;
+      return out;
+    }
+    _enqueueIfMatched(record) {
+      let matchedOpts = null;
+      for (const reg of this._registrations) {
+        const direct = reg.target === record.target;
+        const inSubtree = !direct && reg.options.subtree && reg.target.contains(record.target);
+        if (!direct && !inSubtree) continue;
+        if (record.type === 'childList' && !reg.options.childList) continue;
+        if (record.type === 'characterData' && !reg.options.characterData) continue;
+        if (record.type === 'attributes') {
+          if (!reg.options.attributes) continue;
+          if (reg.options.attributeFilter && !reg.options.attributeFilter.includes(record.attributeName)) continue;
+        }
+        matchedOpts = reg.options;
+        break;
+      }
+      if (!matchedOpts) return;
+      const delivered = {
+        type: record.type,
+        target: record.target,
+        addedNodes: record.addedNodes.slice(),
+        removedNodes: record.removedNodes.slice(),
+        previousSibling: record.previousSibling,
+        nextSibling: record.nextSibling,
+        attributeName: record.attributeName,
+        attributeNamespace: record.attributeNamespace,
+        oldValue: (record.type === 'attributes' && matchedOpts.attributeOldValue) ||
+          (record.type === 'characterData' && matchedOpts.characterDataOldValue)
+          ? record.oldValue
+          : null,
+      };
+      this._records.push(delivered);
+      if (!this._scheduled) {
+        this._scheduled = true;
+        scheduleMicrotaskDeterministic(() => {
+          this._scheduled = false;
+          if (!this._records.length) return;
+          const batch = this.takeRecords();
+          this._callback.call(this, batch, this);
+        });
+      }
+    }
+  }
+
+  class ResizeObserver {
+    constructor(callback) {
+      if (typeof callback !== 'function') {
+        throw new TypeError('ResizeObserver callback must be a function');
+      }
+      this._callback = callback;
+      this._targets = new Set();
+    }
+    observe(target) {
+      if (!(target instanceof Element)) throw new TypeError('ResizeObserver.observe target must be an Element');
+      if (this._targets.has(target)) return;
+      this._targets.add(target);
+      scheduleMicrotaskDeterministic(() => {
+        if (!this._targets.has(target)) return;
+        const rect = target.getBoundingClientRect();
+        const box = [{inlineSize: rect.width, blockSize: rect.height}];
+        this._callback.call(this, [{
+          target,
+          contentRect: rect,
+          borderBoxSize: box,
+          contentBoxSize: box,
+        }], this);
+      });
+    }
+    unobserve(target) {
+      this._targets.delete(target);
+    }
+    disconnect() {
+      this._targets.clear();
+    }
+  }
+
+  class IntersectionObserver {
+    constructor(callback, options = {}) {
+      if (typeof callback !== 'function') {
+        throw new TypeError('IntersectionObserver callback must be a function');
+      }
+      const opts = options && typeof options === 'object' ? options : {};
+      this._callback = callback;
+      this.root = opts.root ?? null;
+      this.rootMargin = opts.rootMargin ?? '0px 0px 0px 0px';
+      this.thresholds = Array.isArray(opts.threshold)
+        ? opts.threshold.map(Number)
+        : [opts.threshold !== undefined ? Number(opts.threshold) : 0];
+      this._targets = new Set();
+      this._records = [];
+    }
+    observe(target) {
+      if (!(target instanceof Element)) throw new TypeError('IntersectionObserver.observe target must be an Element');
+      if (this._targets.has(target)) return;
+      this._targets.add(target);
+      scheduleMicrotaskDeterministic(() => {
+        if (!this._targets.has(target)) return;
+        const rect = target.getBoundingClientRect();
+        const visible = target.isConnected && !target.hidden && target._style.display !== 'none';
+        const entry = {
+          target,
+          isIntersecting: visible,
+          intersectionRatio: visible ? 1 : 0,
+          boundingClientRect: rect,
+          intersectionRect: visible ? rect : {x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0},
+          rootBounds: this.root && typeof this.root.getBoundingClientRect === 'function' ? this.root.getBoundingClientRect() : null,
+          time: virtualNow,
+        };
+        this._callback.call(this, [entry], this);
+      });
+    }
+    unobserve(target) {
+      this._targets.delete(target);
+    }
+    disconnect() {
+      this._targets.clear();
+      this._records.length = 0;
+    }
+    takeRecords() {
+      const out = this._records.slice();
+      this._records.length = 0;
+      return out;
+    }
+  }
+
+  // ==================== getComputedStyle ====================
+  const BLOCK_TAGS = new Set([
+    'address', 'article', 'aside', 'blockquote', 'body', 'dd', 'details', 'dialog',
+    'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'html', 'li', 'main',
+    'nav', 'ol', 'p', 'pre', 'section', 'summary', 'ul',
+  ]);
+  const INLINE_BLOCK_TAGS = new Set(['button', 'img', 'input', 'select', 'textarea']);
+  const HIDDEN_TAGS = new Set(['head', 'link', 'meta', 'script', 'style', 'template', 'title']);
+
+  function getComputedStyle(el, _pseudoElt) {
+    if (!(el instanceof Element)) {
+      throw new TypeError('getComputedStyle expects an Element');
+    }
+    const computed = createStyleObject();
+    let defaultDisplay = 'inline';
+    if (el.hidden || HIDDEN_TAGS.has(el.localName)) defaultDisplay = 'none';
+    else if (BLOCK_TAGS.has(el.localName)) defaultDisplay = 'block';
+    else if (INLINE_BLOCK_TAGS.has(el.localName)) defaultDisplay = 'inline-block';
+    else if (el.localName === 'table') defaultDisplay = 'table';
+    else if (el.localName === 'tr') defaultDisplay = 'table-row';
+    else if (el.localName === 'td' || el.localName === 'th') defaultDisplay = 'table-cell';
+    computed.display = defaultDisplay;
+    computed.visibility = 'visible';
+    for (const [k, v] of Object.entries(el._style)) {
+      if (v !== undefined && v !== null && v !== '') computed[k] = String(v);
+    }
+    return computed;
   }
 
   // ==================== Location & History ====================
@@ -2178,6 +2730,14 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
   globalThis.clearInterval = id => { timers.delete(id); };
   globalThis.requestAnimationFrame = fn => scheduleTimer(fn, 16, [], false, true);
   globalThis.cancelAnimationFrame = id => { timers.delete(id); };
+  if (typeof globalThis.queueMicrotask !== 'function') {
+    globalThis.queueMicrotask = fn => {
+      if (typeof fn !== 'function') throw new TypeError('queueMicrotask expects a function');
+      Promise.resolve().then(() => fn());
+    };
+  }
+  globalThis.getComputedStyle = getComputedStyle;
+  globalThis.performance = {now: () => virtualNow};
   globalThis.__flushTimers = flushTimers;
   globalThis.__flushTimersAsync = flushTimersAsync;
   globalThis.__virtualNow = () => virtualNow;
@@ -2232,5 +2792,9 @@ export const VM_BROWSER_DOM_RUNTIME_SCRIPT = `(function() {
   globalThis.Document = Document;
   globalThis.DOMTokenList = DOMTokenList;
   globalThis.DOMParser = DOMParser;
+  globalThis.FormData = FormData;
+  globalThis.MutationObserver = MutationObserver;
+  globalThis.ResizeObserver = ResizeObserver;
+  globalThis.IntersectionObserver = IntersectionObserver;
   globalThis.navigator = {userAgent: 'DeterministicBrowserVM/1.0', language: 'en-US', languages: ['en-US']};
 })();`;
