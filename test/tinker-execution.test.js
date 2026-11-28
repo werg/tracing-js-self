@@ -4,8 +4,10 @@ import {spawn} from 'node:child_process';
 import {createInterface} from 'node:readline';
 import {fileURLToPath} from 'node:url';
 import {encodeReadable, decodeReadable, prepareTinkerTask, exportTinkerExample,
-  createTinkerSession, parseStudentAction, normalizedSourceHash,
-  assistantVisibleText, assistantThinkingText, isCommutativeReadCall} from '../src/training/tinker-execution.js';
+  createTinkerSession, createCliSession, createStatefulWorld,
+  parseStudentAction, normalizedSourceHash,
+  assistantVisibleText, assistantThinkingText, isCommutativeReadCall,
+  canonicalizeOperationName, canonicalizeHttpRequestArgs, BUILTIN_OPERATIONS} from '../src/training/tinker-execution.js';
 import {describeGraph, realizeGraph} from '../src/training/graph.js';
 import {auditCausalPrefixPair} from '../src/training/tinker-supervision.js';
 import {hardEffectfulTasks, hardEffectfulTemplates} from '../src/training/tinker-hard-effectful.js';
@@ -1452,4 +1454,293 @@ test('http.request argument matching canonicalizes JSON-stringified headers vs p
   assert.equal(bad.done, true);
   assert.equal(bad.grade.success, false);
   assert.equal(bad.grade.failureCategory, 'incorrect-external-request');
+});
+
+test('cross-language tool alias canonicalization, FS mutation barriers, and http.request dict <-> 4-positional matching', async () => {
+  const tc = (name, args, id) => ({
+    role: 'assistant',
+    content: '',
+    tool_calls: [{id, type: 'function', function: {name, arguments: JSON.stringify({arguments: args})}}],
+  });
+
+  // 1. Canonical operation name mapping
+  assert.equal(canonicalizeOperationName('fs_read_text'), 'fs.readText');
+  assert.equal(canonicalizeOperationName('fs_write_text'), 'fs.writeText');
+  assert.equal(canonicalizeOperationName('fs_exists'), 'fs.exists');
+  assert.equal(canonicalizeOperationName('fs_listdir'), 'fs.readdir');
+  assert.equal(canonicalizeOperationName('fs.listdir'), 'fs.readdir');
+  assert.equal(canonicalizeOperationName('fs_stat'), 'fs.stat');
+  assert.equal(canonicalizeOperationName('fs_read_bytes'), 'fs.readBytes');
+  assert.equal(canonicalizeOperationName('fs_write_bytes'), 'fs.writeBytes');
+  assert.equal(canonicalizeOperationName('fs_mkdir'), 'fs.mkdir');
+  assert.equal(canonicalizeOperationName('fs_unlink'), 'fs.unlink');
+  assert.equal(canonicalizeOperationName('fs.remove'), 'fs.unlink');
+  assert.equal(canonicalizeOperationName('fs_rename'), 'fs.rename');
+  assert.equal(canonicalizeOperationName('http_request'), 'http.request');
+  assert.equal(canonicalizeOperationName('http_get'), 'http.get');
+  assert.equal(canonicalizeOperationName('kv_get'), 'kv.get');
+  assert.equal(canonicalizeOperationName('kv_set'), 'kv.set');
+  assert.equal(canonicalizeOperationName('kv_del'), 'kv.delete');
+  assert.equal(canonicalizeOperationName('kv_has'), 'kv.has');
+  assert.equal(canonicalizeOperationName('env_get'), 'env.get');
+
+  // 2. New FS mutation specs registered in BUILTIN_OPERATIONS as strict barriers (NOT commutative reads)
+  for (const op of ['fs.mkdir', 'fs.unlink', 'fs.rename', 'fs.appendText', 'fs.copyFile']) {
+    assert.ok(Object.hasOwn(BUILTIN_OPERATIONS, op), `missing BUILTIN_OPERATIONS[${op}]`);
+    assert.equal(BUILTIN_OPERATIONS[op].commutativeRead, false);
+    assert.equal(isCommutativeReadCall(op, ['/tmp/a', '/tmp/b']), false);
+  }
+  // Underscore read aliases ARE commutative reads; underscore mutation aliases are NOT
+  assert.equal(isCommutativeReadCall('fs_read_text', ['/tmp/a']), true);
+  assert.equal(isCommutativeReadCall('fs_listdir', ['/tmp']), true);
+  assert.equal(isCommutativeReadCall('kv_get', ['k']), true);
+  assert.equal(isCommutativeReadCall('env_get', ['HOME']), true);
+  assert.equal(isCommutativeReadCall('http_request', [{url: 'https://a.test', method: 'get'}]), true);
+  assert.equal(isCommutativeReadCall('http_request', [{url: 'https://a.test', method: 'POST'}]), false);
+  assert.equal(isCommutativeReadCall('fs_write_text', ['/tmp/a', 'x']), false);
+  assert.equal(isCommutativeReadCall('fs_unlink', ['/tmp/a']), false);
+  assert.equal(isCommutativeReadCall('kv_set', ['k', 1]), false);
+  assert.equal(isCommutativeReadCall('kv_del', ['k']), false);
+
+  // 3. canonicalizeHttpRequestArgs handles 4-positional <-> single-dict equivalence
+  assert.deepEqual(
+    canonicalizeHttpRequestArgs(['https://api.test/x', 'post', '{"X-Key":"k1"}', null]),
+    canonicalizeHttpRequestArgs([{url: 'https://api.test/x', method: 'POST', headers: {'X-Key': 'k1'}, body: ''}]),
+  );
+  assert.deepEqual(
+    canonicalizeHttpRequestArgs(['https://api.test/y', 'GET', {}, null]),
+    canonicalizeHttpRequestArgs([{url: 'https://api.test/y'}]),
+  );
+  // Extra unknown keys fail canonicalization
+  assert.equal(canonicalizeHttpRequestArgs([{url: 'https://api.test/y', timeout: 5}]), null);
+
+  // 4. End-to-end session grading with legacy aliases + dict <-> 4-positional http.request
+  const prepared = await prepareTinkerTask({
+    id: 'alias-and-http-dict-js',
+    family: 'alias-and-http-dict',
+    executionMode: 'native',
+    source: `const fs = require('node:fs');
+    async function run() {
+      const a = fs.readFileSync('/workspace/a.txt', 'utf8');
+      const k = kv_get('mode');
+      const r = await fetch('https://api.test/items', {method: 'POST', headers: {'x-mode': k}, body: a});
+      const txt = await r.text();
+      return txt;
+    }`,
+    entry: 'run',
+    args: [],
+    nativeBindings: [{name: 'kv_get', kind: 'synchronous'}],
+    fixture: {
+      calls: [
+        {operation: 'fs.readText', arguments: ['/workspace/a.txt'], status: 'fulfilled', result: 'payload'},
+        {operation: 'natlang.callSync', arguments: ['kv_get', {$js: 'undefined'}, ['mode']], status: 'fulfilled', result: 'fast'},
+        {
+          operation: 'http.request',
+          arguments: ['https://api.test/items', 'POST', {'x-mode': 'fast'}, 'payload'],
+          status: 'fulfilled',
+          result: {status: 200, statusText: 'OK', url: 'https://api.test/items', headers: {}, body: 'accepted'},
+        },
+      ],
+    },
+  });
+
+  // Student calls fs_read_text, kv.get (canonical dot alias for kv_get binding!), and http_request with single-dict + JSON-string headers
+  const sOk = createTinkerSession(prepared);
+  const r1 = await sOk.step(tc('fs_read_text', ['/workspace/a.txt'], 'a1'), 5);
+  assert.equal(r1.done, false);
+  assert.equal(JSON.parse(r1.messages[0].content).value, 'payload');
+  const r2 = await sOk.step(tc('kv.get', ['mode'], 'a2'), 10);
+  assert.equal(r2.done, false);
+  assert.equal(JSON.parse(r2.messages[0].content).value, 'fast');
+  const r3 = await sOk.step(tc('http_request', [{url: 'https://api.test/items', method: 'post', headers: '{"x-mode":"fast"}', body: 'payload'}], 'a3'), 15);
+  assert.equal(r3.done, false);
+  const fin = await sOk.step(complete('accepted', []), 25);
+  assert.equal(fin.done, true);
+  assert.equal(fin.grade.success, true);
+
+  // Wrong body in dict form still strictly fails
+  const sBadBody = createTinkerSession(prepared);
+  await sBadBody.step(tc('fs_read_text', ['/workspace/a.txt'], 'b1'), 5);
+  await sBadBody.step(tc('kv.get', ['mode'], 'b2'), 10);
+  const badRes = await sBadBody.step(tc('http_request', [{url: 'https://api.test/items', method: 'POST', headers: {'x-mode': 'fast'}, body: 'WRONG'}], 'b3'), 15);
+  assert.equal(badRes.done, true);
+  assert.equal(badRes.grade.success, false);
+  assert.equal(badRes.grade.failureCategory, 'incorrect-external-request');
+});
+
+test('worldMode: "stateful" executes fs/kv/env live, grades final world state + strict external http.request, and reports world-state-mismatch', async () => {
+  const tc = (name, args, id) => ({
+    role: 'assistant',
+    content: '',
+    tool_calls: [{id, type: 'function', function: {name, arguments: JSON.stringify({arguments: args})}}],
+  });
+
+  // Direct world unit sanity
+  const w = createStatefulWorld({fs: {'/tmp/init.txt': 'v0'}, kv: {n: 1}, env: {ENV: 'prod'}});
+  assert.equal(w.execute('fs.exists', ['/tmp/init.txt']).value, true);
+  assert.equal(w.execute('fs.readText', ['/tmp/missing.txt']).status, 'rejected');
+
+  const prepared = await prepareTinkerTask({
+    id: 'stateful-world-js-1',
+    family: 'stateful-world-js',
+    executionMode: 'native',
+    worldMode: 'stateful',
+    source: `function run() {
+      // Stateful world task with dynamic FS/KV mutations + 1 strict external HTTP call
+      return 'done';
+    }`,
+    entry: 'run',
+    args: [],
+    initialWorld: {
+      fs: {'/tmp/a.txt': 'alpha', '/tmp/b.txt': 'beta', '/tmp/drop.txt': 'old'},
+      kv: {counter: 10, stale: true},
+      env: {API_HOST: 'https://svc.test'},
+    },
+    expectedFinalWorld: {
+      fs: {
+        '/tmp/a.txt': 'alpha',
+        '/tmp/b.txt': 'beta',
+        '/tmp/out/final.txt': 'alpha+beta:ok',
+        '/tmp/out/copy.txt': 'alpha+beta:ok',
+      },
+      kv: {counter: 11, status: 'synced'},
+    },
+    expectedOutcome: {kind: 'return', value: 'synced:alpha+beta:ok'},
+    fixture: {
+      calls: [
+        {
+          operation: 'http.request',
+          arguments: ['https://svc.test/sync', 'POST', {'x-count': '11'}, 'alpha+beta'],
+          status: 'fulfilled',
+          result: {status: 200, body: 'ok'},
+        },
+      ],
+    },
+  });
+
+  // 1. Student skips redundant fs.exists, reads b then a, writes temp, appends, renames, copies, unlinks drop.txt, mutates KV, calls HTTP -> PASS!
+  const sOk = createTinkerSession(prepared);
+  const declared = JSON.parse(sOk.messages.find(m => m.role === 'tool_declare').content).map(t => t.function.name);
+  assert.ok(declared.includes('fs.writeText') && declared.includes('fs.rename') && declared.includes('kv.set') && declared.includes('env.get'));
+
+  assert.equal(JSON.parse((await sOk.step(tc('env.get', ['API_HOST'], 'w1'), 5)).messages[0].content).value, 'https://svc.test');
+  assert.equal(JSON.parse((await sOk.step(tc('fs.readText', ['/tmp/b.txt'], 'w2'), 10)).messages[0].content).value, 'beta');
+  assert.equal(JSON.parse((await sOk.step(tc('fs_read_text', ['/tmp/a.txt'], 'w3'), 15)).messages[0].content).value, 'alpha');
+  assert.equal(JSON.parse((await sOk.step(tc('kv_get', ['counter'], 'w4'), 20)).messages[0].content).value, 10);
+  await sOk.step(tc('kv.set', ['counter', 11], 'w5'), 25);
+  await sOk.step(tc('kv_del', ['stale'], 'w6'), 30);
+  await sOk.step(tc('kv.set', ['status', 'synced'], 'w7'), 35);
+  // Strict non-world external HTTP call (dict form!)
+  const httpObs = await sOk.step(tc('http.request', [{url: 'https://svc.test/sync', method: 'POST', headers: {'x-count': '11'}, body: 'alpha+beta'}], 'h1'), 40);
+  assert.equal(httpObs.done, false);
+  assert.equal(JSON.parse(httpObs.messages[0].content).value.body, 'ok');
+  // Live FS mutations
+  await sOk.step(tc('fs.mkdir', ['/tmp/out'], 'w8'), 45);
+  await sOk.step(tc('fs.writeText', ['/tmp/out/draft.txt', 'alpha+beta'], 'w9'), 50);
+  await sOk.step(tc('fs.appendText', ['/tmp/out/draft.txt', ':ok'], 'w10'), 55);
+  assert.equal(JSON.parse((await sOk.step(tc('fs.readText', ['/tmp/out/draft.txt'], 'w11'), 60)).messages[0].content).value, 'alpha+beta:ok');
+  await sOk.step(tc('fs.rename', ['/tmp/out/draft.txt', '/tmp/out/final.txt'], 'w12'), 65);
+  await sOk.step(tc('fs.copyFile', ['/tmp/out/final.txt', '/tmp/out/copy.txt'], 'w13'), 70);
+  await sOk.step(tc('fs.unlink', ['/tmp/drop.txt'], 'w14'), 75);
+  assert.deepEqual(JSON.parse((await sOk.step(tc('fs.readdir', ['/tmp/out'], 'w15'), 80)).messages[0].content).value, ['copy.txt', 'final.txt']);
+
+  const fin = await sOk.step(complete('synced:alpha+beta:ok', []), 90);
+  assert.equal(fin.done, true);
+  assert.equal(fin.grade.success, true);
+  assert.equal(fin.grade.matchedExternalCalls, 1);
+  assert.equal(fin.grade.expectedExternalCalls, 1);
+  assert.equal(fin.grade.worldCalls, 15);
+  assert.equal(fin.grade.finalWorld.fs['/tmp/out/final.txt'], 'alpha+beta:ok');
+
+  // 2. Wrong file content fails with failureCategory: "world-state-mismatch"
+  const sBadContent = createTinkerSession(prepared);
+  await sBadContent.step(tc('kv.set', ['counter', 11], 'c1'), 5);
+  await sBadContent.step(tc('kv.delete', ['stale'], 'c2'), 10);
+  await sBadContent.step(tc('kv.set', ['status', 'synced'], 'c3'), 15);
+  await sBadContent.step(tc('http.request', ['https://svc.test/sync', 'POST', {'x-count': '11'}, 'alpha+beta'], 'c4'), 20);
+  await sBadContent.step(tc('fs.writeText', ['/tmp/out/final.txt', 'WRONG_CONTENT'], 'c5'), 25);
+  await sBadContent.step(tc('fs.writeText', ['/tmp/out/copy.txt', 'alpha+beta:ok'], 'c6'), 30);
+  await sBadContent.step(tc('fs.unlink', ['/tmp/drop.txt'], 'c7'), 35);
+  const badContentFin = await sBadContent.step(complete('synced:alpha+beta:ok', []), 40);
+  assert.equal(badContentFin.done, true);
+  assert.equal(badContentFin.grade.success, false);
+  assert.equal(badContentFin.grade.failureCategory, 'world-state-mismatch');
+
+  // 3. Missing expected file fails with failureCategory: "world-state-mismatch"
+  const sMissingFile = createTinkerSession(prepared);
+  await sMissingFile.step(tc('kv.set', ['counter', 11], 'm1'), 5);
+  await sMissingFile.step(tc('kv.delete', ['stale'], 'm2'), 10);
+  await sMissingFile.step(tc('kv.set', ['status', 'synced'], 'm3'), 15);
+  await sMissingFile.step(tc('http.request', ['https://svc.test/sync', 'POST', {'x-count': '11'}, 'alpha+beta'], 'm4'), 20);
+  await sMissingFile.step(tc('fs.writeText', ['/tmp/out/final.txt', 'alpha+beta:ok'], 'm5'), 25);
+  await sMissingFile.step(tc('fs.unlink', ['/tmp/drop.txt'], 'm6'), 30);
+  // Forgot /tmp/out/copy.txt!
+  const missingFileFin = await sMissingFile.step(complete('synced:alpha+beta:ok', []), 35);
+  assert.equal(missingFileFin.done, true);
+  assert.equal(missingFileFin.grade.success, false);
+  assert.equal(missingFileFin.grade.failureCategory, 'world-state-mismatch');
+});
+
+test('executionKind: "cli" renders CLI prompt, grades exitCode/stdout/stderr strictly, and composes with stateful FS', async () => {
+  const tc = (name, args, id) => ({
+    role: 'assistant',
+    content: '',
+    tool_calls: [{id, type: 'function', function: {name, arguments: JSON.stringify({arguments: args})}}],
+  });
+
+  const cliTask = {
+    id: 'cli-node-test-1',
+    family: 'cli-node-test',
+    executionKind: 'cli',
+    worldMode: 'stateful',
+    source: `const fs = require('node:fs');
+    // CLI script reads stdin, writes report, prints summary
+    console.log('ok');`,
+    argv: ['node', 'report.js', '--out', '/tmp/report.txt'],
+    stdin: 'line1\nline2\n',
+    initialWorld: {fs: {'/tmp/header.txt': 'HDR:'}},
+    expectedFinalWorld: {fs: {'/tmp/header.txt': 'HDR:', '/tmp/report.txt': 'HDR:2 lines'}},
+    expectedCli: {exitCode: 0, stdout: 'wrote 2 lines\n', stderr: ''},
+  };
+
+  // 1. Works via both prepareTinkerTask and createCliSession
+  const prepared = await prepareTinkerTask(cliTask);
+  assert.equal(prepared.outcome.kind, 'cli');
+  const s1 = createCliSession(cliTask);
+  const sysText = s1.messages[0].content;
+  const userText = s1.messages.at(-1).content;
+  assert.match(sysText, /"kind":"cli"/);
+  assert.match(userText, /Command argv: \["node","report\.js","--out","\/tmp\/report\.txt"\]/);
+  assert.match(userText, /Stdin: "line1\\nline2\\n"/);
+
+  // Student reads header, writes report, finishes with bare {"kind":"cli",...} JSON
+  const hdr = await s1.step(tc('fs.readText', ['/tmp/header.txt'], 'c1'), 10);
+  assert.equal(JSON.parse(hdr.messages[0].content).value, 'HDR:');
+  await s1.step(tc('fs.writeText', ['/tmp/report.txt', 'HDR:2 lines'], 'c2'), 20);
+  const okFin = await s1.step('```json\n{"kind":"cli","exitCode":0,"stdout":"wrote 2 lines\\n","stderr":""}\n```', 30);
+  assert.equal(okFin.done, true);
+  assert.equal(okFin.grade.success, true);
+
+  // Also accepts {"type":"complete","kind":"cli",...}
+  const s2 = createTinkerSession(prepared);
+  await s2.step(tc('fs.writeText', ['/tmp/report.txt', 'HDR:2 lines'], 'c3'), 10);
+  const okFin2 = await s2.step(JSON.stringify({type: 'complete', kind: 'cli', exitCode: 0, stdout: 'wrote 2 lines\n', stderr: ''}), 20);
+  assert.equal(okFin2.grade.success, true);
+
+  // Failure categories: wrong-exit-code, wrong-stdout, wrong-stderr, world-state-mismatch, wrong-completion-kind
+  const cases = [
+    [{kind: 'cli', exitCode: 1, stdout: 'wrote 2 lines\n', stderr: ''}, true, 'wrong-exit-code'],
+    [{kind: 'cli', exitCode: 0, stdout: 'wrote 3 lines\n', stderr: ''}, true, 'wrong-stdout'],
+    [{kind: 'cli', exitCode: 0, stdout: 'wrote 2 lines\n', stderr: 'warn'}, true, 'wrong-stderr'],
+    [{kind: 'cli', exitCode: 0, stdout: 'wrote 2 lines\n', stderr: ''}, false, 'world-state-mismatch'],
+    [{type: 'complete', kind: 'return', arguments: [], value: 0}, true, 'wrong-completion-kind'],
+  ];
+  for (const [payload, writeFile, expectedCat] of cases) {
+    const s = createCliSession(cliTask);
+    if (writeFile) await s.step(tc('fs.writeText', ['/tmp/report.txt', 'HDR:2 lines'], 'x1'), 5);
+    const r = await s.step(JSON.stringify(payload), 15);
+    assert.equal(r.done, true);
+    assert.equal(r.grade.success, false);
+    assert.equal(r.grade.failureCategory, expectedCat, `expected ${expectedCat}`);
+  }
 });

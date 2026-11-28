@@ -2893,6 +2893,71 @@ def test_pipelines():
         self.assertEqual(bad_shell["grade"]["matchedExternalCalls"], 2)
         self.assertEqual(bad_shell["grade"]["expectedExternalCalls"], 4)
 
+    def test_cross_language_aliases_and_http_request_canonicalization(self) -> None:
+        def tc(op: str, cargs: list[Any], cid: str) -> dict[str, Any]:
+            return {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {"id": cid, "type": "function", "function": {"name": op, "arguments": json.dumps({"arguments": cargs})}}
+                ],
+            }
+
+        source = "\n".join([
+            "import urllib.request",
+            "from pathlib import Path",
+            "def run():",
+            "    txt = Path('in.txt').read_text()",
+            "    k = host.kv_get('lane')",
+            "    req = urllib.request.Request('https://api.test/v1', data=txt.encode('utf-8'), headers={'Accept': k}, method='POST')",
+            "    resp = urllib.request.urlopen(req).read().decode('utf-8')",
+            "    return resp",
+        ])
+        task = {
+            "id": "py-canon-alias-1",
+            "family": "py-canon-alias",
+            "language": "py",
+            "source": source,
+            "entry": "run",
+            "args": [],
+            "fixture": {
+                "calls": [
+                    {"operation": "fs.readText", "arguments": ["in.txt"], "status": "fulfilled", "result": "hello"},
+                    {"operation": "kv_get", "arguments": ["lane"], "status": "fulfilled", "result": "canary"},
+                    {
+                        "operation": "http.request",
+                        "arguments": [{"method": "POST", "url": "https://api.test/v1", "headers": {"Accept": "canary"}, "body": "hello"}],
+                        "status": "fulfilled",
+                        "result": {"status": 200, "url": "https://api.test/v1", "headers": {}, "body": "ok"},
+                    },
+                ],
+            },
+        }
+        prep = prepare_python_task(task, trace_format="actions-only")
+
+        # Student uses fs_read_text, kv.get, and 4-positional http_request with JSON-string headers
+        sess = create_python_session(prep)
+        self.assertFalse(sess.step(tc("fs_read_text", ["in.txt"], "c1"), 5)["done"])
+        self.assertFalse(sess.step(tc("kv.get", ["lane"], "c2"), 10)["done"])
+        self.assertFalse(
+            sess.step(tc("http_request", ["https://api.test/v1", "post", '{"Accept":"canary"}', "hello"], "c3"), 15)["done"]
+        )
+        fin = sess.step(json.dumps({"type": "complete", "kind": "return", "arguments": [], "value": "ok"}), 25)
+        self.assertTrue(fin["done"])
+        self.assertTrue(fin["grade"]["success"])
+
+        # Wrong header value still strictly fails
+        sess_bad = create_python_session(prep)
+        sess_bad.step(tc("fs_read_text", ["in.txt"], "b1"), 5)
+        sess_bad.step(tc("kv.get", ["lane"], "b2"), 10)
+        bad = sess_bad.step(
+            tc("http_request", ["https://api.test/v1", "POST", {"Accept": "wrong"}, "hello"], "b3"),
+            15,
+        )
+        self.assertTrue(bad["done"])
+        self.assertFalse(bad["grade"]["success"])
+        self.assertEqual(bad["grade"]["failureCategory"], "incorrect-external-request")
+
 
 if __name__ == "__main__":
     unittest.main()

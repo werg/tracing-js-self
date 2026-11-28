@@ -1,5 +1,6 @@
 // Readable execution training. Private teacher state never enters a live prompt.
 import {createHash, randomBytes} from 'node:crypto';
+import nodePath from 'node:path';
 import {isDeepStrictEqual} from 'node:util';
 import {parse} from 'acorn';
 import {executeWithNativeServices} from '../host/native-driver.js';
@@ -301,10 +302,499 @@ const SYSTEM = `Execute the supplied JavaScript program directly and accurately.
 - Final "arguments" must reflect all input mutations and aliases. Error throws/values use {"name":"ErrorName","message":"..."}.
 - Special JS values: {"$js":"undefined"|"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$js":"bigint","value":"123"}, {"$js":"date","ms":1700000000000}, {"$js":"regexp","source":"abc","flags":"gi"}, {"$js":"map","entries":[[k,v],...]}, {"$js":"set","items":[...]}, {"$js":"typedarray","type":"Uint8Array","b64":"..."}, {"$js":"instance","class":"Name","props":{...}}, {"$js":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the arguments array for tool calls), {"$js":"array","length":3,"entries":{"1":2}} for sparse arrays, {"$js":"object","nullPrototype":true,"entries":{...}} for null-prototype or $js-keyed objects.`;
 
+const CLI_SYSTEM = `Execute the supplied JavaScript/TypeScript CLI command directly and accurately.
+- Never invoke undeclared tools or attempt to run the program via an external shell or interpreter.
+- When execution finishes, end with one JSON completion in a \`\`\`json code fence (or bare JSON):
+  {"kind":"cli","exitCode":0,"stdout":"...","stderr":"..."}
+  ({"type":"complete","kind":"cli","exitCode":0,"stdout":"...","stderr":"..."} is also accepted.)
+- Report the exact integer exitCode, exact stdout string, and exact stderr string produced by running the command with the given argv and stdin.`;
+
+export const OPERATION_ALIASES = Object.freeze({
+  fs_read_text: 'fs.readText',
+  fs_write_text: 'fs.writeText',
+  fs_exists: 'fs.exists',
+  fs_listdir: 'fs.readdir',
+  'fs.listdir': 'fs.readdir',
+  fs_stat: 'fs.stat',
+  fs_read_bytes: 'fs.readBytes',
+  fs_write_bytes: 'fs.writeBytes',
+  fs_mkdir: 'fs.mkdir',
+  fs_unlink: 'fs.unlink',
+  'fs.remove': 'fs.unlink',
+  fs_remove: 'fs.unlink',
+  fs_rename: 'fs.rename',
+  fs_append_text: 'fs.appendText',
+  fs_copy_file: 'fs.copyFile',
+  fs_is_file: 'fs.isFile',
+  fs_is_dir: 'fs.isDir',
+  http_request: 'http.request',
+  http_get: 'http.get',
+  kv_get: 'kv.get',
+  kv_set: 'kv.set',
+  kv_del: 'kv.delete',
+  kv_delete: 'kv.delete',
+  kv_has: 'kv.has',
+  kv_keys: 'kv.keys',
+  env_get: 'env.get',
+  env_has: 'env.has',
+  env_keys: 'env.keys',
+});
+
+export function canonicalizeOperationName(op) {
+  if (typeof op !== 'string') return op;
+  return own(OPERATION_ALIASES, op) ? OPERATION_ALIASES[op] : op;
+}
+
+export const BUILTIN_OPERATIONS = Object.freeze({
+  'fs.mkdir': Object.freeze({
+    kind: 'synchronous',
+    arity: 1,
+    commutativeRead: false,
+    description: 'Invoke JS external operation fs.mkdir (1-2 arguments: [path, options?]). Creates directory and returns undefined.',
+  }),
+  'fs.unlink': Object.freeze({
+    kind: 'synchronous',
+    arity: 1,
+    commutativeRead: false,
+    description: 'Invoke JS external operation fs.unlink (1 argument: [path]). Deletes file and returns undefined.',
+  }),
+  'fs.rename': Object.freeze({
+    kind: 'synchronous',
+    arity: 2,
+    commutativeRead: false,
+    description: 'Invoke JS external operation fs.rename (2 arguments: [oldPath, newPath]). Moves/renames path and returns undefined.',
+  }),
+  'fs.appendText': Object.freeze({
+    kind: 'synchronous',
+    arity: 2,
+    commutativeRead: false,
+    description: 'Invoke JS external operation fs.appendText (2 arguments: [path, text]). Appends UTF-8 text and returns undefined.',
+  }),
+  'fs.copyFile': Object.freeze({
+    kind: 'synchronous',
+    arity: 2,
+    commutativeRead: false,
+    description: 'Invoke JS external operation fs.copyFile (2 arguments: [srcPath, destPath]). Copies file and returns undefined.',
+  }),
+  'fs.writeBytes': Object.freeze({
+    kind: 'synchronous',
+    arity: 2,
+    commutativeRead: false,
+    description: 'Invoke JS external operation fs.writeBytes (2 arguments: [path, bytes]). Writes binary bytes and returns undefined.',
+  }),
+  'fs.isFile': Object.freeze({
+    kind: 'synchronous',
+    arity: 1,
+    commutativeRead: true,
+    description: 'Invoke JS external operation fs.isFile (1 argument: [path]). Returns boolean.',
+  }),
+  'fs.isDir': Object.freeze({
+    kind: 'synchronous',
+    arity: 1,
+    commutativeRead: true,
+    description: 'Invoke JS external operation fs.isDir (1 argument: [path]). Returns boolean.',
+  }),
+  'kv.get': Object.freeze({
+    kind: 'synchronous',
+    arity: 1,
+    commutativeRead: true,
+    description: 'Read value for key from virtual KV store (1 argument: [key]).',
+  }),
+  'kv.set': Object.freeze({
+    kind: 'synchronous',
+    arity: 2,
+    commutativeRead: false,
+    description: 'Set value for key in virtual KV store (2 arguments: [key, value]).',
+  }),
+  'kv.delete': Object.freeze({
+    kind: 'synchronous',
+    arity: 1,
+    commutativeRead: false,
+    description: 'Delete key from virtual KV store (1 argument: [key]). Returns boolean.',
+  }),
+  'kv.has': Object.freeze({
+    kind: 'synchronous',
+    arity: 1,
+    commutativeRead: true,
+    description: 'Check whether key exists in virtual KV store (1 argument: [key]). Returns boolean.',
+  }),
+  'kv.keys': Object.freeze({
+    kind: 'synchronous',
+    arity: 0,
+    commutativeRead: true,
+    description: 'List sorted keys in virtual KV store (0 arguments: []).',
+  }),
+  'env.has': Object.freeze({
+    kind: 'synchronous',
+    arity: 1,
+    commutativeRead: true,
+    description: 'Check whether environment variable is set (1 argument: [name]). Returns boolean.',
+  }),
+  'env.keys': Object.freeze({
+    kind: 'synchronous',
+    arity: 0,
+    commutativeRead: true,
+    description: 'List sorted environment variable names (0 arguments: []).',
+  }),
+});
+
+export const STATEFUL_WORLD_OPERATIONS = Object.freeze(new Set([
+  'fs.exists', 'fs.isFile', 'fs.isDir', 'fs.stat', 'fs.readdir',
+  'fs.readText', 'fs.readBytes', 'fs.writeText', 'fs.writeBytes',
+  'fs.appendText', 'fs.mkdir', 'fs.unlink', 'fs.rename', 'fs.copyFile',
+  'kv.get', 'kv.set', 'kv.delete', 'kv.has', 'kv.keys',
+  'env.get', 'env.has', 'env.keys',
+]));
+
+export function isStatefulWorldOperation(op) {
+  return typeof op === 'string' && STATEFUL_WORLD_OPERATIONS.has(canonicalizeOperationName(op));
+}
+
+function resolveExecutionOperationSpec(operation, {nativeMode = true} = {}) {
+  if (own(BUILTIN_OPERATIONS, operation)) return BUILTIN_OPERATIONS[operation];
+  const canon = canonicalizeOperationName(operation);
+  if (own(BUILTIN_OPERATIONS, canon)) return BUILTIN_OPERATIONS[canon];
+  if (nativeMode && own(NODE_IO_OPERATIONS, canon)) return NODE_IO_OPERATIONS[canon];
+  if (own(HOST_OPERATIONS, canon)) return HOST_OPERATIONS[canon];
+  return resolveOperationSpec(operation, {nativeMode});
+}
+
+function normalizeVirtualPath(rawPath) {
+  demand(typeof rawPath === 'string' && rawPath.length > 0, 'Virtual path must be a non-empty string');
+  let norm = nodePath.posix.normalize(rawPath);
+  if (norm.length > 1 && norm.endsWith('/')) norm = norm.slice(0, -1);
+  if (norm.startsWith('./')) norm = norm.slice(2);
+  return norm || '.';
+}
+
+function virtualParentDirs(normPath) {
+  const parents = [];
+  let cur = normPath;
+  while (true) {
+    const dir = nodePath.posix.dirname(cur);
+    if (!dir || dir === cur) break;
+    parents.push(dir);
+    cur = dir;
+    if (dir === '/' || dir === '.') break;
+  }
+  return parents;
+}
+
+export function createStatefulWorld(initialWorld = {}) {
+  const init = plain(initialWorld) ? initialWorld : {};
+  const files = new Map();
+  const dirs = new Set(['/', '.']);
+  const kv = new Map();
+  const env = new Map();
+
+  function recordAncestors(normPath) {
+    for (const parent of virtualParentDirs(normPath)) dirs.add(parent);
+  }
+
+  if (plain(init.fs)) {
+    for (const [rawPath, content] of Object.entries(init.fs)) {
+      const p = normalizeVirtualPath(rawPath);
+      files.set(p, typeof content === 'string' ? content : clone(content));
+      recordAncestors(p);
+    }
+  }
+  if (plain(init.kv)) {
+    for (const [k, v] of Object.entries(init.kv)) {
+      kv.set(String(k), clone(v));
+    }
+  }
+  if (plain(init.env)) {
+    for (const [k, v] of Object.entries(init.env)) {
+      if (v !== undefined && v !== null) env.set(String(k), String(v));
+    }
+  }
+
+  function isDirPath(p) {
+    if (files.has(p)) return false;
+    if (p === '/' || p === '.' || dirs.has(p)) return true;
+    const prefix = p === '/' ? '/' : (p === '.' ? '' : p + '/');
+    for (const key of files.keys()) {
+      if (p === '/') {
+        if (key.startsWith('/')) return true;
+      } else if (p === '.') {
+        if (!key.startsWith('/')) return true;
+      } else if (key.startsWith(prefix)) {
+        return true;
+      }
+    }
+    for (const d of dirs) {
+      if (p !== '/' && p !== '.' && d.startsWith(prefix)) return true;
+    }
+    return false;
+  }
+
+  function toUtf8Text(val) {
+    if (typeof val === 'string') return val;
+    if (val instanceof Uint8Array || ArrayBuffer.isView(val)) {
+      return Buffer.from(val.buffer, val.byteOffset, val.byteLength).toString('utf8');
+    }
+    return String(val);
+  }
+
+  function toUint8Bytes(val) {
+    if (val instanceof Uint8Array) return new Uint8Array(val);
+    if (ArrayBuffer.isView(val)) return new Uint8Array(val.buffer.slice(val.byteOffset, val.byteOffset + val.byteLength));
+    if (typeof val === 'string') {
+      const buf = Buffer.from(val, 'utf8');
+      return new Uint8Array(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
+    }
+    throw new TypeError('Expected string or Uint8Array for binary write');
+  }
+
+  function execute(operation, args) {
+    demand(Array.isArray(args), 'World call arguments must be an array');
+    const op = canonicalizeOperationName(operation);
+    switch (op) {
+      case 'fs.exists': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'fs.exists expects [path]');
+        const p = normalizeVirtualPath(args[0]);
+        return {status: 'fulfilled', value: files.has(p) || isDirPath(p)};
+      }
+      case 'fs.isFile': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'fs.isFile expects [path]');
+        return {status: 'fulfilled', value: files.has(normalizeVirtualPath(args[0]))};
+      }
+      case 'fs.isDir': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'fs.isDir expects [path]');
+        return {status: 'fulfilled', value: isDirPath(normalizeVirtualPath(args[0]))};
+      }
+      case 'fs.stat': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'fs.stat expects [path]');
+        const p = normalizeVirtualPath(args[0]);
+        if (files.has(p)) {
+          const val = files.get(p);
+          const size = typeof val === 'string' ? Buffer.byteLength(val, 'utf8') : val.byteLength;
+          return {status: 'fulfilled', value: {isFile: true, isDirectory: false, size}};
+        }
+        if (isDirPath(p)) {
+          return {status: 'fulfilled', value: {isFile: false, isDirectory: true, size: 0}};
+        }
+        return {status: 'rejected', value: {name: 'Error', message: `ENOENT: no such file or directory, stat '${args[0]}'`}};
+      }
+      case 'fs.readdir': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'fs.readdir expects [path]');
+        const p = normalizeVirtualPath(args[0]);
+        if (files.has(p)) {
+          return {status: 'rejected', value: {name: 'Error', message: `ENOTDIR: not a directory, scandir '${args[0]}'`}};
+        }
+        if (!isDirPath(p)) {
+          return {status: 'rejected', value: {name: 'Error', message: `ENOENT: no such file or directory, scandir '${args[0]}'`}};
+        }
+        const entries = new Set();
+        const collect = key => {
+          if (p === '/') {
+            if (key.startsWith('/') && key.length > 1) entries.add(key.slice(1).split('/')[0]);
+          } else if (p === '.') {
+            if (!key.startsWith('/') && key !== '.') entries.add(key.split('/')[0]);
+          } else if (key.startsWith(p + '/')) {
+            entries.add(key.slice(p.length + 1).split('/')[0]);
+          }
+        };
+        for (const key of files.keys()) collect(key);
+        for (const d of dirs) collect(d);
+        return {status: 'fulfilled', value: [...entries].sort()};
+      }
+      case 'fs.readText': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'fs.readText expects [path]');
+        const p = normalizeVirtualPath(args[0]);
+        if (!files.has(p)) {
+          return {status: 'rejected', value: {name: 'Error', message: `ENOENT: no such file or directory, open '${args[0]}'`}};
+        }
+        return {status: 'fulfilled', value: toUtf8Text(files.get(p))};
+      }
+      case 'fs.readBytes': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'fs.readBytes expects [path]');
+        const p = normalizeVirtualPath(args[0]);
+        if (!files.has(p)) {
+          return {status: 'rejected', value: {name: 'Error', message: `ENOENT: no such file or directory, open '${args[0]}'`}};
+        }
+        return {status: 'fulfilled', value: toUint8Bytes(files.get(p))};
+      }
+      case 'fs.writeText': {
+        demand(args.length === 2 && typeof args[0] === 'string' && typeof args[1] === 'string', 'fs.writeText expects [path, text]');
+        const p = normalizeVirtualPath(args[0]);
+        files.set(p, args[1]);
+        recordAncestors(p);
+        return {status: 'fulfilled', value: undefined};
+      }
+      case 'fs.writeBytes': {
+        demand(args.length === 2 && typeof args[0] === 'string', 'fs.writeBytes expects [path, bytes]');
+        const p = normalizeVirtualPath(args[0]);
+        files.set(p, toUint8Bytes(args[1]));
+        recordAncestors(p);
+        return {status: 'fulfilled', value: undefined};
+      }
+      case 'fs.appendText': {
+        demand(args.length === 2 && typeof args[0] === 'string' && typeof args[1] === 'string', 'fs.appendText expects [path, text]');
+        const p = normalizeVirtualPath(args[0]);
+        const prev = files.has(p) ? toUtf8Text(files.get(p)) : '';
+        files.set(p, prev + args[1]);
+        recordAncestors(p);
+        return {status: 'fulfilled', value: undefined};
+      }
+      case 'fs.mkdir': {
+        demand((args.length === 1 || args.length === 2) && typeof args[0] === 'string', 'fs.mkdir expects [path, options?]');
+        const p = normalizeVirtualPath(args[0]);
+        if (files.has(p)) {
+          return {status: 'rejected', value: {name: 'Error', message: `EEXIST: file already exists, mkdir '${args[0]}'`}};
+        }
+        const opts = args.length === 2 && plain(args[1]) ? args[1] : {};
+        if (opts.recursive === false) {
+          const parent = nodePath.posix.dirname(p);
+          if (parent !== p && !isDirPath(parent)) {
+            return {status: 'rejected', value: {name: 'Error', message: `ENOENT: no such file or directory, mkdir '${args[0]}'`}};
+          }
+        }
+        dirs.add(p);
+        recordAncestors(p);
+        return {status: 'fulfilled', value: undefined};
+      }
+      case 'fs.unlink': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'fs.unlink expects [path]');
+        const p = normalizeVirtualPath(args[0]);
+        if (!files.has(p)) {
+          return {status: 'rejected', value: {name: 'Error', message: `ENOENT: no such file or directory, unlink '${args[0]}'`}};
+        }
+        files.delete(p);
+        return {status: 'fulfilled', value: undefined};
+      }
+      case 'fs.rename': {
+        demand(args.length === 2 && typeof args[0] === 'string' && typeof args[1] === 'string', 'fs.rename expects [oldPath, newPath]');
+        const src = normalizeVirtualPath(args[0]);
+        const dst = normalizeVirtualPath(args[1]);
+        if (files.has(src)) {
+          const content = files.get(src);
+          files.delete(src);
+          files.set(dst, content);
+          recordAncestors(dst);
+          return {status: 'fulfilled', value: undefined};
+        }
+        if (isDirPath(src) && src !== '/' && src !== '.') {
+          const prefix = src + '/';
+          const movedFiles = [];
+          for (const [k, v] of files.entries()) {
+            if (k.startsWith(prefix)) movedFiles.push([k, v]);
+          }
+          for (const [k, v] of movedFiles) {
+            files.delete(k);
+            const nextKey = dst + k.slice(src.length);
+            files.set(nextKey, v);
+            recordAncestors(nextKey);
+          }
+          const movedDirs = [...dirs].filter(d => d === src || d.startsWith(prefix));
+          for (const d of movedDirs) dirs.delete(d);
+          for (const d of movedDirs) {
+            const nextDir = dst + d.slice(src.length);
+            dirs.add(nextDir);
+            recordAncestors(nextDir);
+          }
+          dirs.add(dst);
+          recordAncestors(dst);
+          return {status: 'fulfilled', value: undefined};
+        }
+        return {status: 'rejected', value: {name: 'Error', message: `ENOENT: no such file or directory, rename '${args[0]}' -> '${args[1]}'`}};
+      }
+      case 'fs.copyFile': {
+        demand(args.length === 2 && typeof args[0] === 'string' && typeof args[1] === 'string', 'fs.copyFile expects [src, dest]');
+        const src = normalizeVirtualPath(args[0]);
+        const dst = normalizeVirtualPath(args[1]);
+        if (!files.has(src)) {
+          return {status: 'rejected', value: {name: 'Error', message: `ENOENT: no such file or directory, copyfile '${args[0]}' -> '${args[1]}'`}};
+        }
+        files.set(dst, clone(files.get(src)));
+        recordAncestors(dst);
+        return {status: 'fulfilled', value: undefined};
+      }
+      case 'kv.get': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'kv.get expects [key]');
+        return {status: 'fulfilled', value: kv.has(args[0]) ? clone(kv.get(args[0])) : null};
+      }
+      case 'kv.set': {
+        demand(args.length === 2 && typeof args[0] === 'string', 'kv.set expects [key, value]');
+        kv.set(args[0], clone(args[1]));
+        return {status: 'fulfilled', value: undefined};
+      }
+      case 'kv.delete': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'kv.delete expects [key]');
+        return {status: 'fulfilled', value: kv.delete(args[0])};
+      }
+      case 'kv.has': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'kv.has expects [key]');
+        return {status: 'fulfilled', value: kv.has(args[0])};
+      }
+      case 'kv.keys': {
+        demand(args.length === 0, 'kv.keys expects []');
+        return {status: 'fulfilled', value: [...kv.keys()].sort()};
+      }
+      case 'env.get': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'env.get expects [name]');
+        return {status: 'fulfilled', value: env.has(args[0]) ? env.get(args[0]) : null};
+      }
+      case 'env.has': {
+        demand(args.length === 1 && typeof args[0] === 'string', 'env.has expects [name]');
+        return {status: 'fulfilled', value: env.has(args[0])};
+      }
+      case 'env.keys': {
+        demand(args.length === 0, 'env.keys expects []');
+        return {status: 'fulfilled', value: [...env.keys()].sort()};
+      }
+      default:
+        throw new TypeError(`Unsupported stateful world operation ${operation}`);
+    }
+  }
+
+  function snapshot() {
+    const fsObj = {};
+    for (const key of [...files.keys()].sort()) setOwn(fsObj, key, clone(files.get(key)));
+    const kvObj = {};
+    for (const key of [...kv.keys()].sort()) setOwn(kvObj, key, clone(kv.get(key)));
+    const envObj = {};
+    for (const key of [...env.keys()].sort()) setOwn(envObj, key, env.get(key));
+    return {fs: fsObj, kv: kvObj, env: envObj};
+  }
+
+  function matchesExpectedFinalWorld(expectedFinalWorld) {
+    if (!expectedFinalWorld) return true;
+    if (expectedFinalWorld.fs !== undefined) {
+      if (!plain(expectedFinalWorld.fs)) return false;
+      const expectedFs = new Map();
+      for (const [k, v] of Object.entries(expectedFinalWorld.fs)) {
+        expectedFs.set(normalizeVirtualPath(k), v);
+      }
+      if (files.size !== expectedFs.size) return false;
+      for (const [k, expectedVal] of expectedFs.entries()) {
+        if (!files.has(k)) return false;
+        if (!isDeepStrictEqual(files.get(k), expectedVal)) return false;
+      }
+    }
+    if (expectedFinalWorld.kv !== undefined) {
+      if (!plain(expectedFinalWorld.kv)) return false;
+      const expectedKeys = Object.keys(expectedFinalWorld.kv);
+      if (kv.size !== expectedKeys.length) return false;
+      for (const k of expectedKeys) {
+        if (!kv.has(k)) return false;
+        if (!isDeepStrictEqual(describeGraph([kv.get(k)]), describeGraph([expectedFinalWorld.kv[k]]))) return false;
+      }
+    }
+    return true;
+  }
+
+  return {execute, snapshot, matchesExpectedFinalWorld};
+}
+
 function buildSystemPrompt(operations, prepared) {
+  const basePrompt = prepared.executionKind === 'cli' ? CLI_SYSTEM : SYSTEM;
   const extra = [];
   if (operations.length) {
     extra.push('- Only invoke tools explicitly declared in tool_declare with {"arguments":[...]} in exact execution order for external calls made by the program; never invent observations.');
+  }
+  if (prepared.worldMode === 'stateful') {
+    extra.push('- Stateful virtual world mode: fs.*, kv.*, and env.* operations execute live against the mutable virtual world and reflect prior mutations.');
   }
   if (operations.includes('http.request')) {
     extra.push('- For fetch(url, init), invoke http.request with {"arguments":[url, method, headersObject, bodyOrNull]}.');
@@ -331,26 +821,103 @@ function buildSystemPrompt(operations, prepared) {
   if (prepared.files || operations.includes('code.load')) {
     extra.push('- For unloaded repository files, invoke code.load with {"arguments":[...]} on demand (whole file for small files, symbol snippet or line range for large files; you may batch multiple requests).');
   }
-  return extra.length ? SYSTEM + '\n' + extra.join('\n') : SYSTEM;
+  return extra.length ? basePrompt + '\n' + extra.join('\n') : basePrompt;
+}
+
+function normalizeWorldSpec(raw, {allowEnv = true} = {}) {
+  if (raw === undefined || raw === null) return null;
+  demand(plain(raw), 'World spec must be a plain object');
+  const out = {};
+  if (raw.fs !== undefined) {
+    demand(plain(raw.fs), 'World fs must be a plain object');
+    out.fs = {};
+    for (const [k, v] of Object.entries(raw.fs)) {
+      const p = normalizeVirtualPath(k);
+      const val = typeof v === 'string' ? v : decodeReadable(v);
+      setOwn(out.fs, p, val);
+    }
+  }
+  if (raw.kv !== undefined) {
+    demand(plain(raw.kv), 'World kv must be a plain object');
+    out.kv = {};
+    for (const [k, v] of Object.entries(raw.kv)) {
+      setOwn(out.kv, k, decodeReadable(v));
+    }
+  }
+  if (allowEnv && raw.env !== undefined) {
+    demand(plain(raw.env), 'World env must be a plain object');
+    out.env = {};
+    for (const [k, v] of Object.entries(raw.env)) {
+      if (v !== undefined && v !== null) setOwn(out.env, k, String(v));
+    }
+  }
+  return out;
+}
+
+function encodeWorldSpec(world) {
+  if (!world) return undefined;
+  const out = {};
+  if (world.fs !== undefined) {
+    out.fs = {};
+    for (const [k, v] of Object.entries(world.fs)) setOwn(out.fs, k, encodeReadable(v));
+  }
+  if (world.kv !== undefined) {
+    out.kv = {};
+    for (const [k, v] of Object.entries(world.kv)) setOwn(out.kv, k, encodeReadable(v));
+  }
+  if (world.env !== undefined) {
+    out.env = {...world.env};
+  }
+  return out;
 }
 
 function normalizeTask(input) {
   demand(plain(input), 'Task must be an object');
   demand(typeof input.id === 'string' && input.id.length > 0 && input.id.length <= 256, 'Task id required');
   demand(typeof input.family === 'string' && input.family.length > 0, 'Source family required');
+  const executionKind = input.executionKind ?? 'function';
+  demand(['function', 'cli'].includes(executionKind), 'executionKind must be function or cli');
+  const worldMode = input.worldMode ?? 'scripted';
+  demand(['scripted', 'stateful'].includes(worldMode), 'worldMode must be scripted or stateful');
+  const initialWorld = normalizeWorldSpec(input.initialWorld, {allowEnv: true});
+  const expectedFinalWorld = normalizeWorldSpec(input.expectedFinalWorld, {allowEnv: false});
+  const declaredTools = input.declaredTools === undefined ? null : clone(input.declaredTools);
+  if (declaredTools !== null) {
+    demand(Array.isArray(declaredTools) && declaredTools.every(t => typeof t === 'string' && t.length > 0), 'declaredTools must be an array of non-empty strings');
+  }
+  let argv = null, stdin = '', expectedCli = null;
+  if (executionKind === 'cli') {
+    argv = clone(input.argv ?? []);
+    demand(Array.isArray(argv) && argv.length <= 256 && argv.every(a => typeof a === 'string'), 'CLI argv must be an array of strings');
+    stdin = input.stdin ?? '';
+    demand(typeof stdin === 'string', 'CLI stdin must be a string');
+    if (input.expectedCli !== undefined && input.expectedCli !== null) {
+      demand(plain(input.expectedCli), 'expectedCli must be a plain object');
+      const exitCode = input.expectedCli.exitCode ?? 0;
+      const stdout = input.expectedCli.stdout ?? '';
+      const stderr = input.expectedCli.stderr ?? '';
+      demand(Number.isInteger(exitCode), 'expectedCli.exitCode must be an integer');
+      demand(typeof stdout === 'string', 'expectedCli.stdout must be a string');
+      demand(typeof stderr === 'string', 'expectedCli.stderr must be a string');
+      expectedCli = {exitCode, stdout, stderr};
+    } else {
+      expectedCli = {exitCode: 0, stdout: '', stderr: ''};
+    }
+  }
   const hasFiles = input.files !== undefined && input.files !== null;
   const codebase = hasFiles ? normalizeCodebaseSpec(input) : null;
   if (!hasFiles) {
     demand(typeof input.source === 'string' && input.source.length > 0 && input.source.length <= 262144, 'Bounded source required');
   }
-  const entry = input.entry ?? 'run';
+  const entry = input.entry ?? (executionKind === 'cli' ? 'main' : 'run');
   demand(/^[A-Za-z_$][\w$]*$/.test(entry), 'Entry must be an identifier');
   const environment = input.environment ?? null;
   demand(environment === null || environment === 'browser', 'environment must be omitted or "browser"');
-  const executionMode = input.executionMode ?? (hasFiles || environment === 'browser' ? 'native' : 'owned');
+  const executionMode = input.executionMode ?? (hasFiles || environment === 'browser' || executionKind === 'cli' || worldMode === 'stateful' ? 'native' : 'owned');
   demand(['owned', 'native'].includes(executionMode), 'executionMode must be owned or native');
   if (hasFiles) demand(executionMode === 'native', 'Multi-file tasks require executionMode: "native"');
   demand(environment !== 'browser' || executionMode === 'native', 'Browser environment requires executionMode "native"');
+  if (executionKind === 'cli') demand(executionMode === 'native', 'CLI tasks require executionMode: "native"');
   const initialUrl = environment === 'browser' ? (input.initialUrl ?? DEFAULT_BROWSER_URL) : undefined;
   const initialHtml = environment === 'browser' ? (input.initialHtml ?? DEFAULT_BROWSER_HTML) : undefined;
   if (environment === 'browser') {
@@ -387,7 +954,7 @@ function normalizeTask(input) {
   const isNative = executionMode === 'native';
   const decodedCalls = calls.map(call => {
     demand(plain(call) && !call.callbacks && call.resultFromCallback === undefined, 'Callback fixtures require a separate execution profile');
-    const spec = resolveOperationSpec(call.operation, {nativeMode: isNative});
+    const spec = resolveExecutionOperationSpec(call.operation, {nativeMode: isNative});
     demand(spec.callbackLifetime !== 'subscription', 'Subscription fixtures require a separate execution profile');
     const callArgs = call.argumentGraph ? graphRoots(call.argumentGraph) : decodeReadable(call.arguments ?? []);
     demand(Array.isArray(callArgs), 'External arguments must be an array');
@@ -410,6 +977,14 @@ function normalizeTask(input) {
   if (hasFiles) {
     sourceHash = codebaseSourceHash(codebase.files, codebase.entryFile, entry);
     executableSource = source;
+  } else if (executionKind === 'cli') {
+    const cleaned = source.replace(/^#![^\n]*\n/, '');
+    try {
+      sourceHash = normalizedSourceHash(cleaned);
+    } catch {
+      sourceHash = hash(source);
+    }
+    executableSource = source;
   } else {
     const parsedSource = parse(source, {ecmaVersion: 'latest', sourceType: 'script'});
     for (const declaration of parsedSource.body) if (declaration.type === 'FunctionDeclaration')
@@ -420,6 +995,14 @@ function normalizeTask(input) {
       (binding.kind === 'promise' ? 'natlangCall' : 'natlangCallSync') + '(' + JSON.stringify(binding.name) + ',undefined,args);}').join('\n');
     executableSource = source + '\n' + preamble;
   }
+  let expectedOutcome = null;
+  if (input.expectedOutcome !== undefined && input.expectedOutcome !== null) {
+    demand(plain(input.expectedOutcome) && ['return', 'throw'].includes(input.expectedOutcome.kind), 'Invalid expectedOutcome');
+    const outArgs = input.expectedOutcome.arguments !== undefined ? decodeReadable(input.expectedOutcome.arguments) : clone(args);
+    demand(Array.isArray(outArgs) && outArgs.length === args.length, 'expectedOutcome.arguments arity mismatch');
+    const outVal = decodeReadable(input.expectedOutcome.value);
+    expectedOutcome = {kind: input.expectedOutcome.kind, graph: describeGraph([...outArgs, outVal])};
+  }
   const randomMode = input.randomMode ?? 'seeded';
   demand(['seeded', 'tool'].includes(randomMode), 'randomMode must be seeded or tool');
   const maxSteps = input.maxSteps ?? 100000, timeoutMs = input.timeoutMs ?? 10000;
@@ -427,12 +1010,20 @@ function normalizeTask(input) {
   demand(Number.isSafeInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 60000, 'Invalid teacher timeout');
   const task = {...clone(input), ...(hasFiles ? {source, files: codebase.files, entryFile: codebase.entryFile,
     initialLoadedFiles: codebase.initialLoadedFiles} : {}), entry, language, ...(executionMode !== 'owned' ? {executionMode} : {}),
+    ...(executionKind !== 'function' ? {executionKind, argv, stdin, expectedCli} : {}),
+    ...(worldMode !== 'scripted' ? {worldMode} : {}),
+    ...(initialWorld ? {initialWorld: encodeWorldSpec(initialWorld)} : {}),
+    ...(expectedFinalWorld ? {expectedFinalWorld: encodeWorldSpec(expectedFinalWorld)} : {}),
+    ...(declaredTools ? {declaredTools} : {}),
     ...(environment ? {environment, initialUrl, initialHtml} : {}),
     ...(randomMode !== 'seeded' ? {randomMode} : {}), randomSeed, nativeBindings, args: encodeReadable(args), freshRandomCalls: 0,
     fixture: {calls: decodedCalls.map(call => ({operation: call.operation, arguments: encodeReadable(call.arguments),
       status: call.status ?? 'fulfilled', result: encodeReadable(call.result)})), settlementOrder: fixture.settlementOrder}, maxSteps, timeoutMs};
   return {id: input.id, family: input.family, sourceHash, source, executableSource, entry, args, fixture, nativeBindings,
     ...(hasFiles ? {files: codebase.files, entryFile: codebase.entryFile, initialLoadedFiles: codebase.initialLoadedFiles} : {}),
+    executionKind, ...(executionKind === 'cli' ? {argv, stdin, expectedCli} : {}),
+    worldMode, ...(initialWorld ? {initialWorld} : {}), ...(expectedFinalWorld ? {expectedFinalWorld} : {}),
+    ...(declaredTools ? {declaredTools} : {}), ...(expectedOutcome ? {expectedOutcome} : {}),
     environment, initialUrl, initialHtml, executionMode, randomMode, randomSeed, maxSteps, timeoutMs, task};
 }
 
@@ -446,7 +1037,11 @@ function publicOperation(prepared, operation, args) {
 }
 
 function privateOperation(prepared, operation, args) {
-  const binding = prepared.nativeBindings.find(item => item.name === operation);
+  let binding = prepared.nativeBindings.find(item => item.name === operation);
+  if (!binding) {
+    const canon = canonicalizeOperationName(operation);
+    binding = prepared.nativeBindings.find(item => canonicalizeOperationName(item.name) === canon);
+  }
   return binding ? {operation: binding.kind === 'promise' ? 'natlang.call' : 'natlang.callSync', arguments: [binding.name, undefined, args]} :
     {operation, arguments: args};
 }
@@ -496,14 +1091,22 @@ function toolDeclaration(operation, prepared) {
     };
   }
   const binding = prepared.nativeBindings.find(item => item.name === operation);
-  const nodeIoSpec = own(NODE_IO_OPERATIONS, operation) ? NODE_IO_OPERATIONS[operation] : null;
-  const spec = own(HOST_OPERATIONS, operation) ? HOST_OPERATIONS[operation] : null;
+  const canonOp = canonicalizeOperationName(operation);
+  const builtinSpec = own(BUILTIN_OPERATIONS, operation)
+    ? BUILTIN_OPERATIONS[operation]
+    : (own(BUILTIN_OPERATIONS, canonOp) ? BUILTIN_OPERATIONS[canonOp] : null);
+  const nodeIoSpec = own(NODE_IO_OPERATIONS, operation)
+    ? NODE_IO_OPERATIONS[operation]
+    : (own(NODE_IO_OPERATIONS, canonOp) ? NODE_IO_OPERATIONS[canonOp] : null);
+  const spec = own(HOST_OPERATIONS, operation)
+    ? HOST_OPERATIONS[operation]
+    : (own(HOST_OPERATIONS, canonOp) ? HOST_OPERATIONS[canonOp] : null);
   const arity = spec ? spec.arity : null;
-  const fetchHint = operation === 'http.request' && (prepared.environment === 'browser' || publicScanUnits(prepared).some(sourceUsesGlobalFetch))
+  const fetchHint = canonOp === 'http.request' && (prepared.environment === 'browser' || publicScanUnits(prepared).some(sourceUsesGlobalFetch))
     ? 'Invoke JS external operation http.request (promise, 4 arguments: [url, method, headersObject, bodyOrNull]).'
     : null;
   const browserHint = own(BROWSER_TOOL_DESCRIPTIONS, operation) ? BROWSER_TOOL_DESCRIPTIONS[operation] : null;
-  const description = binding?.description ?? fetchHint ?? browserHint ?? nodeIoSpec?.description ?? (spec
+  const description = binding?.description ?? fetchHint ?? browserHint ?? builtinSpec?.description ?? nodeIoSpec?.description ?? (spec
     ? `Invoke JS external operation ${operation} (${spec.kind}, ${arity} argument${arity === 1 ? '' : 's'}).`
     : `Invoke JS external operation ${operation}.`);
   return {
@@ -547,18 +1150,50 @@ function initialMessages(prepared) {
     }
   }
   if (usesMathRandom && prepared.randomMode === 'tool') names.add('platform.random');
+  if (prepared.worldMode === 'stateful') {
+    const iw = prepared.initialWorld ?? prepared.task?.initialWorld ?? {};
+    const ew = prepared.expectedFinalWorld ?? prepared.task?.expectedFinalWorld ?? {};
+    if (iw.fs !== undefined || ew.fs !== undefined) {
+      for (const op of ['fs.exists', 'fs.isFile', 'fs.isDir', 'fs.stat', 'fs.readdir', 'fs.readText', 'fs.writeText', 'fs.appendText', 'fs.mkdir', 'fs.unlink', 'fs.rename', 'fs.copyFile']) {
+        names.add(op);
+      }
+    }
+    if (iw.kv !== undefined || ew.kv !== undefined) {
+      for (const op of ['kv.get', 'kv.set', 'kv.delete', 'kv.has', 'kv.keys']) names.add(op);
+    }
+    if (iw.env !== undefined) {
+      for (const op of ['env.get', 'env.has', 'env.keys']) names.add(op);
+    }
+  }
+  if (Array.isArray(prepared.declaredTools)) {
+    for (const op of prepared.declaredTools) names.add(op);
+  }
   const operations = [...names].sort();
   let parts;
   if (prepared.files) {
     parts = [
-      'Execute this multi-file JavaScript/TypeScript program. Use code.load to inspect unloaded files or symbols on demand.',
+      prepared.executionKind === 'cli'
+        ? 'Execute this multi-file JavaScript/TypeScript CLI program. Use code.load to inspect unloaded files or symbols on demand.'
+        : 'Execute this multi-file JavaScript/TypeScript program. Use code.load to inspect unloaded files or symbols on demand.',
       renderRepoManifest(prepared.files, prepared.entryFile, prepared.initialLoadedFiles),
     ];
     for (const relPath of prepared.initialLoadedFiles) {
       const fenceLang = /\.(?:ts|tsx|mts|cts)$/i.test(relPath) ? 'typescript' : 'javascript';
       parts.push('File: ' + relPath + '\n```' + fenceLang + '\n' + prepared.files[relPath] + '\n```');
     }
-    parts.push('Entry: ' + prepared.entry + ' in ' + prepared.entryFile + ' with arguments ' + JSON.stringify(encodeReadable(prepared.args)));
+    if (prepared.executionKind === 'cli') {
+      parts.push('Command argv: ' + JSON.stringify(prepared.argv ?? []));
+      parts.push('Stdin: ' + JSON.stringify(prepared.stdin ?? ''));
+    } else {
+      parts.push('Entry: ' + prepared.entry + ' in ' + prepared.entryFile + ' with arguments ' + JSON.stringify(encodeReadable(prepared.args)));
+    }
+  } else if (prepared.executionKind === 'cli') {
+    parts = [
+      'Execute this JavaScript CLI program:',
+      '```javascript\n' + prepared.source + '\n```',
+      'Command argv: ' + JSON.stringify(prepared.argv ?? []),
+      'Stdin: ' + JSON.stringify(prepared.stdin ?? ''),
+    ];
   } else {
     parts = [
       'Execute this JavaScript program:',
@@ -588,12 +1223,42 @@ function initialMessages(prepared) {
   return messages;
 }
 
+function syntheticFixtureEffects(fixtureCalls) {
+  const effects = [];
+  for (let i = 0; i < fixtureCalls.length; i++) {
+    const c = fixtureCalls[i];
+    effects.push({kind: 'dispatch', call: i, operation: c.operation, arguments: c.argumentGraph});
+    effects.push({kind: 'settlement', call: i, status: c.status ?? 'fulfilled', result: c.resultGraph});
+  }
+  return effects;
+}
+
 /** Execute trusted dataset source on the existing CPU host boundary and compare
  * the complete result/effects to a separate native Node reference.
  * In executionMode === 'native', execute directly in real Node/V8 without the
  * bounded owned-interpreter subset restriction. */
 export async function prepareTinkerTask(input, options = {}) {
   const prepared = normalizeTask(input);
+  if (prepared.executionKind === 'cli') {
+    const format = options.traceFormat ? traceFormat(options) : 'actions-only';
+    const outcome = {
+      kind: 'cli',
+      exitCode: prepared.expectedCli.exitCode,
+      stdout: prepared.expectedCli.stdout,
+      stderr: prepared.expectedCli.stderr,
+    };
+    const effects = syntheticFixtureEffects(prepared.fixture.calls);
+    const result = {...prepared, bundle: null, outcome, effects, traceTurns: null};
+    readableMessagesFromJournal(null, result, {traceFormat: format});
+    return result;
+  }
+  if (prepared.worldMode === 'stateful' && prepared.expectedOutcome) {
+    const format = options.traceFormat ? traceFormat(options) : 'actions-only';
+    const effects = syntheticFixtureEffects(prepared.fixture.calls);
+    const result = {...prepared, bundle: null, outcome: prepared.expectedOutcome, effects, traceTurns: null};
+    readableMessagesFromJournal(null, result, {traceFormat: format});
+    return result;
+  }
   if (prepared.executionMode === 'native') {
     const format = options.traceFormat ? traceFormat(options) : 'actions-only';
     const baseRefInput = {source: prepared.executableSource, entry: prepared.entry,
@@ -779,6 +1444,15 @@ function observation(operation, status, value, toolCallId = null) {
   };
 }
 
+function completionActionFromOutcome(outcome) {
+  if (outcome.kind === 'cli') {
+    return {type: 'complete', kind: 'cli', exitCode: outcome.exitCode, stdout: outcome.stdout, stderr: outcome.stderr};
+  }
+  const roots = graphRoots(outcome.graph), value = roots.pop();
+  const completion = encodeReadable({arguments: roots, value});
+  return {type: 'complete', kind: outcome.kind, arguments: completion.arguments, value: completion.value};
+}
+
 /** Converts canonical journal events into causal readable turns, using source
  * text and values rather than event IDs, heap IDs, hashes, or controller state. */
 export function readableMessagesFromJournal(bundle, prepared, options = {}) {
@@ -812,10 +1486,7 @@ export function readableMessagesFromJournal(bundle, prepared, options = {}) {
         }
       }
       demand(emittedDispatches === dispatches.length, 'Multi-file turnEvents/dispatch count mismatch');
-      const roots = graphRoots(prepared.outcome.graph), value = roots.pop();
-      const completion = encodeReadable({arguments: roots, value});
-      messages.push(assistantMessage({type: 'complete', kind: prepared.outcome.kind,
-        arguments: completion.arguments, value: completion.value}, turns?.[prepared.turnEvents.length] ?? [], channel));
+      messages.push(assistantMessage(completionActionFromOutcome(prepared.outcome), turns?.[prepared.turnEvents.length] ?? [], channel));
       return messages;
     }
     for (let index = 0; index < dispatches.length; index++) {
@@ -827,10 +1498,7 @@ export function readableMessagesFromJournal(bundle, prepared, options = {}) {
       demand(settlement, 'Missing external settlement');
       messages.push(observation(call.operation, settlement.status, graphRoots(settlement.result)[0], callId));
     }
-    const roots = graphRoots(prepared.outcome.graph), value = roots.pop();
-    const completion = encodeReadable({arguments: roots, value});
-    messages.push(assistantMessage({type: 'complete', kind: prepared.outcome.kind,
-      arguments: completion.arguments, value: completion.value}, turns?.[dispatches.length] ?? [], channel));
+    messages.push(assistantMessage(completionActionFromOutcome(prepared.outcome), turns?.[dispatches.length] ?? [], channel));
     return messages;
   }
   const nodes = format === 'actions-only' ? null : sourceNodes(prepared.source);
@@ -933,6 +1601,18 @@ function validateActionObject(action) {
     demand(fields === 'arguments,operation,type' && typeof action.operation === 'string', 'Invalid external call action');
     return action;
   }
+  if ((action.type === 'complete' || !own(action, 'type')) && action.kind === 'cli') {
+    const keys = Object.keys(action).sort().join(',');
+    const allowed = keys === 'exitCode,kind,stderr,stdout,type' || keys === 'exitCode,kind,stderr,stdout';
+    demand(
+      allowed &&
+      Number.isInteger(action.exitCode) &&
+      typeof action.stdout === 'string' &&
+      typeof action.stderr === 'string',
+      'Invalid CLI completion action',
+    );
+    return {type: 'complete', kind: 'cli', exitCode: action.exitCode, stdout: action.stdout, stderr: action.stderr};
+  }
   if (action.type === 'complete') {
     const keys = Object.keys(action).sort();
     const allowed = keys.join(',') === 'arguments,kind,type,value' || keys.join(',') === 'kind,type,value';
@@ -974,7 +1654,7 @@ export function parseStudentAction(input) {
   for (const match of fenced) {
     try {
       const parsed = JSON.parse(match[1].trim());
-      if (plain(parsed) && typeof parsed.type === 'string') actionFences.push({match, parsed});
+      if (plain(parsed) && (typeof parsed.type === 'string' || parsed.kind === 'cli')) actionFences.push({match, parsed});
     } catch { /* Non-JSON prose code block; ignore. */ }
   }
   if (actionFences.length) {
@@ -1076,24 +1756,26 @@ function isReadOnlySqliteSelect(args) {
  * Unknown operations conservatively default to strict barriers (false). */
 export function isCommutativeReadCall(operation, args = []) {
   if (typeof operation !== 'string') return false;
-  if (PURE_COMMUTATIVE_READ_OPS.has(operation)) return true;
-  if (HTTP_METHOD_CHECKED_OPS.has(operation)) {
+  const canon = canonicalizeOperationName(operation);
+  if (PURE_COMMUTATIVE_READ_OPS.has(canon)) return true;
+  if (HTTP_METHOD_CHECKED_OPS.has(canon)) {
     const method = extractHttpRequestMethod(args);
     return method !== null && READ_ONLY_HTTP_METHODS.has(method);
   }
-  if (operation === 'sqlite3.query') {
+  if (canon === 'sqlite3.query') {
     return isReadOnlySqliteSelect(args);
   }
   return false;
 }
 
 function expectedFixtureCallIsRead(call, isNative) {
-  if (PURE_COMMUTATIVE_READ_OPS.has(call.operation)) return true;
-  if (HTTP_METHOD_CHECKED_OPS.has(call.operation) || call.operation === 'sqlite3.query') {
+  const canon = canonicalizeOperationName(call.operation);
+  if (PURE_COMMUTATIVE_READ_OPS.has(canon)) return true;
+  if (HTTP_METHOD_CHECKED_OPS.has(canon) || canon === 'sqlite3.query') {
     const decodedArgs = call.arguments !== undefined
       ? call.arguments
       : (isNative ? realizeGraph(call.argumentGraph) : decodeOwnedGraph(JSON.stringify(call.argumentGraph)));
-    return isCommutativeReadCall(call.operation, decodedArgs);
+    return isCommutativeReadCall(canon, decodedArgs);
   }
   return false;
 }
@@ -1108,38 +1790,102 @@ function normalizeHttpHeadersArg(value) {
         const parsed = JSON.parse(trimmed);
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return parsed;
       } catch {
-        return value;
+        return null;
       }
     }
-    return value;
+    return null;
   }
-  if (typeof value === 'object' && !Array.isArray(value)) return value;
-  return value;
+  if (plain(value)) return value;
+  return null;
 }
 
 function normalizeHttpBodyArg(value) {
   return value === undefined || value === null ? '' : value;
 }
 
+const ALLOWED_HTTP_REQUEST_KEYS = new Set(['url', 'method', 'headers', 'body']);
+
+export function canonicalizeHttpRequestArgs(args) {
+  if (!Array.isArray(args)) return null;
+  if (args.length === 1 && plain(args[0])) {
+    const req = args[0];
+    for (const k of Object.keys(req)) {
+      if (!ALLOWED_HTTP_REQUEST_KEYS.has(k)) return null;
+    }
+    if (typeof req.url !== 'string') return null;
+    let method;
+    if (req.method === undefined || req.method === null) method = 'GET';
+    else if (typeof req.method === 'string') {
+      method = req.method.trim().toUpperCase();
+      if (!method) return null;
+    } else return null;
+    const headers = normalizeHttpHeadersArg(req.headers);
+    if (headers === null) return null;
+    const body = normalizeHttpBodyArg(req.body);
+    return {url: req.url, method, headers, body};
+  }
+  if (args.length === 4 && typeof args[0] === 'string') {
+    let method;
+    if (args[1] === undefined || args[1] === null) method = 'GET';
+    else if (typeof args[1] === 'string') {
+      method = args[1].trim().toUpperCase();
+      if (!method) return null;
+    } else return null;
+    const headers = normalizeHttpHeadersArg(args[2]);
+    if (headers === null) return null;
+    const body = normalizeHttpBodyArg(args[3]);
+    return {url: args[0], method, headers, body};
+  }
+  return null;
+}
+
 function expectedArgumentsMatch(operation, callArgs, encodedArgs, candidate, isNative) {
   if (isDeepStrictEqual(encodedArgs, candidate.argumentGraph)) return true;
-  if ((operation === 'http.request' || operation === 'browser.fetch') && Array.isArray(callArgs) && callArgs.length === 4) {
+  const canonOp = canonicalizeOperationName(operation);
+  if (canonOp === 'http.request' || canonOp === 'browser.fetch') {
     const expectedArgs = candidate.arguments !== undefined
       ? candidate.arguments
       : (isNative ? realizeGraph(candidate.argumentGraph) : decodeOwnedGraph(JSON.stringify(candidate.argumentGraph)));
-    if (!Array.isArray(expectedArgs) || expectedArgs.length !== 4) return false;
-    if (!isDeepStrictEqual(callArgs[0], expectedArgs[0])) return false;
-    const actualMethod = typeof callArgs[1] === 'string' ? callArgs[1].trim().toUpperCase() : callArgs[1];
-    const expectedMethod = typeof expectedArgs[1] === 'string' ? expectedArgs[1].trim().toUpperCase() : expectedArgs[1];
-    if (!isDeepStrictEqual(actualMethod, expectedMethod)) return false;
-    const actualHeaders = normalizeHttpHeadersArg(callArgs[2]);
-    const expectedHeaders = normalizeHttpHeadersArg(expectedArgs[2]);
-    if (!isDeepStrictEqual(actualHeaders, expectedHeaders)) return false;
-    const actualBody = normalizeHttpBodyArg(callArgs[3]);
-    const expectedBody = normalizeHttpBodyArg(expectedArgs[3]);
-    return isDeepStrictEqual(actualBody, expectedBody);
+    const actualCanon = canonicalizeHttpRequestArgs(callArgs);
+    const expectedCanon = canonicalizeHttpRequestArgs(expectedArgs);
+    if (actualCanon !== null && expectedCanon !== null) {
+      return isDeepStrictEqual(actualCanon, expectedCanon);
+    }
   }
   return false;
+}
+
+function isPreparedCallWorldOp(prepared, call, isNative) {
+  if (isStatefulWorldOperation(call.operation)) return true;
+  if (['natlang.call', 'natlang.callSync'].includes(call.operation)) {
+    const callArgs = call.arguments !== undefined
+      ? call.arguments
+      : (isNative ? realizeGraph(call.argumentGraph) : decodeOwnedGraph(JSON.stringify(call.argumentGraph)));
+    const pub = publicOperation(prepared, call.operation, callArgs);
+    return isStatefulWorldOperation(pub.operation);
+  }
+  return false;
+}
+
+function filterNonWorldEffects(prepared, rawEffects, isNative) {
+  const worldCallIds = new Set();
+  for (const eff of rawEffects) {
+    if (eff.kind === 'dispatch') {
+      const args = isNative ? realizeGraph(eff.arguments) : decodeOwnedGraph(JSON.stringify(eff.arguments));
+      const pub = publicOperation(prepared, eff.operation, args);
+      if (isStatefulWorldOperation(eff.operation) || isStatefulWorldOperation(pub.operation)) {
+        worldCallIds.add(eff.call);
+      }
+    }
+  }
+  const idMap = new Map();
+  const out = [];
+  for (const eff of rawEffects) {
+    if (worldCallIds.has(eff.call)) continue;
+    if (!idMap.has(eff.call)) idMap.set(eff.call, idMap.size);
+    out.push({...eff, call: idMap.get(eff.call)});
+  }
+  return out;
 }
 
 /** Live student state has no teacher trace continuation. A rejected request
@@ -1148,10 +1894,18 @@ function expectedArgumentsMatch(operation, callArgs, encodedArgs, candidate, isN
  * may execute in any order, while barriers and cross-epoch ordering remain strict. */
 export function createTinkerSession(prepared) {
   const isNative = prepared.executionMode === 'native';
-  const expectedCalls = prepared.fixture.calls;
+  const executionKind = prepared.executionKind ?? prepared.task?.executionKind ?? 'function';
+  const worldMode = prepared.worldMode ?? prepared.task?.worldMode ?? 'scripted';
+  const isStateful = worldMode === 'stateful';
+  const world = isStateful ? createStatefulWorld(prepared.initialWorld ?? prepared.task?.initialWorld ?? {}) : null;
+  const expectedFinalWorld = isStateful ? (prepared.expectedFinalWorld ?? prepared.task?.expectedFinalWorld ?? null) : null;
+  const rawCalls = prepared.fixture.calls;
+  const expectedCalls = isStateful
+    ? rawCalls.filter(call => !isPreparedCallWorldOp(prepared, call, isNative))
+    : rawCalls;
   const expectedExternalCalls = expectedCalls.length;
   for (const call of expectedCalls) {
-    resolveOperationSpec(call.operation, {nativeMode: isNative});
+    resolveExecutionOperationSpec(call.operation, {nativeMode: isNative});
   }
   const expectedIsRead = expectedCalls.map(call => expectedFixtureCallIsRead(call, isNative));
   const consumed = new Array(expectedExternalCalls).fill(false);
@@ -1159,7 +1913,7 @@ export function createTinkerSession(prepared) {
   const recordedSettlements = new Array(expectedExternalCalls);
   let epochStart = 0;
   let done = false, completed = false, success = false, reason = 'incomplete', failureCategory = 'incomplete',
-    generatedTokens = 0, calls = 0, turns = 0, codeLoadCalls = 0, codeLoadBytes = 0;
+    generatedTokens = 0, calls = 0, worldCalls = 0, totalToolCalls = 0, turns = 0, codeLoadCalls = 0, codeLoadBytes = 0;
   const maxTurns = prepared.task.maxTurns ?? 256;
   demand(Number.isSafeInteger(maxTurns) && maxTurns > 0 && maxTurns <= 4096, 'Invalid rollout turn limit');
   const count = total => {
@@ -1171,29 +1925,31 @@ export function createTinkerSession(prepared) {
     return {success: done && success, reward: done && success ? 1 / (1 + generatedTokens / 1000) : 0,
       reason, failureCategory, generatedTokens, externalCalls: calls,
       matchedExternalCalls: calls, expectedExternalCalls, complete: completed,
+      ...(isStateful ? {worldCalls, finalWorld: world.snapshot()} : {}),
       ...(prepared.files ? {codeLoadCalls, codeLoadBytes} : {})};
   };
   const reject = (why, category = why) => { done = true; success = false; reason = why; failureCategory = category;
     return {messages: [], done, grade: grade()}; };
   function matchExpectedCall(operation, callArgs, encodedArgs) {
     if (epochStart >= expectedExternalCalls) return -1;
+    const canonOp = canonicalizeOperationName(operation);
     if (expectedIsRead[epochStart]) {
       // Unconsumed pure reads remain in the current epoch: barrier calls cannot bypass them.
-      if (!isCommutativeReadCall(operation, callArgs)) return -1;
+      if (!isCommutativeReadCall(canonOp, callArgs)) return -1;
       let epochEnd = epochStart;
       while (epochEnd < expectedExternalCalls && expectedIsRead[epochEnd]) epochEnd++;
       // Scan in ascending index order so duplicate identical reads observe FIFO causal order.
       for (let idx = epochStart; idx < epochEnd; idx++) {
         if (consumed[idx]) continue;
         const candidate = expectedCalls[idx];
-        if (candidate.operation === operation && expectedArgumentsMatch(operation, callArgs, encodedArgs, candidate, isNative)) {
+        if (canonicalizeOperationName(candidate.operation) === canonOp && expectedArgumentsMatch(canonOp, callArgs, encodedArgs, candidate, isNative)) {
           return idx;
         }
       }
       return -1;
     }
     const barrier = expectedCalls[epochStart];
-    if (barrier.operation === operation && expectedArgumentsMatch(operation, callArgs, encodedArgs, barrier, isNative)) {
+    if (canonicalizeOperationName(barrier.operation) === canonOp && expectedArgumentsMatch(canonOp, callArgs, encodedArgs, barrier, isNative)) {
       return epochStart;
     }
     return -1;
@@ -1208,21 +1964,57 @@ export function createTinkerSession(prepared) {
       try { action = parseStudentAction(text); } catch { return reject('invalid-action', 'malformed-action'); }
       if (action.type === 'complete') {
         try {
-          const result = decodeReadable({arguments: action.arguments, value: action.value});
-          demand(Array.isArray(result.arguments) && result.arguments.length === prepared.args.length, 'Input argument arity changed');
-          const actual = {kind: action.kind, graph: describeGraph([...result.arguments, result.value])};
           if (calls !== expectedExternalCalls || epochStart !== expectedExternalCalls) {
             return reject('incomplete-or-invalid-completion', 'missing-external-effects');
           }
-          const expectedEffects = Array.isArray(prepared.effects) ? prepared.effects : [];
+          const rawEffects = Array.isArray(prepared.effects) ? prepared.effects : [];
+          const expectedEffects = isStateful ? filterNonWorldEffects(prepared, rawEffects, isNative) : rawEffects;
           const expectedDispatches = expectedEffects.filter(e => e.kind === 'dispatch').sort((a, b) => a.call - b.call);
           const expectedSettlements = expectedEffects.filter(e => e.kind === 'settlement').sort((a, b) => a.call - b.call);
           const effectsOk = expectedEffects.length === expectedExternalCalls * 2 &&
             isDeepStrictEqual(recordedDispatches, expectedDispatches) &&
             isDeepStrictEqual(recordedSettlements, expectedSettlements);
+          const worldStateOk = !isStateful || world.matchesExpectedFinalWorld(expectedFinalWorld);
+
+          if (executionKind === 'cli') {
+            completed = true;
+            done = true;
+            const expCli = prepared.expectedCli ?? prepared.outcome ?? {exitCode: 0, stdout: '', stderr: ''};
+            if (action.kind !== 'cli') {
+              success = false; reason = 'outcome-mismatch'; failureCategory = 'wrong-completion-kind';
+            } else if (action.exitCode !== expCli.exitCode) {
+              success = false; reason = 'outcome-mismatch'; failureCategory = 'wrong-exit-code';
+            } else if (action.stdout !== expCli.stdout) {
+              success = false; reason = 'outcome-mismatch'; failureCategory = 'wrong-stdout';
+            } else if (action.stderr !== expCli.stderr) {
+              success = false; reason = 'outcome-mismatch'; failureCategory = 'wrong-stderr';
+            } else if (!effectsOk) {
+              success = false; reason = 'outcome-mismatch'; failureCategory = 'effect-mismatch';
+            } else if (!worldStateOk) {
+              success = false; reason = 'world-state-mismatch'; failureCategory = 'world-state-mismatch';
+            } else {
+              success = true; reason = 'verified-complete-execution'; failureCategory = null;
+            }
+            return {messages: [], done, grade: grade()};
+          }
+
+          if (action.kind === 'cli') {
+            completed = true;
+            done = true;
+            success = false;
+            reason = 'outcome-mismatch';
+            failureCategory = 'wrong-completion-kind';
+            return {messages: [], done, grade: grade()};
+          }
+
+          const result = decodeReadable({arguments: action.arguments, value: action.value});
+          demand(Array.isArray(result.arguments) && result.arguments.length === prepared.args.length, 'Input argument arity changed');
+          const actual = {kind: action.kind, graph: describeGraph([...result.arguments, result.value])};
           completed = true;
-          done = true; success = isDeepStrictEqual(actual, prepared.outcome) && effectsOk;
-          reason = success ? 'verified-complete-execution' : 'outcome-mismatch';
+          done = true;
+          const outcomeOk = isDeepStrictEqual(actual, prepared.outcome);
+          success = outcomeOk && effectsOk && worldStateOk;
+          reason = success ? 'verified-complete-execution' : (!outcomeOk || !effectsOk ? 'outcome-mismatch' : 'world-state-mismatch');
           failureCategory = null;
           if (!success) {
             const expected = graphRoots(prepared.outcome.graph), value = expected.pop();
@@ -1233,7 +2025,8 @@ export function createTinkerSession(prepared) {
             } else if (!isDeepStrictEqual(describeGraph([result.value]), describeGraph([value])))
               failureCategory = action.kind === 'throw' ? 'wrong-exception' : 'wrong-return';
             else if (!isDeepStrictEqual(actual.graph, prepared.outcome.graph)) failureCategory = 'alias-mismatch';
-            else failureCategory = 'effect-mismatch';
+            else if (!effectsOk) failureCategory = 'effect-mismatch';
+            else failureCategory = 'world-state-mismatch';
           }
           return {messages: [], done, grade: grade()};
         } catch { return reject('incomplete-or-invalid-completion', 'invalid-completion'); }
@@ -1246,6 +2039,7 @@ export function createTinkerSession(prepared) {
             const args = decodeReadable(item.arguments);
             const loadResults = serveCodeLoad(prepared.files, args);
             codeLoadCalls++;
+            totalToolCalls++;
             codeLoadBytes += codeLoadResultBytes(loadResults);
             const toolCallId = item.toolCallId ?? ('code_load_' + codeLoadCalls);
             observations.push(observation('code.load', 'fulfilled', loadResults, toolCallId));
@@ -1253,6 +2047,14 @@ export function createTinkerSession(prepared) {
           }
           const args = decodeReadable(item.arguments);
           demand(Array.isArray(args), 'Call arguments must be an array');
+          if (isStateful && isStatefulWorldOperation(item.operation)) {
+            const res = world.execute(item.operation, args);
+            worldCalls++;
+            totalToolCalls++;
+            const toolCallId = item.toolCallId ?? ('world_' + worldCalls);
+            observations.push(observation(item.operation, res.status, res.value, toolCallId));
+            continue;
+          }
           const request = privateOperation(prepared, item.operation, args);
           // No counterfactual fixture result may be exposed to a different request.
           const encodedArgs = isNative ? describeGraph(request.arguments) : encodeNativeGraph(request.arguments);
@@ -1267,9 +2069,10 @@ export function createTinkerSession(prepared) {
           const encodedResult = isNative ? describeGraph([value]) : encodeNativeGraph([value]);
           consumed[matchedIdx] = true;
           while (epochStart < expectedExternalCalls && consumed[epochStart]) epochStart++;
-          recordedDispatches[matchedIdx] = {kind: 'dispatch', call: matchedIdx, operation: request.operation, arguments: expected.argumentGraph};
+          recordedDispatches[matchedIdx] = {kind: 'dispatch', call: matchedIdx, operation: expected.operation, arguments: expected.argumentGraph};
           recordedSettlements[matchedIdx] = {kind: 'settlement', call: matchedIdx, status, result: encodedResult};
           calls++;
+          totalToolCalls++;
           const toolCallId = item.toolCallId ?? ('call_' + calls);
           observations.push(observation(item.operation, status, value, toolCallId));
         }
@@ -1279,4 +2082,21 @@ export function createTinkerSession(prepared) {
     grade,
     close() { done = true; }
   };
+}
+
+/** Convenience helper to construct a live CLI grading session from either a raw
+ * CLI task object or an already-prepared CLI task. */
+export function createCliSession(taskOrPrepared) {
+  if (taskOrPrepared?.outcome?.kind === 'cli' && taskOrPrepared.task && taskOrPrepared.fixture) {
+    return createTinkerSession(taskOrPrepared);
+  }
+  const prepared = normalizeTask({...taskOrPrepared, executionKind: 'cli'});
+  const outcome = {
+    kind: 'cli',
+    exitCode: prepared.expectedCli.exitCode,
+    stdout: prepared.expectedCli.stdout,
+    stderr: prepared.expectedCli.stderr,
+  };
+  const effects = syntheticFixtureEffects(prepared.fixture.calls);
+  return createTinkerSession({...prepared, bundle: null, outcome, effects, traceTurns: null});
 }
