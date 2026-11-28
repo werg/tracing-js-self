@@ -32,7 +32,7 @@
   "batch_size": 16,
   "rl_steps": 75,
   "rl_prompts_per_step": 8,
-  "rollout_concurrency": 20,
+  "rollout_concurrency": 16,
   "group_size": 4,
   "max_turns": 48,
   "max_generated_tokens": 49152,
