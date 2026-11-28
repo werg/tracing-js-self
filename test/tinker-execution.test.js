@@ -5,7 +5,7 @@ import {createInterface} from 'node:readline';
 import {fileURLToPath} from 'node:url';
 import {encodeReadable, decodeReadable, prepareTinkerTask, exportTinkerExample,
   createTinkerSession, parseStudentAction, normalizedSourceHash,
-  assistantVisibleText, assistantThinkingText} from '../src/training/tinker-execution.js';
+  assistantVisibleText, assistantThinkingText, isCommutativeReadCall} from '../src/training/tinker-execution.js';
 import {describeGraph, realizeGraph} from '../src/training/graph.js';
 import {auditCausalPrefixPair} from '../src/training/tinker-supervision.js';
 import {hardEffectfulTasks, hardEffectfulTemplates} from '../src/training/tinker-hard-effectful.js';
@@ -1112,4 +1112,308 @@ test('session grade tracks matchedExternalCalls and expectedExternalCalls withou
   } finally {
     sPass.close();
   }
+});
+
+test('isCommutativeReadCall classifies pure reads vs strict barriers conservatively', () => {
+  for (const [op, args] of [
+    ['env.get', ['A']], ['env.has', ['A']], ['env.list', []], ['env.keys', []],
+    ['fs.exists', ['/a']], ['fs.stat', ['/a']], ['fs.isFile', ['/a']], ['fs.isDir', ['/a']],
+    ['fs.listdir', ['/']], ['fs.readdir', ['/']], ['fs.readText', ['/a']], ['fs.readBytes', ['/a']],
+    ['kv_get', ['k']], ['kv.get', ['k']], ['kv.has', ['k']], ['kv.list', []], ['kv.keys', []],
+    ['browser.storageGet', ['local', 'k']], ['browser.storage.getItem', ['k']],
+    ['browser.storage.length', []], ['browser.storage.key', [0]],
+    ['http.get', ['https://example.test/a']],
+    ['http.request', ['https://example.test/a', 'GET', {}, null]],
+    ['http.request', ['https://example.test/a', 'HEAD', {}, null]],
+    ['http.request', ['https://example.test/a', null, {}, null]],
+    ['http.request', [{url: 'https://example.test/a', method: 'GET'}]],
+    ['http.request', [{url: 'https://example.test/a'}]],
+    ['browser.fetch', ['https://example.test/a']],
+    ['browser.fetch', ['https://example.test/a', {method: 'head'}]],
+    ['sqlite3.query', ['SELECT id, name FROM users WHERE active = 1;']],
+    ['sqlite3.query', ['-- lead comment\nSELECT 1']],
+  ]) {
+    assert.equal(isCommutativeReadCall(op, args), true, `expected read: ${op} ${JSON.stringify(args)}`);
+  }
+
+  for (const [op, args] of [
+    ['fs.writeText', ['/a', 'x']], ['fs.writeBytes', ['/a', new Uint8Array([1])]],
+    ['fs.mkdir', ['/d']], ['fs.remove', ['/a']], ['fs.unlink', ['/a']], ['fs.rename', ['/a', '/b']],
+    ['kv_set', ['k', 'v']], ['kv_del', ['k']], ['kv.set', ['k', 'v']], ['kv.delete', ['k']],
+    ['shell.exec', [{command: 'ls', args: []}]],
+    ['sqlite3.exec', ['SELECT 1']],
+    ['sqlite3.query', ['INSERT INTO t VALUES (1)']],
+    ['sqlite3.query', ['SELECT 1; DROP TABLE t']],
+    ['http.request', ['https://example.test/a', 'POST', {}, '{}']],
+    ['http.request', ['https://example.test/a', 'PUT', {}, '{}']],
+    ['http.request', ['https://example.test/a', 'PATCH', {}, '{}']],
+    ['http.request', ['https://example.test/a', 'DELETE', {}, null]],
+    ['http.request', [{url: 'https://example.test/a', method: 'POST'}]],
+    ['browser.fetch', ['https://example.test/a', {method: 'POST'}]],
+    ['platform.time', []], ['platform.dateNow', []], ['platform.random', []],
+    ['platform.randomBytes', [4]], ['platform.uuid', []], ['platform.log', ['INFO', 'hi']],
+    ['platform.print', ['hi']], ['platform.console.log', ['hi']],
+    ['browser.confirm', ['ok?']], ['browser.prompt', ['name', '']], ['browser.alert', ['hi']],
+    ['browser.storageSet', ['local', 'k', 'v']], ['browser.storage.setItem', ['k', 'v']],
+    ['browser.storage.removeItem', ['k']], ['browser.storage.clear', []],
+    ['natlang.call', ['fn', undefined, []]], ['custom.unknownOp', ['x']],
+  ]) {
+    assert.equal(isCommutativeReadCall(op, args), false, `expected barrier: ${op} ${JSON.stringify(args)}`);
+  }
+});
+
+test('causal-epoch grading allows commutative read reordering while strictly enforcing write/side-effect barriers', async () => {
+  const tc = (name, args, id) => ({
+    role: 'assistant',
+    content: '',
+    tool_calls: [{type: 'function', id, function: {name, arguments: JSON.stringify({arguments: args})}}],
+  });
+
+  // 1. Multi-epoch workflow:
+  //    Epoch 0 (reads): env.get(A), env.get(B), fs.readText(f1), fs.readText(f2), http.request(GET /1), http.request(GET /2)
+  //    Barrier 6:       fs.writeText(out.txt, ...)
+  //    Epoch 1 (reads): fs.readText(after1), fs.readText(after2)
+  //    Barrier 9:       http.request(POST /submit)
+  //    Barrier 10:      platform.console.log(...)
+  const prepared = await prepareTinkerTask({
+    id: 'causal-epoch-js-1',
+    family: 'causal-epoch-js',
+    executionMode: 'native',
+    source: `const fs = require('node:fs');
+    async function run() {
+      const a = process.env.A;
+      const b = process.env.B;
+      const t1 = fs.readFileSync('/workspace/f1.txt', 'utf8');
+      const t2 = fs.readFileSync('/workspace/f2.txt', 'utf8');
+      const r1 = await (await fetch('https://api.example.test/1')).text();
+      const r2 = await (await fetch('https://api.example.test/2')).text();
+      const summary = [a, b, t1, t2, r1, r2].join('|');
+      fs.writeFileSync('/workspace/out.txt', summary, 'utf8');
+      const post1 = fs.readFileSync('/workspace/after1.txt', 'utf8');
+      const post2 = fs.readFileSync('/workspace/after2.txt', 'utf8');
+      const resp = await (await fetch('https://api.example.test/submit', {method: 'POST', body: post1 + '+' + post2})).text();
+      console.log('done:' + resp);
+      return summary + '=>' + resp;
+    }`,
+    entry: 'run',
+    args: [],
+    fixture: {
+      calls: [
+        {operation: 'env.get', arguments: ['A'], status: 'fulfilled', result: 'ea'},
+        {operation: 'env.get', arguments: ['B'], status: 'fulfilled', result: 'eb'},
+        {operation: 'fs.readText', arguments: ['/workspace/f1.txt'], status: 'fulfilled', result: 'c1'},
+        {operation: 'fs.readText', arguments: ['/workspace/f2.txt'], status: 'fulfilled', result: 'c2'},
+        {operation: 'http.request', arguments: ['https://api.example.test/1', 'GET', {}, null], status: 'fulfilled', result: {status: 200, headers: {}, body: 'g1', bodyEncoding: 'utf-8'}},
+        {operation: 'http.request', arguments: ['https://api.example.test/2', 'GET', {}, null], status: 'fulfilled', result: {status: 200, headers: {}, body: 'g2', bodyEncoding: 'utf-8'}},
+        {operation: 'fs.writeText', arguments: ['/workspace/out.txt', 'ea|eb|c1|c2|g1|g2'], status: 'fulfilled', result: {$js: 'undefined'}},
+        {operation: 'fs.readText', arguments: ['/workspace/after1.txt'], status: 'fulfilled', result: 'p1'},
+        {operation: 'fs.readText', arguments: ['/workspace/after2.txt'], status: 'fulfilled', result: 'p2'},
+        {operation: 'http.request', arguments: ['https://api.example.test/submit', 'POST', {}, 'p1+p2'], status: 'fulfilled', result: {status: 200, headers: {}, body: 'ok', bodyEncoding: 'utf-8'}},
+        {operation: 'platform.console.log', arguments: ['done:ok'], status: 'fulfilled', result: {$js: 'undefined'}},
+      ],
+    },
+  });
+
+  const finalCompletion = complete('ea|eb|c1|c2|g1|g2=>ok', []);
+
+  // 1a. Original order passes
+  const sOrig = createTinkerSession(prepared);
+  const origSteps = [
+    ['env.get', ['A'], 'ea'],
+    ['env.get', ['B'], 'eb'],
+    ['fs.readText', ['/workspace/f1.txt'], 'c1'],
+    ['fs.readText', ['/workspace/f2.txt'], 'c2'],
+    ['http.request', ['https://api.example.test/1', 'GET', {}, null], 'g1'],
+    ['http.request', ['https://api.example.test/2', 'GET', {}, null], 'g2'],
+    ['fs.writeText', ['/workspace/out.txt', 'ea|eb|c1|c2|g1|g2'], null],
+    ['fs.readText', ['/workspace/after1.txt'], 'p1'],
+    ['fs.readText', ['/workspace/after2.txt'], 'p2'],
+    ['http.request', ['https://api.example.test/submit', 'POST', {}, 'p1+p2'], 'ok'],
+    ['platform.console.log', ['done:ok'], null],
+  ];
+  for (let i = 0; i < origSteps.length; i++) {
+    const [op, cargs, expectedBodyOrVal] = origSteps[i];
+    const r = await sOrig.step(tc(op, cargs, 'o' + i), (i + 1) * 5);
+    assert.equal(r.done, false);
+    const obsVal = JSON.parse(r.messages[0].content).value;
+    if (expectedBodyOrVal !== null) {
+      assert.equal(typeof obsVal === 'object' ? obsVal.body : obsVal, expectedBodyOrVal);
+    }
+  }
+  const origFin = await sOrig.step(finalCompletion, 200);
+  assert.equal(origFin.done, true);
+  assert.equal(origFin.grade.success, true);
+  assert.equal(origFin.grade.matchedExternalCalls, 11);
+  assert.equal(origFin.grade.expectedExternalCalls, 11);
+
+  // 1b. Swapped order within each read epoch passes AND returns exact per-call observations!
+  const sSwap = createTinkerSession(prepared);
+  const swappedSteps = [
+    ['http.request', ['https://api.example.test/2', 'GET', {}, null], 'g2'],
+    ['fs.readText', ['/workspace/f2.txt'], 'c2'],
+    ['env.get', ['B'], 'eb'],
+    ['http.request', ['https://api.example.test/1', 'GET', {}, null], 'g1'],
+    ['env.get', ['A'], 'ea'],
+    ['fs.readText', ['/workspace/f1.txt'], 'c1'],
+    ['fs.writeText', ['/workspace/out.txt', 'ea|eb|c1|c2|g1|g2'], null],
+    ['fs.readText', ['/workspace/after2.txt'], 'p2'],
+    ['fs.readText', ['/workspace/after1.txt'], 'p1'],
+    ['http.request', ['https://api.example.test/submit', 'POST', {}, 'p1+p2'], 'ok'],
+    ['platform.console.log', ['done:ok'], null],
+  ];
+  for (let i = 0; i < swappedSteps.length; i++) {
+    const [op, cargs, expectedBodyOrVal] = swappedSteps[i];
+    const r = await sSwap.step(tc(op, cargs, 's' + i), (i + 1) * 5);
+    assert.equal(r.done, false, `step ${i} (${op}) failed unexpectedly`);
+    const obsVal = JSON.parse(r.messages[0].content).value;
+    if (expectedBodyOrVal !== null) {
+      assert.equal(typeof obsVal === 'object' ? obsVal.body : obsVal, expectedBodyOrVal);
+    }
+  }
+  const swapFin = await sSwap.step(finalCompletion, 200);
+  assert.equal(swapFin.done, true);
+  assert.equal(swapFin.grade.success, true);
+  assert.equal(swapFin.grade.matchedExternalCalls, 11);
+  assert.equal(swapFin.grade.expectedExternalCalls, 11);
+
+  // 1c. Barrier enforcement: invoking fs.writeText BEFORE finishing all epoch-0 reads fails strictly!
+  const sEarlyWrite = createTinkerSession(prepared);
+  assert.equal((await sEarlyWrite.step(tc('env.get', ['B'], 'e1'), 5)).done, false);
+  const badWrite = await sEarlyWrite.step(tc('fs.writeText', ['/workspace/out.txt', 'ea|eb|c1|c2|g1|g2'], 'e2'), 10);
+  assert.equal(badWrite.done, true);
+  assert.equal(badWrite.grade.success, false);
+  assert.equal(badWrite.grade.failureCategory, 'incorrect-external-request');
+  assert.equal(badWrite.grade.matchedExternalCalls, 1);
+  assert.equal(badWrite.grade.expectedExternalCalls, 11);
+  assert.deepEqual(badWrite.messages, []);
+
+  // 1d. Cross-barrier read hoisting: reading after1.txt before fs.writeText fails strictly!
+  const sHoistRead = createTinkerSession(prepared);
+  assert.equal((await sHoistRead.step(tc('env.get', ['B'], 'h1'), 5)).done, false);
+  const badHoist = await sHoistRead.step(tc('fs.readText', ['/workspace/after1.txt'], 'h2'), 10);
+  assert.equal(badHoist.done, true);
+  assert.equal(badHoist.grade.success, false);
+  assert.equal(badHoist.grade.failureCategory, 'incorrect-external-request');
+  assert.equal(badHoist.grade.matchedExternalCalls, 1);
+  assert.equal(badHoist.grade.expectedExternalCalls, 11);
+
+  // 1e. Swapping two barriers (platform.console.log before POST http.request) fails strictly!
+  const sSwapBarriers = createTinkerSession(prepared);
+  for (let i = 0; i < 9; i++) {
+    const [op, cargs] = swappedSteps[i];
+    assert.equal((await sSwapBarriers.step(tc(op, cargs, 'b' + i), (i + 1) * 5)).done, false);
+  }
+  const badBarrier = await sSwapBarriers.step(tc('platform.console.log', ['done:ok'], 'b9'), 60);
+  assert.equal(badBarrier.done, true);
+  assert.equal(badBarrier.grade.success, false);
+  assert.equal(badBarrier.grade.failureCategory, 'incorrect-external-request');
+  assert.equal(badBarrier.grade.matchedExternalCalls, 9);
+  assert.equal(badBarrier.grade.expectedExternalCalls, 11);
+
+  // 1f. Calling an already-consumed read twice in the same epoch fails strictly!
+  const sDupConsume = createTinkerSession(prepared);
+  assert.equal((await sDupConsume.step(tc('env.get', ['B'], 'd1'), 5)).done, false);
+  const badDup = await sDupConsume.step(tc('env.get', ['B'], 'd2'), 10);
+  assert.equal(badDup.done, true);
+  assert.equal(badDup.grade.failureCategory, 'incorrect-external-request');
+  assert.equal(badDup.grade.matchedExternalCalls, 1);
+  assert.equal(badDup.grade.expectedExternalCalls, 11);
+
+  // 1g. Premature completion mid-epoch fails with missing-external-effects and accurate progress!
+  const sMidComplete = createTinkerSession(prepared);
+  assert.equal((await sMidComplete.step(tc('env.get', ['B'], 'm1'), 5)).done, false);
+  assert.equal((await sMidComplete.step(tc('fs.readText', ['/workspace/f2.txt'], 'm2'), 10)).done, false);
+  const earlyFin = await sMidComplete.step(finalCompletion, 20);
+  assert.equal(earlyFin.done, true);
+  assert.equal(earlyFin.grade.success, false);
+  assert.equal(earlyFin.grade.failureCategory, 'missing-external-effects');
+  assert.equal(earlyFin.grade.matchedExternalCalls, 2);
+  assert.equal(earlyFin.grade.expectedExternalCalls, 11);
+
+  // 2. Duplicate identical reads in the same epoch preserve FIFO observation order!
+  const dupPrepared = await prepareTinkerTask({
+    id: 'causal-epoch-js-fifo',
+    family: 'causal-epoch-js',
+    executionMode: 'native',
+    source: `const fs = require('node:fs');
+    function run() {
+      const a1 = fs.existsSync('/workspace/a.txt');
+      const b1 = fs.existsSync('/workspace/b.txt');
+      const a2 = fs.existsSync('/workspace/a.txt');
+      return [a1, b1, a2];
+    }`,
+    entry: 'run',
+    args: [],
+    fixture: {
+      calls: [
+        {operation: 'fs.exists', arguments: ['/workspace/a.txt'], status: 'fulfilled', result: false},
+        {operation: 'fs.exists', arguments: ['/workspace/b.txt'], status: 'fulfilled', result: true},
+        {operation: 'fs.exists', arguments: ['/workspace/a.txt'], status: 'fulfilled', result: true},
+      ],
+    },
+  });
+  const sFifo = createTinkerSession(dupPrepared);
+  const fb = await sFifo.step(tc('fs.exists', ['/workspace/b.txt'], 'f1'), 5);
+  assert.equal(fb.done, false);
+  assert.equal(JSON.parse(fb.messages[0].content).value, true);
+  const fa1 = await sFifo.step(tc('fs.exists', ['/workspace/a.txt'], 'f2'), 10);
+  assert.equal(fa1.done, false);
+  assert.equal(JSON.parse(fa1.messages[0].content).value, false); // First recorded 'a.txt' observation!
+  const fa2 = await sFifo.step(tc('fs.exists', ['/workspace/a.txt'], 'f3'), 15);
+  assert.equal(fa2.done, false);
+  assert.equal(JSON.parse(fa2.messages[0].content).value, true); // Second recorded 'a.txt' observation!
+  const fifoFin = await sFifo.step(complete([false, true, true], []), 20);
+  assert.equal(fifoFin.done, true);
+  assert.equal(fifoFin.grade.success, true);
+
+  // 3. Two consecutive write barriers cannot be swapped!
+  const twoWrites = await prepareTinkerTask({
+    id: 'causal-epoch-js-two-writes',
+    family: 'causal-epoch-js',
+    executionMode: 'native',
+    source: `const fs = require('node:fs');
+    function run() {
+      fs.writeFileSync('/workspace/w1.txt', '1', 'utf8');
+      fs.writeFileSync('/workspace/w2.txt', '2', 'utf8');
+      return 'ok';
+    }`,
+    entry: 'run',
+    args: [],
+    fixture: {
+      calls: [
+        {operation: 'fs.writeText', arguments: ['/workspace/w1.txt', '1'], status: 'fulfilled', result: {$js: 'undefined'}},
+        {operation: 'fs.writeText', arguments: ['/workspace/w2.txt', '2'], status: 'fulfilled', result: {$js: 'undefined'}},
+      ],
+    },
+  });
+  const sBadWriteSwap = createTinkerSession(twoWrites);
+  const wSwap = await sBadWriteSwap.step(tc('fs.writeText', ['/workspace/w2.txt', '2'], 'w1'), 5);
+  assert.equal(wSwap.done, true);
+  assert.equal(wSwap.grade.success, false);
+  assert.equal(wSwap.grade.failureCategory, 'incorrect-external-request');
+  assert.equal(wSwap.grade.matchedExternalCalls, 0);
+  assert.equal(wSwap.grade.expectedExternalCalls, 2);
+
+  // 4. Owned mode also supports commutative reads (fs.readText + http.get) in swapped order!
+  const ownedReads = await prepareTinkerTask(task(
+    'async function run(){const a=await host.readText("a.txt");const b=await host.httpGet("https://example.test/b");return a+":"+b;}',
+    {
+      fixture: {
+        calls: [
+          {operation: 'fs.readText', arguments: ['a.txt'], result: 'hello'},
+          {operation: 'http.get', arguments: ['https://example.test/b'], result: 'world'},
+        ],
+      },
+    },
+  ));
+  const sOwnedSwap = createTinkerSession(ownedReads);
+  const o1 = await sOwnedSwap.step(tc('http.get', ['https://example.test/b'], 'ow1'), 5);
+  assert.equal(o1.done, false);
+  assert.equal(JSON.parse(o1.messages[0].content).value, 'world');
+  const o2 = await sOwnedSwap.step(tc('fs.readText', ['a.txt'], 'ow2'), 10);
+  assert.equal(o2.done, false);
+  assert.equal(JSON.parse(o2.messages[0].content).value, 'hello');
+  const oFin = await sOwnedSwap.step(complete('hello:world', []), 15);
+  assert.equal(oFin.done, true);
+  assert.equal(oFin.grade.success, true);
 });

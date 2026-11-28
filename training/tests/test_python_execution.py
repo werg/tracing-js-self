@@ -41,6 +41,7 @@ from tinker_py.execution import (
     create_python_session,
     export_python_example,
     initial_messages,
+    is_commutative_read_call,
     prepare_python_task,
 )
 from tinker_py.tracer import _format_value, create_python_tracer
@@ -2582,6 +2583,315 @@ def test_pipelines():
         self.assertNotIn("http.request", io_sys)
         self.assertNotIn("fs.readText", io_sys)
         self.assertNotIn("code.load", io_sys)
+
+    def test_is_commutative_read_call_classification(self) -> None:
+        pure_reads = [
+            ("env.get", ["A"]),
+            ("env.has", ["A"]),
+            ("env.list", []),
+            ("env.keys", []),
+            ("fs.exists", ["a.txt"]),
+            ("fs.stat", ["a.txt"]),
+            ("fs.isFile", ["a.txt"]),
+            ("fs.isDir", ["dir"]),
+            ("fs.listdir", ["dir"]),
+            ("fs.readdir", ["dir"]),
+            ("fs.readText", ["a.txt"]),
+            ("fs.readBytes", ["a.bin"]),
+            ("kv_get", ["k"]),
+            ("kv.get", ["k"]),
+            ("kv.has", ["k"]),
+            ("kv.list", []),
+            ("kv.keys", []),
+            ("browser.storageGet", ["local", "k"]),
+            ("browser.storage.getItem", ["k"]),
+            ("browser.storage.length", []),
+            ("browser.storage.key", [0]),
+            ("http.get", ["https://example.test/1"]),
+            ("http.request", [{"method": "GET", "url": "https://example.test/1"}]),
+            ("http.request", [{"method": "HEAD", "url": "https://example.test/1"}]),
+            ("http.request", [{"url": "https://example.test/1"}]),
+            ("http.request", ["https://example.test/1", "GET", {}, None]),
+            ("browser.fetch", ["https://example.test/1"]),
+            ("browser.fetch", ["https://example.test/1", {"method": "head"}]),
+            ("sqlite3.query", ["SELECT * FROM items WHERE id = 1;"]),
+            ("sqlite3.query", ["-- comment\nSELECT 1"]),
+        ]
+        for op, cargs in pure_reads:
+            self.assertTrue(is_commutative_read_call(op, cargs), f"expected read: {op} {cargs}")
+
+        barriers = [
+            ("fs.writeText", ["a.txt", "hi"]),
+            ("fs.writeBytes", ["a.bin", b"hi"]),
+            ("fs.mkdir", ["d"]),
+            ("fs.remove", ["a.txt"]),
+            ("fs.unlink", ["a.txt"]),
+            ("fs.rename", ["a", "b"]),
+            ("kv_set", ["k", "v"]),
+            ("kv_del", ["k"]),
+            ("kv.set", ["k", "v"]),
+            ("kv.delete", ["k"]),
+            ("shell.exec", [{"args": ["echo", "hi"], "shell": False}]),
+            ("sqlite3.exec", ["SELECT 1"]),
+            ("sqlite3.query", ["DELETE FROM items"]),
+            ("sqlite3.query", ["SELECT 1; DROP TABLE items"]),
+            ("http.request", [{"method": "POST", "url": "https://example.test/1", "body": "{}"}]),
+            ("http.request", [{"method": "PUT", "url": "https://example.test/1"}]),
+            ("http.request", [{"method": "PATCH", "url": "https://example.test/1"}]),
+            ("http.request", [{"method": "DELETE", "url": "https://example.test/1"}]),
+            ("browser.fetch", ["https://example.test/1", {"method": "POST"}]),
+            ("platform.time", []),
+            ("platform.dateNow", []),
+            ("platform.random", []),
+            ("platform.randomBytes", [8]),
+            ("platform.uuid", []),
+            ("platform.log", ["INFO", "msg"]),
+            ("platform.print", ["hi"]),
+            ("platform.console.log", ["hi"]),
+            ("browser.confirm", ["ok?"]),
+            ("browser.prompt", ["q", ""]),
+            ("browser.alert", ["hi"]),
+            ("browser.storageSet", ["local", "k", "v"]),
+            ("browser.storage.setItem", ["k", "v"]),
+            ("browser.storage.removeItem", ["k"]),
+            ("browser.storage.clear", []),
+            ("natlang.call", ["fn", None, []]),
+            ("custom.unknown_op", ["x"]),
+        ]
+        for op, cargs in barriers:
+            self.assertFalse(is_commutative_read_call(op, cargs), f"expected barrier: {op} {cargs}")
+
+    def test_causal_epoch_commutative_read_grading_and_strict_barriers(self) -> None:
+        def tc(op: str, cargs: list[Any], cid: str) -> dict[str, Any]:
+            return {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {"id": cid, "type": "function", "function": {"name": op, "arguments": json.dumps({"arguments": cargs})}}
+                ],
+            }
+
+        source = "\n".join([
+            "import logging, os, urllib.request",
+            "from pathlib import Path",
+            "def run():",
+            "    a = os.getenv('A')",
+            "    b = os.getenv('B')",
+            "    t1 = Path('f1.txt').read_text()",
+            "    t2 = Path('f2.txt').read_text()",
+            "    g1 = urllib.request.urlopen('https://api.example.test/1').read().decode('utf-8')",
+            "    g2 = urllib.request.urlopen('https://api.example.test/2').read().decode('utf-8')",
+            "    summary = '|'.join([a, b, t1, t2, g1, g2])",
+            "    Path('out.txt').write_text(summary)",
+            "    p1 = Path('after1.txt').read_text()",
+            "    p2 = Path('after2.txt').read_text()",
+            "    req = urllib.request.Request('https://api.example.test/submit', data=(p1 + '+' + p2).encode('utf-8'), method='POST')",
+            "    resp = urllib.request.urlopen(req).read().decode('utf-8')",
+            "    logging.info('done:%s', resp)",
+            "    return summary + '=>' + resp",
+        ])
+        task = {
+            "id": "py-causal-epoch-1",
+            "family": "py-causal-epoch",
+            "language": "py",
+            "source": source,
+            "entry": "run",
+            "args": [],
+            "fixture": {
+                "calls": [
+                    {"operation": "env.get", "arguments": ["A"], "status": "fulfilled", "result": "ea"},
+                    {"operation": "env.get", "arguments": ["B"], "status": "fulfilled", "result": "eb"},
+                    {"operation": "fs.readText", "arguments": ["f1.txt"], "status": "fulfilled", "result": "c1"},
+                    {"operation": "fs.readText", "arguments": ["f2.txt"], "status": "fulfilled", "result": "c2"},
+                    {"operation": "http.request", "arguments": [{"method": "GET", "url": "https://api.example.test/1"}], "status": "fulfilled", "result": {"status": 200, "url": "https://api.example.test/1", "headers": {}, "body": "g1"}},
+                    {"operation": "http.request", "arguments": [{"method": "GET", "url": "https://api.example.test/2"}], "status": "fulfilled", "result": {"status": 200, "url": "https://api.example.test/2", "headers": {}, "body": "g2"}},
+                    {"operation": "fs.writeText", "arguments": ["out.txt", "ea|eb|c1|c2|g1|g2"], "status": "fulfilled", "result": None},
+                    {"operation": "fs.readText", "arguments": ["after1.txt"], "status": "fulfilled", "result": "p1"},
+                    {"operation": "fs.readText", "arguments": ["after2.txt"], "status": "fulfilled", "result": "p2"},
+                    {"operation": "http.request", "arguments": [{"method": "POST", "url": "https://api.example.test/submit", "body": "p1+p2"}], "status": "fulfilled", "result": {"status": 200, "url": "https://api.example.test/submit", "headers": {}, "body": "ok"}},
+                    {"operation": "platform.log", "arguments": ["INFO", "done:ok"], "status": "fulfilled", "result": None},
+                ],
+            },
+        }
+        prepared = prepare_python_task(task, trace_format="actions-only")
+        final_comp = json.dumps({"type": "complete", "kind": "return", "arguments": [], "value": "ea|eb|c1|c2|g1|g2=>ok"})
+        post_arg = [{"method": "POST", "url": "https://api.example.test/submit", "body": "p1+p2"}]
+
+        # 1a. Original order passes
+        orig_seq = [
+            ("env.get", ["A"], "ea"),
+            ("env.get", ["B"], "eb"),
+            ("fs.readText", ["f1.txt"], "c1"),
+            ("fs.readText", ["f2.txt"], "c2"),
+            ("http.request", [{"method": "GET", "url": "https://api.example.test/1"}], "g1"),
+            ("http.request", [{"method": "GET", "url": "https://api.example.test/2"}], "g2"),
+            ("fs.writeText", ["out.txt", "ea|eb|c1|c2|g1|g2"], None),
+            ("fs.readText", ["after1.txt"], "p1"),
+            ("fs.readText", ["after2.txt"], "p2"),
+            ("http.request", post_arg, "ok"),
+            ("platform.log", ["INFO", "done:ok"], None),
+        ]
+        s_orig = create_python_session(prepared)
+        for idx, (op, cargs, exp_val) in enumerate(orig_seq):
+            res = s_orig.step(tc(op, cargs, f"o{idx}"), (idx + 1) * 5)
+            self.assertFalse(res["done"])
+            obs = json.loads(res["messages"][0]["content"])["value"]
+            if exp_val is not None:
+                self.assertEqual(obs["body"] if isinstance(obs, dict) else obs, exp_val)
+        fin_orig = s_orig.step(final_comp, 100)
+        self.assertTrue(fin_orig["done"])
+        self.assertTrue(fin_orig["grade"]["success"])
+        self.assertEqual(fin_orig["grade"]["matchedExternalCalls"], 11)
+        self.assertEqual(fin_orig["grade"]["expectedExternalCalls"], 11)
+
+        # 1b. Swapped order within each read epoch passes with exact observations!
+        swapped_seq = [
+            ("http.request", [{"method": "GET", "url": "https://api.example.test/2"}], "g2"),
+            ("fs.readText", ["f2.txt"], "c2"),
+            ("env.get", ["B"], "eb"),
+            ("http.request", [{"method": "GET", "url": "https://api.example.test/1"}], "g1"),
+            ("env.get", ["A"], "ea"),
+            ("fs.readText", ["f1.txt"], "c1"),
+            ("fs.writeText", ["out.txt", "ea|eb|c1|c2|g1|g2"], None),
+            ("fs.readText", ["after2.txt"], "p2"),
+            ("fs.readText", ["after1.txt"], "p1"),
+            ("http.request", post_arg, "ok"),
+            ("platform.log", ["INFO", "done:ok"], None),
+        ]
+        s_swap = create_python_session(prepared)
+        for idx, (op, cargs, exp_val) in enumerate(swapped_seq):
+            res = s_swap.step(tc(op, cargs, f"s{idx}"), (idx + 1) * 5)
+            self.assertFalse(res["done"], f"step {idx} ({op}) failed unexpectedly")
+            obs = json.loads(res["messages"][0]["content"])["value"]
+            if exp_val is not None:
+                self.assertEqual(obs["body"] if isinstance(obs, dict) else obs, exp_val)
+        fin_swap = s_swap.step(final_comp, 100)
+        self.assertTrue(fin_swap["done"])
+        self.assertTrue(fin_swap["grade"]["success"])
+        self.assertEqual(fin_swap["grade"]["matchedExternalCalls"], 11)
+        self.assertEqual(fin_swap["grade"]["expectedExternalCalls"], 11)
+
+        # 1c. Attempting write barrier before unconsumed read fails strictly
+        s_early_write = create_python_session(prepared)
+        self.assertFalse(s_early_write.step(tc("env.get", ["B"], "e1"), 5)["done"])
+        bad_write = s_early_write.step(tc("fs.writeText", ["out.txt", "ea|eb|c1|c2|g1|g2"], "e2"), 10)
+        self.assertTrue(bad_write["done"])
+        self.assertFalse(bad_write["grade"]["success"])
+        self.assertEqual(bad_write["grade"]["failureCategory"], "incorrect-external-request")
+        self.assertEqual(bad_write["grade"]["matchedExternalCalls"], 1)
+        self.assertEqual(bad_write["grade"]["expectedExternalCalls"], 11)
+        self.assertEqual(bad_write["messages"], [])
+
+        # 1d. Attempting to hoist a read across a write barrier fails strictly
+        s_hoist = create_python_session(prepared)
+        self.assertFalse(s_hoist.step(tc("env.get", ["B"], "h1"), 5)["done"])
+        bad_hoist = s_hoist.step(tc("fs.readText", ["after1.txt"], "h2"), 10)
+        self.assertTrue(bad_hoist["done"])
+        self.assertFalse(bad_hoist["grade"]["success"])
+        self.assertEqual(bad_hoist["grade"]["failureCategory"], "incorrect-external-request")
+        self.assertEqual(bad_hoist["grade"]["matchedExternalCalls"], 1)
+        self.assertEqual(bad_hoist["grade"]["expectedExternalCalls"], 11)
+
+        # 1e. Swapping two barriers (platform.log before POST http.request) fails strictly
+        s_swap_barriers = create_python_session(prepared)
+        for idx in range(9):
+            op, cargs, _ = swapped_seq[idx]
+            self.assertFalse(s_swap_barriers.step(tc(op, cargs, f"b{idx}"), (idx + 1) * 5)["done"])
+        bad_barrier = s_swap_barriers.step(tc("platform.log", ["INFO", "done:ok"], "b9"), 60)
+        self.assertTrue(bad_barrier["done"])
+        self.assertFalse(bad_barrier["grade"]["success"])
+        self.assertEqual(bad_barrier["grade"]["failureCategory"], "incorrect-external-request")
+        self.assertEqual(bad_barrier["grade"]["matchedExternalCalls"], 9)
+        self.assertEqual(bad_barrier["grade"]["expectedExternalCalls"], 11)
+
+        # 1f. Premature completion mid-epoch fails with missing-external-effects and accurate progress
+        s_premature = create_python_session(prepared)
+        self.assertFalse(s_premature.step(tc("env.get", ["B"], "p1"), 5)["done"])
+        self.assertFalse(s_premature.step(tc("fs.readText", ["f2.txt"], "p2"), 10)["done"])
+        early_fin = s_premature.step(final_comp, 20)
+        self.assertTrue(early_fin["done"])
+        self.assertFalse(early_fin["grade"]["success"])
+        self.assertEqual(early_fin["grade"]["failureCategory"], "missing-external-effects")
+        self.assertEqual(early_fin["grade"]["matchedExternalCalls"], 2)
+        self.assertEqual(early_fin["grade"]["expectedExternalCalls"], 11)
+
+        # 2. Duplicate identical reads in the same epoch preserve FIFO observation order!
+        fifo_task = {
+            "id": "py-causal-epoch-fifo",
+            "family": "py-causal-epoch",
+            "language": "py",
+            "source": "import os\ndef run():\n    a1 = os.path.exists('a.txt')\n    b1 = os.path.exists('b.txt')\n    a2 = os.path.exists('a.txt')\n    return [a1, b1, a2]\n",
+            "entry": "run",
+            "args": [],
+            "fixture": {
+                "calls": [
+                    {"operation": "fs.exists", "arguments": ["a.txt"], "status": "fulfilled", "result": False},
+                    {"operation": "fs.exists", "arguments": ["b.txt"], "status": "fulfilled", "result": True},
+                    {"operation": "fs.exists", "arguments": ["a.txt"], "status": "fulfilled", "result": True},
+                ],
+            },
+        }
+        fifo_prep = prepare_python_task(fifo_task, trace_format="actions-only")
+        s_fifo = create_python_session(fifo_prep)
+        fb = s_fifo.step(tc("fs.exists", ["b.txt"], "f1"), 5)
+        self.assertFalse(fb["done"])
+        self.assertEqual(json.loads(fb["messages"][0]["content"])["value"], True)
+        fa1 = s_fifo.step(tc("fs.exists", ["a.txt"], "f2"), 10)
+        self.assertFalse(fa1["done"])
+        self.assertEqual(json.loads(fa1["messages"][0]["content"])["value"], False)
+        fa2 = s_fifo.step(tc("fs.exists", ["a.txt"], "f3"), 15)
+        self.assertFalse(fa2["done"])
+        self.assertEqual(json.loads(fa2["messages"][0]["content"])["value"], True)
+        fifo_fin = s_fifo.step(json.dumps({"type": "complete", "kind": "return", "arguments": [], "value": [False, True, True]}), 20)
+        self.assertTrue(fifo_fin["done"])
+        self.assertTrue(fifo_fin["grade"]["success"])
+
+        # 3. kv_get / kv_set & shell.exec barrier checks
+        kv_task = {
+            "id": "py-causal-epoch-kv-shell",
+            "family": "py-causal-epoch",
+            "language": "py",
+            "source": "\n".join([
+                "import subprocess",
+                "def run():",
+                "    x = host.kv_get('k1')",
+                "    y = host.kv_get('k2')",
+                "    host.kv_set('sum', x + y)",
+                "    out = subprocess.run(['echo', 'ok'], capture_output=True, text=True).stdout",
+                "    return [x + y, out]",
+            ]),
+            "entry": "run",
+            "args": [],
+            "fixture": {
+                "calls": [
+                    {"operation": "kv_get", "arguments": ["k1"], "status": "fulfilled", "result": 10},
+                    {"operation": "kv_get", "arguments": ["k2"], "status": "fulfilled", "result": 20},
+                    {"operation": "kv_set", "arguments": ["sum", 30], "status": "fulfilled", "result": None},
+                    {"operation": "shell.exec", "arguments": [{"args": ["echo", "ok"], "shell": False}], "status": "fulfilled", "result": {"returncode": 0, "stdout": "ok\n", "stderr": ""}},
+                ],
+            },
+        }
+        kv_prep = prepare_python_task(kv_task, trace_format="actions-only")
+        # Swapped kv_get k2 -> k1 then kv_set -> shell.exec passes!
+        s_kv_ok = create_python_session(kv_prep)
+        r_k2 = s_kv_ok.step(tc("kv_get", ["k2"], "k1"), 5)
+        self.assertEqual(json.loads(r_k2["messages"][0]["content"])["value"], 20)
+        r_k1 = s_kv_ok.step(tc("kv_get", ["k1"], "k2"), 10)
+        self.assertEqual(json.loads(r_k1["messages"][0]["content"])["value"], 10)
+        self.assertFalse(s_kv_ok.step(tc("kv_set", ["sum", 30], "k3"), 15)["done"])
+        self.assertFalse(s_kv_ok.step(tc("shell.exec", [{"args": ["echo", "ok"], "shell": False}], "k4"), 20)["done"])
+        kv_fin = s_kv_ok.step(json.dumps({"type": "complete", "kind": "return", "arguments": [], "value": [30, "ok\n"]}), 25)
+        self.assertTrue(kv_fin["grade"]["success"])
+
+        # Attempting shell.exec before kv_set (barrier swap) fails strictly!
+        s_kv_bad = create_python_session(kv_prep)
+        self.assertFalse(s_kv_bad.step(tc("kv_get", ["k2"], "bk1"), 5)["done"])
+        self.assertFalse(s_kv_bad.step(tc("kv_get", ["k1"], "bk2"), 10)["done"])
+        bad_shell = s_kv_bad.step(tc("shell.exec", [{"args": ["echo", "ok"], "shell": False}], "bk3"), 15)
+        self.assertTrue(bad_shell["done"])
+        self.assertEqual(bad_shell["grade"]["failureCategory"], "incorrect-external-request")
+        self.assertEqual(bad_shell["grade"]["matchedExternalCalls"], 2)
+        self.assertEqual(bad_shell["grade"]["expectedExternalCalls"], 4)
 
 
 if __name__ == "__main__":

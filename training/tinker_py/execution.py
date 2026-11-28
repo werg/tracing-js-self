@@ -1151,6 +1151,118 @@ def parse_student_action(input_val: Any) -> dict[str, Any]:
     return _validate_action_object(action)
 
 
+_PURE_COMMUTATIVE_READ_OPS: frozenset[str] = frozenset({
+    "env.get",
+    "env.has",
+    "env.list",
+    "env.keys",
+    "env.cwd",
+    "fs.exists",
+    "fs.stat",
+    "fs.isFile",
+    "fs.isDir",
+    "fs.listdir",
+    "fs.readdir",
+    "fs.list",
+    "fs.readText",
+    "fs.readBytes",
+    "kv_get",
+    "kv.get",
+    "kv.has",
+    "kv.list",
+    "kv.keys",
+    "browser.storageGet",
+    "browser.storage.getItem",
+    "browser.storage.length",
+    "browser.storage.key",
+    "http.get",
+})
+
+_HTTP_METHOD_CHECKED_OPS: frozenset[str] = frozenset({"http.request", "browser.fetch"})
+_READ_ONLY_HTTP_METHODS: frozenset[str] = frozenset({"GET", "HEAD"})
+
+
+def _extract_http_request_method(args: Any) -> str | None:
+    if not isinstance(args, list) or len(args) == 0:
+        return None
+    first = args[0]
+    if isinstance(first, dict):
+        method = first.get("method")
+        if method is None:
+            return "GET"
+        if isinstance(method, str):
+            norm = method.strip().upper()
+            return norm if norm else None
+        return None
+    if isinstance(first, str):
+        if len(args) == 1:
+            return "GET"
+        second = args[1]
+        if second is None:
+            return "GET"
+        if isinstance(second, str):
+            norm = second.strip().upper()
+            return norm if norm else None
+        if isinstance(second, dict):
+            method = second.get("method")
+            if method is None:
+                return "GET"
+            if isinstance(method, str):
+                norm = method.strip().upper()
+                return norm if norm else None
+            return None
+        return None
+    return None
+
+
+def _is_read_only_sqlite_select(args: Any) -> bool:
+    if not isinstance(args, list) or len(args) == 0:
+        return False
+    first = args[0]
+    sql: str | None = None
+    if isinstance(first, str):
+        sql = first
+    elif isinstance(first, dict):
+        cand = first.get("sql") if isinstance(first.get("sql"), str) else first.get("query")
+        if isinstance(cand, str):
+            sql = cand
+    if not isinstance(sql, str):
+        return False
+    rest = sql
+    while True:
+        trimmed = rest.lstrip()
+        if trimmed.startswith("--"):
+            nl = trimmed.find("\n")
+            rest = "" if nl < 0 else trimmed[nl + 1 :]
+        elif trimmed.startswith("/*"):
+            end = trimmed.find("*/", 2)
+            if end < 0:
+                return False
+            rest = trimmed[end + 2 :]
+        else:
+            rest = trimmed
+            break
+    body = re.sub(r";+\s*$", "", rest)
+    return bool(re.match(r"^SELECT\b", body, re.IGNORECASE)) and ";" not in body
+
+
+def is_commutative_read_call(operation: Any, args: Any = None) -> bool:
+    """Return True iff (operation, args) is a pure/commutative read allowed to reorder within its causal epoch.
+
+    Unknown operations conservatively default to strict barriers (False).
+    """
+    if not isinstance(operation, str):
+        return False
+    if operation in _PURE_COMMUTATIVE_READ_OPS:
+        return True
+    if operation in _HTTP_METHOD_CHECKED_OPS:
+        method = _extract_http_request_method(args if args is not None else [])
+        return method is not None and method in _READ_ONLY_HTTP_METHODS
+    if operation == "sqlite3.query":
+        return _is_read_only_sqlite_select(args if args is not None else [])
+    return False
+
+
 def _external_effects_only(effects: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Filter out read-only `code.load` effects and renumber remaining external effect IDs."""
     id_map: dict[int, int] = {}
@@ -1166,7 +1278,11 @@ def _external_effects_only(effects: list[dict[str, Any]]) -> list[dict[str, Any]
 
 
 class PythonExecutionSession:
-    """Stateful live grading session for Python execution tasks."""
+    """Stateful live grading session for Python execution tasks.
+
+    Independent pure reads within the current causal epoch (before the next barrier)
+    may execute in any order, while barriers and cross-epoch ordering remain strict.
+    """
 
     def __init__(self, prepared: dict[str, Any]) -> None:
         self._prepared = prepared
@@ -1182,13 +1298,53 @@ class PythonExecutionSession:
         self._code_load_calls = 0
         self._code_load_bytes = 0
         self._turns = 0
-        self._recorded_effects: list[dict[str, Any]] = []
+        fixture_calls = prepared["fixture"]["calls"]
+        self._expected_is_read: list[bool] = [
+            is_commutative_read_call(
+                c["operation"],
+                c["arguments"] if "arguments" in c else realize_graph(c["argumentGraph"]),
+            )
+            for c in fixture_calls
+        ]
+        self._consumed: list[bool] = [False] * len(fixture_calls)
+        self._epoch_start = 0
+        self._recorded_by_index: dict[int, tuple[dict[str, Any], dict[str, Any]]] = {}
         max_turns = prepared["task"].get("maxTurns", 256)
         _demand(
             isinstance(max_turns, int) and not isinstance(max_turns, bool) and 0 < max_turns <= 4096,
             "Invalid rollout turn limit",
         )
         self._max_turns = max_turns
+
+    def _match_expected_call(
+        self,
+        operation: str,
+        args: list[Any],
+        actual_arg_graph: dict[str, Any],
+    ) -> int:
+        fixture_calls = self._prepared["fixture"]["calls"]
+        total = len(fixture_calls)
+        if self._epoch_start >= total:
+            return -1
+        if self._expected_is_read[self._epoch_start]:
+            # Unconsumed pure reads remain in the current epoch: barrier calls cannot bypass them.
+            if not is_commutative_read_call(operation, args):
+                return -1
+            epoch_end = self._epoch_start
+            while epoch_end < total and self._expected_is_read[epoch_end]:
+                epoch_end += 1
+            # Scan ascending so duplicate identical reads in the same epoch observe FIFO causal order.
+            for idx in range(self._epoch_start, epoch_end):
+                if self._consumed[idx]:
+                    continue
+                cand = fixture_calls[idx]
+                if cand["operation"] == operation and actual_arg_graph == cand["argumentGraph"]:
+                    return idx
+            return -1
+        barrier = fixture_calls[self._epoch_start]
+        if barrier["operation"] == operation and actual_arg_graph == barrier["argumentGraph"]:
+            return self._epoch_start
+        return -1
 
     def _count(self, total: int) -> None:
         _demand(
@@ -1253,7 +1409,7 @@ class PythonExecutionSession:
                     "kind": action["kind"],
                     "graph": describe_graph([*result["arguments"], result["value"]]),
                 }
-                if self._calls != len(fixture_calls):
+                if self._calls != len(fixture_calls) or self._epoch_start != len(fixture_calls):
                     return self._reject("incomplete-or-invalid-completion", "missing-external-effects")
 
                 expected_outcome = self._prepared["outcome"]
@@ -1261,12 +1417,25 @@ class PythonExecutionSession:
                     "kind": expected_outcome["kind"],
                     "graph": expected_outcome["graph"],
                 }
+                expected_ext_effects = _external_effects_only(self._prepared["effects"])
+                expected_dispatches = sorted(
+                    (e for e in expected_ext_effects if e.get("kind") == "dispatch"),
+                    key=lambda e: e["call"],
+                )
+                expected_settlements = sorted(
+                    (e for e in expected_ext_effects if e.get("kind") == "settlement"),
+                    key=lambda e: e["call"],
+                )
+                recorded_dispatches = [self._recorded_by_index[i][0] for i in range(len(fixture_calls))]
+                recorded_settlements = [self._recorded_by_index[i][1] for i in range(len(fixture_calls))]
+                effects_ok = (
+                    len(expected_ext_effects) == 2 * len(fixture_calls)
+                    and recorded_dispatches == expected_dispatches
+                    and recorded_settlements == expected_settlements
+                )
                 self._completed = True
                 self._done = True
-                self._success = (
-                    actual == expected_outcome_cmp
-                    and self._recorded_effects == _external_effects_only(self._prepared["effects"])
-                )
+                self._success = actual == expected_outcome_cmp and effects_ok
                 self._reason = "verified-complete-execution" if self._success else "outcome-mismatch"
                 self._failure_category = None
                 if not self._success:
@@ -1308,30 +1477,30 @@ class PythonExecutionSession:
                     self._code_load_bytes += len(obs["content"].encode("utf-8"))
                     observations.append(obs)
                     continue
-                if self._calls >= len(fixture_calls):
-                    raise TypeError("Unexpected extra external call")
-                expected = fixture_calls[self._calls]
                 actual_arg_graph = describe_graph(args)
-                _demand(
-                    expected["operation"] == item["operation"] and actual_arg_graph == expected["argumentGraph"],
-                    "External request mismatch",
-                )
-                cid = self._calls
+                matched_idx = self._match_expected_call(item["operation"], args, actual_arg_graph)
+                _demand(matched_idx >= 0, "External request mismatch")
+                expected = fixture_calls[matched_idx]
+                self._consumed[matched_idx] = True
+                while self._epoch_start < len(fixture_calls) and self._consumed[self._epoch_start]:
+                    self._epoch_start += 1
                 status = expected["status"]
                 value = expected["result"]
-                self._recorded_effects.append({
-                    "kind": "dispatch",
-                    "call": cid,
-                    "operation": item["operation"],
-                    "arguments": actual_arg_graph,
-                })
-                self._recorded_effects.append({
-                    "kind": "settlement",
-                    "call": cid,
-                    "operation": item["operation"],
-                    "status": status,
-                    "result": describe_graph([value], allow_exceptions=True),
-                })
+                self._recorded_by_index[matched_idx] = (
+                    {
+                        "kind": "dispatch",
+                        "call": matched_idx,
+                        "operation": item["operation"],
+                        "arguments": actual_arg_graph,
+                    },
+                    {
+                        "kind": "settlement",
+                        "call": matched_idx,
+                        "operation": item["operation"],
+                        "status": status,
+                        "result": describe_graph([value], allow_exceptions=True),
+                    },
+                )
                 self._calls += 1
                 self._total_tool_calls += 1
                 tool_call_id = item.get("toolCallId") or f"call_{self._total_tool_calls}"

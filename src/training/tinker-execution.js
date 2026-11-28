@@ -22,7 +22,6 @@ import {
   NODE_IO_OPERATIONS,
   resolveOperationSpec,
   canonicalNativeFixturePlan,
-  createNativeFixtureBroker,
   scanPublicSourceNodeIoTools,
 } from './tinker-node-io.js';
 import {normalizeCodebaseSpec, codebaseSourceHash, renderRepoManifest,
@@ -999,11 +998,122 @@ export function parseStudentAction(input) {
   return validateActionObject(action);
 }
 
+const PURE_COMMUTATIVE_READ_OPS = new Set([
+  'env.get', 'env.has', 'env.list', 'env.keys', 'env.cwd',
+  'fs.exists', 'fs.stat', 'fs.isFile', 'fs.isDir', 'fs.listdir', 'fs.readdir', 'fs.list',
+  'fs.readText', 'fs.readBytes',
+  'kv_get', 'kv.get', 'kv.has', 'kv.list', 'kv.keys',
+  'browser.storageGet', 'browser.storage.getItem', 'browser.storage.length', 'browser.storage.key',
+  'http.get',
+]);
+
+const HTTP_METHOD_CHECKED_OPS = new Set(['http.request', 'browser.fetch']);
+const READ_ONLY_HTTP_METHODS = new Set(['GET', 'HEAD']);
+
+function extractHttpRequestMethod(args) {
+  if (!Array.isArray(args) || args.length === 0) return null;
+  const first = args[0];
+  if (plain(first)) {
+    if (!own(first, 'method') || first.method === undefined || first.method === null) return 'GET';
+    if (typeof first.method === 'string') {
+      const method = first.method.trim().toUpperCase();
+      return method.length > 0 ? method : null;
+    }
+    return null;
+  }
+  if (typeof first === 'string') {
+    if (args.length === 1) return 'GET';
+    const second = args[1];
+    if (second === undefined || second === null) return 'GET';
+    if (typeof second === 'string') {
+      const method = second.trim().toUpperCase();
+      return method.length > 0 ? method : null;
+    }
+    if (plain(second)) {
+      if (!own(second, 'method') || second.method === undefined || second.method === null) return 'GET';
+      if (typeof second.method === 'string') {
+        const method = second.method.trim().toUpperCase();
+        return method.length > 0 ? method : null;
+      }
+      return null;
+    }
+    return null;
+  }
+  return null;
+}
+
+function isReadOnlySqliteSelect(args) {
+  if (!Array.isArray(args) || args.length === 0) return false;
+  const first = args[0];
+  let sql = null;
+  if (typeof first === 'string') sql = first;
+  else if (plain(first)) {
+    if (typeof first.sql === 'string') sql = first.sql;
+    else if (typeof first.query === 'string') sql = first.query;
+  }
+  if (typeof sql !== 'string') return false;
+  let rest = sql;
+  while (true) {
+    const trimmed = rest.trimStart();
+    if (trimmed.startsWith('--')) {
+      const nl = trimmed.indexOf('\n');
+      rest = nl < 0 ? '' : trimmed.slice(nl + 1);
+    } else if (trimmed.startsWith('/*')) {
+      const end = trimmed.indexOf('*/', 2);
+      if (end < 0) return false;
+      rest = trimmed.slice(end + 2);
+    } else {
+      rest = trimmed;
+      break;
+    }
+  }
+  const body = rest.replace(/;+\s*$/, '');
+  return /^SELECT\b/i.test(body) && !body.includes(';');
+}
+
+/** Return true iff (operation, args) is a pure/commutative read that may
+ * reorder freely within its causal epoch before the next mutating/nondeterministic barrier.
+ * Unknown operations conservatively default to strict barriers (false). */
+export function isCommutativeReadCall(operation, args = []) {
+  if (typeof operation !== 'string') return false;
+  if (PURE_COMMUTATIVE_READ_OPS.has(operation)) return true;
+  if (HTTP_METHOD_CHECKED_OPS.has(operation)) {
+    const method = extractHttpRequestMethod(args);
+    return method !== null && READ_ONLY_HTTP_METHODS.has(method);
+  }
+  if (operation === 'sqlite3.query') {
+    return isReadOnlySqliteSelect(args);
+  }
+  return false;
+}
+
+function expectedFixtureCallIsRead(call, isNative) {
+  if (PURE_COMMUTATIVE_READ_OPS.has(call.operation)) return true;
+  if (HTTP_METHOD_CHECKED_OPS.has(call.operation) || call.operation === 'sqlite3.query') {
+    const decodedArgs = call.arguments !== undefined
+      ? call.arguments
+      : (isNative ? realizeGraph(call.argumentGraph) : decodeOwnedGraph(JSON.stringify(call.argumentGraph)));
+    return isCommutativeReadCall(call.operation, decodedArgs);
+  }
+  return false;
+}
+
 /** Live student state has no teacher trace continuation. A rejected request
- * ends the rollout without disclosing the expected next operation or result. */
+ * ends the rollout without disclosing the expected next operation or result.
+ * Independent pure reads within the current causal epoch (before the next barrier)
+ * may execute in any order, while barriers and cross-epoch ordering remain strict. */
 export function createTinkerSession(prepared) {
   const isNative = prepared.executionMode === 'native';
-  const broker = isNative ? createNativeFixtureBroker(prepared.fixture) : createFixtureBroker(prepared.fixture);
+  const expectedCalls = prepared.fixture.calls;
+  const expectedExternalCalls = expectedCalls.length;
+  for (const call of expectedCalls) {
+    resolveOperationSpec(call.operation, {nativeMode: isNative});
+  }
+  const expectedIsRead = expectedCalls.map(call => expectedFixtureCallIsRead(call, isNative));
+  const consumed = new Array(expectedExternalCalls).fill(false);
+  const recordedDispatches = new Array(expectedExternalCalls);
+  const recordedSettlements = new Array(expectedExternalCalls);
+  let epochStart = 0;
   let done = false, completed = false, success = false, reason = 'incomplete', failureCategory = 'incomplete',
     generatedTokens = 0, calls = 0, turns = 0, codeLoadCalls = 0, codeLoadBytes = 0;
   const maxTurns = prepared.task.maxTurns ?? 256;
@@ -1012,7 +1122,6 @@ export function createTinkerSession(prepared) {
     demand(Number.isSafeInteger(total) && total >= generatedTokens, 'Generated token count must be cumulative and monotonic');
     generatedTokens = total;
   };
-  const expectedExternalCalls = prepared.fixture.calls.length;
   const grade = total => {
     if (total !== undefined) count(total);
     return {success: done && success, reward: done && success ? 1 / (1 + generatedTokens / 1000) : 0,
@@ -1021,7 +1130,30 @@ export function createTinkerSession(prepared) {
       ...(prepared.files ? {codeLoadCalls, codeLoadBytes} : {})};
   };
   const reject = (why, category = why) => { done = true; success = false; reason = why; failureCategory = category;
-    broker.abort(); return {messages: [], done, grade: grade()}; };
+    return {messages: [], done, grade: grade()}; };
+  function matchExpectedCall(operation, callArgs, encodedArgs) {
+    if (epochStart >= expectedExternalCalls) return -1;
+    if (expectedIsRead[epochStart]) {
+      // Unconsumed pure reads remain in the current epoch: barrier calls cannot bypass them.
+      if (!isCommutativeReadCall(operation, callArgs)) return -1;
+      let epochEnd = epochStart;
+      while (epochEnd < expectedExternalCalls && expectedIsRead[epochEnd]) epochEnd++;
+      // Scan in ascending index order so duplicate identical reads observe FIFO causal order.
+      for (let idx = epochStart; idx < epochEnd; idx++) {
+        if (consumed[idx]) continue;
+        const candidate = expectedCalls[idx];
+        if (candidate.operation === operation && isDeepStrictEqual(encodedArgs, candidate.argumentGraph)) {
+          return idx;
+        }
+      }
+      return -1;
+    }
+    const barrier = expectedCalls[epochStart];
+    if (barrier.operation === operation && isDeepStrictEqual(encodedArgs, barrier.argumentGraph)) {
+      return epochStart;
+    }
+    return -1;
+  }
   return {
     messages: initialMessages(prepared),
     async step(text, total = generatedTokens) {
@@ -1035,10 +1167,17 @@ export function createTinkerSession(prepared) {
           const result = decodeReadable({arguments: action.arguments, value: action.value});
           demand(Array.isArray(result.arguments) && result.arguments.length === prepared.args.length, 'Input argument arity changed');
           const actual = {kind: action.kind, graph: describeGraph([...result.arguments, result.value])};
-          if (calls !== prepared.fixture.calls.length) return reject('incomplete-or-invalid-completion', 'missing-external-effects');
-          const effects = broker.finish();
+          if (calls !== expectedExternalCalls || epochStart !== expectedExternalCalls) {
+            return reject('incomplete-or-invalid-completion', 'missing-external-effects');
+          }
+          const expectedEffects = Array.isArray(prepared.effects) ? prepared.effects : [];
+          const expectedDispatches = expectedEffects.filter(e => e.kind === 'dispatch').sort((a, b) => a.call - b.call);
+          const expectedSettlements = expectedEffects.filter(e => e.kind === 'settlement').sort((a, b) => a.call - b.call);
+          const effectsOk = expectedEffects.length === expectedExternalCalls * 2 &&
+            isDeepStrictEqual(recordedDispatches, expectedDispatches) &&
+            isDeepStrictEqual(recordedSettlements, expectedSettlements);
           completed = true;
-          done = true; success = isDeepStrictEqual(actual, prepared.outcome) && isDeepStrictEqual(effects, prepared.effects);
+          done = true; success = isDeepStrictEqual(actual, prepared.outcome) && effectsOk;
           reason = success ? 'verified-complete-execution' : 'outcome-mismatch';
           failureCategory = null;
           if (!success) {
@@ -1071,17 +1210,21 @@ export function createTinkerSession(prepared) {
           const args = decodeReadable(item.arguments);
           demand(Array.isArray(args), 'Call arguments must be an array');
           const request = privateOperation(prepared, item.operation, args);
-          const expected = prepared.fixture.calls[calls];
           // No counterfactual fixture result may be exposed to a different request.
           const encodedArgs = isNative ? describeGraph(request.arguments) : encodeNativeGraph(request.arguments);
-          demand(expected && expected.operation === request.operation &&
-            isDeepStrictEqual(encodedArgs, expected.argumentGraph), 'External request mismatch');
-          let status = 'fulfilled', value;
-          try { value = await broker.invoke(request.operation, request.arguments); }
-          catch (error) {
-            demand(expected.status === 'rejected', 'Environment infrastructure failure');
-            status = 'rejected'; value = error;
-          }
+          const matchedIdx = matchExpectedCall(request.operation, request.arguments, encodedArgs);
+          demand(matchedIdx >= 0, 'External request mismatch');
+          const expected = expectedCalls[matchedIdx];
+          const status = expected.status ?? 'fulfilled';
+          demand(status === 'fulfilled' || status === 'rejected', 'Invalid fixture outcome');
+          const value = isNative
+            ? realizeGraph(expected.resultGraph)[0]
+            : decodeOwnedGraph(JSON.stringify(expected.resultGraph))[0];
+          const encodedResult = isNative ? describeGraph([value]) : encodeNativeGraph([value]);
+          consumed[matchedIdx] = true;
+          while (epochStart < expectedExternalCalls && consumed[epochStart]) epochStart++;
+          recordedDispatches[matchedIdx] = {kind: 'dispatch', call: matchedIdx, operation: request.operation, arguments: encodedArgs};
+          recordedSettlements[matchedIdx] = {kind: 'settlement', call: matchedIdx, status, result: encodedResult};
           calls++;
           const toolCallId = item.toolCallId ?? ('call_' + calls);
           observations.push(observation(item.operation, status, value, toolCallId));
@@ -1090,6 +1233,6 @@ export function createTinkerSession(prepared) {
       } catch { return reject('external-request-mismatch', 'incorrect-external-request'); }
     },
     grade,
-    close() { broker.abort(); done = true; }
+    close() { done = true; }
   };
 }
