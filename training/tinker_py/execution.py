@@ -12,6 +12,7 @@ from functools import lru_cache
 import hashlib
 import json
 from pathlib import Path
+import posixpath
 import re
 import subprocess
 import sys
@@ -42,53 +43,445 @@ PY_HOST_METHODS: dict[str, str] = {
     "kv_set": "kv_set",
 }
 
+OPERATION_ALIASES: dict[str, str] = {
+    "fs_read_text": "fs.readText",
+    "fs_write_text": "fs.writeText",
+    "fs_exists": "fs.exists",
+    "fs_listdir": "fs.readdir",
+    "fs.listdir": "fs.readdir",
+    "fs_stat": "fs.stat",
+    "fs_read_bytes": "fs.readBytes",
+    "fs_write_bytes": "fs.writeBytes",
+    "fs_mkdir": "fs.mkdir",
+    "fs_unlink": "fs.unlink",
+    "fs.remove": "fs.unlink",
+    "fs_remove": "fs.unlink",
+    "fs_rename": "fs.rename",
+    "fs_append_text": "fs.appendText",
+    "fs_copy_file": "fs.copyFile",
+    "fs_is_file": "fs.isFile",
+    "fs_is_dir": "fs.isDir",
+    "http_request": "http.request",
+    "http_get": "http.get",
+    "kv_get": "kv.get",
+    "kv_set": "kv.set",
+    "kv_del": "kv.delete",
+    "kv_delete": "kv.delete",
+    "kv_has": "kv.has",
+    "kv_keys": "kv.keys",
+    "env_get": "env.get",
+    "env_has": "env.has",
+    "env_keys": "env.keys",
+}
+
+
+def canonicalize_operation_name(op: Any) -> Any:
+    if not isinstance(op, str):
+        return op
+    return OPERATION_ALIASES.get(op, op)
+
+
 PY_HOST_OPERATIONS: dict[str, dict[str, Any]] = {
-    "platform.print": {"arity": None, "description": "Invoke Python print(*args) external operation."},
+    "platform.print": {"arity": None, "commutativeRead": False, "description": "Invoke Python print(*args) external operation."},
     "platform.time": {
         "arity": 0,
+        "commutativeRead": False,
         "description": "Invoke Python time.time()/time.monotonic()/datetime.now()/today() external clock operation (0 arguments).",
     },
-    "platform.random": {"arity": 0, "description": "Invoke Python random.random() external operation (0 arguments)."},
+    "platform.random": {"arity": 0, "commutativeRead": False, "description": "Invoke Python random.random() external operation (0 arguments)."},
     "platform.log": {
         "arity": 2,
+        "commutativeRead": False,
         "description": "Invoke Python logging operation (2 arguments: [level_name, formatted_message]). Returns None.",
     },
     "platform.uuid": {
         "arity": 0,
+        "commutativeRead": False,
         "description": "Invoke Python uuid.uuid4() external operation (0 arguments). Returns canonical UUID string.",
     },
     "platform.secrets": {
         "arity": 2,
+        "commutativeRead": False,
         "description": 'Invoke Python secrets external operation (2 arguments: [method_name, int_arg], e.g. ["token_hex", 16] or ["randbelow", 100]).',
     },
-    "fs.readText": {"arity": 1, "description": "Invoke Python external operation fs.readText (1 argument: [path])."},
-    "fs.readBytes": {"arity": 1, "description": "Read binary file contents from path (1 argument: [path]). Returns bytes."},
-    "fs.writeText": {"arity": 2, "description": "Invoke Python external operation fs.writeText (2 arguments: [path, text])."},
-    "fs.writeBytes": {"arity": 2, "description": "Write binary bytes to path (2 arguments: [path, data]). Returns None."},
-    "fs.exists": {"arity": 1, "description": "Check whether filesystem path exists (1 argument: [path]). Returns bool."},
-    "fs.isFile": {"arity": 1, "description": "Check whether filesystem path is a regular file (1 argument: [path]). Returns bool."},
-    "fs.isDir": {"arity": 1, "description": "Check whether filesystem path is a directory (1 argument: [path]). Returns bool."},
-    "fs.listdir": {"arity": 1, "description": "List entry names in directory path (1 argument: [path]). Returns sorted list of strings."},
-    "env.get": {"arity": 1, "description": "Read environment variable (1 argument: [key]). Returns string value or None."},
+    "fs.readText": {"arity": 1, "commutativeRead": True, "description": "Invoke Python external operation fs.readText (1 argument: [path])."},
+    "fs.readBytes": {"arity": 1, "commutativeRead": True, "description": "Read binary file contents from path (1 argument: [path]). Returns bytes."},
+    "fs.writeText": {"arity": 2, "commutativeRead": False, "description": "Invoke Python external operation fs.writeText (2 arguments: [path, text])."},
+    "fs.writeBytes": {"arity": 2, "commutativeRead": False, "description": "Write binary bytes to path (2 arguments: [path, data]). Returns None."},
+    "fs.appendText": {"arity": 2, "commutativeRead": False, "description": "Append UTF-8 text to file at path (2 arguments: [path, text]). Returns None."},
+    "fs.exists": {"arity": 1, "commutativeRead": True, "description": "Check whether filesystem path exists (1 argument: [path]). Returns bool."},
+    "fs.isFile": {"arity": 1, "commutativeRead": True, "description": "Check whether filesystem path is a regular file (1 argument: [path]). Returns bool."},
+    "fs.isDir": {"arity": 1, "commutativeRead": True, "description": "Check whether filesystem path is a directory (1 argument: [path]). Returns bool."},
+    "fs.stat": {"arity": 1, "commutativeRead": True, "description": "Stat filesystem path (1 argument: [path]). Returns {\"isFile\": bool, \"isDirectory\": bool, \"size\": int}."},
+    "fs.listdir": {"arity": 1, "commutativeRead": True, "description": "List entry names in directory path (1 argument: [path]). Returns sorted list of strings."},
+    "fs.readdir": {"arity": 1, "commutativeRead": True, "description": "List entry names in directory path (1 argument: [path]). Returns sorted list of strings."},
+    "fs.mkdir": {"arity": 1, "commutativeRead": False, "description": "Create directory at path (1-2 arguments: [path, options?]). Returns None."},
+    "fs.unlink": {"arity": 1, "commutativeRead": False, "description": "Delete file at path (1 argument: [path]). Returns None."},
+    "fs.remove": {"arity": 1, "commutativeRead": False, "description": "Delete file at path (1 argument: [path]). Returns None."},
+    "fs.rename": {"arity": 2, "commutativeRead": False, "description": "Rename/move path from old_path to new_path (2 arguments: [old_path, new_path]). Returns None."},
+    "fs.copyFile": {"arity": 2, "commutativeRead": False, "description": "Copy file from src to dest (2 arguments: [src, dest]). Returns None."},
+    "env.get": {"arity": 1, "commutativeRead": True, "description": "Read environment variable (1 argument: [key]). Returns string value or None."},
+    "env.has": {"arity": 1, "commutativeRead": True, "description": "Check whether environment variable is set (1 argument: [key]). Returns bool."},
+    "env.keys": {"arity": 0, "commutativeRead": True, "description": "List sorted environment variable names (0 arguments: [])."},
     "shell.exec": {
         "arity": 1,
+        "commutativeRead": False,
         "description": (
             'Execute subprocess command (1 argument: {"args": str | list[str], "shell": bool}). '
             'Returns {"returncode": int, "stdout": str | bytes, "stderr": str | bytes}.'
         ),
     },
-    "http.get": {"arity": 1, "description": "Invoke Python external operation http.get (1 argument)."},
+    "http.get": {"arity": 1, "commutativeRead": True, "description": "Invoke Python external operation http.get (1 argument)."},
     "http.request": {
         "arity": 1,
+        "commutativeRead": False,
         "description": (
             'Invoke Python external HTTP request (1 argument: canonical dict {"method":"GET"|"POST"|...,"url":str,'
             '"headers"?:dict[str,str],"body"?:str|bytes}; omit "headers" if empty and "body" if None). '
             'Returns {"status":int,"url":str,"headers":dict[str,str],"body":str|bytes}.'
         ),
     },
-    "kv_get": {"arity": 1, "description": "Invoke Python external operation kv_get (1 argument)."},
-    "kv_set": {"arity": 2, "description": "Invoke Python external operation kv_set (2 arguments)."},
+    "kv_get": {"arity": 1, "commutativeRead": True, "description": "Invoke Python external operation kv_get (1 argument)."},
+    "kv_set": {"arity": 2, "commutativeRead": False, "description": "Invoke Python external operation kv_set (2 arguments)."},
+    "kv_del": {"arity": 1, "commutativeRead": False, "description": "Delete key from virtual KV store (1 argument: [key]). Returns bool."},
+    "kv_has": {"arity": 1, "commutativeRead": True, "description": "Check whether key exists in virtual KV store (1 argument: [key]). Returns bool."},
+    "kv.get": {"arity": 1, "commutativeRead": True, "description": "Read value for key from virtual KV store (1 argument: [key])."},
+    "kv.set": {"arity": 2, "commutativeRead": False, "description": "Set value for key in virtual KV store (2 arguments: [key, value])."},
+    "kv.delete": {"arity": 1, "commutativeRead": False, "description": "Delete key from virtual KV store (1 argument: [key]). Returns bool."},
+    "kv.has": {"arity": 1, "commutativeRead": True, "description": "Check whether key exists in virtual KV store (1 argument: [key]). Returns bool."},
+    "kv.keys": {"arity": 0, "commutativeRead": True, "description": "List sorted keys in virtual KV store (0 arguments: [])."},
 }
+
+BUILTIN_OPERATIONS: dict[str, dict[str, Any]] = PY_HOST_OPERATIONS
+
+STATEFUL_WORLD_OPERATIONS: frozenset[str] = frozenset({
+    "fs.exists",
+    "fs.isFile",
+    "fs.isDir",
+    "fs.stat",
+    "fs.readdir",
+    "fs.readText",
+    "fs.readBytes",
+    "fs.writeText",
+    "fs.writeBytes",
+    "fs.appendText",
+    "fs.mkdir",
+    "fs.unlink",
+    "fs.rename",
+    "fs.copyFile",
+    "kv.get",
+    "kv.set",
+    "kv.delete",
+    "kv.has",
+    "kv.keys",
+    "env.get",
+    "env.has",
+    "env.keys",
+})
+
+
+def is_stateful_world_operation(op: Any) -> bool:
+    return isinstance(op, str) and canonicalize_operation_name(op) in STATEFUL_WORLD_OPERATIONS
+
+
+def _normalize_virtual_path(raw_path: Any) -> str:
+    _demand(isinstance(raw_path, str) and len(raw_path) > 0, "Virtual path must be a non-empty string")
+    norm = posixpath.normpath(raw_path)
+    if len(norm) > 1 and norm.endswith("/"):
+        norm = norm[:-1]
+    if norm.startswith("./"):
+        norm = norm[2:]
+    return norm or "."
+
+
+def _virtual_parent_dirs(norm_path: str) -> list[str]:
+    parents: list[str] = []
+    cur = norm_path
+    while True:
+        parent = posixpath.dirname(cur)
+        if not parent or parent == cur:
+            break
+        parents.append(parent)
+        cur = parent
+        if parent in ("/", "."):
+            break
+    return parents
+
+
+class StatefulVirtualWorld:
+    """Live in-memory mutable virtual world (fs, kv, env) for stateful rollout grading."""
+
+    def __init__(self, initial_world: dict[str, Any] | None = None) -> None:
+        init = initial_world if isinstance(initial_world, dict) else {}
+        self._files: dict[str, str | bytes] = {}
+        self._dirs: set[str] = {"/", "."}
+        self._kv: dict[str, Any] = {}
+        self._env: dict[str, str] = {}
+
+        fs_init = init.get("fs")
+        if isinstance(fs_init, dict):
+            for raw_path, content in fs_init.items():
+                p = _normalize_virtual_path(raw_path)
+                self._files[p] = content if isinstance(content, (str, bytes)) else copy.deepcopy(content)
+                self._record_ancestors(p)
+
+        kv_init = init.get("kv")
+        if isinstance(kv_init, dict):
+            for k, v in kv_init.items():
+                self._kv[str(k)] = copy.deepcopy(v)
+
+        env_init = init.get("env")
+        if isinstance(env_init, dict):
+            for k, v in env_init.items():
+                if v is not None:
+                    self._env[str(k)] = str(v)
+
+    def _record_ancestors(self, norm_path: str) -> None:
+        for parent in _virtual_parent_dirs(norm_path):
+            self._dirs.add(parent)
+
+    def _is_dir(self, p: str) -> bool:
+        if p in self._files:
+            return False
+        if p in ("/", ".") or p in self._dirs:
+            return True
+        prefix = "/" if p == "/" else ("" if p == "." else p + "/")
+        for key in self._files:
+            if p == "/":
+                if key.startswith("/"):
+                    return True
+            elif p == ".":
+                if not key.startswith("/"):
+                    return True
+            elif key.startswith(prefix):
+                return True
+        if p not in ("/", "."):
+            for d in self._dirs:
+                if d.startswith(prefix):
+                    return True
+        return False
+
+    def execute(self, operation: str, args: list[Any]) -> tuple[str, Any]:
+        _demand(isinstance(args, list), "World call arguments must be a list")
+        op = canonicalize_operation_name(operation)
+
+        if op == "fs.exists":
+            _demand(len(args) == 1 and isinstance(args[0], str), "fs.exists expects [path]")
+            p = _normalize_virtual_path(args[0])
+            return ("fulfilled", p in self._files or self._is_dir(p))
+
+        if op == "fs.isFile":
+            _demand(len(args) == 1 and isinstance(args[0], str), "fs.isFile expects [path]")
+            return ("fulfilled", _normalize_virtual_path(args[0]) in self._files)
+
+        if op == "fs.isDir":
+            _demand(len(args) == 1 and isinstance(args[0], str), "fs.isDir expects [path]")
+            return ("fulfilled", self._is_dir(_normalize_virtual_path(args[0])))
+
+        if op == "fs.stat":
+            _demand(len(args) == 1 and isinstance(args[0], str), "fs.stat expects [path]")
+            p = _normalize_virtual_path(args[0])
+            if p in self._files:
+                val = self._files[p]
+                size = len(val.encode("utf-8")) if isinstance(val, str) else len(val)
+                return ("fulfilled", {"isFile": True, "isDirectory": False, "size": size})
+            if self._is_dir(p):
+                return ("fulfilled", {"isFile": False, "isDirectory": True, "size": 0})
+            return ("rejected", {"name": "FileNotFoundError", "message": f"ENOENT: no such file or directory: '{args[0]}'"})
+
+        if op == "fs.readdir":
+            _demand(len(args) == 1 and isinstance(args[0], str), "fs.readdir expects [path]")
+            p = _normalize_virtual_path(args[0])
+            if p in self._files:
+                return ("rejected", {"name": "NotADirectoryError", "message": f"ENOTDIR: not a directory: '{args[0]}'"})
+            if not self._is_dir(p):
+                return ("rejected", {"name": "FileNotFoundError", "message": f"ENOENT: no such file or directory: '{args[0]}'"})
+            entries: set[str] = set()
+
+            def _collect(key: str) -> None:
+                if p == "/":
+                    if key.startswith("/") and len(key) > 1:
+                        entries.add(key[1:].split("/", 1)[0])
+                elif p == ".":
+                    if not key.startswith("/") and key != ".":
+                        entries.add(key.split("/", 1)[0])
+                elif key.startswith(p + "/"):
+                    entries.add(key[len(p) + 1 :].split("/", 1)[0])
+
+            for k in self._files:
+                _collect(k)
+            for d in self._dirs:
+                _collect(d)
+            return ("fulfilled", sorted(entries))
+
+        if op == "fs.readText":
+            _demand(len(args) == 1 and isinstance(args[0], str), "fs.readText expects [path]")
+            p = _normalize_virtual_path(args[0])
+            if p not in self._files:
+                return ("rejected", {"name": "FileNotFoundError", "message": f"ENOENT: no such file or directory: '{args[0]}'"})
+            val = self._files[p]
+            return ("fulfilled", val if isinstance(val, str) else val.decode("utf-8"))
+
+        if op == "fs.readBytes":
+            _demand(len(args) == 1 and isinstance(args[0], str), "fs.readBytes expects [path]")
+            p = _normalize_virtual_path(args[0])
+            if p not in self._files:
+                return ("rejected", {"name": "FileNotFoundError", "message": f"ENOENT: no such file or directory: '{args[0]}'"})
+            val = self._files[p]
+            return ("fulfilled", val if isinstance(val, bytes) else val.encode("utf-8"))
+
+        if op == "fs.writeText":
+            _demand(len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str), "fs.writeText expects [path, text]")
+            p = _normalize_virtual_path(args[0])
+            self._files[p] = args[1]
+            self._record_ancestors(p)
+            return ("fulfilled", None)
+
+        if op == "fs.writeBytes":
+            _demand(len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], (bytes, bytearray, str)), "fs.writeBytes expects [path, bytes]")
+            p = _normalize_virtual_path(args[0])
+            data = bytes(args[1]) if isinstance(args[1], (bytes, bytearray)) else args[1].encode("utf-8")
+            self._files[p] = data
+            self._record_ancestors(p)
+            return ("fulfilled", None)
+
+        if op == "fs.appendText":
+            _demand(len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str), "fs.appendText expects [path, text]")
+            p = _normalize_virtual_path(args[0])
+            prev_val = self._files.get(p, "")
+            prev_str = prev_val if isinstance(prev_val, str) else prev_val.decode("utf-8")
+            self._files[p] = prev_str + args[1]
+            self._record_ancestors(p)
+            return ("fulfilled", None)
+
+        if op == "fs.mkdir":
+            _demand(len(args) in (1, 2) and isinstance(args[0], str), "fs.mkdir expects [path, options?]")
+            p = _normalize_virtual_path(args[0])
+            if p in self._files:
+                return ("rejected", {"name": "FileExistsError", "message": f"EEXIST: file exists: '{args[0]}'"})
+            opts = args[1] if len(args) == 2 and isinstance(args[1], dict) else {}
+            if opts.get("recursive") is False:
+                parent = posixpath.dirname(p)
+                if parent and parent != p and not self._is_dir(parent):
+                    return ("rejected", {"name": "FileNotFoundError", "message": f"ENOENT: no such file or directory: '{args[0]}'"})
+            self._dirs.add(p)
+            self._record_ancestors(p)
+            return ("fulfilled", None)
+
+        if op == "fs.unlink":
+            _demand(len(args) == 1 and isinstance(args[0], str), "fs.unlink expects [path]")
+            p = _normalize_virtual_path(args[0])
+            if p not in self._files:
+                return ("rejected", {"name": "FileNotFoundError", "message": f"ENOENT: no such file or directory: '{args[0]}'"})
+            del self._files[p]
+            return ("fulfilled", None)
+
+        if op == "fs.rename":
+            _demand(len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str), "fs.rename expects [old_path, new_path]")
+            src = _normalize_virtual_path(args[0])
+            dst = _normalize_virtual_path(args[1])
+            if src in self._files:
+                self._files[dst] = self._files.pop(src)
+                self._record_ancestors(dst)
+                return ("fulfilled", None)
+            if self._is_dir(src) and src not in ("/", "."):
+                prefix = src + "/"
+                moved_files = [(k, v) for k, v in self._files.items() if k.startswith(prefix)]
+                for k, v in moved_files:
+                    del self._files[k]
+                    nk = dst + k[len(src) :]
+                    self._files[nk] = v
+                    self._record_ancestors(nk)
+                moved_dirs = [d for d in self._dirs if d == src or d.startswith(prefix)]
+                for d in moved_dirs:
+                    self._dirs.discard(d)
+                for d in moved_dirs:
+                    nd = dst + d[len(src) :]
+                    self._dirs.add(nd)
+                    self._record_ancestors(nd)
+                self._dirs.add(dst)
+                self._record_ancestors(dst)
+                return ("fulfilled", None)
+            return ("rejected", {"name": "FileNotFoundError", "message": f"ENOENT: no such file or directory: '{args[0]}'"})
+
+        if op == "fs.copyFile":
+            _demand(len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str), "fs.copyFile expects [src, dest]")
+            src = _normalize_virtual_path(args[0])
+            dst = _normalize_virtual_path(args[1])
+            if src not in self._files:
+                return ("rejected", {"name": "FileNotFoundError", "message": f"ENOENT: no such file or directory: '{args[0]}'"})
+            self._files[dst] = copy.deepcopy(self._files[src])
+            self._record_ancestors(dst)
+            return ("fulfilled", None)
+
+        if op == "kv.get":
+            _demand(len(args) == 1 and isinstance(args[0], str), "kv.get expects [key]")
+            return ("fulfilled", copy.deepcopy(self._kv[args[0]]) if args[0] in self._kv else None)
+
+        if op == "kv.set":
+            _demand(len(args) == 2 and isinstance(args[0], str), "kv.set expects [key, value]")
+            self._kv[args[0]] = copy.deepcopy(args[1])
+            return ("fulfilled", None)
+
+        if op == "kv.delete":
+            _demand(len(args) == 1 and isinstance(args[0], str), "kv.delete expects [key]")
+            existed = args[0] in self._kv
+            self._kv.pop(args[0], None)
+            return ("fulfilled", existed)
+
+        if op == "kv.has":
+            _demand(len(args) == 1 and isinstance(args[0], str), "kv.has expects [key]")
+            return ("fulfilled", args[0] in self._kv)
+
+        if op == "kv.keys":
+            _demand(len(args) == 0, "kv.keys expects []")
+            return ("fulfilled", sorted(self._kv.keys()))
+
+        if op == "env.get":
+            _demand(len(args) == 1 and isinstance(args[0], str), "env.get expects [key]")
+            return ("fulfilled", self._env.get(args[0]))
+
+        if op == "env.has":
+            _demand(len(args) == 1 and isinstance(args[0], str), "env.has expects [key]")
+            return ("fulfilled", args[0] in self._env)
+
+        if op == "env.keys":
+            _demand(len(args) == 0, "env.keys expects []")
+            return ("fulfilled", sorted(self._env.keys()))
+
+        raise TypeError(f"Unsupported stateful world operation {operation}")
+
+    def snapshot(self) -> dict[str, dict[str, Any]]:
+        return {
+            "fs": {k: copy.deepcopy(self._files[k]) for k in sorted(self._files)},
+            "kv": {k: copy.deepcopy(self._kv[k]) for k in sorted(self._kv)},
+            "env": {k: self._env[k] for k in sorted(self._env)},
+        }
+
+    def matches_expected_final_world(self, expected_final_world: dict[str, Any] | None) -> bool:
+        if expected_final_world is None:
+            return True
+        if "fs" in expected_final_world and expected_final_world["fs"] is not None:
+            exp_fs_raw = expected_final_world["fs"]
+            if not isinstance(exp_fs_raw, dict):
+                return False
+            exp_fs = {_normalize_virtual_path(k): v for k, v in exp_fs_raw.items()}
+            if set(self._files.keys()) != set(exp_fs.keys()):
+                return False
+            for k, exp_v in exp_fs.items():
+                if type(self._files[k]) is not type(exp_v) or self._files[k] != exp_v:
+                    return False
+        if "kv" in expected_final_world and expected_final_world["kv"] is not None:
+            exp_kv = expected_final_world["kv"]
+            if not isinstance(exp_kv, dict):
+                return False
+            if set(self._kv.keys()) != set(exp_kv.keys()):
+                return False
+            for k, exp_v in exp_kv.items():
+                if describe_graph([self._kv[k]]) != describe_graph([exp_v]):
+                    return False
+        return True
+
 
 SYSTEM_PROMPT = """Execute the supplied Python program directly and accurately.
 - Never invoke undeclared tools or attempt to run the program via an external shell or interpreter.
@@ -97,13 +490,31 @@ SYSTEM_PROMPT = """Execute the supplied Python program directly and accurately.
 - Final "arguments" must reflect all input mutations and aliases. Standard exceptions use {"name":"ValueError","message":"..."}.
 - Special Python values: {"$py":"NaN"|"-0"|"Infinity"|"-Infinity"}, {"$py":"tuple","items":[...]}, {"$py":"set","items":[...]}, {"$py":"frozenset","items":[...]}, {"$py":"bytes","b64":"..."}, {"$py":"complex","real":...,"imag":...}, {"$py":"decimal","value":"..."}, {"$py":"datetime","iso":"..."}, {"$py":"date","iso":"..."}, {"$py":"timedelta","days":...,"seconds":...,"microseconds":...}, {"$py":"path","value":"..."}, {"$py":"enum","class":"...","name":"...","value":...}, {"$py":"object","class":"...","attrs":{...}}, {"$py":"dict","entries":[[k,v],...]} for non-string or $py-keyed dicts, {"$py":"ref","path":"/arguments/0"} (paths rooted at {arguments,value} for completions or at the arguments array for tool calls)."""
 
+CLI_SYSTEM_PROMPT = """Execute the supplied Python CLI command directly and accurately.
+- Never invoke undeclared tools or attempt to run the program via an external shell or interpreter.
+- When execution finishes, end with one JSON completion in a ```json code fence (or bare JSON):
+  {"kind":"cli","exitCode":0,"stdout":"...","stderr":"..."}
+  ({"type":"complete","kind":"cli","exitCode":0,"stdout":"...","stderr":"..."} is also accepted.)
+- Report the exact integer exitCode, exact stdout string, and exact stderr string produced by running the command with the given argv and stdin."""
 
-def _build_system_prompt(operations: list[str], *, multifile: bool = False) -> str:
+
+def _build_system_prompt(
+    operations: list[str],
+    *,
+    multifile: bool = False,
+    execution_kind: str = "function",
+    world_mode: str = "scripted",
+) -> str:
+    base_prompt = CLI_SYSTEM_PROMPT if execution_kind == "cli" else SYSTEM_PROMPT
     extra: list[str] = []
     if operations:
         extra.append(
             '- Only invoke tools explicitly declared in tool_declare with {"arguments":[...]} in exact execution order '
             "for external calls made by the program; never invent observations."
+        )
+    if world_mode == "stateful":
+        extra.append(
+            "- Stateful virtual world mode: fs.*, kv.*, and env.* operations execute live against the mutable virtual world and reflect prior mutations."
         )
     io_hints: list[str] = []
     if any(op.startswith("fs.") for op in operations):
@@ -139,7 +550,7 @@ def _build_system_prompt(operations: list[str], *, multifile: bool = False) -> s
             '{"arguments":[{"path":"...","start_line":N,"end_line":M}]} whenever you need code from another file; '
             "you may batch multiple requests."
         )
-    return SYSTEM_PROMPT + ("\n" + "\n".join(extra) if extra else "")
+    return base_prompt + ("\n" + "\n".join(extra) if extra else "")
 
 
 MULTIFILE_SYSTEM_PROMPT = _build_system_prompt([CODE_LOAD_OPERATION], multifile=True)
@@ -631,7 +1042,7 @@ def _tool_declaration(operation: str, native_bindings: list[dict[str, Any]]) -> 
             },
         }
     binding = next((b for b in native_bindings if b["name"] == operation), None)
-    spec = PY_HOST_OPERATIONS.get(operation)
+    spec = PY_HOST_OPERATIONS.get(operation) or PY_HOST_OPERATIONS.get(canonicalize_operation_name(operation))
     description = (
         binding.get("description")
         if binding and binding.get("description")
@@ -656,13 +1067,48 @@ def _tool_declaration(operation: str, native_bindings: list[dict[str, Any]]) -> 
     }
 
 
+def _stateful_world_tools(prepared: dict[str, Any]) -> set[str]:
+    tools: set[str] = set()
+    world_mode = prepared.get("worldMode") or (prepared.get("task") or {}).get("worldMode") or "scripted"
+    if world_mode == "stateful":
+        iw = prepared.get("initialWorld") or (prepared.get("task") or {}).get("initialWorld") or {}
+        ew = prepared.get("expectedFinalWorld") or (prepared.get("task") or {}).get("expectedFinalWorld") or {}
+        if "fs" in iw or "fs" in ew:
+            tools.update((
+                "fs.exists",
+                "fs.isFile",
+                "fs.isDir",
+                "fs.stat",
+                "fs.readdir",
+                "fs.readText",
+                "fs.writeText",
+                "fs.appendText",
+                "fs.mkdir",
+                "fs.unlink",
+                "fs.rename",
+                "fs.copyFile",
+            ))
+        if "kv" in iw or "kv" in ew:
+            tools.update(("kv.get", "kv.set", "kv.delete", "kv.has", "kv.keys"))
+        if "env" in iw:
+            tools.update(("env.get", "env.has", "env.keys"))
+    declared = prepared.get("declaredTools")
+    if isinstance(declared, list):
+        tools.update(t for t in declared if isinstance(t, str) and t)
+    return tools
+
+
 def initial_messages(prepared: dict[str, Any]) -> list[dict[str, Any]]:
     """Build initial public messages (system, optional tool_declare, user)."""
+    execution_kind = prepared.get("executionKind") or (prepared.get("task") or {}).get("executionKind") or "function"
+    world_mode = prepared.get("worldMode") or (prepared.get("task") or {}).get("worldMode") or "scripted"
+    extra_tools = _stateful_world_tools(prepared)
+
     if is_multifile_task(prepared):
         files = prepared["files"]
         entry_file = prepared["entryFile"]
         loaded_files = prepared.get("initialLoadedFiles") or [entry_file]
-        op_set: set[str] = {CODE_LOAD_OPERATION}
+        op_set: set[str] = {CODE_LOAD_OPERATION} | extra_tools
         uses_random = False
         for src in files.values():
             try:
@@ -678,7 +1124,7 @@ def initial_messages(prepared: dict[str, Any]) -> list[dict[str, Any]]:
         operations = sorted(op_set)
         manifest = render_repo_manifest(files, entry_file, loaded_files)
         parts = [
-            "Execute this multi-file Python repository:",
+            "Execute this multi-file Python CLI repository:" if execution_kind == "cli" else "Execute this multi-file Python repository:",
             manifest,
             f"Loaded entry file ({entry_file}):",
             "```python\n" + files[entry_file] + "\n```",
@@ -687,27 +1133,53 @@ def initial_messages(prepared: dict[str, Any]) -> list[dict[str, Any]]:
             if extra_path != entry_file and extra_path in files:
                 parts.append(f"Loaded file ({extra_path}):")
                 parts.append("```python\n" + files[extra_path] + "\n```")
-        parts.append(
-            "Entry: "
-            + prepared["entry"]
-            + " in "
-            + entry_file
-            + " with arguments "
-            + _json_compact(encode_readable(prepared["args"]))
+        if execution_kind == "cli":
+            parts.append("Command argv: " + _json_compact(prepared.get("argv") or []))
+            parts.append("Stdin: " + _json_compact(prepared.get("stdin") or ""))
+        else:
+            parts.append(
+                "Entry: "
+                + prepared["entry"]
+                + " in "
+                + entry_file
+                + " with arguments "
+                + _json_compact(encode_readable(prepared["args"]))
+            )
+        system_prompt = _build_system_prompt(
+            operations,
+            multifile=True,
+            execution_kind=execution_kind,
+            world_mode=world_mode,
         )
-        system_prompt = _build_system_prompt(operations, multifile=True)
     else:
-        operations, uses_random = _scan_public_source_tools(
-            prepared["source"],
-            prepared["randomMode"],
-            prepared["nativeBindings"],
+        try:
+            scanned_ops, uses_random = _scan_public_source_tools(
+                prepared["source"],
+                prepared["randomMode"],
+                prepared["nativeBindings"],
+            )
+        except SyntaxError:
+            scanned_ops, uses_random = [b["name"] for b in prepared["nativeBindings"]], False
+        operations = sorted(set(scanned_ops) | extra_tools)
+        if execution_kind == "cli":
+            parts = [
+                "Execute this Python CLI program:",
+                "```python\n" + prepared["source"] + "\n```",
+                "Command argv: " + _json_compact(prepared.get("argv") or []),
+                "Stdin: " + _json_compact(prepared.get("stdin") or ""),
+            ]
+        else:
+            parts = [
+                "Execute this Python program:",
+                "```python\n" + prepared["source"] + "\n```",
+                "Entry: " + prepared["entry"] + " with arguments " + _json_compact(encode_readable(prepared["args"])),
+            ]
+        system_prompt = _build_system_prompt(
+            operations,
+            multifile=False,
+            execution_kind=execution_kind,
+            world_mode=world_mode,
         )
-        parts = [
-            "Execute this Python program:",
-            "```python\n" + prepared["source"] + "\n```",
-            "Entry: " + prepared["entry"] + " with arguments " + _json_compact(encode_readable(prepared["args"])),
-        ]
-        system_prompt = _build_system_prompt(operations, multifile=False)
 
     if uses_random:
         if prepared["randomMode"] == "tool":
@@ -725,12 +1197,86 @@ def initial_messages(prepared: dict[str, Any]) -> list[dict[str, Any]]:
     return messages
 
 
+def _normalize_world_spec(raw: Any, *, allow_env: bool = True) -> dict[str, Any] | None:
+    if raw is None:
+        return None
+    _demand(isinstance(raw, dict), "World spec must be a dict")
+    out: dict[str, Any] = {}
+    if "fs" in raw and raw["fs"] is not None:
+        _demand(isinstance(raw["fs"], dict), "World fs must be a dict")
+        out["fs"] = {
+            _normalize_virtual_path(k): (v if isinstance(v, (str, bytes)) else decode_readable(v))
+            for k, v in raw["fs"].items()
+        }
+    if "kv" in raw and raw["kv"] is not None:
+        _demand(isinstance(raw["kv"], dict), "World kv must be a dict")
+        out["kv"] = {str(k): decode_readable(v) for k, v in raw["kv"].items()}
+    if allow_env and "env" in raw and raw["env"] is not None:
+        _demand(isinstance(raw["env"], dict), "World env must be a dict")
+        out["env"] = {str(k): str(v) for k, v in raw["env"].items() if v is not None}
+    return out
+
+
+def _encode_world_spec(world: dict[str, Any] | None) -> dict[str, Any] | None:
+    if world is None:
+        return None
+    out: dict[str, Any] = {}
+    if "fs" in world:
+        out["fs"] = {k: encode_readable(v) for k, v in world["fs"].items()}
+    if "kv" in world:
+        out["kv"] = {k: encode_readable(v) for k, v in world["kv"].items()}
+    if "env" in world:
+        out["env"] = dict(world["env"])
+    return out
+
+
 def normalize_python_task(input_task: dict[str, Any]) -> dict[str, Any]:
     _demand(isinstance(input_task, dict), "Task must be a dict")
     task_id = input_task.get("id")
     family = input_task.get("family")
     _demand(isinstance(task_id, str) and 0 < len(task_id) <= 256, "Task id required")
     _demand(isinstance(family, str) and len(family) > 0, "Source family required")
+
+    execution_kind = input_task.get("executionKind", "function")
+    _demand(execution_kind in ("function", "cli"), "executionKind must be function or cli")
+    world_mode = input_task.get("worldMode", "scripted")
+    _demand(world_mode in ("scripted", "stateful"), "worldMode must be scripted or stateful")
+
+    initial_world = _normalize_world_spec(input_task.get("initialWorld"), allow_env=True)
+    expected_final_world = _normalize_world_spec(input_task.get("expectedFinalWorld"), allow_env=False)
+    declared_tools_raw = input_task.get("declaredTools")
+    declared_tools: list[str] | None = None
+    if declared_tools_raw is not None:
+        _demand(
+            isinstance(declared_tools_raw, list) and all(isinstance(t, str) and len(t) > 0 for t in declared_tools_raw),
+            "declaredTools must be a list of non-empty strings",
+        )
+        declared_tools = list(declared_tools_raw)
+
+    argv: list[str] | None = None
+    stdin: str = ""
+    expected_cli: dict[str, Any] | None = None
+    if execution_kind == "cli":
+        argv_raw = input_task.get("argv", [])
+        _demand(
+            isinstance(argv_raw, list) and len(argv_raw) <= 256 and all(isinstance(a, str) for a in argv_raw),
+            "CLI argv must be a list of strings",
+        )
+        argv = list(argv_raw)
+        stdin = input_task.get("stdin", "")
+        _demand(isinstance(stdin, str), "CLI stdin must be a string")
+        exp_cli_raw = input_task.get("expectedCli")
+        if exp_cli_raw is not None:
+            _demand(isinstance(exp_cli_raw, dict), "expectedCli must be a dict")
+            exit_code = exp_cli_raw.get("exitCode", 0)
+            stdout_str = exp_cli_raw.get("stdout", "")
+            stderr_str = exp_cli_raw.get("stderr", "")
+            _demand(isinstance(exit_code, int) and not isinstance(exit_code, bool), "expectedCli.exitCode must be an int")
+            _demand(isinstance(stdout_str, str), "expectedCli.stdout must be a str")
+            _demand(isinstance(stderr_str, str), "expectedCli.stderr must be a str")
+            expected_cli = {"exitCode": exit_code, "stdout": stdout_str, "stderr": stderr_str}
+        else:
+            expected_cli = {"exitCode": 0, "stdout": "", "stderr": ""}
 
     multifile = is_multifile_task(input_task)
     norm_files: dict[str, str] | None = None
@@ -750,7 +1296,7 @@ def normalize_python_task(input_task: dict[str, Any]) -> dict[str, Any]:
         source = input_task.get("source")
         _demand(isinstance(source, str) and 0 < len(source) <= 262144, "Bounded source required")
 
-    entry = input_task.get("entry", "run")
+    entry = input_task.get("entry", "main" if execution_kind == "cli" else "run")
     _demand(isinstance(entry, str) and entry.isidentifier(), "Entry must be a valid Python identifier")
 
     language = input_task.get("language", "py")
@@ -758,6 +1304,15 @@ def normalize_python_task(input_task: dict[str, Any]) -> dict[str, Any]:
 
     args = decode_readable(input_task.get("args", []))
     _demand(isinstance(args, list) and len(args) <= 32, "At most 32 input arguments are supported")
+
+    expected_outcome: dict[str, Any] | None = None
+    if input_task.get("expectedOutcome") is not None:
+        eo = input_task["expectedOutcome"]
+        _demand(isinstance(eo, dict) and eo.get("kind") in ("return", "throw"), "Invalid expectedOutcome")
+        eo_args = decode_readable(eo["arguments"]) if "arguments" in eo else copy.deepcopy(args)
+        _demand(isinstance(eo_args, list) and len(eo_args) == len(args), "expectedOutcome.arguments arity mismatch")
+        eo_val = decode_readable(eo.get("value"))
+        expected_outcome = {"kind": eo["kind"], "graph": describe_graph([*eo_args, eo_val])}
 
     random_mode = input_task.get("randomMode", "seeded")
     _demand(random_mode in ("seeded", "tool"), "randomMode must be seeded or tool")
@@ -819,7 +1374,13 @@ def normalize_python_task(input_task: dict[str, Any]) -> dict[str, Any]:
         assert norm_files is not None and norm_entry_file is not None and norm_initial_loaded is not None
         source_hash = normalized_multifile_source_hash(norm_files, norm_entry_file)
     else:
-        source_hash = normalized_py_source_hash(source)
+        try:
+            source_hash = normalized_py_source_hash(source)
+        except SyntaxError:
+            if execution_kind == "cli":
+                source_hash = _sha256(source)
+            else:
+                raise
 
     normalized_fixture_calls = [
         {
@@ -845,6 +1406,19 @@ def normalize_python_task(input_task: dict[str, Any]) -> dict[str, Any]:
         "maxSteps": max_steps,
         "timeoutMs": timeout_ms,
     }
+    if execution_kind != "function":
+        canonical_task["executionKind"] = execution_kind
+        canonical_task["argv"] = argv
+        canonical_task["stdin"] = stdin
+        canonical_task["expectedCli"] = expected_cli
+    if world_mode != "scripted":
+        canonical_task["worldMode"] = world_mode
+    if initial_world is not None:
+        canonical_task["initialWorld"] = _encode_world_spec(initial_world)
+    if expected_final_world is not None:
+        canonical_task["expectedFinalWorld"] = _encode_world_spec(expected_final_world)
+    if declared_tools is not None:
+        canonical_task["declaredTools"] = declared_tools
     if random_mode != "seeded":
         canonical_task["randomMode"] = random_mode
     if multifile:
@@ -863,12 +1437,26 @@ def normalize_python_task(input_task: dict[str, Any]) -> dict[str, Any]:
         "args": args,
         "fixture": {"calls": decoded_calls},
         "nativeBindings": native_bindings,
+        "executionKind": execution_kind,
+        "worldMode": world_mode,
         "randomMode": random_mode,
         "randomSeed": random_seed,
         "maxSteps": max_steps,
         "timeoutMs": timeout_ms,
         "task": canonical_task,
     }
+    if execution_kind == "cli":
+        normalized_result["argv"] = argv
+        normalized_result["stdin"] = stdin
+        normalized_result["expectedCli"] = expected_cli
+    if initial_world is not None:
+        normalized_result["initialWorld"] = initial_world
+    if expected_final_world is not None:
+        normalized_result["expectedFinalWorld"] = expected_final_world
+    if declared_tools is not None:
+        normalized_result["declaredTools"] = declared_tools
+    if expected_outcome is not None:
+        normalized_result["expectedOutcome"] = expected_outcome
     if multifile:
         assert norm_files is not None and norm_entry_file is not None and norm_initial_loaded is not None
         normalized_result["files"] = norm_files
@@ -921,10 +1509,53 @@ def _invoke_reference_worker(prepared: dict[str, Any], *, trace: bool) -> dict[s
     return result
 
 
+def _synthetic_fixture_effects(fixture_calls: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    effects: list[dict[str, Any]] = []
+    for idx, c in enumerate(fixture_calls):
+        effects.append({
+            "kind": "dispatch",
+            "call": idx,
+            "operation": c["operation"],
+            "arguments": c["argumentGraph"],
+        })
+        effects.append({
+            "kind": "settlement",
+            "call": idx,
+            "operation": c["operation"],
+            "status": c["status"],
+            "result": describe_graph([c["result"]], allow_exceptions=True),
+        })
+    return effects
+
+
 def prepare_python_task(input_task: dict[str, Any], *, trace_format: str = "compact") -> dict[str, Any]:
     """Execute Python task in isolated worker with optional sys.settrace compact tracing."""
     fmt = _validate_trace_format(trace_format)
     prepared = normalize_python_task(input_task)
+    if prepared.get("executionKind") == "cli":
+        exp_cli = prepared["expectedCli"]
+        result = {
+            **prepared,
+            "outcome": {
+                "kind": "cli",
+                "exitCode": exp_cli["exitCode"],
+                "stdout": exp_cli["stdout"],
+                "stderr": exp_cli["stderr"],
+            },
+            "effects": _synthetic_fixture_effects(prepared["fixture"]["calls"]),
+            "traceTurns": None,
+        }
+        readable_messages_from_python(result, trace_format=fmt)
+        return result
+    if prepared.get("worldMode") == "stateful" and prepared.get("expectedOutcome") is not None:
+        result = {
+            **prepared,
+            "outcome": prepared["expectedOutcome"],
+            "effects": _synthetic_fixture_effects(prepared["fixture"]["calls"]),
+            "traceTurns": None,
+        }
+        readable_messages_from_python(result, trace_format=fmt)
+        return result
     want_trace = fmt != "actions-only"
     if want_trace:
         try:
@@ -1035,22 +1666,26 @@ def readable_messages_from_python(
         settled_val = realize_graph(settlement["result"])[0]
         messages.append(_observation(receipt["operation"], settlement["status"], settled_val, call_id))
 
-    roots = realize_graph(prepared["outcome"]["graph"])
-    value = roots.pop()
-    completion = encode_readable({"arguments": roots, "value": value})
     final_turn = turns[len(dispatches)] if turns is not None and len(dispatches) < len(turns) else []
-    messages.append(
-        _assistant_message(
-            {
-                "type": "complete",
-                "kind": prepared["outcome"]["kind"],
-                "arguments": completion["arguments"],
-                "value": completion["value"],
-            },
-            final_turn,
-            channel,
-        )
-    )
+    if prepared["outcome"].get("kind") == "cli":
+        completion_action: dict[str, Any] = {
+            "type": "complete",
+            "kind": "cli",
+            "exitCode": prepared["outcome"]["exitCode"],
+            "stdout": prepared["outcome"]["stdout"],
+            "stderr": prepared["outcome"]["stderr"],
+        }
+    else:
+        roots = realize_graph(prepared["outcome"]["graph"])
+        value = roots.pop()
+        completion = encode_readable({"arguments": roots, "value": value})
+        completion_action = {
+            "type": "complete",
+            "kind": prepared["outcome"]["kind"],
+            "arguments": completion["arguments"],
+            "value": completion["value"],
+        }
+    messages.append(_assistant_message(completion_action, final_turn, channel))
     return messages
 
 
@@ -1061,6 +1696,25 @@ def _validate_action_object(action: Any) -> dict[str, Any]:
         fields = ",".join(sorted(action.keys()))
         _demand(fields == "arguments,operation,type" and isinstance(action.get("operation"), str), "Invalid external call action")
         return action
+    if (action_type == "complete" or "type" not in action) and action.get("kind") == "cli":
+        keys = ",".join(sorted(action.keys()))
+        allowed = keys in ("exitCode,kind,stderr,stdout,type", "exitCode,kind,stderr,stdout")
+        exit_code = action.get("exitCode")
+        _demand(
+            allowed
+            and isinstance(exit_code, int)
+            and not isinstance(exit_code, bool)
+            and isinstance(action.get("stdout"), str)
+            and isinstance(action.get("stderr"), str),
+            "Invalid CLI completion action",
+        )
+        return {
+            "type": "complete",
+            "kind": "cli",
+            "exitCode": exit_code,
+            "stdout": action["stdout"],
+            "stderr": action["stderr"],
+        }
     if action_type == "complete":
         keys = ",".join(sorted(action.keys()))
         allowed = keys in ("arguments,kind,type,value", "kind,type,value")
@@ -1122,7 +1776,7 @@ def parse_student_action(input_val: Any) -> dict[str, Any]:
     for match in fenced:
         try:
             parsed = json.loads(match.group(1).strip())
-            if isinstance(parsed, dict) and isinstance(parsed.get("type"), str):
+            if isinstance(parsed, dict) and (isinstance(parsed.get("type"), str) or parsed.get("kind") == "cli"):
                 action_fences.append((match, parsed))
         except Exception:
             pass
@@ -1253,24 +1907,118 @@ def is_commutative_read_call(operation: Any, args: Any = None) -> bool:
     """
     if not isinstance(operation, str):
         return False
-    if operation in _PURE_COMMUTATIVE_READ_OPS:
+    canon = canonicalize_operation_name(operation)
+    if canon in _PURE_COMMUTATIVE_READ_OPS:
         return True
-    if operation in _HTTP_METHOD_CHECKED_OPS:
+    if canon in _HTTP_METHOD_CHECKED_OPS:
         method = _extract_http_request_method(args if args is not None else [])
         return method is not None and method in _READ_ONLY_HTTP_METHODS
-    if operation == "sqlite3.query":
+    if canon == "sqlite3.query":
         return _is_read_only_sqlite_select(args if args is not None else [])
     return False
 
 
-def _external_effects_only(effects: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Filter out read-only `code.load` effects and renumber remaining external effect IDs."""
+_ALLOWED_HTTP_REQUEST_KEYS: frozenset[str] = frozenset({"url", "method", "headers", "body"})
+
+
+def _normalize_http_headers_arg(value: Any) -> dict[str, Any] | None:
+    if value is None or value == "":
+        return {}
+    if isinstance(value, str):
+        trimmed = value.strip()
+        if not trimmed:
+            return {}
+        if trimmed.startswith("{") and trimmed.endswith("}"):
+            try:
+                parsed = json.loads(trimmed)
+                if isinstance(parsed, dict):
+                    return parsed
+            except Exception:
+                return None
+        return None
+    if isinstance(value, dict):
+        return value
+    return None
+
+
+def _normalize_http_body_arg(value: Any) -> Any:
+    return "" if value is None else value
+
+
+def canonicalize_http_request_args(args: Any) -> dict[str, Any] | None:
+    """Canonicalize http.request arguments across single-dict and 4-positional forms."""
+    if not isinstance(args, list):
+        return None
+    if len(args) == 1 and isinstance(args[0], dict):
+        req = args[0]
+        if any(k not in _ALLOWED_HTTP_REQUEST_KEYS for k in req):
+            return None
+        url = req.get("url")
+        if not isinstance(url, str):
+            return None
+        raw_method = req.get("method")
+        if raw_method is None:
+            method = "GET"
+        elif isinstance(raw_method, str):
+            method = raw_method.strip().upper()
+            if not method:
+                return None
+        else:
+            return None
+        headers = _normalize_http_headers_arg(req.get("headers"))
+        if headers is None:
+            return None
+        body = _normalize_http_body_arg(req.get("body"))
+        return {"url": url, "method": method, "headers": headers, "body": body}
+    if len(args) == 4 and isinstance(args[0], str):
+        raw_method = args[1]
+        if raw_method is None:
+            method = "GET"
+        elif isinstance(raw_method, str):
+            method = raw_method.strip().upper()
+            if not method:
+                return None
+        else:
+            return None
+        headers = _normalize_http_headers_arg(args[2])
+        if headers is None:
+            return None
+        body = _normalize_http_body_arg(args[3])
+        return {"url": args[0], "method": method, "headers": headers, "body": body}
+    return None
+
+
+def _expected_arguments_match(
+    operation: str,
+    call_args: list[Any],
+    actual_arg_graph: dict[str, Any],
+    candidate: dict[str, Any],
+) -> bool:
+    if actual_arg_graph == candidate["argumentGraph"]:
+        return True
+    canon_op = canonicalize_operation_name(operation)
+    if canon_op in ("http.request", "browser.fetch"):
+        expected_args = candidate["arguments"] if "arguments" in candidate else realize_graph(candidate["argumentGraph"])
+        actual_canon = canonicalize_http_request_args(call_args)
+        expected_canon = canonicalize_http_request_args(expected_args)
+        if actual_canon is not None and expected_canon is not None:
+            return describe_graph([actual_canon]) == describe_graph([expected_canon])
+    return False
+
+
+def _external_effects_only(effects: list[dict[str, Any]], *, exclude_world: bool = False) -> list[dict[str, Any]]:
+    """Filter out read-only `code.load` (and optionally stateful world) effects and renumber call IDs."""
+    skipped_call_ids: set[int] = set()
+    for eff in effects:
+        op = eff.get("operation")
+        if op == CODE_LOAD_OPERATION or (exclude_world and is_stateful_world_operation(op)):
+            skipped_call_ids.add(eff["call"])
     id_map: dict[int, int] = {}
     out: list[dict[str, Any]] = []
     for eff in effects:
-        if eff.get("operation") == CODE_LOAD_OPERATION:
-            continue
         orig_id = eff["call"]
+        if orig_id in skipped_call_ids:
+            continue
         if orig_id not in id_map:
             id_map[orig_id] = len(id_map)
         out.append({**eff, "call": id_map[orig_id]})
@@ -1282,10 +2030,25 @@ class PythonExecutionSession:
 
     Independent pure reads within the current causal epoch (before the next barrier)
     may execute in any order, while barriers and cross-epoch ordering remain strict.
+    Supports opt-in live stateful virtual world mode (`worldMode: "stateful"`)
+    and first-class CLI execution mode (`executionKind: "cli"`).
     """
 
     def __init__(self, prepared: dict[str, Any]) -> None:
         self._prepared = prepared
+        self._execution_kind: str = prepared.get("executionKind") or (prepared.get("task") or {}).get("executionKind") or "function"
+        self._world_mode: str = prepared.get("worldMode") or (prepared.get("task") or {}).get("worldMode") or "scripted"
+        self._is_stateful = self._world_mode == "stateful"
+        self._world: StatefulVirtualWorld | None = (
+            StatefulVirtualWorld(prepared.get("initialWorld") or (prepared.get("task") or {}).get("initialWorld") or {})
+            if self._is_stateful
+            else None
+        )
+        self._expected_final_world: dict[str, Any] | None = (
+            prepared.get("expectedFinalWorld") or (prepared.get("task") or {}).get("expectedFinalWorld")
+            if self._is_stateful
+            else None
+        )
         self.messages = initial_messages(prepared)
         self._done = False
         self._completed = False
@@ -1294,19 +2057,25 @@ class PythonExecutionSession:
         self._failure_category: str | None = "incomplete"
         self._generated_tokens = 0
         self._calls = 0
+        self._world_calls = 0
         self._total_tool_calls = 0
         self._code_load_calls = 0
         self._code_load_bytes = 0
         self._turns = 0
-        fixture_calls = prepared["fixture"]["calls"]
+        raw_fixture_calls = prepared["fixture"]["calls"]
+        self._fixture_calls: list[dict[str, Any]] = (
+            [c for c in raw_fixture_calls if not is_stateful_world_operation(c["operation"])]
+            if self._is_stateful
+            else list(raw_fixture_calls)
+        )
         self._expected_is_read: list[bool] = [
             is_commutative_read_call(
                 c["operation"],
                 c["arguments"] if "arguments" in c else realize_graph(c["argumentGraph"]),
             )
-            for c in fixture_calls
+            for c in self._fixture_calls
         ]
-        self._consumed: list[bool] = [False] * len(fixture_calls)
+        self._consumed: list[bool] = [False] * len(self._fixture_calls)
         self._epoch_start = 0
         self._recorded_by_index: dict[int, tuple[dict[str, Any], dict[str, Any]]] = {}
         max_turns = prepared["task"].get("maxTurns", 256)
@@ -1322,13 +2091,14 @@ class PythonExecutionSession:
         args: list[Any],
         actual_arg_graph: dict[str, Any],
     ) -> int:
-        fixture_calls = self._prepared["fixture"]["calls"]
+        fixture_calls = self._fixture_calls
         total = len(fixture_calls)
         if self._epoch_start >= total:
             return -1
+        canon_op = canonicalize_operation_name(operation)
         if self._expected_is_read[self._epoch_start]:
             # Unconsumed pure reads remain in the current epoch: barrier calls cannot bypass them.
-            if not is_commutative_read_call(operation, args):
+            if not is_commutative_read_call(canon_op, args):
                 return -1
             epoch_end = self._epoch_start
             while epoch_end < total and self._expected_is_read[epoch_end]:
@@ -1338,11 +2108,15 @@ class PythonExecutionSession:
                 if self._consumed[idx]:
                     continue
                 cand = fixture_calls[idx]
-                if cand["operation"] == operation and actual_arg_graph == cand["argumentGraph"]:
+                if canonicalize_operation_name(cand["operation"]) == canon_op and _expected_arguments_match(
+                    canon_op, args, actual_arg_graph, cand
+                ):
                     return idx
             return -1
         barrier = fixture_calls[self._epoch_start]
-        if barrier["operation"] == operation and actual_arg_graph == barrier["argumentGraph"]:
+        if canonicalize_operation_name(barrier["operation"]) == canon_op and _expected_arguments_match(
+            canon_op, args, actual_arg_graph, barrier
+        ):
             return self._epoch_start
         return -1
 
@@ -1357,8 +2131,8 @@ class PythonExecutionSession:
         if total is not None:
             self._count(total)
         ok = self._done and self._success
-        expected_external_calls = len(self._prepared["fixture"]["calls"])
-        return {
+        expected_external_calls = len(self._fixture_calls)
+        result: dict[str, Any] = {
             "success": ok,
             "reward": (1.0 / (1.0 + self._generated_tokens / 1000.0)) if ok else 0.0,
             "reason": self._reason,
@@ -1373,6 +2147,10 @@ class PythonExecutionSession:
             "codeLoadBytes": self._code_load_bytes,
             "complete": self._completed,
         }
+        if self._is_stateful and self._world is not None:
+            result["worldCalls"] = self._world_calls
+            result["finalWorld"] = self._world.snapshot()
+        return result
 
     def _reject(self, why: str, category: str | None = None) -> dict[str, Any]:
         self._done = True
@@ -1395,29 +2173,17 @@ class PythonExecutionSession:
         except Exception:
             return self._reject("invalid-action", "malformed-action")
 
-        fixture_calls = self._prepared["fixture"]["calls"]
+        fixture_calls = self._fixture_calls
 
         if action["type"] == "complete":
             try:
-                result = decode_readable({"arguments": action["arguments"], "value": action["value"]})
-                _demand(
-                    isinstance(result["arguments"], list)
-                    and len(result["arguments"]) == len(self._prepared["args"]),
-                    "Input argument arity changed",
-                )
-                actual = {
-                    "kind": action["kind"],
-                    "graph": describe_graph([*result["arguments"], result["value"]]),
-                }
                 if self._calls != len(fixture_calls) or self._epoch_start != len(fixture_calls):
                     return self._reject("incomplete-or-invalid-completion", "missing-external-effects")
 
-                expected_outcome = self._prepared["outcome"]
-                expected_outcome_cmp = {
-                    "kind": expected_outcome["kind"],
-                    "graph": expected_outcome["graph"],
-                }
-                expected_ext_effects = _external_effects_only(self._prepared["effects"])
+                expected_ext_effects = _external_effects_only(
+                    self._prepared.get("effects") or [],
+                    exclude_world=self._is_stateful,
+                )
                 expected_dispatches = sorted(
                     (e for e in expected_ext_effects if e.get("kind") == "dispatch"),
                     key=lambda e: e["call"],
@@ -1433,10 +2199,82 @@ class PythonExecutionSession:
                     and recorded_dispatches == expected_dispatches
                     and recorded_settlements == expected_settlements
                 )
+                world_state_ok = (
+                    True
+                    if not self._is_stateful or self._world is None
+                    else self._world.matches_expected_final_world(self._expected_final_world)
+                )
+
+                if self._execution_kind == "cli":
+                    self._completed = True
+                    self._done = True
+                    exp_cli = self._prepared.get("expectedCli") or self._prepared.get("outcome") or {
+                        "exitCode": 0,
+                        "stdout": "",
+                        "stderr": "",
+                    }
+                    if action["kind"] != "cli":
+                        self._success = False
+                        self._reason = "outcome-mismatch"
+                        self._failure_category = "wrong-completion-kind"
+                    elif action["exitCode"] != exp_cli["exitCode"]:
+                        self._success = False
+                        self._reason = "outcome-mismatch"
+                        self._failure_category = "wrong-exit-code"
+                    elif action["stdout"] != exp_cli["stdout"]:
+                        self._success = False
+                        self._reason = "outcome-mismatch"
+                        self._failure_category = "wrong-stdout"
+                    elif action["stderr"] != exp_cli["stderr"]:
+                        self._success = False
+                        self._reason = "outcome-mismatch"
+                        self._failure_category = "wrong-stderr"
+                    elif not effects_ok:
+                        self._success = False
+                        self._reason = "outcome-mismatch"
+                        self._failure_category = "effect-mismatch"
+                    elif not world_state_ok:
+                        self._success = False
+                        self._reason = "world-state-mismatch"
+                        self._failure_category = "world-state-mismatch"
+                    else:
+                        self._success = True
+                        self._reason = "verified-complete-execution"
+                        self._failure_category = None
+                    return {"messages": [], "done": self._done, "grade": self.grade()}
+
+                if action["kind"] == "cli":
+                    self._completed = True
+                    self._done = True
+                    self._success = False
+                    self._reason = "outcome-mismatch"
+                    self._failure_category = "wrong-completion-kind"
+                    return {"messages": [], "done": self._done, "grade": self.grade()}
+
+                result = decode_readable({"arguments": action["arguments"], "value": action["value"]})
+                _demand(
+                    isinstance(result["arguments"], list)
+                    and len(result["arguments"]) == len(self._prepared["args"]),
+                    "Input argument arity changed",
+                )
+                actual = {
+                    "kind": action["kind"],
+                    "graph": describe_graph([*result["arguments"], result["value"]]),
+                }
+                expected_outcome = self._prepared["outcome"]
+                expected_outcome_cmp = {
+                    "kind": expected_outcome["kind"],
+                    "graph": expected_outcome["graph"],
+                }
                 self._completed = True
                 self._done = True
-                self._success = actual == expected_outcome_cmp and effects_ok
-                self._reason = "verified-complete-execution" if self._success else "outcome-mismatch"
+                outcome_ok = actual == expected_outcome_cmp
+                self._success = outcome_ok and effects_ok and world_state_ok
+                self._reason = (
+                    "verified-complete-execution"
+                    if self._success
+                    else ("outcome-mismatch" if (not outcome_ok or not effects_ok) else "world-state-mismatch")
+                )
                 self._failure_category = None
                 if not self._success:
                     expected_roots = realize_graph(expected_outcome["graph"])
@@ -1455,8 +2293,10 @@ class PythonExecutionSession:
                         )
                     elif actual["graph"] != expected_outcome["graph"]:
                         self._failure_category = "alias-mismatch"
-                    else:
+                    elif not effects_ok:
                         self._failure_category = "effect-mismatch"
+                    else:
+                        self._failure_category = "world-state-mismatch"
                 return {"messages": [], "done": self._done, "grade": self.grade()}
             except Exception:
                 return self._reject("incomplete-or-invalid-completion", "invalid-completion")
@@ -1477,6 +2317,13 @@ class PythonExecutionSession:
                     self._code_load_bytes += len(obs["content"].encode("utf-8"))
                     observations.append(obs)
                     continue
+                if self._is_stateful and self._world is not None and is_stateful_world_operation(item["operation"]):
+                    status, value = self._world.execute(item["operation"], args)
+                    self._world_calls += 1
+                    self._total_tool_calls += 1
+                    tool_call_id = item.get("toolCallId") or f"world_{self._world_calls}"
+                    observations.append(_observation(item["operation"], status, value, tool_call_id))
+                    continue
                 actual_arg_graph = describe_graph(args)
                 matched_idx = self._match_expected_call(item["operation"], args, actual_arg_graph)
                 _demand(matched_idx >= 0, "External request mismatch")
@@ -1490,13 +2337,13 @@ class PythonExecutionSession:
                     {
                         "kind": "dispatch",
                         "call": matched_idx,
-                        "operation": item["operation"],
-                        "arguments": actual_arg_graph,
+                        "operation": expected["operation"],
+                        "arguments": expected["argumentGraph"],
                     },
                     {
                         "kind": "settlement",
                         "call": matched_idx,
-                        "operation": item["operation"],
+                        "operation": expected["operation"],
                         "status": status,
                         "result": describe_graph([value], allow_exceptions=True),
                     },
@@ -1514,6 +2361,19 @@ class PythonExecutionSession:
 
 
 def create_python_session(prepared: dict[str, Any]) -> PythonExecutionSession:
+    return PythonExecutionSession(prepared)
+
+
+def create_cli_session(task_or_prepared: dict[str, Any]) -> PythonExecutionSession:
+    """Create a live CLI grading session from either a raw CLI task or a prepared CLI task."""
+    if (
+        isinstance(task_or_prepared, dict)
+        and isinstance(task_or_prepared.get("outcome"), dict)
+        and task_or_prepared["outcome"].get("kind") == "cli"
+        and "task" in task_or_prepared
+    ):
+        return PythonExecutionSession(task_or_prepared)
+    prepared = prepare_python_task({**task_or_prepared, "executionKind": "cli"}, trace_format="actions-only")
     return PythonExecutionSession(prepared)
 
 
