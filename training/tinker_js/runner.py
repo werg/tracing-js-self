@@ -119,6 +119,7 @@ DEFAULTS: dict[str, Any] = {
     "skip_failed_exports": True,
     "tolerate_rollout_errors": False,
     "skip_baseline_eval": False,
+    "rollback_on_validation_regression": True,
 }
 
 
@@ -1693,10 +1694,11 @@ def record_validation(bridge: Any, adapter: Any, rows: list[dict], config: dict,
     # uninterrupted run, even when the RL step itself was already checkpointed.
     best = state.get("best_trained_checkpoint")
     # Roll back on compression-gate failure during compression RL, or on a real
-    # accuracy regression beyond accuracy_tolerance during correctness RL (never
+    # accuracy regression beyond accuracy_tolerance during likelihood/correctness RL (never
     # merely because accuracy is still climbing below compression_min_accuracy).
-    regressed = (not gate) if config.get("rl_objective", "likelihood") in ("compression", "likelihood") else (accuracy < anchor - config["accuracy_tolerance"])
-    if stage.startswith("rl-") and regressed and best and best["training_path"] != state.get("training_path"):
+    regressed = (not gate) if config.get("rl_objective", "likelihood") == "compression" else (accuracy < anchor - config["accuracy_tolerance"])
+    if (config.get("rollback_on_validation_regression", True)
+            and stage.startswith("rl-") and regressed and best and best["training_path"] != state.get("training_path")):
         event = {"step": state.get("rl_steps_completed", 0), "validation_stage": stage,
                  "from": state.get("training_path"), "to": best["training_path"],
                  "reason": "validation accuracy below compression gate; restore selected optimizer state"}

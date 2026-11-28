@@ -26,7 +26,9 @@ import {
   scanPublicSourceNodeIoTools,
 } from './tinker-node-io.js';
 import {normalizeCodebaseSpec, codebaseSourceHash, renderRepoManifest,
-  serveCodeLoad, codeLoadResultBytes, transpileSingleModuleToCjs} from './tinker-codebase.js';
+  serveCodeLoad, serveCodeSearch, serveCodeList, codeLoadResultBytes,
+  CODE_SEARCH_TOOL_SPEC, CODE_LIST_TOOL_SPEC, ADAPTIVE_MANIFEST_FILE_THRESHOLD,
+  transpileSingleModuleToCjs} from './tinker-codebase.js';
 import {BROWSER_TOOL_DESCRIPTIONS, DEFAULT_BROWSER_HTML, DEFAULT_BROWSER_URL, scanPublicSourceBrowserTools} from './tinker-browser-dom.js';
 
 export const TINKER_EXECUTION_SCHEMA = 'readable-js-execution/1';
@@ -1071,6 +1073,8 @@ function publicScanUnits(prepared) {
 }
 
 function toolDeclaration(operation, prepared) {
+  if (operation === 'code.search') return CODE_SEARCH_TOOL_SPEC;
+  if (operation === 'code.list') return CODE_LIST_TOOL_SPEC;
   if (operation === 'code.load') {
     return {
       type: 'function',
@@ -1133,7 +1137,13 @@ function initialMessages(prepared) {
   // expected call inventory (which could reveal which branch will execute).
   const scanUnits = publicScanUnits(prepared);
   const names = new Set(prepared.nativeBindings.map(binding => binding.name));
-  if (prepared.files) names.add('code.load');
+  if (prepared.files) {
+    names.add('code.load');
+    if (Object.keys(prepared.files).length > ADAPTIVE_MANIFEST_FILE_THRESHOLD || prepared.task?.enableCodeSearch) {
+      names.add('code.search');
+      names.add('code.list');
+    }
+  }
   let usesMathRandom = false;
   for (const unit of scanUnits) {
     for (const match of unit.matchAll(/\bhost\.([A-Za-z_$][\w$]*)/g)) {
@@ -2043,6 +2053,18 @@ export function createTinkerSession(prepared) {
             codeLoadBytes += codeLoadResultBytes(loadResults);
             const toolCallId = item.toolCallId ?? ('code_load_' + codeLoadCalls);
             observations.push(observation('code.load', 'fulfilled', loadResults, toolCallId));
+            continue;
+          }
+          if (prepared.files && (item.operation === 'code.search' || item.operation === 'code.list')) {
+            const args = decodeReadable(item.arguments);
+            const navResult = item.operation === 'code.search'
+              ? serveCodeSearch(prepared.files, args)
+              : serveCodeList(prepared.files, args);
+            codeLoadCalls++;
+            totalToolCalls++;
+            codeLoadBytes += Buffer.byteLength(JSON.stringify(navResult), 'utf8');
+            const toolCallId = item.toolCallId ?? (`${item.operation.replace('.', '_')}_${codeLoadCalls}`);
+            observations.push(observation(item.operation, 'fulfilled', navResult, toolCallId));
             continue;
           }
           const args = decodeReadable(item.arguments);

@@ -19,3 +19,10 @@ Nobody depends on compatibility with the current implementation or saved formats
 
 These instructions supersede older repository guidance that requires version
 bumps or compatibility work during this pre-release period.
+
+## Continuous data & training discipline
+
+- **Always keep thinking ahead on data**: while remote RL/training runs execute on Tinker, continuously analyze the latest validation and `RealExecBench` bottlenecks and collect targeted, non-bloated new data (especially real-world OSS multi-file repos and messy stateful I/O) on local CPUs to feed the next stage.
+- **Fault tolerance & no wasted recomputation**: never let batch pipelines die on a single task failure; skip and log individual errors cleanly, preserve already-collected trajectories, and auto-prune superseded remote recovery checkpoints.
+- **Timers**: always set scheduled check-in timers to **at most 45 minutes** (`<= 2700s`) for prompt-cache reasons.
+

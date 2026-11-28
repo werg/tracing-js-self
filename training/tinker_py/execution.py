@@ -20,13 +20,20 @@ import tempfile
 from typing import Any
 
 from .codebase import (
+    ADAPTIVE_MANIFEST_FILE_THRESHOLD,
+    CODE_LIST_OPERATION,
+    CODE_LIST_TOOL_SPEC,
     CODE_LOAD_OPERATION,
     CODE_LOAD_TOOL_DESCRIPTION,
+    CODE_SEARCH_OPERATION,
+    CODE_SEARCH_TOOL_SPEC,
     is_multifile_task,
     normalize_codebase_files,
     normalized_multifile_source_hash,
     render_repo_manifest,
+    serve_code_list,
     serve_code_load,
+    serve_code_search,
 )
 from .codec import decode_readable, describe_graph, encode_readable, realize_graph
 
@@ -1023,6 +1030,10 @@ def _scan_public_source_tools_uncached(
 
 
 def _tool_declaration(operation: str, native_bindings: list[dict[str, Any]]) -> dict[str, Any]:
+    if operation == CODE_SEARCH_OPERATION:
+        return copy.deepcopy(CODE_SEARCH_TOOL_SPEC)
+    if operation == CODE_LIST_OPERATION:
+        return copy.deepcopy(CODE_LIST_TOOL_SPEC)
     if operation == CODE_LOAD_OPERATION:
         return {
             "type": "function",
@@ -1109,6 +1120,8 @@ def initial_messages(prepared: dict[str, Any]) -> list[dict[str, Any]]:
         entry_file = prepared["entryFile"]
         loaded_files = prepared.get("initialLoadedFiles") or [entry_file]
         op_set: set[str] = {CODE_LOAD_OPERATION} | extra_tools
+        if len(files) > ADAPTIVE_MANIFEST_FILE_THRESHOLD or (prepared.get("task") or {}).get("enableCodeSearch"):
+            op_set.update({CODE_SEARCH_OPERATION, CODE_LIST_OPERATION})
         uses_random = False
         for src in files.values():
             try:
@@ -2314,6 +2327,20 @@ class PythonExecutionSession:
                     self._total_tool_calls += 1
                     tool_call_id = item.get("toolCallId") or f"call_{self._total_tool_calls}"
                     obs = _observation(CODE_LOAD_OPERATION, "fulfilled", result_items, tool_call_id)
+                    self._code_load_bytes += len(obs["content"].encode("utf-8"))
+                    observations.append(obs)
+                    continue
+                if item["operation"] in (CODE_SEARCH_OPERATION, CODE_LIST_OPERATION):
+                    _demand(is_multifile_task(self._prepared), f"{item['operation']} is only available on multi-file tasks")
+                    nav_res = (
+                        serve_code_search(self._prepared["files"], args)
+                        if item["operation"] == CODE_SEARCH_OPERATION
+                        else serve_code_list(self._prepared["files"], args)
+                    )
+                    self._code_load_calls += 1
+                    self._total_tool_calls += 1
+                    tool_call_id = item.get("toolCallId") or f"call_{self._total_tool_calls}"
+                    obs = _observation(item["operation"], "fulfilled", nav_res, tool_call_id)
                     self._code_load_bytes += len(obs["content"].encode("utf-8"))
                     observations.append(obs)
                     continue
