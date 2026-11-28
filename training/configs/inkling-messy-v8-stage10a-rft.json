@@ -25,7 +25,7 @@
   "skip_failed_exports": true,
   "tolerate_rollout_errors": true,
   "skip_baseline_eval": true,
-  "holdout_fraction": 0.2,
+  "holdout_fraction": 0.0,
   "validation_fraction": 0.2,
   "sft_epochs": 1,
   "batch_size": 16,
