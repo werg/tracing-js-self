@@ -1012,10 +1012,12 @@ export function createTinkerSession(prepared) {
     demand(Number.isSafeInteger(total) && total >= generatedTokens, 'Generated token count must be cumulative and monotonic');
     generatedTokens = total;
   };
+  const expectedExternalCalls = prepared.fixture.calls.length;
   const grade = total => {
     if (total !== undefined) count(total);
     return {success: done && success, reward: done && success ? 1 / (1 + generatedTokens / 1000) : 0,
-      reason, failureCategory, generatedTokens, externalCalls: calls, complete: completed,
+      reason, failureCategory, generatedTokens, externalCalls: calls,
+      matchedExternalCalls: calls, expectedExternalCalls, complete: completed,
       ...(prepared.files ? {codeLoadCalls, codeLoadBytes} : {})};
   };
   const reject = (why, category = why) => { done = true; success = false; reason = why; failureCategory = category;

@@ -28,8 +28,9 @@ from typing import Any
 
 from .adapter import ContextOverflow
 from .learning import (DIFFICULTY_SAMPLING_DEFAULTS, choose_validation_checkpoint, compression_coefficient,
-                       curriculum_pick, difficulty_pick, execution_advantages, likelihood_advantages,
-                       pick_turn_target, sft_epoch_rows, task_metadata, update_curriculum, update_task_difficulty)
+                       curriculum_pick, difficulty_pick, execution_advantages, external_prefix_shaping_reward,
+                       likelihood_advantages, pick_turn_target, sft_epoch_rows, task_metadata,
+                       update_curriculum, update_task_difficulty)
 from .metrics import paired_statistics, summarize_records, task_eval_bucket
 
 
@@ -68,6 +69,7 @@ DEFAULTS: dict[str, Any] = {
     "length_penalty": 0.25,
     "length_scale_tokens": 2048,
     "code_load_latency_tokens": 0.0,
+    "external_prefix_shaping_weight": 0.0,
     "advantage_mode": "decoupled",
     "rl_objective": "likelihood",
     "target_anchor_weight": 0.25,
@@ -357,7 +359,8 @@ def load_config(path: Path | None = None, overrides: dict | None = None) -> dict
     if config["opsd_teacher"] not in {"self", "reference"}:
         raise ValueError("opsd_teacher must be self or reference")
     for name in ("accuracy_tolerance", "min_token_saving", "compression_min_accuracy",
-                 "rl_group_temperature_spread", "multiturn_rollout_fraction"):
+                 "rl_group_temperature_spread", "multiturn_rollout_fraction",
+                 "external_prefix_shaping_weight"):
         value = config[name]
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not 0 <= value <= 1:
             raise ValueError(f"{name} must be finite in [0, 1]")
@@ -999,7 +1002,25 @@ def rollout(bridge: Any, adapter: Any, task: dict, config: dict, seed: int, *, t
         grade["success"] = bool(done and grade.get("success") and not forced_failure)
         if not grade["success"] and not forced_failure and thinking_only_turn:
             grade["failureCategory"] = "thinking_without_text"
-        grade["reward"] = compression_reward(grade["success"], total, config)
+        expected_ext = grade.get("expectedExternalCalls")
+        if expected_ext is None:
+            expected_ext = grade.get("expected_external_calls")
+        if expected_ext is None:
+            fixture_calls = (task.get("fixture") or {}).get("calls")
+            expected_ext = len(fixture_calls) if isinstance(fixture_calls, list) else 0
+        matched_ext = grade.get("matchedExternalCalls")
+        if matched_ext is None:
+            matched_ext = grade.get("matched_external_calls")
+        if matched_ext is None:
+            matched_ext = int(grade.get("externalCalls") or 0)
+        grade["matchedExternalCalls"] = int(matched_ext)
+        grade["expectedExternalCalls"] = int(expected_ext)
+        grade["matched_external_calls"] = int(matched_ext)
+        grade["expected_external_calls"] = int(expected_ext)
+        if grade["success"]:
+            grade["reward"] = compression_reward(True, total, config)
+        else:
+            grade["reward"] = external_prefix_shaping_reward(grade, config)
         grade["generatedTokens"] = total
         return {"task_id": task.get("id"), "family": task.get("family"), "seed": seed,
                 "backend": getattr(adapter, "backend_name", "test-double"), "samples": samples, "messages": messages,

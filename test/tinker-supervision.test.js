@@ -134,7 +134,10 @@ test('student mistakes receive only arrived observations and a wrong call termin
   assert.deepEqual(invalid.messages, []);
   assert.equal(invalid.done, true);
   assert.equal(invalid.grade.failureCategory, 'incorrect-external-request');
-  assert.doesNotMatch(JSON.stringify(invalid), /771234|771237|"two"|expected|corrected/);
+  assert.equal(invalid.grade.matchedExternalCalls, 1);
+  assert.equal(invalid.grade.expectedExternalCalls, 2);
+  const {expectedExternalCalls: _expectedCount, ...gradeWithoutCount} = invalid.grade;
+  assert.doesNotMatch(JSON.stringify({...invalid, grade: gradeWithoutCount}), /771234|771237|"two"|expected|corrected/);
   const stopped = await session.step(call('demo.readNumber', ['two']), 45);
   assert.equal(stopped.done, true);
   assert.deepEqual(stopped.messages, []);

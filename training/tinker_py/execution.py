@@ -1201,6 +1201,7 @@ class PythonExecutionSession:
         if total is not None:
             self._count(total)
         ok = self._done and self._success
+        expected_external_calls = len(self._prepared["fixture"]["calls"])
         return {
             "success": ok,
             "reward": (1.0 / (1.0 + self._generated_tokens / 1000.0)) if ok else 0.0,
@@ -1208,6 +1209,10 @@ class PythonExecutionSession:
             "failureCategory": self._failure_category,
             "generatedTokens": self._generated_tokens,
             "externalCalls": self._calls,
+            "matchedExternalCalls": self._calls,
+            "expectedExternalCalls": expected_external_calls,
+            "matched_external_calls": self._calls,
+            "expected_external_calls": expected_external_calls,
             "codeLoadCalls": self._code_load_calls,
             "codeLoadBytes": self._code_load_bytes,
             "complete": self._completed,

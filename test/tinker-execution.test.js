@@ -1005,3 +1005,111 @@ test('system prompt omits undeclared I/O tools like shell.exec on pure JS tasks'
   assert.doesNotMatch(sys, /code\.load/);
   assert.equal(pure.messages.some(m => m.role === 'tool_declare'), false);
 });
+
+test('session grade tracks matchedExternalCalls and expectedExternalCalls without counting code.load', async () => {
+  const multiCallTask = await prepareTinkerTask({
+    id: 'prefix-progress-js',
+    family: 'prefix-progress-js',
+    executionMode: 'native',
+    files: {
+      'index.js': [
+        "const helper = require('./helper.js');",
+        'function run(k1, k2) {',
+        '  const a = process.env[k1];',
+        '  const b = process.env[k2];',
+        '  return helper.combine(a, b);',
+        '}',
+        'module.exports = {run};',
+      ].join('\n'),
+      'helper.js': [
+        'function combine(a, b) {',
+        '  const ts = Date.now();',
+        '  return a + ":" + b + "@" + ts;',
+        '}',
+        'module.exports = {combine};',
+      ].join('\n'),
+    },
+    entryFile: 'index.js',
+    entry: 'run',
+    args: ['K1', 'K2'],
+    fixture: {
+      calls: [
+        {operation: 'env.get', arguments: ['K1'], status: 'fulfilled', result: 'hello'},
+        {operation: 'env.get', arguments: ['K2'], status: 'fulfilled', result: 'world'},
+        {operation: 'platform.dateNow', arguments: [], status: 'fulfilled', result: 12345},
+      ],
+    },
+  });
+
+  // Case 1: code.load + 2 matched external calls then mismatch on 3rd call.
+  const sMismatch = createTinkerSession(multiCallTask);
+  try {
+    const loadRes = await sMismatch.step({
+      role: 'assistant',
+      content: '',
+      tool_calls: [{id: 'cl1', type: 'function', function: {name: 'code.load', arguments: JSON.stringify({arguments: [{path: 'helper.js'}]})}}],
+    }, 10);
+    assert.equal(loadRes.done, false);
+    const step1 = await sMismatch.step({
+      role: 'assistant',
+      content: '',
+      tool_calls: [{id: 'c1', type: 'function', function: {name: 'env.get', arguments: JSON.stringify({arguments: ['K1']})}}],
+    }, 20);
+    assert.equal(step1.done, false);
+    const step2 = await sMismatch.step({
+      role: 'assistant',
+      content: '',
+      tool_calls: [{id: 'c2', type: 'function', function: {name: 'env.get', arguments: JSON.stringify({arguments: ['K2']})}}],
+    }, 30);
+    assert.equal(step2.done, false);
+    const step3 = await sMismatch.step({
+      role: 'assistant',
+      content: '',
+      tool_calls: [{id: 'c3', type: 'function', function: {name: 'env.get', arguments: JSON.stringify({arguments: ['WRONG']})}}],
+    }, 40);
+    assert.equal(step3.done, true);
+    assert.equal(step3.grade.success, false);
+    assert.equal(step3.grade.complete, false);
+    assert.equal(step3.grade.failureCategory, 'incorrect-external-request');
+    assert.equal(step3.grade.codeLoadCalls, 1);
+    assert.equal(step3.grade.matchedExternalCalls, 2);
+    assert.equal(step3.grade.expectedExternalCalls, 3);
+  } finally {
+    sMismatch.close();
+  }
+
+  // Case 2: 1 matched external call then premature completion -> missing-external-effects.
+  const sMissing = createTinkerSession(multiCallTask);
+  try {
+    await sMissing.step({
+      role: 'assistant',
+      content: '',
+      tool_calls: [{id: 'c1', type: 'function', function: {name: 'env.get', arguments: JSON.stringify({arguments: ['K1']})}}],
+    }, 15);
+    const early = await sMissing.step('```json\n{"type":"complete","kind":"return","arguments":["K1","K2"],"value":"hello:world@12345"}\n```', 25);
+    assert.equal(early.done, true);
+    assert.equal(early.grade.success, false);
+    assert.equal(early.grade.complete, false);
+    assert.equal(early.grade.failureCategory, 'missing-external-effects');
+    assert.equal(early.grade.matchedExternalCalls, 1);
+    assert.equal(early.grade.expectedExternalCalls, 3);
+  } finally {
+    sMissing.close();
+  }
+
+  // Case 3: exact pass -> matchedExternalCalls === expectedExternalCalls === 3.
+  const sPass = createTinkerSession(multiCallTask);
+  try {
+    await sPass.step({role: 'assistant', content: '', tool_calls: [{id: 'c1', type: 'function', function: {name: 'env.get', arguments: '{"arguments":["K1"]}'}}]}, 10);
+    await sPass.step({role: 'assistant', content: '', tool_calls: [{id: 'c2', type: 'function', function: {name: 'env.get', arguments: '{"arguments":["K2"]}'}}]}, 20);
+    await sPass.step({role: 'assistant', content: '', tool_calls: [{id: 'c3', type: 'function', function: {name: 'platform.dateNow', arguments: '{"arguments":[]}'}}]}, 30);
+    const fin = await sPass.step('```json\n{"type":"complete","kind":"return","arguments":["K1","K2"],"value":"hello:world@12345"}\n```', 40);
+    assert.equal(fin.done, true);
+    assert.equal(fin.grade.success, true);
+    assert.equal(fin.grade.complete, true);
+    assert.equal(fin.grade.matchedExternalCalls, 3);
+    assert.equal(fin.grade.expectedExternalCalls, 3);
+  } finally {
+    sPass.close();
+  }
+});

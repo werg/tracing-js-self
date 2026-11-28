@@ -46,6 +46,54 @@ def compression_coefficient(config: dict, step: int, *, gate_open: bool = True) 
     return config["length_penalty"] * factor
 
 
+SHAPABLE_EXTERNAL_FAILURE_CATEGORIES = frozenset({
+    "incorrect-external-request",
+    "missing-external-effects",
+})
+EXTERNAL_PREFIX_SHAPING_CAP = 0.45
+EXTERNAL_PREFIX_SHAPING_STD_FLOOR = 0.25
+
+
+def _grade_nonneg_int(grade: dict, *keys: str, default: int = 0) -> int:
+    for key in keys:
+        if key in grade and grade[key] is not None:
+            raw = grade[key]
+            if isinstance(raw, bool) or not isinstance(raw, int) or raw < 0:
+                raise ValueError(f"{key} must be a nonnegative integer")
+            return raw
+    return default
+
+
+def external_prefix_shaping_reward(grade: dict, config: dict) -> float:
+    """Smooth partial RL reward for exact prefix external calls matched before mismatch/missing tail.
+
+    Strictly gated by ``external_prefix_shaping_weight > 0``, capped at 0.45 so an exact
+    verified pass (1.0) always strictly dominates, and never marks ``success`` or ``complete``.
+    """
+    raw_weight = config.get("external_prefix_shaping_weight", 0.0)
+    if (isinstance(raw_weight, bool) or not isinstance(raw_weight, (int, float))
+            or not math.isfinite(raw_weight) or not 0.0 <= float(raw_weight) <= 1.0):
+        raise ValueError("external_prefix_shaping_weight must be finite in [0, 1]")
+    weight = float(raw_weight)
+    if weight <= 0.0 or not isinstance(grade, dict) or bool(grade.get("success")):
+        return 0.0
+    category = grade.get("failureCategory")
+    if category is None:
+        category = grade.get("failure_category")
+    if category not in SHAPABLE_EXTERNAL_FAILURE_CATEGORIES:
+        return 0.0
+    expected = _grade_nonneg_int(grade, "expectedExternalCalls", "expected_external_calls", default=0)
+    if expected <= 0:
+        return 0.0
+    matched = _grade_nonneg_int(
+        grade, "matchedExternalCalls", "matched_external_calls", "externalCalls", default=0
+    )
+    if matched <= 0:
+        return 0.0
+    progress = min(matched, expected) / expected
+    return min(EXTERNAL_PREFIX_SHAPING_CAP, weight * progress)
+
+
 def _record_code_load_calls(record: dict) -> int:
     grade = record.get("grade") if isinstance(record.get("grade"), dict) else {}
     raw = grade.get("codeLoadCalls")
@@ -72,6 +120,10 @@ def execution_advantages(records: list[dict], config: dict, coefficient: float |
     When ``code_load_latency_tokens > 0``, effective length cost includes
     ``code_load_latency_tokens * code_load_calls`` so RL jointly optimizes
     tokens and code.load tool-call round-trip latency.
+    When ``external_prefix_shaping_weight > 0``, failing rollouts with
+    ``incorrect-external-request`` or ``missing-external-effects`` receive smooth
+    partial credit ``min(0.45, weight * matched / expected)`` in correctness
+    advantages (while never counting as successes or receiving length credit).
     """
     if not records:
         raise ValueError("execution advantages require at least one rollout")
@@ -85,14 +137,36 @@ def execution_advantages(records: list[dict], config: dict, coefficient: float |
     if isinstance(raw_latency, bool) or not isinstance(raw_latency, (int, float)) or not math.isfinite(raw_latency) or raw_latency < 0:
         raise ValueError("code_load_latency_tokens must be finite and nonnegative")
     latency_tokens = float(raw_latency)
-    correct = [float(bool(record["grade"]["success"])) for record in records]
+    raw_shaping = config.get("external_prefix_shaping_weight", 0.0)
+    if (isinstance(raw_shaping, bool) or not isinstance(raw_shaping, (int, float))
+            or not math.isfinite(raw_shaping) or not 0.0 <= float(raw_shaping) <= 1.0):
+        raise ValueError("external_prefix_shaping_weight must be finite in [0, 1]")
+    shaping_weight = float(raw_shaping)
+    success_flags = [bool(record["grade"]["success"]) for record in records]
+    prefix_shaping = [
+        0.0 if ok else external_prefix_shaping_reward(record["grade"], config)
+        for ok, record in zip(success_flags, records)
+    ]
+    correct = [1.0 if ok else partial for ok, partial in zip(success_flags, prefix_shaping)]
     tokens = [record["generated_tokens"] for record in records]
     if any(isinstance(value, bool) or not isinstance(value, int) or value < 0 for value in tokens):
         raise ValueError("generated token counts must be nonnegative integers")
     code_loads = [_record_code_load_calls(record) for record in records]
     compress_only_accurate = bool(config.get("compress_only_accurate_groups", False))
-    correctness = centered(correct, standardize=config.get("advantage_mode", "decoupled") == "decoupled")
-    successful = [index for index, value in enumerate(correct) if value]
+    successful = [index for index, ok in enumerate(success_flags) if ok]
+    if config.get("advantage_mode", "decoupled") == "decoupled":
+        if successful or shaping_weight <= 0.0:
+            correctness = centered(correct, standardize=True)
+        else:
+            raw_c = centered(correct, standardize=False)
+            dev = math.sqrt(statistics.fmean(v * v for v in raw_c))
+            if dev > 1e-12:
+                denom = max(dev, EXTERNAL_PREFIX_SHAPING_STD_FLOOR)
+                correctness = [v / denom for v in raw_c]
+            else:
+                correctness = [0.0] * len(records)
+    else:
+        correctness = centered(correct, standardize=False)
     length = [0.0] * len(records)
     if successful and (not compress_only_accurate or len(successful) == len(records)):
         costs = [min((tokens[index] + latency_tokens * code_loads[index]) / scale, 1.0) for index in successful]
@@ -104,6 +178,8 @@ def execution_advantages(records: list[dict], config: dict, coefficient: float |
     kind = "all_failure" if successes == 0 else "all_success" if successes == len(records) else "mixed_success"
     return {"advantages": advantages, "correctness_advantages": correctness,
             "length_advantages": length, "length_contributions": [coefficient * value for value in length],
+            "prefix_shaping_rewards": prefix_shaping,
+            "prefix_shaping_signal": any(value > 0.0 for value in prefix_shaping) and any(abs(value) > 1e-12 for value in correctness),
             "compression_coefficient": coefficient, "group_kind": kind,
             "zero_advantage_group": not any(abs(value) > 1e-12 for value in advantages),
             "length_signal": any(abs(value) > 1e-12 for value in length),
