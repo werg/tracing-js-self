@@ -1223,7 +1223,7 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
         for row, repeat, seed in pending_jobs:
             try:
                 _record_eval_result(_run_eval_job(row, repeat, seed))
-            except (RolloutError, AdapterError) as error:
+            except (RolloutError, AdapterError, BridgeError) as error:
                 err_rec = getattr(error, "record", None)
                 err_payload = err_rec if isinstance(err_rec, dict) else {
                     "task_id": row["id"], "error": {"type": type(error).__name__, "message": str(error)}}
@@ -1245,7 +1245,7 @@ def evaluate(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                     row, repeat = futures[future]
                     try:
                         record = future.result()
-                    except (RolloutError, AdapterError) as error:
+                    except (RolloutError, AdapterError, BridgeError) as error:
                         err_rec = getattr(error, "record", None)
                         err_payload = err_rec if isinstance(err_rec, dict) else {
                             "task_id": row["id"], "error": {"type": type(error).__name__, "message": str(error)}}
@@ -1993,7 +1993,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
             for row, _curriculum_selection, seed, turn_target, group_mode, rollout_temp in pending_plan:
                 try:
                     record = _run_rl_rollout(row, seed, turn_target, group_mode, rollout_temp)
-                except (RolloutError, AdapterError) as error:
+                except (RolloutError, AdapterError, BridgeError) as error:
                     err_rec = getattr(error, "record", None)
                     err_payload = err_rec if isinstance(err_rec, dict) else {
                         "task_id": row["id"], "error": {"type": type(error).__name__, "message": str(error)}}
@@ -2017,7 +2017,7 @@ def train_rl(bridge: Any, adapter: Any, rows: list[dict], config: dict, output_d
                         idx = futures[future]
                         try:
                             ordered_results[idx] = future.result()
-                        except (RolloutError, AdapterError) as error:
+                        except (RolloutError, AdapterError, BridgeError) as error:
                             row_i, _c_i, seed_i, _tt_i, mode_i, _temp_i = pending_plan[idx]
                             err_rec = getattr(error, "record", None)
                             err_payload = err_rec if isinstance(err_rec, dict) else {

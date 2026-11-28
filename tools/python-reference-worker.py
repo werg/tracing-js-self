@@ -190,11 +190,18 @@ def _coerce_stream(
     return bytes(raw)
 
 
-def _install_expanded_io_hooks(invoke: Any, io_depth: list[int]) -> Any:
+def _install_expanded_io_hooks(
+    invoke: Any,
+    io_depth: list[int],
+    expected_ops: set[str] | None = None,
+) -> Any:
     """Install expanded virtual FS, shutil, tempfile, and subprocess.Popen replay hooks."""
     temp_counter = [0]
     popen_counter = [0]
     pending_temp_files: list[Any] = []
+
+    def _op_enabled(op: str) -> bool:
+        return expected_ops is None or op in expected_ops
 
     def _next_temp_path(
         suffix: str | None = None,
@@ -210,12 +217,12 @@ def _install_expanded_io_hooks(invoke: Any, io_depth: list[int]) -> Any:
 
     # -------------------- os.* FS hooks --------------------
     def _os_mkdir(path: Any, mode: int = 0o777, *, dir_fd: Any = None) -> None:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.mkdir"):
             return _ORIG_OS_MKDIR(path, mode, dir_fd=dir_fd)
         invoke("fs.mkdir", [_norm_path(path)], build_io_exception)
 
     def _os_makedirs(name: Any, mode: int = 0o777, exist_ok: bool = False) -> None:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.mkdir"):
             return _ORIG_OS_MAKEDIRS(name, mode, exist_ok=exist_ok)
         try:
             invoke("fs.mkdir", [_norm_path(name)], build_io_exception)
@@ -224,27 +231,27 @@ def _install_expanded_io_hooks(invoke: Any, io_depth: list[int]) -> Any:
                 raise
 
     def _os_remove(path: Any, *, dir_fd: Any = None) -> None:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.unlink"):
             return _ORIG_OS_REMOVE(path, dir_fd=dir_fd)
         invoke("fs.unlink", [_norm_path(path)], build_io_exception)
 
     def _os_unlink(path: Any, *, dir_fd: Any = None) -> None:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.unlink"):
             return _ORIG_OS_UNLINK(path, dir_fd=dir_fd)
         invoke("fs.unlink", [_norm_path(path)], build_io_exception)
 
     def _os_rmdir(path: Any, *, dir_fd: Any = None) -> None:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.unlink"):
             return _ORIG_OS_RMDIR(path, dir_fd=dir_fd)
         invoke("fs.unlink", [_norm_path(path)], build_io_exception)
 
     def _os_rename(src: Any, dst: Any, *, src_dir_fd: Any = None, dst_dir_fd: Any = None) -> None:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.rename"):
             return _ORIG_OS_RENAME(src, dst, src_dir_fd=src_dir_fd, dst_dir_fd=dst_dir_fd)
         invoke("fs.rename", [_norm_path(src), _norm_path(dst)], build_io_exception)
 
     def _os_replace(src: Any, dst: Any, *, src_dir_fd: Any = None, dst_dir_fd: Any = None) -> None:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.rename"):
             return _ORIG_OS_REPLACE(src, dst, src_dir_fd=src_dir_fd, dst_dir_fd=dst_dir_fd)
         invoke("fs.rename", [_norm_path(src), _norm_path(dst)], build_io_exception)
 
@@ -258,7 +265,7 @@ def _install_expanded_io_hooks(invoke: Any, io_depth: list[int]) -> Any:
 
     # -------------------- pathlib.Path hooks --------------------
     def _path_mkdir(self: pathlib.Path, mode: int = 0o777, parents: bool = False, exist_ok: bool = False) -> None:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.mkdir"):
             return _ORIG_PATH_MKDIR(self, mode=mode, parents=parents, exist_ok=exist_ok)
         try:
             invoke("fs.mkdir", [str(self)], build_io_exception)
@@ -267,7 +274,7 @@ def _install_expanded_io_hooks(invoke: Any, io_depth: list[int]) -> Any:
                 raise
 
     def _path_unlink(self: pathlib.Path, missing_ok: bool = False) -> None:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.unlink"):
             return _ORIG_PATH_UNLINK(self, missing_ok=missing_ok)
         try:
             invoke("fs.unlink", [str(self)], build_io_exception)
@@ -276,14 +283,14 @@ def _install_expanded_io_hooks(invoke: Any, io_depth: list[int]) -> Any:
                 raise
 
     def _path_rename(self: pathlib.Path, target: Any) -> pathlib.Path:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.rename"):
             return _ORIG_PATH_RENAME(self, target)
         dst = _norm_path(target)
         invoke("fs.rename", [str(self), dst], build_io_exception)
         return pathlib.Path(dst)
 
     def _path_replace(self: pathlib.Path, target: Any) -> pathlib.Path:
-        if not is_guest_caller(io_depth):
+        if not is_guest_caller(io_depth) or not _op_enabled("fs.rename"):
             return _ORIG_PATH_REPLACE(self, target)
         dst = _norm_path(target)
         invoke("fs.rename", [str(self), dst], build_io_exception)
@@ -1040,7 +1047,8 @@ def main() -> int:
             io_depth=io_depth,
             guest_builtins=guest_builtins,
         )
-        flush_expanded_io = _install_expanded_io_hooks(invoke, io_depth)
+        expected_ops = {str(c.get("operation", "")) for c in expected_calls}
+        flush_expanded_io = _install_expanded_io_hooks(invoke, io_depth, expected_ops=expected_ops)
 
         extra_guest_globals: dict[str, Any] = {"host": host_obj}
         for binding in native_bindings:
